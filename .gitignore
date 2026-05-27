@@ -1,0 +1,62 @@
+# =========================
+# .NET Core / Visual Studio
+# =========================
+bin/
+obj/
+TestResults/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.dbmdl
+*.jfm
+*.pfx
+*.publishsettings
+
+# Rider / IntelliJ
+.idea/
+*.sln.iml
+
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# Environment and Secrets (Do not commit per Coding Standards)
+appsettings.Development.json
+appsettings.Local.json
+*.env
+.env
+.env.*
+
+# =========================
+# Angular / Node.js
+# =========================
+node_modules/
+dist/
+tmp/
+out-tsc/
+bazel-out/
+.angular/
+npm-debug.log
+yarn-error.log
+
+# =========================
+# OS / macOS
+# =========================
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+
+# =========================
+# Graphify / AI Tools
+# =========================
+graphify-out/
+.agents/.cache/
