@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="SpeedClaim.Api/SpeedClaim.Api.csproj" />
+  <Project Path="SpeedClaim.Core/SpeedClaim.Core.csproj" />
+  <Project Path="SpeedClaim.Infrastructure/SpeedClaim.Infrastructure.csproj" />
+  <Project Path="SpeedClaim.Tests/SpeedClaim.Tests.csproj" />
+</Solution>
