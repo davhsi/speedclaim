@@ -12,7 +12,7 @@ and drive all billing, lapse, and grace period logic.
   purchases). Creation requires a valid INSURANCE_PRODUCTS reference, a policyholder
   user, coverage amount within product bounds, and a selected payment frequency.
 - A human-readable policy_number is auto-generated on issuance in the format
-  POL-YYYY-NNNNN (e.g. POL-2026-00001) and is unique across the system.
+  POL-YYYY-NNNNN (e.g. POL-2026-00001) and is unique across the system for active policies (enforced via a partial index where deleted_at IS NULL).
 - Policies move through the following states:
     - **ACTIVE:** Policy is in force. Premiums are current.
     - **LAPSED:** A scheduled premium installment passed its due_date without payment
@@ -26,6 +26,7 @@ and drive all billing, lapse, and grace period logic.
   rules prohibit hard deletes; the record must remain queryable for regulatory audits.
 - Policy updates (coverage changes, agent reassignment) are captured in AUDIT_LOGS
   with old_values and new_values JSONB snapshots before any mutation is committed.
+  Mid-term coverage and premium changes (endorsements) are explicitly recorded in the POLICY_VERSIONS table for precise historical tracking.
 - A LAPSED policy can be reinstated to ACTIVE by an Admin if outstanding premiums
   are cleared within a defined reinstatement window — handled via a status update
   with full audit trail.
@@ -35,15 +36,15 @@ and drive all billing, lapse, and grace period logic.
   must have is_primary = true per policy, enforced at the application layer.
 - Health policies support multiple insured members (family floater plans) — spouse,
   children, and parents linked via relation_to_holder. All member fields (full_name,
-  date_of_birth, gender) are PHI and encrypted at rest.
+  date_of_birth) are PII and encrypted at rest.
 - Vehicle policies are 1:1 with a single vehicle. The vehicle_number (registration
   plate) carries a unique constraint — no two active policies can cover the same
-  vehicle. IDV (insured_declared_value) is mandatory and determines maximum payout.
+  vehicle. insured_declared_value (IDV) is mandatory and determines maximum payout.
   is_comprehensive distinguishes comprehensive from third-party only cover.
 - Life policies are 1:1 and require a nominee (nominee_name, nominee_relation,
   nominee_phone) before issuance. The nominee is the legal recipient of the death
-  benefit and must match claim settlement details at payout time. Optional accidental
-  rider tracked via has_accidental_rider boolean.
+  benefit and must match claimant_name on CLAIM_LIFE_DETAILS at settlement.
+  Optional accidental rider tracked via has_accidental_rider boolean.
 - Domain detail rows (POLICY_HEALTH_DETAILS, POLICY_VEHICLE_DETAILS,
   POLICY_LIFE_DETAILS) are created atomically with the POLICIES row in a single
   transaction — a policy cannot exist without its domain extension.
@@ -63,16 +64,11 @@ and drive all billing, lapse, and grace period logic.
   trigger for the overdue cron job, which transitions status to OVERDUE and
   dispatches premium overdue notifications.
 - A grace period is observed before transitioning a policy to LAPSED — the exact
-  grace window is configurable at the application layer. During grace period the
-  policy remains ACTIVE but notifications escalate.
-- If a claim is approved during a grace period, it is settled normally. The overdue
-  premium remains outstanding on the PREMIUM_SCHEDULE and the lapse cron job continues
-  to run independently. The overdue premium is not deducted from the claim settlement.
+  grace window is configurable at the application layer.
 - Refunds are modelled as a new PAYMENTS row with payment_type = REFUND and
-  original_payment_id pointing to the original transaction, satisfying the
-  self-referencing idempotency requirement.
-- PAYMENTS supports both premium intake (policy_id set, claim_id null) and claim
-  settlements (claim_id set, policy_id nullable) in the same table, distinguished
-  by payment_type (PREMIUM | CLAIM_SETTLEMENT | REFUND).
+  original_payment_id pointing to the original transaction.
+- PAYMENTS handles both premium intake (payment_type = PREMIUM, policy_id set) and
+  claim settlements (payment_type = CLAIM_SETTLEMENT, claim_id set) in the same table.
+  All payment status transitions are immutably recorded in PAYMENT_STATUS_HISTORY.
 - All monetary amounts use decimal(12,2) with ISO 4217 currency code (default INR).
   No floating point types are used anywhere in financial calculations.

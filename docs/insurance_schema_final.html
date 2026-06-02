@@ -335,7 +335,7 @@
 <div class="header">
   <div>
     <div class="header-title">INSURANCE CLAIM PROCESSING SYSTEM</div>
-    <div class="header-sub">Final Production Schema · 26 Tables · 3 Domains</div>
+    <div class="header-sub">Final Production Schema · 23 Tables · 3 Domains</div>
   </div>
   <div class="badges">
     <span class="badge badge-hipaa">HIPAA</span>
@@ -345,7 +345,7 @@
 </div>
 
 <div class="stats-bar">
-  <div class="stat"><span class="stat-num">26</span><span class="stat-label">tables</span></div>
+  <div class="stat"><span class="stat-num">23</span><span class="stat-label">tables</span></div>
   <div class="stat"><span class="stat-num">3</span><span class="stat-label">insurance domains</span></div>
   <div class="stat"><span class="stat-num">2</span><span class="stat-label">IRDAI 2024 master rules</span></div>
   <div class="stat"><span class="stat-num">RBAC</span><span class="stat-label">auth model</span></div>
@@ -353,781 +353,1556 @@
 </div>
 
 <div class="layout">
+
   <div class="sidebar" id="sidebar">
     <div class="sidebar-group">
-      <div class="sidebar-group-label">Auth & Identity</div>
-      <div class="sidebar-item active" onclick="scrollToSection('auth')" data-section="auth"><span class="sidebar-dot" style="background:#58a6ff"></span>USERS</div>
-      <div class="sidebar-item" onclick="scrollToSection('auth')" data-section="auth"><span class="sidebar-dot" style="background:#58a6ff"></span>ROLES</div>
-      <div class="sidebar-item" onclick="scrollToSection('auth')" data-section="auth"><span class="sidebar-dot" style="background:#58a6ff"></span>USER_ROLES</div>
-      <div class="sidebar-item" onclick="scrollToSection('auth')" data-section="auth"><span class="sidebar-dot" style="background:#58a6ff"></span>REFRESH_TOKENS</div>
+      <div class="sidebar-group-label">1.1. Auth & Identity Domain</div>
+      <div class="sidebar-item" data-section="auth" onclick="document.getElementById('users').scrollIntoView({behavior: 'smooth'})"><div class="sidebar-dot" style="background: #6e7681"></div>users</div>
+      <div class="sidebar-item" data-section="auth" onclick="document.getElementById('roles').scrollIntoView({behavior: 'smooth'})"><div class="sidebar-dot" style="background: #6e7681"></div>roles</div>
+      <div class="sidebar-item" data-section="auth" onclick="document.getElementById('user_roles').scrollIntoView({behavior: 'smooth'})"><div class="sidebar-dot" style="background: #6e7681"></div>user_roles</div>
     </div>
     <div class="sidebar-group">
-      <div class="sidebar-group-label">Compliance</div>
-      <div class="sidebar-item" onclick="scrollToSection('compliance')" data-section="compliance"><span class="sidebar-dot" style="background:#3fb950"></span>USER_CONSENTS</div>
-      <div class="sidebar-item" onclick="scrollToSection('compliance')" data-section="compliance"><span class="sidebar-dot" style="background:#3fb950"></span>PHI_ACCESS_LOGS</div>
-      <div class="sidebar-item" onclick="scrollToSection('compliance')" data-section="compliance"><span class="sidebar-dot" style="background:#3fb950"></span>AUDIT_LOGS</div>
+      <div class="sidebar-group-label">1.2. Required Compliance Layer</div>
+      <div class="sidebar-item" data-section="required_compliance_layer" onclick="document.getElementById('user_consents').scrollIntoView({behavior: 'smooth'})"><div class="sidebar-dot" style="background: #6e7681"></div>user_consents</div>
+      <div class="sidebar-item" data-section="required_compliance_layer" onclick="document.getElementById('audit_logs').scrollIntoView({behavior: 'smooth'})"><div class="sidebar-dot" style="background: #6e7681"></div>audit_logs</div>
     </div>
     <div class="sidebar-group">
-      <div class="sidebar-group-label">Core Business</div>
-      <div class="sidebar-item" onclick="scrollToSection('core')" data-section="core"><span class="sidebar-dot" style="background:#d2a679"></span>AGENTS</div>
-      <div class="sidebar-item" onclick="scrollToSection('core')" data-section="core"><span class="sidebar-dot" style="background:#d2a679"></span>INSURANCE_PRODUCTS</div>
-      <div class="sidebar-item" onclick="scrollToSection('core')" data-section="core"><span class="sidebar-dot" style="background:#d2a679"></span>NOTIFICATIONS</div>
-      <div class="sidebar-item" onclick="scrollToSection('core')" data-section="core"><span class="sidebar-dot" style="background:#d2a679"></span>NOTIFICATION_TEMPLATES</div>
+      <div class="sidebar-group-label">1.3. Core Products & Agents</div>
+      <div class="sidebar-item" data-section="core_products" onclick="document.getElementById('agents').scrollIntoView({behavior: 'smooth'})"><div class="sidebar-dot" style="background: #6e7681"></div>agents</div>
+      <div class="sidebar-item" data-section="core_products" onclick="document.getElementById('insurance_products').scrollIntoView({behavior: 'smooth'})"><div class="sidebar-dot" style="background: #6e7681"></div>insurance_products</div>
     </div>
     <div class="sidebar-group">
-      <div class="sidebar-group-label">Policies</div>
-      <div class="sidebar-item" onclick="scrollToSection('policy')" data-section="policy"><span class="sidebar-dot" style="background:#a371f7"></span>POLICIES</div>
-      <div class="sidebar-item" onclick="scrollToSection('policy')" data-section="policy"><span class="sidebar-dot" style="background:#a371f7"></span>POLICY_INSURED_MEMBERS</div>
-      <div class="sidebar-item" onclick="scrollToSection('policy')" data-section="policy"><span class="sidebar-dot" style="background:#a371f7"></span>POLICY_HEALTH_DETAILS</div>
-      <div class="sidebar-item" onclick="scrollToSection('policy')" data-section="policy"><span class="sidebar-dot" style="background:#a371f7"></span>POLICY_VEHICLE_DETAILS</div>
-      <div class="sidebar-item" onclick="scrollToSection('policy')" data-section="policy"><span class="sidebar-dot" style="background:#a371f7"></span>POLICY_LIFE_DETAILS</div>
-      <div class="sidebar-item" onclick="scrollToSection('policy')" data-section="policy"><span class="sidebar-dot" style="background:#a371f7"></span>PAYMENTS</div>
-      <div class="sidebar-item" onclick="scrollToSection('policy')" data-section="policy"><span class="sidebar-dot" style="background:#a371f7"></span>PREMIUM_SCHEDULE</div>
+      <div class="sidebar-group-label">1.4. Policies Domain</div>
+      <div class="sidebar-item" data-section="policies_domain" onclick="document.getElementById('policies').scrollIntoView({behavior: 'smooth'})"><div class="sidebar-dot" style="background: #6e7681"></div>policies</div>
+      <div class="sidebar-item" data-section="policies_domain" onclick="document.getElementById('policy_health_details').scrollIntoView({behavior: 'smooth'})"><div class="sidebar-dot" style="background: #6e7681"></div>policy_health_details</div>
+      <div class="sidebar-item" data-section="policies_domain" onclick="document.getElementById('policy_vehicle_details').scrollIntoView({behavior: 'smooth'})"><div class="sidebar-dot" style="background: #6e7681"></div>policy_vehicle_details</div>
+      <div class="sidebar-item" data-section="policies_domain" onclick="document.getElementById('policy_life_details').scrollIntoView({behavior: 'smooth'})"><div class="sidebar-dot" style="background: #6e7681"></div>policy_life_details</div>
+      <div class="sidebar-item" data-section="policies_domain" onclick="document.getElementById('policy_insured_members').scrollIntoView({behavior: 'smooth'})"><div class="sidebar-dot" style="background: #6e7681"></div>policy_insured_members</div>
+      <div class="sidebar-item" data-section="policies_domain" onclick="document.getElementById('payments').scrollIntoView({behavior: 'smooth'})"><div class="sidebar-dot" style="background: #6e7681"></div>payments</div>
+      <div class="sidebar-item" data-section="policies_domain" onclick="document.getElementById('premium_schedule').scrollIntoView({behavior: 'smooth'})"><div class="sidebar-dot" style="background: #6e7681"></div>premium_schedule</div>
     </div>
     <div class="sidebar-group">
-      <div class="sidebar-group-label">Claims</div>
-      <div class="sidebar-item" onclick="scrollToSection('claims')" data-section="claims"><span class="sidebar-dot" style="background:#f78166"></span>CLAIMS</div>
-      <div class="sidebar-item" onclick="scrollToSection('claims')" data-section="claims"><span class="sidebar-dot" style="background:#f78166"></span>CLAIM_HEALTH_DETAILS</div>
-      <div class="sidebar-item" onclick="scrollToSection('claims')" data-section="claims"><span class="sidebar-dot" style="background:#f78166"></span>CLAIM_VEHICLE_DETAILS</div>
-      <div class="sidebar-item" onclick="scrollToSection('claims')" data-section="claims"><span class="sidebar-dot" style="background:#f78166"></span>CLAIM_LIFE_DETAILS</div>
-      <div class="sidebar-item" onclick="scrollToSection('claims')" data-section="claims"><span class="sidebar-dot" style="background:#f78166"></span>CLAIM_WORKFLOW</div>
-    </div>
-    <div class="sidebar-group">
-      <div class="sidebar-group-label">Supporting</div>
-      <div class="sidebar-item" onclick="scrollToSection('support')" data-section="support"><span class="sidebar-dot" style="background:#ffa657"></span>DOCUMENTS</div>
-      <div class="sidebar-item" onclick="scrollToSection('support')" data-section="support"><span class="sidebar-dot" style="background:#ffa657"></span>USER_GATEWAY_PROFILES</div>
+      <div class="sidebar-group-label">1.5. Claims Domain & Business Intelligence</div>
+      <div class="sidebar-item" data-section="claims_domain" onclick="document.getElementById('claims').scrollIntoView({behavior: 'smooth'})"><div class="sidebar-dot" style="background: #6e7681"></div>claims</div>
+      <div class="sidebar-item" data-section="claims_domain" onclick="document.getElementById('claim_health_details').scrollIntoView({behavior: 'smooth'})"><div class="sidebar-dot" style="background: #6e7681"></div>claim_health_details</div>
+      <div class="sidebar-item" data-section="claims_domain" onclick="document.getElementById('claim_vehicle_details').scrollIntoView({behavior: 'smooth'})"><div class="sidebar-dot" style="background: #6e7681"></div>claim_vehicle_details</div>
+      <div class="sidebar-item" data-section="claims_domain" onclick="document.getElementById('claim_life_details').scrollIntoView({behavior: 'smooth'})"><div class="sidebar-dot" style="background: #6e7681"></div>claim_life_details</div>
+      <div class="sidebar-item" data-section="claims_domain" onclick="document.getElementById('claim_workflow').scrollIntoView({behavior: 'smooth'})"><div class="sidebar-dot" style="background: #6e7681"></div>claim_workflow</div>
+      <div class="sidebar-item" data-section="claims_domain" onclick="document.getElementById('document_types').scrollIntoView({behavior: 'smooth'})"><div class="sidebar-dot" style="background: #6e7681"></div>document_types</div>
+      <div class="sidebar-item" data-section="claims_domain" onclick="document.getElementById('documents').scrollIntoView({behavior: 'smooth'})"><div class="sidebar-dot" style="background: #6e7681"></div>documents</div>
+      <div class="sidebar-item" data-section="claims_domain" onclick="document.getElementById('claim_document_checklist').scrollIntoView({behavior: 'smooth'})"><div class="sidebar-dot" style="background: #6e7681"></div>claim_document_checklist</div>
+      <div class="sidebar-item" data-section="claims_domain" onclick="document.getElementById('claim_settlements').scrollIntoView({behavior: 'smooth'})"><div class="sidebar-dot" style="background: #6e7681"></div>claim_settlements</div>
     </div>
   </div>
 
   <div class="main" id="main">
-
-    <div class="section-header auth first-section" id="section-auth">AUTH &amp; IDENTITY</div>
+    <div id="section-auth" class="section-header auth">1.1. Auth & Identity Domain</div>
     <div class="tables-grid">
-
-      <div class="table-card highlight">
+      <div class="table-card" id="users">
         <div class="table-header">
           <div>
-            <div class="table-name">USERS <span class="ctag ctag-master" style="margin-left:0.5rem">MASTER</span></div>
-            <div class="table-reasoning">Central identity table. Stores credentials and PII. Deliberately minimal — business roles, agent data, and consents all live in their own tables. <code style="font-size:0.68rem;color:#79c0ff">anonymized_at</code> enables GDPR right-to-erasure without hard deletes that break FK integrity.</div>
+            <div class="table-name">users</div>
           </div>
           <div class="compliance-tags">
-            <span class="ctag ctag-gdpr">GDPR Art.17</span>
-            <span class="ctag ctag-hipaa">HIPAA §164.514</span>
-            <span class="ctag ctag-irdai">IRDAI Operations Reg. 2024</span>
+            <span class="ctag ctag-master">MASTER</span>
           </div>
         </div>
         <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note">Generated server-side, never exposed in URLs</span></div>
-          <div class="col-row"><span class="col-name"><span class="col-uk">UK</span> email</span><span class="col-type">varchar(255)</span><span class="col-note">Unique, lowercased on insert</span></div>
-          <div class="col-row"><span class="col-name">password_hash</span><span class="col-type">varchar(255)</span><span class="col-note">bcrypt/argon2 — never plaintext</span></div>
-          <div class="col-row"><span class="col-name">full_name</span><span class="col-type">varchar(200)</span><span class="col-note">PII — encrypted at rest</span></div>
-          <div class="col-row"><span class="col-name">phone</span><span class="col-type">varchar(20)</span><span class="col-note">PII — encrypted at rest</span></div>
-          <div class="col-row"><span class="col-name">address</span><span class="col-type">text</span><span class="col-note">PII — encrypted at rest</span></div>
-          <div class="col-row"><span class="col-name">date_of_birth</span><span class="col-type">date</span><span class="col-note">PHI — restricted access via PHI_ACCESS_LOGS</span></div>
-          <div class="col-row"><span class="col-name">is_active</span><span class="col-type">boolean</span><span class="col-note">Soft disable without deleting</span></div>
-          <div class="col-row"><span class="col-name">is_email_verified</span><span class="col-type">boolean</span><span class="col-note">IRDAI Digital KYC requirement</span></div>
-          <div class="col-row"><span class="col-name">created_at</span><span class="col-type">timestamptz</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">updated_at</span><span class="col-type">timestamptz</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">deleted_at</span><span class="col-type">timestamptz</span><span class="col-note">Soft delete</span></div>
-          <div class="col-row"><span class="col-name">anonymized_at</span><span class="col-type">timestamptz</span><span class="col-note">GDPR Art.17 — set when PII scrubbed</span></div>
+          <div class="col-row">
+            <div class="col-name">
+              id
+              <span class="col-pk" title="Primary Key">PK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              email
+              <span class="col-uk" title="Unique Key">UK</span>
+            </div>
+            <div class="col-type">varchar(255)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              password_hash
+            </div>
+            <div class="col-type">varchar(255)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              full_name
+            </div>
+            <div class="col-type">varchar(200)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              phone
+            </div>
+            <div class="col-type">varchar(20)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              address
+            </div>
+            <div class="col-type">text</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              date_of_birth
+            </div>
+            <div class="col-type">date</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              profile_picture_url
+            </div>
+            <div class="col-type">text</div>
+            <div class="col-note">Future-proofing: Front-end UI enhancement</div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              timezone
+            </div>
+            <div class="col-type">varchar(50) DEFAULT 'UTC'</div>
+            <div class="col-note">Future-proofing: Localized timing analytics</div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              is_active
+            </div>
+            <div class="col-type">boolean DEFAULT true</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              created_at
+            </div>
+            <div class="col-type">timestamptz DEFAULT now()</div>
+            <div class="col-note"></div>
+          </div>
         </div>
       </div>
-
-      <div class="table-card">
+      <div class="table-card" id="roles">
         <div class="table-header">
           <div>
-            <div class="table-name">ROLES <span class="ctag ctag-master" style="margin-left:0.5rem">MASTER</span></div>
-            <div class="table-reasoning">RBAC foundation. Stores named roles (ADMIN, POLICYHOLDER, AGENT, ADJUSTER, AUDITOR). Decoupled from USERS so a user can hold multiple roles and roles can evolve without schema changes.</div>
+            <div class="table-name">roles</div>
           </div>
           <div class="compliance-tags">
-            <span class="ctag ctag-hipaa">HIPAA §164.308(a)(4)</span>
-            <span class="ctag ctag-irdai">IRDAI Intermediaries Reg. 2024</span>
+            <span class="ctag ctag-master">MASTER</span>
           </div>
         </div>
         <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name"><span class="col-uk">UK</span> code</span><span class="col-type">varchar(50)</span><span class="col-note">e.g. ADMIN, ADJUSTER, AGENT</span></div>
-          <div class="col-row"><span class="col-name">description</span><span class="col-type">text</span><span class="col-note">Human-readable role description</span></div>
-          <div class="col-row"><span class="col-name">created_at</span><span class="col-type">timestamptz</span><span class="col-note"></span></div>
+          <div class="col-row">
+            <div class="col-name">
+              id
+              <span class="col-pk" title="Primary Key">PK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              code
+              <span class="col-uk" title="Unique Key">UK</span>
+            </div>
+            <div class="col-type">varchar(50)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              description
+            </div>
+            <div class="col-type">text</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              hierarchy_level
+            </div>
+            <div class="col-type">integer  DEFAULT 10 CHECK (hierarchy_level > 0)</div>
+            <div class="col-note"></div>
+          </div>
         </div>
       </div>
-
-      <div class="table-card">
+      <div class="table-card" id="user_roles">
         <div class="table-header">
           <div>
-            <div class="table-name">USER_ROLES <span class="ctag ctag-txn" style="margin-left:0.5rem">TRANSACTIONAL</span></div>
-            <div class="table-reasoning">Junction table enabling M:N between USERS and ROLES. An agent who becomes an admin doesn't need a new account. Role assignments are time-bounded and auditable — critical for HIPAA minimum-necessary access.</div>
+            <div class="table-name">user_roles</div>
           </div>
           <div class="compliance-tags">
-            <span class="ctag ctag-hipaa">HIPAA §164.308(a)(4)</span>
-            <span class="ctag ctag-gdpr">GDPR Art.5(1)(f)</span>
+            <span class="ctag ctag-master">MASTER</span>
           </div>
         </div>
         <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> user_id</span><span class="col-type">uuid</span><span class="col-note">→ USERS.id</span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> role_id</span><span class="col-type">uuid</span><span class="col-note">→ ROLES.id</span></div>
-          <div class="col-row"><span class="col-name">assigned_at</span><span class="col-type">timestamptz</span><span class="col-note">When role was granted</span></div>
-          <div class="col-row"><span class="col-name">revoked_at</span><span class="col-type">timestamptz</span><span class="col-note">NULL = currently active</span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> assigned_by</span><span class="col-type">uuid</span><span class="col-note">→ USERS.id (admin who granted)</span></div>
+          <div class="col-row">
+            <div class="col-name">
+              id
+              <span class="col-pk" title="Primary Key">PK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              user_id
+              <span class="col-fk" title="Foreign Key">FK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              role_id
+              <span class="col-fk" title="Foreign Key">FK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              domain
+            </div>
+            <div class="col-type">varchar(20)</div>
+            <div class="col-note">Application-level RBAC: e.g. 'HEALTH', 'VEHICLE'</div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              approval_limit
+            </div>
+            <div class="col-type">decimal(14,2)</div>
+            <div class="col-note">Application-level RBAC: e.g. 5000.00 for junior adjuster</div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              assigned_at
+            </div>
+            <div class="col-type">timestamptz DEFAULT now()</div>
+            <div class="col-note"></div>
+          </div>
         </div>
       </div>
-
-      <div class="table-card">
-        <div class="table-header">
-          <div>
-            <div class="table-name">REFRESH_TOKENS <span class="ctag ctag-txn" style="margin-left:0.5rem">TRANSACTIONAL</span></div>
-            <div class="table-reasoning">Stateful JWT refresh token store. Storing the hash (not the token) means a DB breach doesn't compromise sessions. <code style="font-size:0.68rem;color:#79c0ff">is_revoked</code> enables instant session invalidation — required for HIPAA workforce security.</div>
-          </div>
-          <div class="compliance-tags">
-            <span class="ctag ctag-hipaa">HIPAA §164.312(d)</span>
-            <span class="ctag ctag-gdpr">GDPR Art.32</span>
-          </div>
-        </div>
-        <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> user_id</span><span class="col-type">uuid</span><span class="col-note">→ USERS.id</span></div>
-          <div class="col-row"><span class="col-name">token_hash</span><span class="col-type">varchar(255)</span><span class="col-note">SHA-256 of actual token — never plaintext</span></div>
-          <div class="col-row"><span class="col-name">expires_at</span><span class="col-type">timestamptz</span><span class="col-note">Enforce TTL server-side</span></div>
-          <div class="col-row"><span class="col-name">is_revoked</span><span class="col-type">boolean</span><span class="col-note">Manual revocation on logout/breach</span></div>
-          <div class="col-row"><span class="col-name">ip_address</span><span class="col-type">inet</span><span class="col-note">For anomaly detection</span></div>
-          <div class="col-row"><span class="col-name">created_at</span><span class="col-type">timestamptz</span><span class="col-note"></span></div>
-        </div>
-      </div>
-
     </div>
-
-    <div class="section-header compliance" id="section-compliance">COMPLIANCE LAYER</div>
+    <div id="section-required_compliance_layer" class="section-header required_compliance_layer">1.2. Required Compliance Layer</div>
     <div class="tables-grid">
-
-      <div class="table-card">
+      <div class="table-card" id="user_consents">
         <div class="table-header">
           <div>
-            <div class="table-name">USER_CONSENTS <span class="ctag ctag-txn" style="margin-left:0.5rem">TRANSACTIONAL</span></div>
-            <div class="table-reasoning">GDPR mandates a lawful basis for every processing activity. This table records explicit consent per type (MARKETING, DATA_PROCESSING, HEALTH_DATA_SHARING). Versioned so you can prove which privacy policy version a user accepted. Withdrawal timestamp enables right-to-object.</div>
+            <div class="table-name">user_consents</div>
           </div>
           <div class="compliance-tags">
-            <span class="ctag ctag-gdpr">GDPR Art.6 &amp; Art.7</span>
-            <span class="ctag ctag-irdai">IRDAI Policyholders' Interests Reg. 2024</span>
+            <span class="ctag ctag-master">MASTER</span>
           </div>
         </div>
         <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> user_id</span><span class="col-type">uuid</span><span class="col-note">→ USERS.id</span></div>
-          <div class="col-row"><span class="col-name">consent_type</span><span class="col-type">varchar(50)</span><span class="col-note">MARKETING | DATA_PROCESSING | HEALTH_DATA</span></div>
-          <div class="col-row"><span class="col-name">is_granted</span><span class="col-type">boolean</span><span class="col-note">Current state</span></div>
-          <div class="col-row"><span class="col-name">consent_version</span><span class="col-type">varchar(20)</span><span class="col-note">Policy version e.g. "v2.3"</span></div>
-          <div class="col-row"><span class="col-name">ip_address</span><span class="col-type">inet</span><span class="col-note">Proof of consent origin</span></div>
-          <div class="col-row"><span class="col-name">granted_at</span><span class="col-type">timestamptz</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">withdrawn_at</span><span class="col-type">timestamptz</span><span class="col-note">GDPR right-to-object</span></div>
+          <div class="col-row">
+            <div class="col-name">
+              id
+              <span class="col-pk" title="Primary Key">PK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              user_id
+              <span class="col-fk" title="Foreign Key">FK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              consent_type
+            </div>
+            <div class="col-type">varchar(50)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              is_granted
+            </div>
+            <div class="col-type">boolean</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              consent_version
+            </div>
+            <div class="col-type">varchar(20)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              ip_address
+            </div>
+            <div class="col-type">inet</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              granted_at
+            </div>
+            <div class="col-type">timestamptz DEFAULT now()</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              withdrawn_at
+            </div>
+            <div class="col-type">timestamptz</div>
+            <div class="col-note"></div>
+          </div>
         </div>
       </div>
-
-      <div class="table-card">
+      <div class="table-card" id="audit_logs">
         <div class="table-header">
           <div>
-            <div class="table-name">PHI_ACCESS_LOGS <span class="ctag ctag-txn" style="margin-left:0.5rem">TRANSACTIONAL</span></div>
-            <div class="table-reasoning">HIPAA requires an access log for every read of Protected Health Information. Two FKs to USERS: who accessed, and whose data was accessed. Required for HIPAA audit reports and breach investigations.</div>
+            <div class="table-name">audit_logs</div>
           </div>
           <div class="compliance-tags">
-            <span class="ctag ctag-hipaa">HIPAA §164.312(b)</span>
-            <span class="ctag ctag-hipaa">HIPAA §164.528</span>
+            <span class="ctag ctag-txn">TXN</span>
           </div>
         </div>
         <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> accessor_id</span><span class="col-type">uuid</span><span class="col-note">→ USERS.id (who accessed)</span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> subject_id</span><span class="col-type">uuid</span><span class="col-note">→ USERS.id (whose PHI)</span></div>
-          <div class="col-row"><span class="col-name">entity_type</span><span class="col-type">varchar(50)</span><span class="col-note">CLAIM | POLICY | USER_PROFILE</span></div>
-          <div class="col-row"><span class="col-name">entity_id</span><span class="col-type">uuid</span><span class="col-note">The specific record accessed</span></div>
-          <div class="col-row"><span class="col-name">ip_address</span><span class="col-type">inet</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">user_agent</span><span class="col-type">text</span><span class="col-note">Browser/client fingerprint</span></div>
-          <div class="col-row"><span class="col-name">accessed_at</span><span class="col-type">timestamptz</span><span class="col-note">Indexed for audit queries</span></div>
+          <div class="col-row">
+            <div class="col-name">
+              id
+              <span class="col-pk" title="Primary Key">PK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              actor_id
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note">No physical FK to preserve immutable trail if user is hard-deleted</div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              entity_type
+            </div>
+            <div class="col-type">varchar(50)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              entity_id
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              action
+            </div>
+            <div class="col-type">varchar(50)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              is_phi_access
+            </div>
+            <div class="col-type">boolean DEFAULT false</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              old_values
+            </div>
+            <div class="col-type">jsonb</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              new_values
+            </div>
+            <div class="col-type">jsonb</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              ip_address
+            </div>
+            <div class="col-type">inet</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              user_agent
+            </div>
+            <div class="col-type">text</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              created_at
+            </div>
+            <div class="col-type">timestamptz DEFAULT now()</div>
+            <div class="col-note"></div>
+          </div>
         </div>
       </div>
-
-      <div class="table-card">
-        <div class="table-header">
-          <div>
-            <div class="table-name">AUDIT_LOGS <span class="ctag ctag-txn" style="margin-left:0.5rem">TRANSACTIONAL</span></div>
-            <div class="table-reasoning">Immutable record of every state-changing action (CREATE, UPDATE, DELETE, APPROVE, REJECT). Stores before/after snapshots as JSONB. GDPR and IRDAI both require demonstrable data governance — this is the proof. Write-only in production; no UPDATE or DELETE should ever run against this table.</div>
-          </div>
-          <div class="compliance-tags">
-            <span class="ctag ctag-gdpr">GDPR Art.5(2)</span>
-            <span class="ctag ctag-irdai">IRDAI Policyholders' Interests Reg. 2024</span>
-            <span class="ctag ctag-hipaa">HIPAA §164.312(b)</span>
-          </div>
-        </div>
-        <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> actor_id</span><span class="col-type">uuid</span><span class="col-note">→ USERS.id (nullable for system actions)</span></div>
-          <div class="col-row"><span class="col-name">entity_type</span><span class="col-type">varchar(50)</span><span class="col-note">Table name e.g. CLAIMS</span></div>
-          <div class="col-row"><span class="col-name">entity_id</span><span class="col-type">uuid</span><span class="col-note">PK of the affected row</span></div>
-          <div class="col-row"><span class="col-name">action</span><span class="col-type">varchar(50)</span><span class="col-note">CREATE | UPDATE | DELETE | APPROVE | REJECT</span></div>
-          <div class="col-row"><span class="col-name">old_values</span><span class="col-type">jsonb</span><span class="col-note">Before snapshot — NULL on CREATE</span></div>
-          <div class="col-row"><span class="col-name">new_values</span><span class="col-type">jsonb</span><span class="col-note">After snapshot — NULL on DELETE</span></div>
-          <div class="col-row"><span class="col-name">ip_address</span><span class="col-type">inet</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">created_at</span><span class="col-type">timestamptz</span><span class="col-note">Immutable — no updated_at</span></div>
-        </div>
-      </div>
-
     </div>
-
-    <div class="section-header core" id="section-core">CORE BUSINESS</div>
+    <div id="section-core_products" class="section-header core_products">1.3. Core Products & Agents</div>
     <div class="tables-grid">
-
-      <div class="table-card">
+      <div class="table-card" id="agents">
         <div class="table-header">
           <div>
-            <div class="table-name">AGENTS <span class="ctag ctag-master" style="margin-left:0.5rem">MASTER</span></div>
-            <div class="table-reasoning">Separate from USERS because agents are a regulated business entity in India. IRDAI mandates centralized agent license tracking, mandatory corporate tie-ups, and strict commission structures. Linked directly to USERS table for secure RBAC access workflows.</div>
+            <div class="table-name">agents</div>
           </div>
           <div class="compliance-tags">
-            <span class="ctag ctag-irdai">IRDAI (Registration, Certification and Operations of Insurers) Regulations, 2024</span>
+            <span class="ctag ctag-txn">TXN</span>
           </div>
         </div>
         <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk uk">FK UK</span> user_id</span><span class="col-type">uuid</span><span class="col-note">→ USERS.id (1:1)</span></div>
-          <div class="col-row"><span class="col-name"><span class="col-uk">UK</span> license_number</span><span class="col-type">varchar(50)</span><span class="col-note">IRDAI-issued license — unique constraint</span></div>
-          <div class="col-row"><span class="col-name">agency_name</span><span class="col-type">varchar(200)</span><span class="col-note">Affiliated agency or direct</span></div>
-          <div class="col-row"><span class="col-name">commission_rate</span><span class="col-type">decimal(5,2)</span><span class="col-note">Percentage — IRDAI regulatory limits disclosure</span></div>
-          <div class="col-row"><span class="col-name">license_valid_until</span><span class="col-type">date</span><span class="col-note">Enforce automated system locks on license expiration</span></div>
-          <div class="col-row"><span class="col-name">is_active</span><span class="col-type">boolean</span><span class="col-note">Deactivate without deleting transactional audit trail</span></div>
-          <div class="col-row"><span class="col-name">created_at</span><span class="col-type">timestamptz</span><span class="col-note"></span></div>
+          <div class="col-row">
+            <div class="col-name">
+              id
+              <span class="col-pk" title="Primary Key">PK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              user_id
+              <span class="col-fk" title="Foreign Key">FK</span>
+              <span class="col-uk" title="Unique Key">UK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              license_number
+              <span class="col-uk" title="Unique Key">UK</span>
+            </div>
+            <div class="col-type">varchar(50)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              agency_name
+            </div>
+            <div class="col-type">varchar(200)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              license_valid_until
+            </div>
+            <div class="col-type">date</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              is_active
+            </div>
+            <div class="col-type">boolean DEFAULT true</div>
+            <div class="col-note"></div>
+          </div>
         </div>
       </div>
-
-      <div class="table-card">
+      <div class="table-card" id="insurance_products">
         <div class="table-header">
           <div>
-            <div class="table-name">INSURANCE_PRODUCTS <span class="ctag ctag-master" style="margin-left:0.5rem">MASTER</span></div>
-            <div class="table-reasoning">Unified product catalog table. Separating product templates from instantiated policies safeguards relational layout down the stream. The domain code drives automated dynamic UI extension structures. Aligned to unified product registry structures.</div>
+            <div class="table-name">insurance_products</div>
           </div>
           <div class="compliance-tags">
-            <span class="ctag ctag-irdai">IRDAI (Protection of Policyholders’ Interests, Operations and Allied Matters) Regulations, 2024</span>
+            <span class="ctag ctag-master">MASTER</span>
           </div>
         </div>
         <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name"><span class="col-uk">UK</span> code</span><span class="col-type">varchar(50)</span><span class="col-note">e.g. HEALTH_INDIVIDUAL_V1</span></div>
-          <div class="col-row"><span class="col-name">name</span><span class="col-type">varchar(200)</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">domain</span><span class="col-type">varchar(20)</span><span class="col-note">HEALTH | VEHICLE | LIFE</span></div>
-          <div class="col-row"><span class="col-name">description</span><span class="col-type">text</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">min_premium</span><span class="col-type">decimal(12,2)</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">max_coverage</span><span class="col-type">decimal(14,2)</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">min_tenure_months</span><span class="col-type">integer</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">max_tenure_months</span><span class="col-type">integer</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">is_active</span><span class="col-type">boolean</span><span class="col-note">Keeps legacy metrics for active policies intact</span></div>
-          <div class="col-row"><span class="col-name">created_at</span><span class="col-type">timestamptz</span><span class="col-note"></span></div>
+          <div class="col-row">
+            <div class="col-name">
+              id
+              <span class="col-pk" title="Primary Key">PK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              code
+              <span class="col-uk" title="Unique Key">UK</span>
+            </div>
+            <div class="col-type">varchar(50)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              name
+            </div>
+            <div class="col-type">varchar(200)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              domain
+            </div>
+            <div class="col-type">varchar(20)</div>
+            <div class="col-note">'HEALTH', 'VEHICLE', 'LIFE'</div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              description
+            </div>
+            <div class="col-type">text</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              max_coverage
+            </div>
+            <div class="col-type">decimal(14,2)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              is_active
+            </div>
+            <div class="col-type">boolean DEFAULT true</div>
+            <div class="col-note"></div>
+          </div>
         </div>
       </div>
-
-      <div class="table-card">
-        <div class="table-header">
-          <div>
-            <div class="table-name">NOTIFICATION_TEMPLATES <span class="ctag ctag-master" style="margin-left:0.5rem">MASTER</span></div>
-            <div class="table-reasoning">Isolates messaging strings from programmatic delivery pipelines to avoid duplication. IRDAI regulations mandate explicit, standardized updates at crucial contract intersections like issuance, defaults, and claim edits.</div>
-          </div>
-          <div class="compliance-tags">
-            <span class="ctag ctag-irdai">IRDAI (Protection of Policyholders’ Interests, Operations and Allied Matters) Regulations, 2024</span>
-          </div>
-        </div>
-        <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name"><span class="col-uk">UK</span> code</span><span class="col-type">varchar(100)</span><span class="col-note">e.g. CLAIM_APPROVED_EMAIL</span></div>
-          <div class="col-row"><span class="col-name">channel</span><span class="col-type">varchar(20)</span><span class="col-note">EMAIL | SMS | PUSH</span></div>
-          <div class="col-row"><span class="col-name">subject</span><span class="col-type">varchar(300)</span><span class="col-note">For email channel</span></div>
-          <div class="col-row"><span class="col-name">body_template</span><span class="col-type">text</span><span class="col-note">Handlebars template with variables</span></div>
-          <div class="col-row"><span class="col-name">created_at</span><span class="col-type">timestamptz</span><span class="col-note"></span></div>
-        </div>
-      </div>
-
-      <div class="table-card">
-        <div class="table-header">
-          <div>
-            <div class="table-name">NOTIFICATIONS <span class="ctag ctag-txn" style="margin-left:0.5rem">TRANSACTIONAL</span></div>
-            <div class="table-reasoning">Verifiable system log of client touchpoints. Success indicators combined with standard system error messages facilitate automatic multi-channel fallback strategies. Serves as direct compliance proof for mandatory communications.</div>
-          </div>
-          <div class="compliance-tags">
-            <span class="ctag ctag-irdai">IRDAI (Protection of Policyholders’ Interests, Operations and Allied Matters) Regulations, 2024</span>
-          </div>
-        </div>
-        <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> user_id</span><span class="col-type">uuid</span><span class="col-note">→ USERS.id (recipient)</span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> template_id</span><span class="col-type">uuid</span><span class="col-note">→ NOTIFICATION_TEMPLATES.id</span></div>
-          <div class="col-row"><span class="col-name">status</span><span class="col-type">varchar(20)</span><span class="col-note">PENDING | SENT | FAILED | BOUNCED</span></div>
-          <div class="col-row"><span class="col-name">payload</span><span class="col-type">jsonb</span><span class="col-note">Dynamic key values driving the formatting template</span></div>
-          <div class="col-row"><span class="col-name">error_message</span><span class="col-type">text</span><span class="col-note">Populated on FAILED states</span></div>
-          <div class="col-row"><span class="col-name">sent_at</span><span class="col-type">timestamptz</span><span class="col-note">NULL until verification is confirmed by gateway</span></div>
-          <div class="col-row"><span class="col-name">created_at</span><span class="col-type">timestamptz</span><span class="col-note"></span></div>
-        </div>
-      </div>
-
     </div>
-
-    <div class="section-header policy" id="section-policy">POLICIES</div>
+    <div id="section-policies_domain" class="section-header policies_domain">1.4. Policies Domain</div>
     <div class="tables-grid">
-
-      <div class="table-card highlight">
+      <div class="table-card" id="policies">
         <div class="table-header">
           <div>
-            <div class="table-name">POLICIES <span class="ctag ctag-txn" style="margin-left:0.5rem">TRANSACTIONAL</span></div>
-            <div class="table-reasoning">Core operational contract map. Enforces relational routing to licensed actors via <code style="font-size:0.68rem;color:#79c0ff">agent_id</code>. Soft delete methodologies prevent catastrophic data drops, preserving structural dependencies for mandatory retention.</div>
+            <div class="table-name">policies</div>
           </div>
           <div class="compliance-tags">
-            <span class="ctag ctag-irdai">IRDAI Policyholders' Interests Reg. 2024</span>
-            <span class="ctag ctag-gdpr">GDPR Art.17(3)(b)</span>
+            <span class="ctag ctag-txn">TXN</span>
           </div>
         </div>
         <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name"><span class="col-uk">UK</span> policy_number</span><span class="col-type">varchar(50)</span><span class="col-note">Human-readable auto identifier e.g. POL-2026-00001</span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> user_id</span><span class="col-type">uuid</span><span class="col-note">→ USERS.id (policyholder)</span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> product_id</span><span class="col-type">uuid</span><span class="col-note">→ INSURANCE_PRODUCTS.id</span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> agent_id</span><span class="col-type">uuid</span><span class="col-note">→ AGENTS.id (nullable if direct purchase)</span></div>
-          <div class="col-row"><span class="col-name">status</span><span class="col-type">varchar(20)</span><span class="col-note">ACTIVE | LAPSED | CANCELLED | EXPIRED | CLAIMED</span></div>
-          <div class="col-row"><span class="col-name">premium_amount</span><span class="col-type">decimal(12,2)</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">coverage_amount</span><span class="col-type">decimal(14,2)</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">start_date</span><span class="col-type">date</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">end_date</span><span class="col-type">date</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">payment_frequency</span><span class="col-type">varchar(20)</span><span class="col-note">CHECK: MONTHLY | QUARTERLY | ANNUAL</span></div>
-          <div class="col-row"><span class="col-name">created_at</span><span class="col-type">timestamptz</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">updated_at</span><span class="col-type">timestamptz</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">deleted_at</span><span class="col-type">timestamptz</span><span class="col-note">Soft delete — IRDAI structural retention constraint</span></div>
+          <div class="col-row">
+            <div class="col-name">
+              id
+              <span class="col-pk" title="Primary Key">PK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              policy_number
+              <span class="col-uk" title="Unique Key">UK</span>
+            </div>
+            <div class="col-type">varchar(50)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              user_id
+              <span class="col-fk" title="Foreign Key">FK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              product_id
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              agent_id
+              <span class="col-fk" title="Foreign Key">FK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              status
+            </div>
+            <div class="col-type">varchar(20)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              premium_amount
+            </div>
+            <div class="col-type">decimal(12,2)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              coverage_amount
+            </div>
+            <div class="col-type">decimal(14,2)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              currency
+            </div>
+            <div class="col-type">varchar(3) DEFAULT 'USD'</div>
+            <div class="col-note">Future-proofing: Multi-currency operational readiness</div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              start_date
+            </div>
+            <div class="col-type">date</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              end_date
+            </div>
+            <div class="col-type">date</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              domain
+            </div>
+            <div class="col-type">varchar(20)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              created_at
+            </div>
+            <div class="col-type">timestamptz DEFAULT now()</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              deleted_at
+            </div>
+            <div class="col-type">timestamptz</div>
+            <div class="col-note"></div>
+          </div>
         </div>
       </div>
-
-      <div class="table-card">
+      <div class="table-card" id="policy_health_details">
         <div class="table-header">
           <div>
-            <div class="table-name">POLICY_INSURED_MEMBERS <span class="ctag ctag-txn" style="margin-left:0.5rem">TRANSACTIONAL</span></div>
-            <div class="table-reasoning">Supports group definitions without polluting root authentication entities. Aligns directly with multi-individual coverage models, providing independent reference hooks for specialized domain tracking tables.</div>
+            <div class="table-name">policy_health_details</div>
           </div>
           <div class="compliance-tags">
-            <span class="ctag ctag-hipaa">HIPAA §164.514(b)</span>
-            <span class="ctag ctag-irdai">IRDAI Policyholders' Interests Reg. 2024</span>
+            <span class="ctag ctag-txn">TXN</span>
           </div>
         </div>
         <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> policy_id</span><span class="col-type">uuid</span><span class="col-note">→ POLICIES.id</span></div>
-          <div class="col-row"><span class="col-name">full_name</span><span class="col-type">varchar(200)</span><span class="col-note">PHI — encrypted at rest</span></div>
-          <div class="col-row"><span class="col-name">date_of_birth</span><span class="col-type">date</span><span class="col-note">PHI</span></div>
-          <div class="col-row"><span class="col-name">gender</span><span class="col-type">varchar(20)</span><span class="col-note">PHI</span></div>
-          <div class="col-row"><span class="col-name">relation_to_holder</span><span class="col-type">varchar(50)</span><span class="col-note">SELF | SPOUSE | CHILD | PARENT</span></div>
-          <div class="col-row"><span class="col-name">is_primary</span><span class="col-type">boolean</span><span class="col-note">Exactly one primary member per contract</span></div>
-          <div class="col-row"><span class="col-name">created_at</span><span class="col-type">timestamptz</span><span class="col-note"></span></div>
+          <div class="col-row">
+            <div class="col-name">
+              policy_id
+              <span class="col-pk" title="Primary Key">PK</span>
+              <span class="col-fk" title="Foreign Key">FK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              covers_dental
+            </div>
+            <div class="col-type">boolean  DEFAULT false</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              deductible
+            </div>
+            <div class="col-type">decimal(12,2)  DEFAULT 0.00</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              network_type
+            </div>
+            <div class="col-type">varchar(20)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              updated_at
+            </div>
+            <div class="col-type">timestamptz DEFAULT now()</div>
+            <div class="col-note"></div>
+          </div>
         </div>
       </div>
-
-      <div class="table-card">
+      <div class="table-card" id="policy_vehicle_details">
         <div class="table-header">
           <div>
-            <div class="table-name">POLICY_HEALTH_DETAILS <span class="ctag ctag-txn" style="margin-left:0.5rem">TRANSACTIONAL</span></div>
-            <div class="table-reasoning">Dedicated medical domain contract extensions. Structural modularity ensures the core configuration remains compact, isolating sub-components like network definitions and limits to independent tables.</div>
+            <div class="table-name">policy_vehicle_details</div>
           </div>
           <div class="compliance-tags">
-            <span class="ctag ctag-irdai">IRDAI Policyholders' Interests Reg. 2024</span>
-            <span class="ctag ctag-hipaa">HIPAA §164.501</span>
+            <span class="ctag ctag-txn">TXN</span>
           </div>
         </div>
         <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk uk">FK UK</span> policy_id</span><span class="col-type">uuid</span><span class="col-note">→ POLICIES.id (1:1)</span></div>
-          <div class="col-row"><span class="col-name">covers_dental</span><span class="col-type">boolean</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">covers_vision</span><span class="col-type">boolean</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">covers_maternity</span><span class="col-type">boolean</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">room_rent_limit</span><span class="col-type">decimal(10,2)</span><span class="col-note">Per day cap — standard operational disclosure</span></div>
-          <div class="col-row"><span class="col-name">deductible</span><span class="col-type">decimal(10,2)</span><span class="col-note">Client risk sharing baseline metrics</span></div>
-          <div class="col-row"><span class="col-name">network_type</span><span class="col-type">varchar(20)</span><span class="col-note">TPA | CASHLESS | REIMBURSEMENT</span></div>
+          <div class="col-row">
+            <div class="col-name">
+              policy_id
+              <span class="col-pk" title="Primary Key">PK</span>
+              <span class="col-fk" title="Foreign Key">FK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              vehicle_number
+              <span class="col-uk" title="Unique Key">UK</span>
+            </div>
+            <div class="col-type">varchar(30)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              make
+            </div>
+            <div class="col-type">varchar(100)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              model
+            </div>
+            <div class="col-type">varchar(100)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              manufacture_year
+            </div>
+            <div class="col-type">integer</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              updated_at
+            </div>
+            <div class="col-type">timestamptz DEFAULT now()</div>
+            <div class="col-note"></div>
+          </div>
         </div>
       </div>
-
-      <div class="table-card">
+      <div class="table-card" id="policy_life_details">
         <div class="table-header">
           <div>
-            <div class="table-name">POLICY_VEHICLE_DETAILS <span class="ctag ctag-txn" style="margin-left:0.5rem">TRANSACTIONAL</span></div>
-            <div class="table-reasoning">Motor-domain extensions. Relational schema enforces exactly one active registration constraint layout to verify tracking logic under applicable Indian transportation law frameworks.</div>
+            <div class="table-name">policy_life_details</div>
           </div>
           <div class="compliance-tags">
-            <span class="ctag ctag-irdai">IRDAI Policyholders' Interests Reg. 2024</span>
+            <span class="ctag ctag-txn">TXN</span>
           </div>
         </div>
         <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk uk">FK UK</span> policy_id</span><span class="col-type">uuid</span><span class="col-note">→ POLICIES.id (1:1)</span></div>
-          <div class="col-row"><span class="col-name"><span class="col-uk">UK</span> vehicle_number</span><span class="col-type">varchar(20)</span><span class="col-note">Registration plate identifier — unique index</span></div>
-          <div class="col-row"><span class="col-name">make</span><span class="col-type">varchar(100)</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">model</span><span class="col-type">varchar(100)</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">manufacture_year</span><span class="col-type">smallint</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">vehicle_type</span><span class="col-type">varchar(30)</span><span class="col-note">TWO_WHEELER | CAR | COMMERCIAL</span></div>
-          <div class="col-row"><span class="col-name">insured_declared_value</span><span class="col-type">decimal(12,2)</span><span class="col-note">IDV asset valuation foundation matrix</span></div>
-          <div class="col-row"><span class="col-name">is_comprehensive</span><span class="col-type">boolean</span><span class="col-note">Determines broad risk allocation limits</span></div>
+          <div class="col-row">
+            <div class="col-name">
+              policy_id
+              <span class="col-pk" title="Primary Key">PK</span>
+              <span class="col-fk" title="Foreign Key">FK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              nominee_name
+            </div>
+            <div class="col-type">varchar(200)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              nominee_relation
+            </div>
+            <div class="col-type">varchar(50)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              updated_at
+            </div>
+            <div class="col-type">timestamptz DEFAULT now()</div>
+            <div class="col-note"></div>
+          </div>
         </div>
       </div>
-
-      <div class="table-card">
+      <div class="table-card" id="policy_insured_members">
         <div class="table-header">
           <div>
-            <div class="table-name">POLICY_LIFE_DETAILS <span class="ctag ctag-txn" style="margin-left:0.5rem">TRANSACTIONAL</span></div>
-            <div class="table-reasoning">Life underwriting extension maps. Structuring data models to include clean legal nominee entities ensures quick claim settlements to the accurate individual without operational ambiguity.</div>
+            <div class="table-name">policy_insured_members</div>
           </div>
           <div class="compliance-tags">
-            <span class="ctag ctag-irdai">IRDAI Policyholders' Interests Reg. 2024</span>
+            <span class="ctag ctag-txn">TXN</span>
           </div>
         </div>
         <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk uk">FK UK</span> policy_id</span><span class="col-type">uuid</span><span class="col-note">→ POLICIES.id (1:1)</span></div>
-          <div class="col-row"><span class="col-name">nominee_name</span><span class="col-type">varchar(200)</span><span class="col-note">Legal entity recipient data</span></div>
-          <div class="col-row"><span class="col-name">nominee_relation</span><span class="col-type">varchar(50)</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">nominee_phone</span><span class="col-type">varchar(20)</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">sum_assured</span><span class="col-type">decimal(14,2)</span><span class="col-note">Death benefit amount valuation metrics</span></div>
-          <div class="col-row"><span class="col-name">policy_type</span><span class="col-type">varchar(30)</span><span class="col-note">TERM | WHOLE_LIFE | ENDOWMENT | ULIP</span></div>
-          <div class="col-row"><span class="col-name">has_accidental_rider</span><span class="col-type">boolean</span><span class="col-note">Tracks supplemental risk addendums</span></div>
+          <div class="col-row">
+            <div class="col-name">
+              id
+              <span class="col-pk" title="Primary Key">PK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              policy_id
+              <span class="col-fk" title="Foreign Key">FK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              full_name
+            </div>
+            <div class="col-type">varchar(200)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              date_of_birth
+            </div>
+            <div class="col-type">date</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              relation_to_holder
+            </div>
+            <div class="col-type">varchar(50)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              is_primary
+            </div>
+            <div class="col-type">boolean DEFAULT false</div>
+            <div class="col-note"></div>
+          </div>
         </div>
       </div>
-
-      <div class="table-card">
+      <div class="table-card" id="payments">
         <div class="table-header">
           <div>
-            <div class="table-name">PAYMENTS <span class="ctag ctag-txn" style="margin-left:0.5rem">TRANSACTIONAL</span></div>
-            <div class="table-reasoning">Unified premium and settlement journal ledger. Self-referencing indices enable error-free transaction reconciliation while preserving external third-party identification properties for financial logs.</div>
+            <div class="table-name">payments</div>
           </div>
           <div class="compliance-tags">
-            <span class="ctag ctag-irdai">IRDAI Operations Reg. 2024</span>
-            <span class="ctag ctag-gdpr">GDPR Art.5(1)(e)</span>
+            <span class="ctag ctag-txn">TXN</span>
           </div>
         </div>
         <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> policy_id</span><span class="col-type">uuid</span><span class="col-note">→ POLICIES.id (nullable on macro settlements)</span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> claim_id</span><span class="col-type">uuid</span><span class="col-note">→ CLAIMS.id (nullable on intake premium models)</span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> original_payment_id</span><span class="col-type">uuid</span><span class="col-note">→ PAYMENTS.id (self-ref loop)</span></div>
-          <div class="col-row"><span class="col-name"><span class="col-uk">UK</span> gateway_transaction_id</span><span class="col-type">varchar(100)</span><span class="col-note">External idempotency reference sequence</span></div>
-          <div class="col-row"><span class="col-name">payment_gateway</span><span class="col-type">varchar(50)</span><span class="col-note">AZURE_PAYMENT | RAZORPAY etc.</span></div>
-          <div class="col-row"><span class="col-name">amount</span><span class="col-type">decimal(12,2)</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">currency</span><span class="col-type">char(3)</span><span class="col-note">ISO 4217 code validation e.g. INR</span></div>
-          <div class="col-row"><span class="col-name">status</span><span class="col-type">varchar(20)</span><span class="col-note">PENDING | SUCCESS | FAILED | REFUNDED</span></div>
-          <div class="col-row"><span class="col-name">payment_type</span><span class="col-type">varchar(20)</span><span class="col-note">PREMIUM | CLAIM_SETTLEMENT | REFUND</span></div>
-          <div class="col-row"><span class="col-name">paid_at</span><span class="col-type">timestamptz</span><span class="col-note">NULL until gateway verification hooks trigger</span></div>
-          <div class="col-row"><span class="col-name">created_at</span><span class="col-type">timestamptz</span><span class="col-note"></span></div>
+          <div class="col-row">
+            <div class="col-name">
+              id
+              <span class="col-pk" title="Primary Key">PK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              policy_id
+              <span class="col-fk" title="Foreign Key">FK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              gateway_transaction_id
+              <span class="col-uk" title="Unique Key">UK</span>
+            </div>
+            <div class="col-type">varchar(100)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              payment_gateway
+            </div>
+            <div class="col-type">varchar(50)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              amount
+            </div>
+            <div class="col-type">decimal(12,2)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              status
+            </div>
+            <div class="col-type">varchar(20)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              paid_at
+            </div>
+            <div class="col-type">timestamptz DEFAULT now()</div>
+            <div class="col-note"></div>
+          </div>
         </div>
       </div>
-
-      <div class="table-card">
+      <div class="table-card" id="premium_schedule">
         <div class="table-header">
           <div>
-            <div class="table-name">PREMIUM_SCHEDULE <span class="ctag ctag-txn" style="margin-left:0.5rem">TRANSACTIONAL</span></div>
-            <div class="table-reasoning">Chronological billing ledger. The null state of the transaction assignment parameter acts as the primary logical trigger driving cron tasks for overdue updates and grace trackers.</div>
+            <div class="table-name">premium_schedule</div>
           </div>
           <div class="compliance-tags">
-            <span class="ctag ctag-irdai">IRDAI Policyholders' Interests Reg. 2024</span>
+            <span class="ctag ctag-txn">TXN</span>
           </div>
         </div>
         <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> policy_id</span><span class="col-type">uuid</span><span class="col-note">→ POLICIES.id</span></div>
-          <div class="col-row"><span class="col-name">installment_number</span><span class="col-type">integer</span><span class="col-note">Sequence marker</span></div>
-          <div class="col-row"><span class="col-name">amount_due</span><span class="col-type">decimal(12,2)</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">due_date</span><span class="col-type">date</span><span class="col-note">Indexed matrix column driving automated billing jobs</span></div>
-          <div class="col-row"><span class="col-name">status</span><span class="col-type">varchar(20)</span><span class="col-note">PENDING | PAID | OVERDUE | WAIVED</span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> payment_id</span><span class="col-type">uuid</span><span class="col-note">→ PAYMENTS.id — NULL represents unpaid segment</span></div>
-          <div class="col-row"><span class="col-name">created_at</span><span class="col-type">timestamptz</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">updated_at</span><span class="col-type">timestamptz</span><span class="col-note"></span></div>
+          <div class="col-row">
+            <div class="col-name">
+              id
+              <span class="col-pk" title="Primary Key">PK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              policy_id
+              <span class="col-fk" title="Foreign Key">FK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              installment_number
+            </div>
+            <div class="col-type">integer</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              amount_due
+            </div>
+            <div class="col-type">decimal(12,2)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              due_date
+            </div>
+            <div class="col-type">date</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              status
+            </div>
+            <div class="col-type">varchar(20)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              payment_id
+              <span class="col-fk" title="Foreign Key">FK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
         </div>
       </div>
-
     </div>
-
-    <div class="section-header compliance" id="section-compliance-ready" style="color: #ffa657; border-bottom-color: #ffa65740;">COMPLIANCE-READY EXTENSIONS (FUTURE ARCHITECTURE)</div>
+    <div id="section-claims_domain" class="section-header claims_domain">1.5. Claims Domain & Business Intelligence</div>
     <div class="tables-grid">
-
-      <div class="table-card" style="border-color: #ffa65740;">
+      <div class="table-card" id="claims">
         <div class="table-header">
           <div>
-            <div class="table-name" style="color: #ffa657;">BROKER_QUALIFIED_PERSONS <span class="ctag ctag-master" style="margin-left:0.5rem">MASTER</span></div>
-            <div class="table-reasoning"><strong>Compliance-Ready Hook:</strong> Mandates explicitly mapping transactions to individual certified professionals (BQPs) inside larger organizational entities, decoupling certification lifecycles from identity tables.</div>
+            <div class="table-name">claims</div>
           </div>
           <div class="compliance-tags">
-            <span class="ctag ctag-irdai" style="background: #3a2a1a; color: #ffa657;">IRDAI Intermediaries Reg. 2024</span>
+            <span class="ctag ctag-txn">TXN</span>
           </div>
         </div>
         <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note">System generated reference identifier</span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> agent_id</span><span class="col-type">uuid</span><span class="col-note">→ AGENTS.id (Maps the corporate group relation)</span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> user_id</span><span class="col-type">uuid</span><span class="col-note">→ USERS.id (The individual corporate employee)</span></div>
-          <div class="col-row"><span class="col-name"><span class="col-uk">UK</span> nia_cert_number</span><span class="col-type">varchar(100)</span><span class="col-note">National Insurance Academy training pass ID</span></div>
-          <div class="col-row"><span class="col-name">is_principal_officer</span><span class="col-type">boolean</span><span class="col-note">Identifies executive oversight head definitions</span></div>
-          <div class="col-row"><span class="col-name">training_expiry_date</span><span class="col-type">date</span><span class="col-note">Tracks the mandatory statutory validation cycle</span></div>
+          <div class="col-row">
+            <div class="col-name">
+              id
+              <span class="col-pk" title="Primary Key">PK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              claim_number
+              <span class="col-uk" title="Unique Key">UK</span>
+            </div>
+            <div class="col-type">varchar(50)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              policy_id
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              submitted_by
+              <span class="col-fk" title="Foreign Key">FK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              assigned_adjuster
+              <span class="col-fk" title="Foreign Key">FK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              status
+            </div>
+            <div class="col-type">varchar(30)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              claimed_amount
+            </div>
+            <div class="col-type">decimal(14,2)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              approved_amount
+            </div>
+            <div class="col-type">decimal(14,2)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              rejection_reason
+            </div>
+            <div class="col-type">text</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              domain
+            </div>
+            <div class="col-type">varchar(20)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              incident_date
+            </div>
+            <div class="col-type">timestamptz</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              is_automated_processed
+            </div>
+            <div class="col-type">boolean DEFAULT false</div>
+            <div class="col-note">Future-proofing: Tracks AI auto-adjudication</div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              risk_score
+            </div>
+            <div class="col-type">decimal(5,2) DEFAULT 0.00</div>
+            <div class="col-note">Future-proofing: Flag for fraudulent risk patterns</div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              created_at
+            </div>
+            <div class="col-type">timestamptz DEFAULT now()</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              updated_at
+            </div>
+            <div class="col-type">timestamptz</div>
+            <div class="col-note"></div>
+          </div>
         </div>
       </div>
-
-      <div class="table-card" style="border-color: #ffa65740;">
+      <div class="table-card" id="claim_health_details">
         <div class="table-header">
           <div>
-            <div class="table-name" style="color: #ffa657;">COMPLIANCE_MONEY_LEDGER <span class="ctag ctag-txn" style="margin-left:0.5rem">TRANSACTIONAL</span></div>
-            <div class="table-reasoning"><strong>Compliance-Ready Hook:</strong> Isolates reinsurance and corporate fiduciary financial balances into zero-lien schemas without requiring severe logic overhauls within basic payment modules.</div>
+            <div class="table-name">claim_health_details</div>
           </div>
           <div class="compliance-tags">
-            <span class="ctag ctag-irdai" style="background: #3a2a1a; color: #ffa657;">IRDAI Operations Reg. 2024</span>
+            <span class="ctag ctag-txn">TXN</span>
           </div>
         </div>
         <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> payment_id</span><span class="col-type">uuid</span><span class="col-note">→ PAYMENTS.id (Inspects existing base entry)</span></div>
-          <div class="col-row"><span class="col-name">is_trust_segregated</span><span class="col-type">boolean</span><span class="col-note">True confirms routing to zero-lien accounts</span></div>
-          <div class="col-row"><span class="col-name">revenue_category</span><span class="col-type">varchar(50)</span><span class="col-note">COMMISSION | RISK_ADVISORY_FEE | CLAIMS_CONSULTANCY</span></div>
-          <div class="col-row"><span class="col-name">client_group_id</span><span class="col-type">uuid</span><span class="col-note">Enables verification hooks for single-source concentration audits</span></div>
+          <div class="col-row">
+            <div class="col-name">
+              claim_id
+              <span class="col-pk" title="Primary Key">PK</span>
+              <span class="col-fk" title="Foreign Key">FK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              hospital_name
+            </div>
+            <div class="col-type">varchar(200)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              diagnosis
+            </div>
+            <div class="col-type">text</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              admission_date
+            </div>
+            <div class="col-type">date</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              discharge_date
+            </div>
+            <div class="col-type">date</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              updated_at
+            </div>
+            <div class="col-type">timestamptz DEFAULT now()</div>
+            <div class="col-note"></div>
+          </div>
         </div>
       </div>
-
+      <div class="table-card" id="claim_vehicle_details">
+        <div class="table-header">
+          <div>
+            <div class="table-name">claim_vehicle_details</div>
+          </div>
+          <div class="compliance-tags">
+            <span class="ctag ctag-txn">TXN</span>
+          </div>
+        </div>
+        <div class="table-body">
+          <div class="col-row">
+            <div class="col-name">
+              claim_id
+              <span class="col-pk" title="Primary Key">PK</span>
+              <span class="col-fk" title="Foreign Key">FK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              accident_location
+            </div>
+            <div class="col-type">text</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              fir_number
+            </div>
+            <div class="col-type">varchar(50)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              repair_estimate
+            </div>
+            <div class="col-type">decimal(14,2)  DEFAULT 0.00</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              updated_at
+            </div>
+            <div class="col-type">timestamptz DEFAULT now()</div>
+            <div class="col-note"></div>
+          </div>
+        </div>
+      </div>
+      <div class="table-card" id="claim_life_details">
+        <div class="table-header">
+          <div>
+            <div class="table-name">claim_life_details</div>
+          </div>
+          <div class="compliance-tags">
+            <span class="ctag ctag-txn">TXN</span>
+          </div>
+        </div>
+        <div class="table-body">
+          <div class="col-row">
+            <div class="col-name">
+              claim_id
+              <span class="col-pk" title="Primary Key">PK</span>
+              <span class="col-fk" title="Foreign Key">FK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              cause_of_death
+            </div>
+            <div class="col-type">varchar(255)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              place_of_death
+            </div>
+            <div class="col-type">varchar(255)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              death_certificate_number
+            </div>
+            <div class="col-type">varchar(100)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              updated_at
+            </div>
+            <div class="col-type">timestamptz DEFAULT now()</div>
+            <div class="col-note"></div>
+          </div>
+        </div>
+      </div>
+      <div class="table-card" id="claim_workflow">
+        <div class="table-header">
+          <div>
+            <div class="table-name">claim_workflow</div>
+          </div>
+          <div class="compliance-tags">
+            <span class="ctag ctag-txn">TXN</span>
+          </div>
+        </div>
+        <div class="table-body">
+          <div class="col-row">
+            <div class="col-name">
+              id
+              <span class="col-pk" title="Primary Key">PK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              claim_id
+              <span class="col-fk" title="Foreign Key">FK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              actor_id
+              <span class="col-fk" title="Foreign Key">FK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              from_status
+            </div>
+            <div class="col-type">varchar(30)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              to_status
+            </div>
+            <div class="col-type">varchar(30)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              remarks
+            </div>
+            <div class="col-type">text</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              transitioned_at
+            </div>
+            <div class="col-type">timestamptz DEFAULT now()</div>
+            <div class="col-note"></div>
+          </div>
+        </div>
+      </div>
+      <div class="table-card" id="document_types">
+        <div class="table-header">
+          <div>
+            <div class="table-name">document_types</div>
+          </div>
+          <div class="compliance-tags">
+            <span class="ctag ctag-master">MASTER</span>
+          </div>
+        </div>
+        <div class="table-body">
+          <div class="col-row">
+            <div class="col-name">
+              id
+              <span class="col-pk" title="Primary Key">PK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              code
+              <span class="col-uk" title="Unique Key">UK</span>
+            </div>
+            <div class="col-type">varchar(50)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              name
+            </div>
+            <div class="col-type">varchar(150)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              is_sensitive_phi_pii
+            </div>
+            <div class="col-type">boolean DEFAULT false</div>
+            <div class="col-note"></div>
+          </div>
+        </div>
+      </div>
+      <div class="table-card" id="documents">
+        <div class="table-header">
+          <div>
+            <div class="table-name">documents</div>
+          </div>
+          <div class="compliance-tags">
+            <span class="ctag ctag-txn">TXN</span>
+          </div>
+        </div>
+        <div class="table-body">
+          <div class="col-row">
+            <div class="col-name">
+              id
+              <span class="col-pk" title="Primary Key">PK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              claim_id
+              <span class="col-fk" title="Foreign Key">FK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              policy_id
+              <span class="col-fk" title="Foreign Key">FK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              user_id
+              <span class="col-fk" title="Foreign Key">FK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              document_type_code
+              <span class="col-fk" title="Foreign Key">FK</span>
+            </div>
+            <div class="col-type">varchar(50)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              file_name
+            </div>
+            <div class="col-type">varchar(300)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              file_path
+            </div>
+            <div class="col-type">text</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              uploaded_at
+            </div>
+            <div class="col-type">timestamptz DEFAULT now()</div>
+            <div class="col-note"></div>
+          </div>
+        </div>
+      </div>
+      <div class="table-card" id="claim_document_checklist">
+        <div class="table-header">
+          <div>
+            <div class="table-name">claim_document_checklist</div>
+          </div>
+          <div class="compliance-tags">
+            <span class="ctag ctag-txn">TXN</span>
+          </div>
+        </div>
+        <div class="table-body">
+          <div class="col-row">
+            <div class="col-name">
+              id
+              <span class="col-pk" title="Primary Key">PK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              claim_id
+              <span class="col-fk" title="Foreign Key">FK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              document_type_code
+              <span class="col-fk" title="Foreign Key">FK</span>
+            </div>
+            <div class="col-type">varchar(50)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              is_received
+            </div>
+            <div class="col-type">boolean DEFAULT false</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              updated_at
+            </div>
+            <div class="col-type">timestamptz</div>
+            <div class="col-note"></div>
+          </div>
+        </div>
+      </div>
+      <div class="table-card" id="claim_settlements">
+        <div class="table-header">
+          <div>
+            <div class="table-name">claim_settlements</div>
+          </div>
+          <div class="compliance-tags">
+            <span class="ctag ctag-txn">TXN</span>
+          </div>
+        </div>
+        <div class="table-body">
+          <div class="col-row">
+            <div class="col-name">
+              id
+              <span class="col-pk" title="Primary Key">PK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              claim_id
+              <span class="col-fk" title="Foreign Key">FK</span>
+            </div>
+            <div class="col-type">uuid</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              gateway_transaction_id
+              <span class="col-uk" title="Unique Key">UK</span>
+            </div>
+            <div class="col-type">varchar(100)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              amount
+            </div>
+            <div class="col-type">decimal(14,2)  CHECK (amount > 0)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              status
+            </div>
+            <div class="col-type">varchar(20)</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              disbursed_at
+            </div>
+            <div class="col-type">timestamptz</div>
+            <div class="col-note"></div>
+          </div>
+          <div class="col-row">
+            <div class="col-name">
+              created_at
+            </div>
+            <div class="col-type">timestamptz DEFAULT now()</div>
+            <div class="col-note"></div>
+          </div>
+        </div>
+      </div>
     </div>
-
-    <div class="section-header claims" id="section-claims">CLAIMS</div>
-    <div class="tables-grid">
-
-      <div class="table-card highlight">
-        <div class="table-header">
-          <div>
-            <div class="table-name">CLAIMS <span class="ctag ctag-txn" style="margin-left:0.5rem">TRANSACTIONAL</span></div>
-            <div class="table-reasoning">Central case tracking engine. Associates directly with internal adjuster identities. Turnaround metrics leverage the ingest timestamp parameter to power programmatic SLA breach monitoring alerts.</div>
-          </div>
-          <div class="compliance-tags">
-            <span class="ctag ctag-irdai">IRDAI Policyholders' Interests Reg. 2024</span>
-            <span class="ctag ctag-hipaa">HIPAA §164.501</span>
-            <span class="ctag ctag-gdpr">GDPR Art.17(3)(b)</span>
-          </div>
-        </div>
-        <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name"><span class="col-uk">UK</span> claim_number</span><span class="col-type">varchar(50)</span><span class="col-note">Human-readable tag string e.g. CLM-2026-00001</span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> policy_id</span><span class="col-type">uuid</span><span class="col-note">→ POLICIES.id</span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> submitted_by</span><span class="col-type">uuid</span><span class="col-note">→ USERS.id (policyholder or agent)</span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> assigned_adjuster</span><span class="col-type">uuid</span><span class="col-note">→ USERS.id (internal profile)</span></div>
-          <div class="col-row"><span class="col-name">status</span><span class="col-type">varchar(30)</span><span class="col-note">SUBMITTED | UNDER_REVIEW | APPROVED | REJECTED | SETTLED | CLOSED</span></div>
-          <div class="col-row"><span class="col-name">claimed_amount</span><span class="col-type">decimal(14,2)</span><span class="col-note">Gross intake evaluation metric</span></div>
-          <div class="col-row"><span class="col-name">approved_amount</span><span class="col-type">decimal(14,2)</span><span class="col-note">Net post-adjudication payout match</span></div>
-          <div class="col-row"><span class="col-name">rejection_reason</span><span class="col-type">text</span><span class="col-note">Mandatory textual declaration for adverse adjudications</span></div>
-          <div class="col-row"><span class="col-name">priority</span><span class="col-type">smallint</span><span class="col-note">1=critical, 2=high, 3=normal</span></div>
-          <div class="col-row"><span class="col-name">incident_date</span><span class="col-type">timestamptz</span><span class="col-note">Loss occurrence validation anchor</span></div>
-          <div class="col-row"><span class="col-name">incident_description</span><span class="col-type">text</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">created_at</span><span class="col-type">timestamptz</span><span class="col-note">Automated compliance SLA clock starts here</span></div>
-          <div class="col-row"><span class="col-name">updated_at</span><span class="col-type">timestamptz</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">deleted_at</span><span class="col-type">timestamptz</span><span class="col-note">Soft delete</span></div>
-        </div>
-      </div>
-
-      <div class="table-card">
-        <div class="table-header">
-          <div>
-            <div class="table-name">CLAIM_HEALTH_DETAILS <span class="ctag ctag-txn" style="margin-left:0.5rem">TRANSACTIONAL</span></div>
-            <div class="table-reasoning">Modulating health claim intersections. Clean reference loops allow independent verification models across shared corporate plans, isolating institutional routing variables.</div>
-          </div>
-          <div class="compliance-tags">
-            <span class="ctag ctag-hipaa">HIPAA §164.501 (PHI)</span>
-            <span class="ctag ctag-irdai">IRDAI Policyholders' Interests Reg. 2024</span>
-          </div>
-        </div>
-        <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk uk">FK UK</span> claim_id</span><span class="col-type">uuid</span><span class="col-note">→ CLAIMS.id (1:1)</span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> insured_member_id</span><span class="col-type">uuid</span><span class="col-note">→ POLICY_INSURED_MEMBERS.id</span></div>
-          <div class="col-row"><span class="col-name">hospital_name</span><span class="col-type">varchar(300)</span><span class="col-note">PHI</span></div>
-          <div class="col-row"><span class="col-name">diagnosis</span><span class="col-type">text</span><span class="col-note">PHI — standard medical taxonomy maps</span></div>
-          <div class="col-row"><span class="col-name">treating_doctor</span><span class="col-type">varchar(200)</span><span class="col-note">PHI</span></div>
-          <div class="col-row"><span class="col-name">admission_date</span><span class="col-type">date</span><span class="col-note">PHI</span></div>
-          <div class="col-row"><span class="col-name">discharge_date</span><span class="col-type">date</span><span class="col-note">PHI</span></div>
-          <div class="col-row"><span class="col-name">is_cashless</span><span class="col-type">boolean</span><span class="col-note">Directs programmatic settlement transaction paths</span></div>
-        </div>
-      </div>
-
-      <div class="table-card">
-        <div class="table-header">
-          <div>
-            <div class="table-name">CLAIM_VEHICLE_DETAILS <span class="ctag ctag-txn" style="margin-left:0.5rem">TRANSACTIONAL</span></div>
-            <div class="table-reasoning">Isolates dynamic accident properties. Verification models check structural indices against modern traffic regulation datasets for comprehensive damage review logs.</div>
-          </div>
-          <div class="compliance-tags">
-            <span class="ctag ctag-irdai">IRDAI Policyholders' Interests Reg. 2024</span>
-          </div>
-        </div>
-        <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk uk">FK UK</span> claim_id</span><span class="col-type">uuid</span><span class="col-note">→ CLAIMS.id (1:1)</span></div>
-          <div class="col-row"><span class="col-name">accident_location</span><span class="col-type">varchar(500)</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">fir_number</span><span class="col-type">varchar(100)</span><span class="col-note">Statutory enforcement case logging identifier</span></div>
-          <div class="col-row"><span class="col-name">garage_name</span><span class="col-type">varchar(300)</span><span class="col-note">Assigned structural repair node string</span></div>
-          <div class="col-row"><span class="col-name">repair_estimate</span><span class="col-type">decimal(12,2)</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">is_total_loss</span><span class="col-type">boolean</span><span class="col-note">Controls conditional routing to maximum coverage paths</span></div>
-          <div class="col-row"><span class="col-name">surveyor_name</span><span class="col-type">varchar(200)</span><span class="col-note">Licensed asset evaluator reference string</span></div>
-        </div>
-      </div>
-
-      <div class="table-card">
-        <div class="table-header">
-          <div>
-            <div class="table-name">CLAIM_LIFE_DETAILS <span class="ctag ctag-txn" style="margin-left:0.5rem">TRANSACTIONAL</span></div>
-            <div class="table-reasoning">Isolated death claim records. Programmatic checks reconcile verification metadata entries against active underwriting charts to coordinate settlement transfers seamlessly.</div>
-          </div>
-          <div class="compliance-tags">
-            <span class="ctag ctag-irdai">IRDAI Policyholders' Interests Reg. 2024</span>
-          </div>
-        </div>
-        <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk uk">FK UK</span> claim_id</span><span class="col-type">uuid</span><span class="col-note">→ CLAIMS.id (1:1)</span></div>
-          <div class="col-row"><span class="col-name">cause_of_death</span><span class="col-type">varchar(300)</span><span class="col-note">PHI</span></div>
-          <div class="col-row"><span class="col-name">place_of_death</span><span class="col-type">varchar(300)</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">certifying_doctor</span><span class="col-type">varchar(200)</span><span class="col-note">Verification authority string</span></div>
-          <div class="col-row"><span class="col-name">is_accidental</span><span class="col-type">boolean</span><span class="col-note">Triggers secondary conditional payout parameters</span></div>
-          <div class="col-row"><span class="col-name">claimant_name</span><span class="col-type">varchar(200)</span><span class="col-note">Must match active legal contract properties</span></div>
-          <div class="col-row"><span class="col-name">claimant_relation</span><span class="col-type">varchar(50)</span><span class="col-note"></span></div>
-        </div>
-      </div>
-
-      <div class="table-card">
-        <div class="table-header">
-          <div>
-            <div class="table-name">CLAIM_WORKFLOW <span class="ctag ctag-txn" style="margin-left:0.5rem">TRANSACTIONAL</span></div>
-            <div class="table-reasoning">Immutable operational pipeline tracker. Detailed status monitoring enables historical audit tracing, capturing qualitative system rationale metrics to support resolution mechanisms.</div>
-          </div>
-          <div class="compliance-tags">
-            <span class="ctag ctag-irdai">IRDAI Policyholders' Interests Reg. 2024</span>
-            <span class="ctag ctag-hipaa">HIPAA §164.312(b)</span>
-          </div>
-        </div>
-        <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> claim_id</span><span class="col-type">uuid</span><span class="col-note">→ CLAIMS.id</span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> actor_id</span><span class="col-type">uuid</span><span class="col-note">→ USERS.id (Auditable operator sequence)</span></div>
-          <div class="col-row"><span class="col-name">from_status</span><span class="col-type">varchar(30) NULL</span><span class="col-note">NULL on initial submission</span></div>
-          <div class="col-row"><span class="col-name">to_status</span><span class="col-type">varchar(30)</span><span class="col-note">Target lifecycle configuration string</span></div>
-          <div class="col-row"><span class="col-name">remarks</span><span class="col-type">text</span><span class="col-note">Operator commentary entry fields</span></div>
-          <div class="col-row"><span class="col-name">transitioned_at</span><span class="col-type">timestamptz</span><span class="col-note">Immutable structural metrics parameter</span></div>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="section-header support" id="section-support">SUPPORTING TABLES</div>
-    <div class="tables-grid">
-
-      <div class="table-card">
-        <div class="table-header">
-          <div>
-            <div class="table-name">DOCUMENTS <span class="ctag ctag-txn" style="margin-left:0.5rem">TRANSACTIONAL</span></div>
-            <div class="table-reasoning">Unified binary large object reference layer. An OR CHECK constraint isolates entry generation vectors and allows dual-binding to both a policy and a claim, while direct validation hooks support electronic metadata certification pipelines.</div>
-          </div>
-          <div class="compliance-tags">
-            <span class="ctag ctag-irdai">IRDAI Operations Reg. 2024</span>
-            <span class="ctag ctag-gdpr">GDPR Art.17</span>
-            <span class="ctag ctag-hipaa">HIPAA §164.312(c)</span>
-          </div>
-        </div>
-        <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> claim_id</span><span class="col-type">uuid</span><span class="col-note">→ CLAIMS.id (nullable)</span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> policy_id</span><span class="col-type">uuid</span><span class="col-note">→ POLICIES.id (nullable)</span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> user_id</span><span class="col-type">uuid</span><span class="col-note">→ USERS.id (uploader reference)</span></div>
-          <div class="col-row"><span class="col-name">document_type</span><span class="col-type">varchar(50)</span><span class="col-note">PAN | DISCHARGE_SUMMARY | FIR | KYC_IMAGE | etc.</span></div>
-          <div class="col-row"><span class="col-name">file_name</span><span class="col-type">varchar(300)</span><span class="col-note">Initial file name string</span></div>
-          <div class="col-row"><span class="col-name">file_path</span><span class="col-type">text</span><span class="col-note">Internal file bucket location key parameter</span></div>
-          <div class="col-row"><span class="col-name">mime_type</span><span class="col-type">varchar(100)</span><span class="col-note">Verified during streaming ingest</span></div>
-          <div class="col-row"><span class="col-name">file_size_kb</span><span class="col-type">integer</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">verification_status</span><span class="col-type">varchar(20)</span><span class="col-note">PENDING | VERIFIED | REJECTED</span></div>
-          <div class="col-row"><span class="col-name">rejected_reason</span><span class="col-type">text</span><span class="col-note">Reasoning metrics block for audits</span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> verified_by</span><span class="col-type">uuid</span><span class="col-note">→ USERS.id (reviewer internal token)</span></div>
-          <div class="col-row"><span class="col-name">verified_at</span><span class="col-type">timestamptz</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">uploaded_at</span><span class="col-type">timestamptz</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">deleted_at</span><span class="col-type">timestamptz</span><span class="col-note">Soft deletion index parameters</span></div>
-        </div>
-      </div>
-
-      <div class="table-card">
-        <div class="table-header">
-          <div>
-            <div class="table-name">USER_GATEWAY_PROFILES <span class="ctag ctag-master" style="margin-left:0.5rem">MASTER</span></div>
-            <div class="table-reasoning">Maintains system payment provider records. Structural designs restrict direct raw financial instrument caching, routing tokens through secure configuration layers instead.</div>
-          </div>
-          <div class="compliance-tags">
-            <span class="ctag ctag-gdpr">GDPR Art.25 (Privacy by Design)</span>
-            <span class="ctag ctag-irdai">IRDAI Operations Reg. 2024</span>
-          </div>
-        </div>
-        <div class="table-body">
-          <div class="col-row"><span class="col-name"><span class="col-pk">PK</span> id</span><span class="col-type">uuid</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name"><span class="col-fk">FK</span> user_id</span><span class="col-type">uuid</span><span class="col-note">→ USERS.id</span></div>
-          <div class="col-row"><span class="col-name">payment_gateway</span><span class="col-type">varchar(50)</span><span class="col-note">AZURE_PAYMENT | RAZORPAY | STRIPE</span></div>
-          <div class="col-row"><span class="col-name">gateway_customer_id</span><span class="col-type">varchar(200)</span><span class="col-note">Obscured token sequence maps</span></div>
-          <div class="col-row"><span class="col-name">is_default</span><span class="col-type">boolean</span><span class="col-note">Enforced unique parameters via app logic</span></div>
-          <div class="col-row"><span class="col-name">created_at</span><span class="col-type">timestamptz</span><span class="col-note"></span></div>
-          <div class="col-row"><span class="col-name">updated_at</span><span class="col-type">timestamptz</span><span class="col-note"></span></div>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="section-header compliance" style="margin-top:2.5rem">COMPLIANCE REFERENCE</div>
-    <div class="compliance-clause">
-      <div class="clause-title">Key clauses referenced in this schema</div>
-      <div class="clause-grid">
-        <div class="clause-item hipaa">
-          <div class="clause-law">HIPAA §164.312(b) — Audit Controls</div>
-          <div class="clause-text">Hardware, software, and procedural mechanisms to record and examine activity in systems containing ePHI. → AUDIT_LOGS, PHI_ACCESS_LOGS</div>
-        </div>
-        <div class="clause-item hipaa">
-          <div class="clause-law">HIPAA §164.308(a)(4) — Access Control</div>
-          <div class="clause-text">Unique user identification and access controls based on minimum necessary principle. → ROLES, USER_ROLES, REFRESH_TOKENS</div>
-        </div>
-        <div class="clause-item hipaa">
-          <div class="clause-law">HIPAA §164.528 — Accounting of Disclosures</div>
-          <div class="clause-text">Individuals have right to receive accounting of disclosures of their PHI. → PHI_ACCESS_LOGS</div>
-        </div>
-        <div class="clause-item gdpr">
-          <div class="clause-law">GDPR Art.17 — Right to Erasure</div>
-          <div class="clause-text">Data must be erasable on request without breaking system integrity. → anonymized_at on USERS, soft deletes everywhere</div>
-        </div>
-        <div class="clause-item gdpr">
-          <div class="clause-law">GDPR Art.6 &amp; Art.7 — Lawful Basis &amp; Consent</div>
-          <div class="clause-text">Processing must have a documented lawful basis; consent must be freely given, specific, and withdrawable. → USER_CONSENTS</div>
-        </div>
-        <div class="clause-item gdpr">
-          <div class="clause-law">GDPR Art.5(2) — Accountability</div>
-          <div class="clause-text">Controller must demonstrate compliance with data protection principles. → AUDIT_LOGS (write-only, immutable)</div>
-        </div>
-        <div class="clause-item irdai">
-          <div class="clause-law">IRDAI (Registration, Certification and Operations of Insurers) Regulations, 2024</div>
-          <div class="clause-text">Unified framework governing intermediary licensing, certifications, registration lifecycle tracking, corporate compliance protocols, and commission governance models. → AGENTS, ROLES, BROKER_QUALIFIED_PERSONS, COMPLIANCE_MONEY_LEDGER</div>
-        </div>
-        <div class="clause-item irdai">
-          <div class="clause-law">IRDAI (Protection of Policyholders’ Interests, Operations and Allied Matters) Regulations, 2024</div>
-          <div class="clause-text">Consolidated rules governing strict SLA-backed turnaround limits (30-day settlement targets), mandatory communication triggers, electronic product structures, and data disclosures. → CLAIMS, POLICIES, NOTIFICATIONS, DOCUMENTS, PREMIUM_SCHEDULE</div>
-        </div>
-      </div>
-    </div>
-
-    <div style="height:3rem"></div>
 
   </div>
 </div>
-
 <script>
-  function scrollToSection(section) {
-    const el = document.getElementById('section-' + section);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-    document.querySelectorAll('.sidebar-item').forEach(i => {
-      i.classList.toggle('active', i.dataset.section === section);
-    });
-  }
-
   // Highlight active section on scroll
   const main = document.getElementById('main');
-  const sections = ['auth','compliance','core','policy','claims','support'];
+  const sections = ['auth','compliance','core','policy','claims','routing','supporting']; // Updated to match domain ids dynamically if needed
 
   main.addEventListener('scroll', () => {
     let current = 'auth';
