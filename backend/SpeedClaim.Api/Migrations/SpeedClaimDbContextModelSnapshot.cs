@@ -38,6 +38,10 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("numeric")
                         .HasColumnName("commission_rate");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
                         .HasColumnName("is_active");
@@ -68,6 +72,576 @@ namespace SpeedClaim.Api.Migrations
                         .HasDatabaseName("uq_agents_user_id");
 
                     b.ToTable("agents");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.AuditLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("action");
+
+                    b.Property<Guid?>("ActorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actor_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("entity_id");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("entity_type");
+
+                    b.Property<string>("IpAddress")
+                        .HasColumnType("text")
+                        .HasColumnName("ip_address");
+
+                    b.Property<string>("NewValues")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("new_values");
+
+                    b.Property<string>("OldValues")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("old_values");
+
+                    b.Property<string>("UserAgent")
+                        .HasColumnType("text")
+                        .HasColumnName("user_agent");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("PK_audit_logs");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("EntityType", "EntityId")
+                        .HasDatabaseName("idx_audit_logs_composite");
+
+                    b.ToTable("audit_logs");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.Claim", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal?>("ApprovedAmount")
+                        .HasColumnType("decimal(14,2)")
+                        .HasColumnName("approved_amount");
+
+                    b.Property<Guid?>("AssignedAdjusterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("assigned_adjuster_id");
+
+                    b.Property<string>("ClaimNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("claim_number");
+
+                    b.Property<decimal>("ClaimedAmount")
+                        .HasColumnType("decimal(14,2)")
+                        .HasColumnName("claimed_amount");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Domain")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("domain");
+
+                    b.Property<DateTime>("IncidentDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("incident_date");
+
+                    b.Property<string>("IncidentDescription")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("incident_description");
+
+                    b.Property<bool>("IsAutomatedProcessed")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_automated_processed");
+
+                    b.Property<Guid>("PolicyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("policy_id");
+
+                    b.Property<short>("Priority")
+                        .HasColumnType("smallint")
+                        .HasColumnName("priority");
+
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("text")
+                        .HasColumnName("rejection_reason");
+
+                    b.Property<decimal>("RiskScore")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(5,2)")
+                        .HasDefaultValue(0.00m)
+                        .HasColumnName("risk_score");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("SubmittedById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("submitted_by_id");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("PK_claims");
+
+                    b.HasIndex("AssignedAdjusterId");
+
+                    b.HasIndex("ClaimNumber")
+                        .IsUnique()
+                        .HasDatabaseName("uq_claims_claim_number");
+
+                    b.HasIndex("PolicyId");
+
+                    b.HasIndex("SubmittedById");
+
+                    b.HasIndex("Id", "Domain")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_claim_id_domain");
+
+                    b.ToTable("claims", t =>
+                        {
+                            t.HasCheckConstraint("CK_claims_priority", "priority IN (1, 2, 3)");
+
+                            t.HasCheckConstraint("CK_claims_status", "status IN ('SUBMITTED', 'UNDER_REVIEW', 'ESCALATED', 'APPROVED', 'REJECTED', 'SETTLED', 'CLOSED')");
+                        });
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.ClaimDocumentChecklist", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("ClaimId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("claim_id");
+
+                    b.Property<string>("DocumentTypeCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("document_type_code");
+
+                    b.Property<string>("Domain")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("domain");
+
+                    b.Property<bool>("IsReceived")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_received");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("PK_claim_document_checklist");
+
+                    b.HasIndex("ClaimId", "DocumentTypeCode")
+                        .IsUnique()
+                        .HasDatabaseName("uq_claim_document_checklist_claim_id_document_type_code");
+
+                    b.ToTable("claim_document_checklists");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.ClaimHealthDetail", b =>
+                {
+                    b.Property<Guid>("ClaimId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("claim_id");
+
+                    b.Property<DateTime>("AdmissionDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("admission_date");
+
+                    b.Property<string>("Diagnosis")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("diagnosis");
+
+                    b.Property<DateTime?>("DischargeDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("discharge_date");
+
+                    b.Property<string>("HospitalName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("hospital_name");
+
+                    b.Property<Guid?>("InsuredMemberId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("insured_member_id");
+
+                    b.Property<bool>("IsCashless")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_cashless");
+
+                    b.Property<string>("TreatingDoctor")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("treating_doctor");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("ClaimId")
+                        .HasName("PK_claim_health_details");
+
+                    b.HasIndex("InsuredMemberId");
+
+                    b.ToTable("claim_health_details");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.ClaimLifeDetail", b =>
+                {
+                    b.Property<Guid>("ClaimId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("claim_id");
+
+                    b.Property<string>("CauseOfDeath")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("cause_of_death");
+
+                    b.Property<string>("CertifyingDoctor")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("certifying_doctor");
+
+                    b.Property<string>("ClaimantName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("claimant_name");
+
+                    b.Property<string>("ClaimantRelation")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("claimant_relation");
+
+                    b.Property<string>("DeathCertificateNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("death_certificate_number");
+
+                    b.Property<string>("PlaceOfDeath")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("place_of_death");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("ClaimId")
+                        .HasName("PK_claim_life_details");
+
+                    b.ToTable("claim_life_details");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.ClaimVehicleDetail", b =>
+                {
+                    b.Property<Guid>("ClaimId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("claim_id");
+
+                    b.Property<string>("AccidentLocation")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("accident_location");
+
+                    b.Property<string>("FirNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("fir_number");
+
+                    b.Property<bool>("IsTotalLoss")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_total_loss");
+
+                    b.Property<decimal>("RepairEstimate")
+                        .HasColumnType("decimal(14,2)")
+                        .HasColumnName("repair_estimate");
+
+                    b.Property<string>("SurveyorName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("surveyor_name");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("ClaimId")
+                        .HasName("PK_claim_vehicle_details");
+
+                    b.ToTable("claim_vehicle_details");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.ClaimWorkflow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("ActorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actor_id");
+
+                    b.Property<Guid>("ClaimId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("claim_id");
+
+                    b.Property<string>("FromStatus")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("from_status");
+
+                    b.Property<string>("Remarks")
+                        .HasColumnType("text")
+                        .HasColumnName("remarks");
+
+                    b.Property<string>("ToStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("to_status");
+
+                    b.Property<DateTime>("TransitionedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("transitioned_at");
+
+                    b.HasKey("Id")
+                        .HasName("PK_claim_workflow");
+
+                    b.HasIndex("ActorId");
+
+                    b.HasIndex("ClaimId");
+
+                    b.ToTable("claim_workflows");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.Document", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("ClaimId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("claim_id");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<string>("DocumentTypeCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("document_type_code");
+
+                    b.Property<string>("Domain")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("domain");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("file_name");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("file_path");
+
+                    b.Property<Guid?>("PolicyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("policy_id");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("rejection_reason");
+
+                    b.Property<Guid?>("ReviewedById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reviewed_by_id");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("uploaded_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("VerificationStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("verification_status");
+
+                    b.HasKey("Id")
+                        .HasName("PK_documents");
+
+                    b.HasIndex("ClaimId");
+
+                    b.HasIndex("ReviewedById");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("documents", t =>
+                        {
+                            t.HasCheckConstraint("CK_doc_verification", "verification_status IN ('PENDING', 'VERIFIED', 'REJECTED')");
+                        });
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.DocumentType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("code");
+
+                    b.Property<string>("Domain")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("domain");
+
+                    b.Property<bool>("IsSensitivePhiPii")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_sensitive_phi_pii");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id")
+                        .HasName("PK_document_types");
+
+                    b.HasIndex("Code", "Domain")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_doctype_code_domain");
+
+                    b.ToTable("document_types");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000001"),
+                            Code = "AADHAAR",
+                            Domain = "AUTH",
+                            IsSensitivePhiPii = true,
+                            Name = "Aadhaar Card"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000002"),
+                            Code = "PAN",
+                            Domain = "AUTH",
+                            IsSensitivePhiPii = true,
+                            Name = "PAN Card"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000003"),
+                            Code = "PHOTOGRAPH",
+                            Domain = "AUTH",
+                            IsSensitivePhiPii = false,
+                            Name = "Passport Size Photograph"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000004"),
+                            Code = "ADDRESS_PROOF",
+                            Domain = "AUTH",
+                            IsSensitivePhiPii = false,
+                            Name = "Proof of Address"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000005"),
+                            Code = "SUPPORTING_DOC",
+                            Domain = "HEALTH",
+                            IsSensitivePhiPii = true,
+                            Name = "Supporting Document"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000006"),
+                            Code = "SUPPORTING_DOC",
+                            Domain = "VEHICLE",
+                            IsSensitivePhiPii = false,
+                            Name = "Supporting Document"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000007"),
+                            Code = "SUPPORTING_DOC",
+                            Domain = "LIFE",
+                            IsSensitivePhiPii = true,
+                            Name = "Supporting Document"
+                        });
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.InsuranceProduct", b =>
@@ -120,6 +694,103 @@ namespace SpeedClaim.Api.Migrations
                         .HasDatabaseName("UQ_product_id_domain");
 
                     b.ToTable("insurance_products");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.PaymentStatusHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("ChangedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("changed_at");
+
+                    b.Property<Guid?>("ChangedById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("changed_by_id");
+
+                    b.Property<string>("NewStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("new_status");
+
+                    b.Property<string>("OldStatus")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("old_status");
+
+                    b.Property<Guid>("PaymentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("payment_id");
+
+                    b.Property<string>("Remarks")
+                        .HasColumnType("text")
+                        .HasColumnName("remarks");
+
+                    b.HasKey("Id")
+                        .HasName("PK_payment_status_history");
+
+                    b.HasIndex("ChangedById");
+
+                    b.HasIndex("PaymentId");
+
+                    b.ToTable("payment_status_histories");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.PaymentTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric")
+                        .HasColumnName("amount");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("currency");
+
+                    b.Property<Guid>("PolicyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("policy_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.Property<string>("StripeEventId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("stripe_event_id");
+
+                    b.Property<string>("StripePaymentIntentId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("stripe_payment_intent_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PolicyId");
+
+                    b.HasIndex("StripePaymentIntentId")
+                        .IsUnique();
+
+                    b.ToTable("payment_transactions");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.Policy", b =>
@@ -195,6 +866,11 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
 
+                    b.Property<string>("domain")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
                     b.HasKey("Id")
                         .HasName("PK_policies");
 
@@ -218,40 +894,14 @@ namespace SpeedClaim.Api.Migrations
                             t.HasCheckConstraint("CK_policies_payment_frequency", "payment_frequency IN ('MONTHLY', 'QUARTERLY', 'ANNUAL')");
 
                             t.HasCheckConstraint("CK_policies_status", "status IN ('ACTIVE', 'LAPSED', 'CANCELLED', 'EXPIRED', 'CLAIMED')");
+
+                            t.Property("domain")
+                                .HasColumnName("domain1");
                         });
-                });
 
-            modelBuilder.Entity("SpeedClaim.Api.Models.PolicyHealthDetail", b =>
-                {
-                    b.Property<Guid>("PolicyId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("policy_id");
+                    b.HasDiscriminator<string>("domain").HasValue("Policy");
 
-                    b.Property<bool>("CoversDental")
-                        .HasColumnType("boolean")
-                        .HasColumnName("covers_dental");
-
-                    b.Property<decimal>("Deductible")
-                        .HasColumnType("numeric")
-                        .HasColumnName("deductible");
-
-                    b.Property<string>("NetworkType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("network_type");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.HasKey("PolicyId")
-                        .HasName("PK_policy_health_details");
-
-                    b.ToTable("policy_health_details", t =>
-                        {
-                            t.HasCheckConstraint("CK_health_network", "network_type IN ('TPA', 'CASHLESS', 'REIMBURSEMENT')");
-                        });
+                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.PolicyInsuredMember", b =>
@@ -291,94 +941,6 @@ namespace SpeedClaim.Api.Migrations
                     b.HasIndex("PolicyId");
 
                     b.ToTable("policy_insured_members");
-                });
-
-            modelBuilder.Entity("SpeedClaim.Api.Models.PolicyLifeDetail", b =>
-                {
-                    b.Property<Guid>("PolicyId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("policy_id");
-
-                    b.Property<bool>("HasAccidentalRider")
-                        .HasColumnType("boolean")
-                        .HasColumnName("has_accidental_rider");
-
-                    b.Property<string>("NomineeName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("nominee_name");
-
-                    b.Property<string>("NomineePhone")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("nominee_phone");
-
-                    b.Property<string>("NomineeRelation")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("nominee_relation");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.HasKey("PolicyId")
-                        .HasName("PK_policy_life_details");
-
-                    b.ToTable("policy_life_details");
-                });
-
-            modelBuilder.Entity("SpeedClaim.Api.Models.PolicyVehicleDetail", b =>
-                {
-                    b.Property<Guid>("PolicyId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("policy_id");
-
-                    b.Property<decimal>("InsuredDeclaredValue")
-                        .HasColumnType("numeric")
-                        .HasColumnName("insured_declared_value");
-
-                    b.Property<bool>("IsComprehensive")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_comprehensive");
-
-                    b.Property<string>("Make")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("make");
-
-                    b.Property<int>("ManufactureYear")
-                        .HasColumnType("integer")
-                        .HasColumnName("manufacture_year");
-
-                    b.Property<string>("Model")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("model");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.Property<string>("VehicleNumber")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)")
-                        .HasColumnName("vehicle_number");
-
-                    b.HasKey("PolicyId")
-                        .HasName("PK_policy_vehicle_details");
-
-                    b.HasIndex("VehicleNumber")
-                        .IsUnique()
-                        .HasDatabaseName("uq_policy_vehicle_details_vehicle_number");
-
-                    b.ToTable("policy_vehicle_details");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.PolicyVersion", b =>
@@ -424,6 +986,52 @@ namespace SpeedClaim.Api.Migrations
                         .HasDatabaseName("uq_policy_versions_policy_id_version_number");
 
                     b.ToTable("policy_versions");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.PremiumSchedule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("AmountDue")
+                        .HasColumnType("decimal(12,2)")
+                        .HasColumnName("amount_due");
+
+                    b.Property<DateTime>("DueDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("due_date");
+
+                    b.Property<int>("InstallmentNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("installment_number");
+
+                    b.Property<Guid?>("PaymentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("payment_id");
+
+                    b.Property<Guid>("PolicyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("policy_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id")
+                        .HasName("PK_premium_schedule");
+
+                    b.HasIndex("PaymentId");
+
+                    b.HasIndex("PolicyId");
+
+                    b.HasIndex("DueDate", "Status")
+                        .HasDatabaseName("idx_premium_schedule_due");
+
+                    b.ToTable("premium_schedules");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.RefreshToken", b =>
@@ -505,6 +1113,29 @@ namespace SpeedClaim.Api.Migrations
                         {
                             t.HasCheckConstraint("CK_roles_hierarchy_level", "hierarchy_level > 0");
                         });
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("11111111-1111-1111-1111-111111111111"),
+                            Code = "Customer",
+                            Description = "Standard customer",
+                            HierarchyLevel = 10
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222222"),
+                            Code = "Agent",
+                            Description = "Insurance agent",
+                            HierarchyLevel = 20
+                        },
+                        new
+                        {
+                            Id = new Guid("33333333-3333-3333-3333-333333333333"),
+                            Code = "Admin",
+                            Description = "System administrator",
+                            HierarchyLevel = 50
+                        });
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.User", b =>
@@ -514,10 +1145,21 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("Address")
+                    b.Property<string>("AadhaarNumber")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)")
+                        .HasColumnName("aadhaar_number");
+
+                    b.Property<string>("City")
                         .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("address");
+                        .HasColumnName("city");
+
+                    b.Property<string>("Country")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("country");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -542,9 +1184,27 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("text")
                         .HasColumnName("full_name");
 
+                    b.Property<string>("Gender")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("gender");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
                         .HasColumnName("is_active");
+
+                    b.Property<string>("KycStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("kyc_status");
+
+                    b.Property<string>("PanNumber")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("pan_number");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -557,10 +1217,25 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("text")
                         .HasColumnName("phone");
 
+                    b.Property<string>("PostalCode")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("postal_code");
+
                     b.Property<string>("ProfilePictureUrl")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("profile_picture_url");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("state");
+
+                    b.Property<string>("Street")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("street");
 
                     b.Property<string>("Timezone")
                         .IsRequired()
@@ -570,11 +1245,66 @@ namespace SpeedClaim.Api.Migrations
                     b.HasKey("Id")
                         .HasName("PK_users");
 
+                    b.HasIndex("AadhaarNumber")
+                        .IsUnique()
+                        .HasDatabaseName("uq_users_aadhaar");
+
                     b.HasIndex("Email")
                         .IsUnique()
                         .HasDatabaseName("uq_users_email");
 
+                    b.HasIndex("PanNumber")
+                        .IsUnique()
+                        .HasDatabaseName("uq_users_pan");
+
                     b.ToTable("users");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.UserConsent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ConsentType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("consent_type");
+
+                    b.Property<string>("ConsentVersion")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("consent_version");
+
+                    b.Property<DateTime>("GrantedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("granted_at");
+
+                    b.Property<string>("IpAddress")
+                        .HasColumnType("text")
+                        .HasColumnName("ip_address");
+
+                    b.Property<bool>("IsGranted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_granted");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateTime?>("WithdrawnAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("withdrawn_at");
+
+                    b.HasKey("Id")
+                        .HasName("PK_user_consents");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("user_consents");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.UserRole", b =>
@@ -619,6 +1349,116 @@ namespace SpeedClaim.Api.Migrations
                     b.ToTable("user_roles");
                 });
 
+            modelBuilder.Entity("SpeedClaim.Api.Models.HealthPolicy", b =>
+                {
+                    b.HasBaseType("SpeedClaim.Api.Models.Policy");
+
+                    b.Property<bool>("CoversDental")
+                        .HasColumnType("boolean")
+                        .HasColumnName("covers_dental");
+
+                    b.Property<decimal>("Deductible")
+                        .HasColumnType("numeric")
+                        .HasColumnName("deductible");
+
+                    b.Property<string>("NetworkType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("network_type");
+
+                    b.ToTable("policies", t =>
+                        {
+                            t.HasCheckConstraint("CK_policies_payment_frequency", "payment_frequency IN ('MONTHLY', 'QUARTERLY', 'ANNUAL')");
+
+                            t.HasCheckConstraint("CK_policies_status", "status IN ('ACTIVE', 'LAPSED', 'CANCELLED', 'EXPIRED', 'CLAIMED')");
+
+                            t.Property("domain")
+                                .HasColumnName("domain1");
+                        });
+
+                    b.HasDiscriminator().HasValue("HEALTH");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.LifePolicy", b =>
+                {
+                    b.HasBaseType("SpeedClaim.Api.Models.Policy");
+
+                    b.Property<bool>("HasAccidentalRider")
+                        .HasColumnType("boolean")
+                        .HasColumnName("has_accidental_rider");
+
+                    b.Property<string>("NomineeName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("nominee_name");
+
+                    b.Property<string>("NomineePhone")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("nominee_phone");
+
+                    b.Property<string>("NomineeRelation")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("nominee_relation");
+
+                    b.ToTable("policies", t =>
+                        {
+                            t.HasCheckConstraint("CK_policies_payment_frequency", "payment_frequency IN ('MONTHLY', 'QUARTERLY', 'ANNUAL')");
+
+                            t.HasCheckConstraint("CK_policies_status", "status IN ('ACTIVE', 'LAPSED', 'CANCELLED', 'EXPIRED', 'CLAIMED')");
+
+                            t.Property("domain")
+                                .HasColumnName("domain1");
+                        });
+
+                    b.HasDiscriminator().HasValue("LIFE");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.VehiclePolicy", b =>
+                {
+                    b.HasBaseType("SpeedClaim.Api.Models.Policy");
+
+                    b.Property<decimal>("InsuredDeclaredValue")
+                        .HasColumnType("numeric")
+                        .HasColumnName("insured_declared_value");
+
+                    b.Property<bool>("IsComprehensive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_comprehensive");
+
+                    b.Property<string>("Make")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("make");
+
+                    b.Property<int>("ManufactureYear")
+                        .HasColumnType("integer")
+                        .HasColumnName("manufacture_year");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("model");
+
+                    b.Property<string>("VehicleNumber")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("vehicle_number");
+
+                    b.ToTable("policies", t =>
+                        {
+                            t.HasCheckConstraint("CK_policies_payment_frequency", "payment_frequency IN ('MONTHLY', 'QUARTERLY', 'ANNUAL')");
+
+                            t.HasCheckConstraint("CK_policies_status", "status IN ('ACTIVE', 'LAPSED', 'CANCELLED', 'EXPIRED', 'CLAIMED')");
+
+                            t.Property("domain")
+                                .HasColumnName("domain1");
+                        });
+
+                    b.HasDiscriminator().HasValue("VEHICLE");
+                });
+
             modelBuilder.Entity("SpeedClaim.Api.Models.Agent", b =>
                 {
                     b.HasOne("SpeedClaim.Api.Models.User", "User")
@@ -629,6 +1469,174 @@ namespace SpeedClaim.Api.Migrations
                         .HasConstraintName("FK_agents_users_user_id");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.AuditLog", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.User", null)
+                        .WithMany("AuditLogs")
+                        .HasForeignKey("UserId");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.Claim", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.User", "AssignedAdjuster")
+                        .WithMany()
+                        .HasForeignKey("AssignedAdjusterId")
+                        .HasConstraintName("FK_claims_users_assigned_adjuster_id");
+
+                    b.HasOne("SpeedClaim.Api.Models.Policy", "Policy")
+                        .WithMany()
+                        .HasForeignKey("PolicyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_claims_policies_policy_id");
+
+                    b.HasOne("SpeedClaim.Api.Models.User", "SubmittedBy")
+                        .WithMany()
+                        .HasForeignKey("SubmittedById")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_claims_users_submitted_by_id");
+
+                    b.Navigation("AssignedAdjuster");
+
+                    b.Navigation("Policy");
+
+                    b.Navigation("SubmittedBy");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.ClaimDocumentChecklist", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.Claim", "Claim")
+                        .WithMany("DocumentChecklists")
+                        .HasForeignKey("ClaimId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_checklist_claim");
+
+                    b.Navigation("Claim");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.ClaimHealthDetail", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.Claim", "Claim")
+                        .WithOne("HealthDetail")
+                        .HasForeignKey("SpeedClaim.Api.Models.ClaimHealthDetail", "ClaimId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_claim_health_details_claims_claim_id");
+
+                    b.HasOne("SpeedClaim.Api.Models.PolicyInsuredMember", "InsuredMember")
+                        .WithMany("ClaimHealthDetails")
+                        .HasForeignKey("InsuredMemberId")
+                        .HasConstraintName("FK_claim_health_details_policy_insured_members_insured_member_id");
+
+                    b.Navigation("Claim");
+
+                    b.Navigation("InsuredMember");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.ClaimLifeDetail", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.Claim", "Claim")
+                        .WithOne("LifeDetail")
+                        .HasForeignKey("SpeedClaim.Api.Models.ClaimLifeDetail", "ClaimId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_claim_life_details_claims_claim_id");
+
+                    b.Navigation("Claim");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.ClaimVehicleDetail", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.Claim", "Claim")
+                        .WithOne("VehicleDetail")
+                        .HasForeignKey("SpeedClaim.Api.Models.ClaimVehicleDetail", "ClaimId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_claim_vehicle_details_claims_claim_id");
+
+                    b.Navigation("Claim");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.ClaimWorkflow", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.User", "Actor")
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_claim_workflow_users_actor_id");
+
+                    b.HasOne("SpeedClaim.Api.Models.Claim", "Claim")
+                        .WithMany("Workflows")
+                        .HasForeignKey("ClaimId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_claim_workflow_claims_claim_id");
+
+                    b.Navigation("Actor");
+
+                    b.Navigation("Claim");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.Document", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.Claim", "Claim")
+                        .WithMany("Documents")
+                        .HasForeignKey("ClaimId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("FK_documents_claims_claim_id");
+
+                    b.HasOne("SpeedClaim.Api.Models.User", "ReviewedBy")
+                        .WithMany()
+                        .HasForeignKey("ReviewedById")
+                        .HasConstraintName("FK_documents_users_reviewed_by_id");
+
+                    b.HasOne("SpeedClaim.Api.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_documents_users_user_id");
+
+                    b.Navigation("Claim");
+
+                    b.Navigation("ReviewedBy");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.PaymentStatusHistory", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.User", "ChangedBy")
+                        .WithMany("StatusChanges")
+                        .HasForeignKey("ChangedById")
+                        .HasConstraintName("FK_payment_status_history_users_changed_by_id");
+
+                    b.HasOne("SpeedClaim.Api.Models.PaymentTransaction", "Payment")
+                        .WithMany("StatusHistories")
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_payment_status_history_payment_transactions_payment_id");
+
+                    b.Navigation("ChangedBy");
+
+                    b.Navigation("Payment");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.PaymentTransaction", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.Policy", "Policy")
+                        .WithMany()
+                        .HasForeignKey("PolicyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Policy");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.Policy", b =>
@@ -659,18 +1667,6 @@ namespace SpeedClaim.Api.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("SpeedClaim.Api.Models.PolicyHealthDetail", b =>
-                {
-                    b.HasOne("SpeedClaim.Api.Models.Policy", "Policy")
-                        .WithOne("HealthDetail")
-                        .HasForeignKey("SpeedClaim.Api.Models.PolicyHealthDetail", "PolicyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_policy_health_details_policies_policy_id");
-
-                    b.Navigation("Policy");
-                });
-
             modelBuilder.Entity("SpeedClaim.Api.Models.PolicyInsuredMember", b =>
                 {
                     b.HasOne("SpeedClaim.Api.Models.Policy", "Policy")
@@ -679,30 +1675,6 @@ namespace SpeedClaim.Api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("FK_policy_insured_members_policies_policy_id");
-
-                    b.Navigation("Policy");
-                });
-
-            modelBuilder.Entity("SpeedClaim.Api.Models.PolicyLifeDetail", b =>
-                {
-                    b.HasOne("SpeedClaim.Api.Models.Policy", "Policy")
-                        .WithOne("LifeDetail")
-                        .HasForeignKey("SpeedClaim.Api.Models.PolicyLifeDetail", "PolicyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_policy_life_details_policies_policy_id");
-
-                    b.Navigation("Policy");
-                });
-
-            modelBuilder.Entity("SpeedClaim.Api.Models.PolicyVehicleDetail", b =>
-                {
-                    b.HasOne("SpeedClaim.Api.Models.Policy", "Policy")
-                        .WithOne("VehicleDetail")
-                        .HasForeignKey("SpeedClaim.Api.Models.PolicyVehicleDetail", "PolicyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_policy_vehicle_details_policies_policy_id");
 
                     b.Navigation("Policy");
                 });
@@ -719,6 +1691,25 @@ namespace SpeedClaim.Api.Migrations
                     b.Navigation("Policy");
                 });
 
+            modelBuilder.Entity("SpeedClaim.Api.Models.PremiumSchedule", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.PaymentTransaction", "Payment")
+                        .WithMany("PremiumSchedules")
+                        .HasForeignKey("PaymentId")
+                        .HasConstraintName("FK_premium_schedule_payment_transactions_payment_id");
+
+                    b.HasOne("SpeedClaim.Api.Models.Policy", "Policy")
+                        .WithMany("PremiumSchedules")
+                        .HasForeignKey("PolicyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_premium_schedule_policies_policy_id");
+
+                    b.Navigation("Payment");
+
+                    b.Navigation("Policy");
+                });
+
             modelBuilder.Entity("SpeedClaim.Api.Models.RefreshToken", b =>
                 {
                     b.HasOne("SpeedClaim.Api.Models.User", "User")
@@ -727,6 +1718,18 @@ namespace SpeedClaim.Api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("FK_refresh_tokens_users_user_id");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.UserConsent", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.User", "User")
+                        .WithMany("Consents")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_user_consents_users_user_id");
 
                     b.Navigation("User");
                 });
@@ -752,20 +1755,40 @@ namespace SpeedClaim.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("SpeedClaim.Api.Models.Claim", b =>
+                {
+                    b.Navigation("DocumentChecklists");
+
+                    b.Navigation("Documents");
+
+                    b.Navigation("HealthDetail");
+
+                    b.Navigation("LifeDetail");
+
+                    b.Navigation("VehicleDetail");
+
+                    b.Navigation("Workflows");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.PaymentTransaction", b =>
+                {
+                    b.Navigation("PremiumSchedules");
+
+                    b.Navigation("StatusHistories");
+                });
+
             modelBuilder.Entity("SpeedClaim.Api.Models.Policy", b =>
                 {
-                    b.Navigation("HealthDetail")
-                        .IsRequired();
-
                     b.Navigation("InsuredMembers");
 
-                    b.Navigation("LifeDetail")
-                        .IsRequired();
-
-                    b.Navigation("VehicleDetail")
-                        .IsRequired();
+                    b.Navigation("PremiumSchedules");
 
                     b.Navigation("Versions");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.PolicyInsuredMember", b =>
+                {
+                    b.Navigation("ClaimHealthDetails");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.Role", b =>
@@ -778,7 +1801,13 @@ namespace SpeedClaim.Api.Migrations
                     b.Navigation("Agent")
                         .IsRequired();
 
+                    b.Navigation("AuditLogs");
+
+                    b.Navigation("Consents");
+
                     b.Navigation("RefreshTokens");
+
+                    b.Navigation("StatusChanges");
 
                     b.Navigation("UserRoles");
                 });

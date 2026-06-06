@@ -27,14 +27,13 @@ public class GlobalExceptionMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An unhandled exception occurred.");
-            await HandleExceptionAsync(context, ex);
+            await HandleExceptionAsync(context, ex, _logger);
         }
     }
 
-    private static Task HandleExceptionAsync(HttpContext context, Exception exception)
+    private static Task HandleExceptionAsync(HttpContext context, Exception exception, ILogger logger)
     {
-        context.Response.ContentType = "application/json";
+        context.Response.ContentType = "application/problem+json";
         
         var statusCode = exception switch
         {
@@ -44,14 +43,28 @@ public class GlobalExceptionMiddleware
             _ => (int)HttpStatusCode.InternalServerError
         };
 
+        if (statusCode >= 500)
+        {
+            logger.LogError(exception, "A server error occurred.");
+        }
+        else
+        {
+            logger.LogWarning("Client error {StatusCode}: {Message}", statusCode, exception.Message);
+        }
+
         context.Response.StatusCode = statusCode;
+
+        var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        var isDevelopment = env == "Development";
 
         var result = JsonSerializer.Serialize(new
         {
-            StatusCode = statusCode,
-            Message = statusCode == 500 ? "An internal server error occurred." : exception.Message,
-            // Hidden in production: Detailed = exception.StackTrace 
-        });
+            type = $"https://httpstatuses.com/{statusCode}",
+            title = exception.GetType().Name,
+            status = statusCode,
+            detail = statusCode == 500 && !isDevelopment ? "An internal server error occurred." : exception.Message,
+            traceId = context.TraceIdentifier
+        }, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 
         return context.Response.WriteAsync(result);
     }

@@ -1,3 +1,5 @@
+using SpeedClaim.Api.Dtos.Common;
+
 namespace SpeedClaim.Api.Dtos.Auth;
 
 public record RegisterAgentRequest(
@@ -5,7 +7,9 @@ public record RegisterAgentRequest(
     string Password,
     string FullName,
     string Phone,
-    string Address,
+    AddressDto Address,
     string LicenseNumber,
-    string AgencyName
+    string AgencyName,
+    string AadhaarNumber,
+    string PanNumber
 );

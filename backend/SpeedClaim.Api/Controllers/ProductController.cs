@@ -20,14 +20,14 @@ public class ProductController : BaseApiController
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] string? domain)
+    public async Task<IActionResult> GetAll([FromQuery] string? domain, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
     {
         if (!string.IsNullOrEmpty(domain))
         {
-            var domainProducts = await _productService.GetProductsByDomainAsync(domain);
+            var domainProducts = await _productService.GetProductsByDomainAsync(domain, pageNumber, pageSize);
             return Ok(domainProducts);
         }
-        var products = await _productService.GetAllProductsAsync();
+        var products = await _productService.GetAllProductsAsync(pageNumber, pageSize);
         return Ok(products);
     }
 

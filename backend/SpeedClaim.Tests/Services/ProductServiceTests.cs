@@ -1,15 +1,16 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using AutoMapper;
-using SpeedClaim.Api.Context;
+using Moq;
 using SpeedClaim.Api.Dtos.Catalog;
 using SpeedClaim.Api.Mappings;
 using SpeedClaim.Api.Models;
 using SpeedClaim.Api.Services;
+using SpeedClaim.Api.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace SpeedClaim.Tests.Services;
@@ -17,18 +18,18 @@ namespace SpeedClaim.Tests.Services;
 [TestFixture]
 public class ProductServiceTests
 {
-    private SpeedClaimDbContext _context;
+    private Mock<IUnitOfWork> _mockUnitOfWork;
+    private Mock<IRepository<InsuranceProduct>> _mockProductRepo;
     private IMapper _mapper;
     private ProductService _productService;
 
     [SetUp]
     public void Setup()
     {
-        var options = new DbContextOptionsBuilder<SpeedClaimDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .Options;
+        _mockUnitOfWork = new Mock<IUnitOfWork>();
+        _mockProductRepo = new Mock<IRepository<InsuranceProduct>>();
 
-        _context = new SpeedClaimDbContext(options);
+        _mockUnitOfWork.Setup(u => u.Products).Returns(_mockProductRepo.Object);
 
         var services = new ServiceCollection();
         services.AddLogging();
@@ -36,91 +37,61 @@ public class ProductServiceTests
         var provider = services.BuildServiceProvider();
         _mapper = provider.GetRequiredService<IMapper>();
 
-        _productService = new ProductService(_context, _mapper);
-    }
-
-    [TearDown]
-    public void TearDown()
-    {
-        _context.Database.EnsureDeleted();
-        _context.Dispose();
+        _productService = new ProductService(_mockUnitOfWork.Object, _mapper);
     }
 
     [Test]
     public async Task GetAllProductsAsync_ReturnsAllProducts()
     {
-        // Arrange
-        _context.InsuranceProducts.AddRange(
+        var products = new List<InsuranceProduct>
+        {
             new InsuranceProduct { Code = "P1", Name = "Product 1", Domain = "HEALTH", Description = "Desc", IsActive = true },
             new InsuranceProduct { Code = "P2", Name = "Product 2", Domain = "LIFE", Description = "Desc", IsActive = true }
-        );
-        _context.SaveChanges();
+        };
+        _mockProductRepo.Setup(r => r.GetPagedAsync(1, 10, null, null)).ReturnsAsync((products, products.Count));
 
-        // Act
-        var result = await _productService.GetAllProductsAsync();
+        var result = await _productService.GetAllProductsAsync(1, 10);
 
-        // Assert
-        Assert.That(result.Count(), Is.EqualTo(2));
+        Assert.That(result.Data.Count(), Is.EqualTo(2));
     }
 
     [Test]
     public async Task GetProductsByDomainAsync_ReturnsFilteredProducts()
     {
-        // Arrange
-        _context.InsuranceProducts.AddRange(
+        var products = new List<InsuranceProduct>
+        {
             new InsuranceProduct { Code = "P1", Name = "Product 1", Domain = "HEALTH", Description = "Desc", IsActive = true },
-            new InsuranceProduct { Code = "P2", Name = "Product 2", Domain = "HEALTH", Description = "Desc", IsActive = true },
-            new InsuranceProduct { Code = "P3", Name = "Product 3", Domain = "VEHICLE", Description = "Desc", IsActive = true }
-        );
-        _context.SaveChanges();
+            new InsuranceProduct { Code = "P2", Name = "Product 2", Domain = "HEALTH", Description = "Desc", IsActive = true }
+        };
+        
+        _mockProductRepo.Setup(r => r.GetPagedAsync(1, 10, It.IsAny<Expression<Func<InsuranceProduct, bool>>>(), null)).ReturnsAsync((products, products.Count));
 
-        // Act
-        var result = await _productService.GetProductsByDomainAsync("health");
+        var result = await _productService.GetProductsByDomainAsync("health", 1, 10);
 
-        // Assert
-        Assert.That(result.Count(), Is.EqualTo(2));
-        Assert.That(result.All(p => p.Domain == "HEALTH"), Is.True);
+        Assert.That(result.Data.Count(), Is.EqualTo(2));
     }
 
     [Test]
     public async Task CreateProductAsync_ValidRequest_CreatesProduct()
     {
-        // Arrange
-        var request = new CreateProductRequest(
-            "AUTO-1",
-            "Basic Auto",
-            "VEHICLE",
-            "Basic auto coverage",
-            50000m
-        );
+        var request = new CreateProductRequest("AUTO-1", "Basic Auto", "VEHICLE", "Basic auto coverage", 50000m);
+        _mockProductRepo.Setup(r => r.SingleOrDefaultAsync(It.IsAny<Expression<Func<InsuranceProduct, bool>>>())).ReturnsAsync((InsuranceProduct?)null);
 
-        // Act
         var result = await _productService.CreateProductAsync(request);
 
-        // Assert
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Code, Is.EqualTo("AUTO-1"));
-        
-        var dbProduct = await _context.InsuranceProducts.FirstOrDefaultAsync(p => p.Code == "AUTO-1");
-        Assert.That(dbProduct, Is.Not.Null);
+        _mockProductRepo.Verify(r => r.AddAsync(It.IsAny<InsuranceProduct>()), Times.Once);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
 
     [Test]
     public void CreateProductAsync_DuplicateCodeAndDomain_ThrowsInvalidOperationException()
     {
-        // Arrange
-        _context.InsuranceProducts.Add(new InsuranceProduct { Code = "LIFE-1", Name = "Existing", Domain = "LIFE", Description = "Desc" });
-        _context.SaveChanges();
+        var request = new CreateProductRequest("LIFE-1", "Duplicate", "LIFE", "", null);
+        var existingProduct = new InsuranceProduct { Code = "LIFE-1", Domain = "LIFE" };
+        _mockProductRepo.Setup(r => r.SingleOrDefaultAsync(It.IsAny<Expression<Func<InsuranceProduct, bool>>>())).ReturnsAsync(existingProduct);
 
-        var request = new CreateProductRequest(
-            "LIFE-1",
-            "Duplicate",
-            "LIFE",
-            "",
-            null
-        );
-
-        // Act & Assert
         var ex = Assert.ThrowsAsync<InvalidOperationException>(async () => await _productService.CreateProductAsync(request));
         Assert.That(ex.Message, Does.Contain("already exists"));
     }
@@ -128,49 +99,40 @@ public class ProductServiceTests
     [Test]
     public async Task UpdateProductAsync_ExistingId_UpdatesProduct()
     {
-        // Arrange
         var id = Guid.NewGuid();
-        _context.InsuranceProducts.Add(new InsuranceProduct { Id = id, Code = "L1", Name = "Old Name", Domain = "LIFE", Description = "Desc" });
-        _context.SaveChanges();
+        var existingProduct = new InsuranceProduct { Id = id, Code = "L1", Name = "Old Name", Domain = "LIFE", Description = "Desc", IsActive = true };
+        _mockProductRepo.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(existingProduct);
 
-        var request = new UpdateProductRequest(
-            "New Name",
-            "New Desc",
-            1000m,
-            false
-        );
+        var request = new UpdateProductRequest("New Name", "New Desc", 1000m, false);
 
-        // Act
         var result = await _productService.UpdateProductAsync(id, request);
 
-        // Assert
         Assert.That(result.Name, Is.EqualTo("New Name"));
         Assert.That(result.IsActive, Is.False);
+        _mockProductRepo.Verify(r => r.Update(existingProduct), Times.Once);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
 
     [Test]
     public void UpdateProductAsync_NonExistingId_ThrowsKeyNotFoundException()
     {
-        // Arrange
         var request = new UpdateProductRequest("New", "", null, true);
+        _mockProductRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((InsuranceProduct?)null);
 
-        // Act & Assert
         Assert.ThrowsAsync<KeyNotFoundException>(async () => await _productService.UpdateProductAsync(Guid.NewGuid(), request));
     }
 
     [Test]
     public async Task DeleteProductAsync_ExistingId_DeactivatesProduct()
     {
-        // Arrange
         var id = Guid.NewGuid();
-        _context.InsuranceProducts.Add(new InsuranceProduct { Id = id, Code = "L1", Name = "Name", Domain = "LIFE", Description = "Desc", IsActive = true });
-        _context.SaveChanges();
+        var existingProduct = new InsuranceProduct { Id = id, Code = "L1", Name = "Name", Domain = "LIFE", Description = "Desc", IsActive = true };
+        _mockProductRepo.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(existingProduct);
 
-        // Act
         await _productService.DeleteProductAsync(id);
 
-        // Assert
-        var product = await _context.InsuranceProducts.FindAsync(id);
-        Assert.That(product!.IsActive, Is.False);
+        Assert.That(existingProduct.IsActive, Is.False);
+        _mockProductRepo.Verify(r => r.Update(existingProduct), Times.Once);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
 }

@@ -13,4 +13,5 @@ public class PolicyInsuredMember
     public bool IsPrimary { get; set; }
 
     public Policy Policy { get; set; }
+    public virtual ICollection<ClaimHealthDetail> ClaimHealthDetails { get; set; } = new List<ClaimHealthDetail>();
 }

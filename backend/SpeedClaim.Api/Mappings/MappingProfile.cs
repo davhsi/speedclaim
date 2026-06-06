@@ -19,9 +19,13 @@ public class MappingProfile : Profile
         CreateMap<InsuranceProduct, ProductDto>();
 
         // Policy Mappings
-        CreateMap<Policy, PolicyDto>();
-        CreateMap<PolicyHealthDetail, PolicyHealthDetailDto>();
-        CreateMap<PolicyVehicleDetail, PolicyVehicleDetailDto>();
-        CreateMap<PolicyLifeDetail, PolicyLifeDetailDto>();
+        CreateMap<Policy, PolicyDto>()
+            .ForCtorParam("HealthDetail", opt => opt.MapFrom(src => src is HealthPolicy ? (HealthPolicy)src : null))
+            .ForCtorParam("VehicleDetail", opt => opt.MapFrom(src => src is VehiclePolicy ? (VehiclePolicy)src : null))
+            .ForCtorParam("LifeDetail", opt => opt.MapFrom(src => src is LifePolicy ? (LifePolicy)src : null));
+
+        CreateMap<HealthPolicy, PolicyHealthDetailDto>();
+        CreateMap<VehiclePolicy, PolicyVehicleDetailDto>();
+        CreateMap<LifePolicy, PolicyLifeDetailDto>();
     }
 }

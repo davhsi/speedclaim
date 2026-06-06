@@ -28,11 +28,15 @@ public class JwtService : IJwtService
 
         var claims = new[]
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim(ClaimTypes.Role, roleCode),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new System.Security.Claims.Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new System.Security.Claims.Claim(JwtRegisteredClaimNames.Email, user.Email),
+            new System.Security.Claims.Claim("fullName", user.FullName),
+            new System.Security.Claims.Claim("kycStatus", user.KycStatus)
         };
+
+        var identityClaims = new List<System.Security.Claims.Claim>(claims);
+        identityClaims.Add(new System.Security.Claims.Claim(ClaimTypes.Role, roleCode));
+        identityClaims.Add(new System.Security.Claims.Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -40,7 +44,7 @@ public class JwtService : IJwtService
         var token = new JwtSecurityToken(
             issuer: jwtSettings["Issuer"],
             audience: jwtSettings["Audience"],
-            claims: claims,
+            claims: identityClaims,
             expires: DateTime.UtcNow.AddMinutes(double.Parse(jwtSettings["AccessTokenExpirationMinutes"] ?? "15")),
             signingCredentials: creds
         );

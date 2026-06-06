@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace SpeedClaim.Api.Models;
 
-public class Policy
+public abstract class Policy
 {
     public Guid Id { get; set; }
     public string PolicyNumber { get; set; }
@@ -27,8 +27,5 @@ public class Policy
     
     public ICollection<PolicyVersion> Versions { get; set; } = new List<PolicyVersion>();
     public ICollection<PolicyInsuredMember> InsuredMembers { get; set; } = new List<PolicyInsuredMember>();
-    
-    public PolicyHealthDetail HealthDetail { get; set; }
-    public PolicyVehicleDetail VehicleDetail { get; set; }
-    public PolicyLifeDetail LifeDetail { get; set; }
+    public virtual ICollection<PremiumSchedule> PremiumSchedules { get; set; } = new List<PremiumSchedule>();
 }

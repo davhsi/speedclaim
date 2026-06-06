@@ -7,8 +7,8 @@ namespace SpeedClaim.Api.Interfaces;
 
 public interface IProductService
 {
-    Task<IEnumerable<ProductDto>> GetAllProductsAsync();
-    Task<IEnumerable<ProductDto>> GetProductsByDomainAsync(string domain);
+    Task<SpeedClaim.Api.Dtos.Common.PagedResponse<ProductDto>> GetAllProductsAsync(int pageNumber, int pageSize);
+    Task<SpeedClaim.Api.Dtos.Common.PagedResponse<ProductDto>> GetProductsByDomainAsync(string domain, int pageNumber, int pageSize);
     Task<ProductDto> GetProductByIdAsync(Guid id);
     Task<ProductDto> CreateProductAsync(CreateProductRequest request);
     Task<ProductDto> UpdateProductAsync(Guid id, UpdateProductRequest request);

@@ -21,6 +21,17 @@ public class PolicyController : BaseApiController
         _policyService = policyService;
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetUserPolicies([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            return Unauthorized("User ID not found in token.");
+
+        var policies = await _policyService.GetPoliciesByUserAsync(userId, pageNumber, pageSize);
+        return Ok(policies);
+    }
+
     [HttpPost]
     public async Task<IActionResult> IssuePolicy([FromBody] CreatePolicyRequest request)
     {
@@ -37,28 +48,8 @@ public class PolicyController : BaseApiController
         }
 
         var policy = await _policyService.IssuePolicyAsync(request, agentUserId);
-        return CreatedAtAction(nameof(GetById), new { id = policy.Id }, policy);
+        return Created("", policy);
     }
-
-    [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id)
-    {
-        var policy = await _policyService.GetPolicyByIdAsync(id);
-        return Ok(policy);
-    }
-
-    [HttpGet("user/{userId:guid}")]
-    public async Task<IActionResult> GetByUser(Guid userId)
-    {
-        var currentUserIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var role = User.FindFirst(ClaimTypes.Role)?.Value;
-
-        if (currentUserIdStr != userId.ToString() && role == "CUSTOMER")
-        {
-            return Forbid();
-        }
-
-        var policies = await _policyService.GetPoliciesByUserAsync(userId);
-        return Ok(policies);
-    }
+    
+    
 }

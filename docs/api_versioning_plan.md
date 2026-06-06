@@ -12,55 +12,50 @@ The development cycle will follow a strict, phased approach:
 
 ---
 
-## API Version 1 (v1) - The Core Foundation
+## API Version 1 (v1) - The MVP (Completed)
 
-**Goal:** Establish a robust baseline system with functional Auth, Catalog, Policy Issuance, and basic file handling.
+**Goal:** Establish a robust baseline system with functional Auth, Catalog, Policy Issuance, Payments, Claims, and file handling.
 
 ### Features
 * **Authentication & Authorization**
   * JWT-based login and registration for Users and Agents.
   * Role-based endpoints via `[Authorize]`.
   * Basic password hashing (BCrypt).
+  * Strict KYC Enforcement (FluentValidation for Age/PAN/Aadhaar) and PII masking (Aadhaar Data Vault compliance).
 * **Document / File Management**
-  * Local File System storage for Profile Pictures (upload and retrieval).
-* **Catalog Management**
+  * Local File System storage for Profile Pictures, KYC Documents, and Claims Proofs.
+* **Catalog & Policy Management**
   * Full CRUD for `InsuranceProduct` entities.
-* **Policy Management**
-  * Issuance of base policies (`Health`, `Vehicle`, `Life`).
-  * Basic policy retrieval endpoints.
+  * Issuance of base policies (`Health`, `Vehicle`, `Life`) using TPH strategy.
+  * Pagination for efficient retrieval.
+* **Payment Processing & Claims**
+  * Sandbox Stripe integration and Webhooks for processing policy premiums.
+  * Complete Claims Engine (Submission, Adjuster assignment, Document attachment, Approval, Settlement).
 * **Testing**
-  * NUnit service tests covering `AuthService`, `ProductService`, and `PolicyService`.
-  * Repository interfaces heavily mocked for deterministic testing.
+  * Comprehensive NUnit service tests heavily mocking repository interfaces.
 
 ---
 
-## API Version 2 (v2) - Financial Integration & Claims
+## API Version 2 (v2) - Automation, Scale, & Cloud Infrastructure
 
-**Goal:** Add core business functionalities that rely heavily on third-party services like payments, as well as complex workflows such as the Claims lifecycle.
-
-### Features
-* **Payment Processing (Stripe Integration)**
-  * Sandbox Stripe endpoints for processing policy premiums.
-  * Webhooks for listening to successful/failed payments.
-* **Claims Engine**
-  * Claim submission endpoint with document attachment logic (extending local file storage).
-  * Agent/Admin claim review workflows (Approve, Reject, Request More Info).
-* **Automated Notifications**
-  * Gmail SMTP integration for sending policy issuance certificates and claim status updates.
-
----
-
-## API Version 3 (v3) - Advanced Features & Automation
-
-**Goal:** Optimize the platform for scale and background robustness.
+**Goal:** Add advanced features, real-time updates, and migrate infrastructure to the cloud for production readiness.
 
 ### Features
-* **Background Jobs (e.g., Hangfire / Quartz / Hosted Services)**
-  * Agent License Expiry Enforcement: Automatically flagging policies/agents if licenses expire.
-* **Cloud Storage Migration**
+* **Cloud & Infrastructure Upgrades**
   * Transition from Local File System to Azure Blob Storage for user profile pictures and claim documents.
-* **Analytics & Reporting**
-  * Endpoints aggregating claim processing speeds, agent performance, and premium revenue.
+  * Azure Key Vault integration for all secrets and credentials.
+* **Advanced Claim Features**
+  * Server-Side Claim Drafts.
+  * Two-Way Adjuster/Customer Messaging.
+  * Document Rejection Context tracking.
+* **Payout Automation (Stripe Connect)**
+  * Automating outbound claim settlement payouts directly to a user's bank account.
+* **Real-time UX & Notifications**
+  * SignalR integration for real-time websocket updates (e.g., live claim status updates).
+  * Granular Notification Preferences (Email/SMS toggles).
+* **Compliance & Background Jobs**
+  * `audit_logs` and `user_consents` implementation.
+  * Overdue premium crons and SLA escalations.
 
 ---
 

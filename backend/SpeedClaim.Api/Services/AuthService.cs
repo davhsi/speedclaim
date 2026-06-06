@@ -11,27 +11,39 @@ namespace SpeedClaim.Api.Services;
 
 public class AuthService : IAuthService
 {
-    private readonly SpeedClaimDbContext _context;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IJwtService _jwtService;
     private readonly IConfiguration _configuration;
     private readonly IMapper _mapper;
+    private readonly IEmailService _emailService;
 
-    public AuthService(SpeedClaimDbContext context, IJwtService jwtService, IConfiguration configuration, IMapper mapper)
+    public AuthService(IUnitOfWork unitOfWork, IJwtService jwtService, IConfiguration configuration, IMapper mapper, IEmailService emailService)
     {
-        _context = context;
+        _unitOfWork = unitOfWork;
         _jwtService = jwtService;
         _configuration = configuration;
         _mapper = mapper;
+        _emailService = emailService;
     }
 
     public async Task<AuthResponse> RegisterUserAsync(RegisterUserRequest request)
     {
-        if (await _context.Users.AnyAsync(u => u.Email == request.Email))
+        if (await _unitOfWork.Users.AnyAsync(u => u.Email == request.Email))
         {
             throw new ArgumentException("Email is already registered.");
         }
+        
+        if (!string.IsNullOrEmpty(request.AadhaarNumber) && await _unitOfWork.Users.AnyAsync(u => u.AadhaarNumber == request.AadhaarNumber))
+        {
+            throw new ArgumentException("Aadhaar Number is already registered to another user.");
+        }
+        
+        if (!string.IsNullOrEmpty(request.PanNumber) && await _unitOfWork.Users.AnyAsync(u => u.PanNumber == request.PanNumber))
+        {
+            throw new ArgumentException("PAN Number is already registered to another user.");
+        }
 
-        var customerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Code == "Customer")
+        var customerRole = await _unitOfWork.Roles.FirstOrDefaultAsync(r => r.Code == "Customer")
             ?? throw new InvalidOperationException("Customer role not found in database.");
 
         var user = new User
@@ -40,7 +52,15 @@ public class AuthService : IAuthService
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
             FullName = request.FullName,
             Phone = request.Phone,
-            Address = request.Address,
+            Street = request.Address.Street,
+            City = request.Address.City,
+            State = request.Address.State,
+            PostalCode = request.Address.PostalCode,
+            Country = request.Address.Country,
+            DateOfBirth = request.DateOfBirth,
+            AadhaarNumber = request.AadhaarNumber,
+            PanNumber = request.PanNumber,
+            Gender = request.Gender,
             ProfilePictureUrl = "",
             IsActive = true
         };
@@ -51,20 +71,34 @@ public class AuthService : IAuthService
             Domain = "ALL"
         });
 
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
+        await _unitOfWork.Users.AddAsync(user);
+        await _unitOfWork.CompleteAsync();
+
+        var emailSubject = "Welcome to SpeedClaim!";
+        var emailBody = $"<h1>Welcome {user.FullName}!</h1><p>Your account has been created successfully. You can now login to manage your insurance policies and claims.</p>";
+        await _emailService.SendEmailAsync(user.Email, user.FullName, emailSubject, emailBody);
 
         return await GenerateAuthResponseAsync(user);
     }
 
     public async Task<AuthResponse> RegisterAgentAsync(RegisterAgentRequest request)
     {
-        if (await _context.Users.AnyAsync(u => u.Email == request.Email))
+        if (await _unitOfWork.Users.AnyAsync(u => u.Email == request.Email))
         {
             throw new ArgumentException("Email is already registered.");
         }
+        
+        if (!string.IsNullOrEmpty(request.AadhaarNumber) && await _unitOfWork.Users.AnyAsync(u => u.AadhaarNumber == request.AadhaarNumber))
+        {
+            throw new ArgumentException("Aadhaar Number is already registered to another user.");
+        }
+        
+        if (!string.IsNullOrEmpty(request.PanNumber) && await _unitOfWork.Users.AnyAsync(u => u.PanNumber == request.PanNumber))
+        {
+            throw new ArgumentException("PAN Number is already registered to another user.");
+        }
 
-        var agentRole = await _context.Roles.FirstOrDefaultAsync(r => r.Code == "Agent")
+        var agentRole = await _unitOfWork.Roles.FirstOrDefaultAsync(r => r.Code == "Agent")
             ?? throw new InvalidOperationException("Agent role not found in database.");
 
         var user = new User
@@ -73,7 +107,13 @@ public class AuthService : IAuthService
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
             FullName = request.FullName,
             Phone = request.Phone,
-            Address = request.Address,
+            Street = request.Address.Street,
+            City = request.Address.City,
+            State = request.Address.State,
+            PostalCode = request.Address.PostalCode,
+            Country = request.Address.Country,
+            AadhaarNumber = request.AadhaarNumber,
+            PanNumber = request.PanNumber,
             ProfilePictureUrl = "",
             IsActive = true
         };
@@ -93,19 +133,16 @@ public class AuthService : IAuthService
             User = user
         };
 
-        _context.Users.Add(user);
-        _context.Agents.Add(agent);
-        await _context.SaveChangesAsync();
+        await _unitOfWork.Users.AddAsync(user);
+        await _unitOfWork.Agents.AddAsync(agent);
+        await _unitOfWork.CompleteAsync();
 
         return await GenerateAuthResponseAsync(user);
     }
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request)
     {
-        var user = await _context.Users
-            .Include(u => u.UserRoles)
-            .ThenInclude(ur => ur.Role)
-            .FirstOrDefaultAsync(u => u.Email == request.Email);
+        var user = await _unitOfWork.Users.GetUserByEmailWithRolesAsync(request.Email);
 
         if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
         {
@@ -122,11 +159,8 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponse> RefreshTokenAsync(RefreshTokenRequest request)
     {
-        var storedToken = await _context.RefreshTokens
-            .Include(rt => rt.User)
-            .ThenInclude(u => u.UserRoles)
-            .ThenInclude(ur => ur.Role)
-            .FirstOrDefaultAsync(rt => rt.TokenHash == request.RefreshToken);
+        var storedToken = await _unitOfWork.RefreshTokens
+            .GetByTokenWithUserAsync(request.RefreshToken);
 
         if (storedToken == null || storedToken.ExpiresAt < DateTime.UtcNow)
         {
@@ -140,7 +174,8 @@ public class AuthService : IAuthService
 
         // Revoke current token
         storedToken.IsRevoked = true;
-        _context.RefreshTokens.Update(storedToken);
+        _unitOfWork.RefreshTokens.Update(storedToken);
+        await _unitOfWork.CompleteAsync();
 
         return await GenerateAuthResponseAsync(storedToken.User);
     }
@@ -161,8 +196,8 @@ public class AuthService : IAuthService
             IpAddress = "N/A" // To be passed from controller context ideally
         };
 
-        _context.RefreshTokens.Add(refreshToken);
-        await _context.SaveChangesAsync();
+        await _unitOfWork.RefreshTokens.AddAsync(refreshToken);
+        await _unitOfWork.CompleteAsync();
 
         var userDto = _mapper.Map<UserDto>(user);
 

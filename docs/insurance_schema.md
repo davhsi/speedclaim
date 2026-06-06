@@ -2,6 +2,8 @@
 
 This document outlines the core database schema for the SpeedClaim platform. The design utilizes a strictly typed, explicit schema supporting a multi-domain architecture (Health, Vehicle, Life) along with a rigorous compliance, audit, and role-based access control layer.
 
+> [!NOTE]
+> For the live implementation status of these tables, please refer to our master tracking document: [overall-checklist.md](file:///Users/davishe/.gemini/antigravity-ide/brain/0bdab543-c7ed-4e7c-a89c-19f32cb696e3/overall-checklist.md).
 ## 1. Database Schema
 
 ### 1.1. Auth & Identity Domain
@@ -13,8 +15,16 @@ CREATE TABLE users (
     password_hash       varchar(255) NOT NULL,
     full_name           varchar(200),
     phone               varchar(20),
-    address             text,
+    street              text,
+    city                varchar(100),
+    state               varchar(100),
+    postal_code         varchar(20),
+    country             varchar(100),
     date_of_birth       date,
+    aadhaar_number      varchar(12) NOT NULL UNIQUE,  -- Stored raw, but masked in API responses to protect PII
+    pan_number          varchar(10) NOT NULL UNIQUE,  -- Stored raw, but masked in API responses to protect PII
+    gender              varchar(20) NOT NULL,
+    kyc_status          varchar(20) NOT NULL DEFAULT 'PENDING',
     profile_picture_url text,
     timezone            varchar(50) DEFAULT 'UTC',
     is_active           boolean DEFAULT true,
@@ -50,7 +60,9 @@ CREATE TABLE refresh_tokens (
 );
 ```
 
-### 1.2. Required Compliance Layer
+### 1.2. Required Compliance Layer [DEFERRED FOR PHASE 2]
+
+*Note: The following tables (`user_consents`, `audit_logs`) are reserved for subsequent phases and do not exist in the V1 MVP.*
 
 ```sql
 CREATE TABLE user_consents (
@@ -123,9 +135,28 @@ CREATE TABLE policies (
     domain            varchar(20) NOT NULL,
     created_at        timestamptz DEFAULT now(),
     deleted_at        timestamptz,
+    
+    -- Table-Per-Hierarchy (TPH) Fields for Domain-Specific Policies
+    -- HEALTH
+    covers_dental     boolean,
+    deductible        decimal(12,2),
+    network_type      varchar(20),
+    -- VEHICLE
+    vehicle_number    varchar(30),
+    make              varchar(100),
+    model             varchar(100),
+    manufacture_year  integer,
+    insured_declared_value decimal(14,2),
+    is_comprehensive  boolean,
+    -- LIFE
+    nominee_name      varchar(200),
+    nominee_relation  varchar(50),
+    nominee_phone     varchar(20),
+    has_accidental_rider boolean,
+
     CONSTRAINT CK_policies_status CHECK (status IN ('ACTIVE', 'LAPSED', 'CANCELLED', 'EXPIRED', 'CLAIMED')),
     CONSTRAINT CK_policies_payment_frequency CHECK (payment_frequency IN ('MONTHLY', 'QUARTERLY', 'ANNUAL')),
-    CONSTRAINT UQ_policy_id_domain UNIQUE (id, domain),  -- Safeguard link for claims
+    CONSTRAINT UQ_policy_id_domain UNIQUE (id, domain),
     CONSTRAINT FK_policies_product_domain FOREIGN KEY (product_id, domain) REFERENCES insurance_products(id, domain)
 );
 
@@ -143,35 +174,6 @@ CREATE TABLE policy_versions (
     UNIQUE (policy_id, version_number)
 );
 
-CREATE TABLE policy_health_details (
-    policy_id         uuid PRIMARY KEY REFERENCES policies(id) ON DELETE CASCADE,
-    covers_dental     boolean NOT NULL DEFAULT false,
-    deductible        decimal(12,2) NOT NULL DEFAULT 0.00,
-    network_type      varchar(20) NOT NULL,
-    updated_at        timestamptz DEFAULT now(),
-    CONSTRAINT CK_health_network CHECK (network_type IN ('TPA', 'CASHLESS', 'REIMBURSEMENT'))
-);
-
-CREATE TABLE policy_vehicle_details (
-    policy_id              uuid PRIMARY KEY REFERENCES policies(id) ON DELETE CASCADE,
-    vehicle_number         varchar(30) NOT NULL UNIQUE,
-    make                   varchar(100) NOT NULL,
-    model                  varchar(100) NOT NULL,
-    manufacture_year       integer NOT NULL,
-    insured_declared_value decimal(14,2) NOT NULL,  -- IDV: determines maximum payout
-    is_comprehensive       boolean NOT NULL DEFAULT true,  -- false = third-party only
-    updated_at             timestamptz DEFAULT now()
-);
-
-CREATE TABLE policy_life_details (
-    policy_id            uuid PRIMARY KEY REFERENCES policies(id) ON DELETE CASCADE,
-    nominee_name         varchar(200) NOT NULL,
-    nominee_relation     varchar(50) NOT NULL,
-    nominee_phone        varchar(20),
-    has_accidental_rider boolean NOT NULL DEFAULT false,
-    updated_at           timestamptz DEFAULT now()
-);
-
 CREATE TABLE policy_insured_members (
     id                 uuid PRIMARY KEY,
     policy_id          uuid NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
@@ -181,42 +183,19 @@ CREATE TABLE policy_insured_members (
     is_primary         boolean DEFAULT false
 );
 
-CREATE TABLE payments (
-    id                     uuid PRIMARY KEY,
-    policy_id              uuid REFERENCES policies(id),   -- NULL for claim-only settlements
-    claim_id               uuid,                           -- Set for CLAIM_SETTLEMENT type; FK added after claims table
-    payment_type           varchar(20) NOT NULL DEFAULT 'PREMIUM',  -- 'PREMIUM', 'CLAIM_SETTLEMENT', 'REFUND'
-    original_payment_id    uuid REFERENCES payments(id),  -- Self-ref for REFUND rows
-    gateway_transaction_id varchar(100) NOT NULL UNIQUE,
-    payment_gateway        varchar(50) NOT NULL,
-    amount                 decimal(12,2) NOT NULL,
-    status                 varchar(20) NOT NULL,
-    paid_at                timestamptz,
-    CONSTRAINT CK_payment_status CHECK (status IN ('SUCCESS', 'FAILED', 'PENDING', 'DISPUTED', 'REFUNDED')),
-    CONSTRAINT CK_payment_type CHECK (payment_type IN ('PREMIUM', 'CLAIM_SETTLEMENT', 'REFUND'))
+CREATE TABLE payment_transactions (
+    id                         uuid PRIMARY KEY,
+    policy_id                  uuid NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
+    stripe_payment_intent_id   varchar(255) NOT NULL UNIQUE,
+    stripe_event_id            varchar(255) NOT NULL,
+    amount                     decimal(12,2) NOT NULL,
+    currency                   varchar(3) DEFAULT 'INR',
+    status                     varchar(50) NOT NULL,
+    created_at                 timestamptz DEFAULT now(),
+    updated_at                 timestamptz DEFAULT now()
 );
 
-CREATE TABLE payment_status_history (
-    id             uuid PRIMARY KEY,
-    payment_id     uuid NOT NULL REFERENCES payments(id) ON DELETE CASCADE,
-    old_status     varchar(20),
-    new_status     varchar(20) NOT NULL,
-    changed_by     uuid REFERENCES users(id),
-    remarks        text,
-    changed_at     timestamptz DEFAULT now()
-);
-
-CREATE TABLE premium_schedule (
-    id                  uuid PRIMARY KEY,
-    policy_id           uuid NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
-    installment_number  integer NOT NULL,
-    amount_due          decimal(12,2) NOT NULL,
-    due_date            date NOT NULL,
-    status              varchar(20) NOT NULL,
-    payment_id          uuid REFERENCES payments(id),
-    UNIQUE (policy_id, installment_number),
-    CONSTRAINT CK_premium_schedule_status CHECK (status IN ('PENDING', 'PAID', 'OVERDUE'))
-);
+-- [DEFERRED FOR PHASE 2] payment_status_history, premium_schedule tables are reserved for subsequent phases.
 ```
 
 ### 1.5. Claims Domain
@@ -246,8 +225,9 @@ CREATE TABLE claims (
     CONSTRAINT FK_claims_policy_domain FOREIGN KEY (policy_id, domain) REFERENCES policies(id, domain)
 );
 
--- Forward FK from payments to claims (payments table created first)
-ALTER TABLE payments ADD CONSTRAINT FK_payments_claim FOREIGN KEY (claim_id) REFERENCES claims(id);
+-- [DEFERRED FOR PHASE 2] Domain-Specific Claim Details
+-- The following tables (`claim_health_details`, `claim_vehicle_details`, `claim_life_details`) 
+-- are reserved for V2 to capture extended details beyond `incident_description`.
 
 CREATE TABLE claim_health_details (
     claim_id          uuid PRIMARY KEY REFERENCES claims(id) ON DELETE CASCADE,
@@ -319,6 +299,7 @@ CREATE TABLE documents (
     CONSTRAINT FK_documents_doctype FOREIGN KEY (document_type_code, domain) REFERENCES document_types(code, domain)
 );
 
+-- [DEFERRED FOR PHASE 2] Document Checklist Tracker
 CREATE TABLE claim_document_checklist (
     id                  uuid PRIMARY KEY,
     claim_id            uuid NOT NULL,
