@@ -5,8 +5,8 @@ A claim is filed against an active policy and processed through a structured wor
 managed by assigned adjusters. Every state transition is immutably recorded in
 CLAIM_WORKFLOW. Domain-specific detail tables (CLAIM_HEALTH_DETAILS,
 CLAIM_VEHICLE_DETAILS, CLAIM_LIFE_DETAILS) extend the core CLAIMS row with
-type-specific evidence. Documents are attached via the DOCUMENTS table. Settlement
-is executed via the PAYMENTS table on approval.
+type-specific evidence. Documents are attached via the DOCUMENTS table, utilizing composite foreign keys with domains to strictly enforce cross-domain document integrity. Settlement
+is executed via the PAYMENTS table on approval, with settlement statuses tracked in CLAIM_SETTLEMENT_STATUS_HISTORY.
 
 ## Claim Submission
 - Claims can be submitted by a POLICYHOLDER or an AGENT on behalf of a policyholder.
@@ -29,10 +29,10 @@ is executed via the PAYMENTS table on approval.
       repair_estimate. fir_number is mandatory if is_total_loss is true.
       surveyor_name is required before the claim can move past UNDER_REVIEW.
     - **Life:** CLAIM_LIFE_DETAILS requires cause_of_death, certifying_doctor,
-      claimant_name, and claimant_relation. claimant_name must match the nominee
+      claimant_name, and claimant_relation. claimant_name must match the nominee_name
       recorded on POLICY_LIFE_DETAILS before settlement can be triggered.
 - Required documents must be uploaded to DOCUMENTS with the claim_id set before
-  the claim can advance from SUBMITTED to UNDER_REVIEW:
+  the claim can advance from SUBMITTED to UNDER_REVIEW. The CLAIM_DOCUMENT_CHECKLIST strictly enforces domain-appropriate documents via composite keys:
     - Health: discharge summary, treating doctor certificate, bills
     - Vehicle: FIR copy (if applicable), repair estimate, surveyor report
     - Life: death certificate, claimant identity proof, nominee relationship proof
@@ -49,6 +49,8 @@ is executed via the PAYMENTS table on approval.
     - **UNDER_REVIEW:** Adjuster has been assigned and has begun assessment.
       This state is reachable only when all required documents are verified AND
       assigned_adjuster IS NOT NULL.
+    - **ESCALATED:** Claim has been escalated due to approval limit breach or SLA
+      breach. Notifies the manager identified via the adjuster's reporting chain.
     - **APPROVED:** Adjuster has validated the claim. approved_amount is set
       (may differ from claimed_amount). A PAYMENTS row with
       payment_type = CLAIM_SETTLEMENT and status PENDING is created atomically.
@@ -65,15 +67,17 @@ is executed via the PAYMENTS table on approval.
   available as terminal exits from UNDER_REVIEW or APPROVED respectively.
 - SLA monitoring: IRDAI mandates 30-day claim settlement targets. The SLA clock
   starts at CLAIMS.created_at. A background job monitors claims approaching the
-  30-day window and escalates priority (priority field: 1=critical, 2=high,
+  30-day window and escalates priority (CLAIMS.priority: 1=critical, 2=high,
   3=normal) and notifies the assigned adjuster.
 - priority can be manually overridden by Admin at any point in the workflow.
 
 ## Adjuster & Approval Rules
-- Only users with the ADJUSTER role can transition claims from SUBMITTED to
-  UNDER_REVIEW, and from UNDER_REVIEW to APPROVED or REJECTED.
-- For the capstone, all adjusters have unlimited financial authority. Future extension:
-  add an `approval_limit` column to a future `ADJUSTER_PROFILES` table.
+- Adjusters have functional roles like `CLAIM_JUNIOR`, `CLAIM_SENIOR`, and `CLAIM_MANAGER`,
+  which dictate their financial authority through `approval_limit` on USER_ROLES.
+- Claims are auto-assigned or escalated based on the required approval amount matching
+  an adjuster's approval_limit.
+- Claims can transition to an ESCALATED state when the claimed amount exceeds the
+  assigned adjuster's approval_limit.
 - Only ADMIN users can assign or reassign the assigned_adjuster on a CLAIMS row.
 - Adjusters can only action claims assigned to them. An adjuster cannot approve
   or reject a claim where assigned_adjuster != their own user ID, enforced at
@@ -87,8 +91,5 @@ is executed via the PAYMENTS table on approval.
 - All approval and rejection actions are written to both CLAIM_WORKFLOW
   (for claim-specific history) and AUDIT_LOGS (for system-wide compliance log)
   in the same transaction.
-- PHI fields accessed during claim review (diagnosis, cause_of_death,
-  hospital_name, treating_doctor) must log a PHI_ACCESS_LOGS entry per read,
-  recording the adjuster's user ID as accessor_id.
 - ADMIN users can force-close any claim (transition to CLOSED) at any workflow
   stage with a mandatory remarks entry in CLAIM_WORKFLOW.

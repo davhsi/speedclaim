@@ -35,29 +35,17 @@ every downstream policy and claim operation.
 - The system enforces license expiry automatically — agents with
   license_valid_until < today are blocked from policy-creation endpoints regardless
   of their active role assignment in USER_ROLES.
-- Commission rates are stored per agent as a decimal percentage. IRDAI regulatory
-  disclosure requirements mandate this is recorded and auditable.
-- Commission calculation is derived from `AGENTS.commission_rate × PAYMENTS.amount` where
-  payment_type = PREMIUM and status = SUCCESS. Actual disbursement is a batch process
-  outside the core system scope for the capstone (planned future extension via a
-  COMPLIANCE_MONEY_LEDGER table).
+- Commission rates are stored per agent as a decimal percentage in AGENTS.commission_rate
+  (e.g. 0.0500 = 5%). IRDAI regulatory disclosure requirements mandate this is recorded
+  and auditable. Actual disbursement is a batch process outside the core system scope.
 - Agents can be deactivated (is_active = false) without deleting their record,
   preserving the full transactional and audit trail for all policies they issued.
 - Policies sold directly by policyholders without an agent set agent_id to NULL on
   the POLICIES row — direct purchase is a supported flow.
-- Future architecture includes BROKER_QUALIFIED_PERSONS for corporate broker entities
-  where individual certified professionals (BQPs) must be mapped to transactions,
-  with NIA certification numbers and principal officer flags tracked separately.
 
 ## Notifications & Communications
-- All notifications are template-driven via NOTIFICATION_TEMPLATES. Templates are
-  keyed by a unique code (e.g. CLAIM_APPROVED_EMAIL) and support three channels:
-  EMAIL, SMS, and PUSH. Email templates include a subject line. All templates use
-  Handlebars-style variable substitution.
-- Every dispatched notification is recorded in the NOTIFICATIONS table with status
-  (PENDING | SENT | FAILED | BOUNCED), the rendered payload as JSONB, and
-  error_message populated on failure — enabling automatic multi-channel fallback
-  and retry logic.
+- Notifications are handled in application business logic. No dedicated database tables
+  are used for notification templates or dispatch records in this version.
 - The following events must trigger notifications per IRDAI Policyholders'
   Interests Reg. 2024 mandatory communication requirements:
     - Policy issued → policyholder EMAIL + SMS
@@ -65,12 +53,6 @@ every downstream policy and claim operation.
     - Premium payment received → policyholder EMAIL
     - Premium overdue / policy lapse warning → policyholder EMAIL + SMS
     - Claim submitted confirmation → policyholder EMAIL + SMS
-    - Claim status change (UNDER_REVIEW, APPROVED, REJECTED, SETTLED) →
-      policyholder EMAIL + SMS
+    - Claim status change (UNDER_REVIEW, APPROVED, REJECTED, SETTLED) → policyholder EMAIL + SMS
     - Claim rejection with mandatory reason → policyholder EMAIL
-    - Document verified or rejected → policyholder EMAIL
     - Agent license expiry warning (30 days prior) → agent EMAIL
-- sent_at is populated only after gateway delivery confirmation — NULL indicates
-  the message has not been confirmed delivered yet.
-- NOTIFICATIONS rows are never deleted; they serve as compliance proof of mandatory
-  communications.
