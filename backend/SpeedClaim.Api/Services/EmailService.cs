@@ -14,11 +14,13 @@ public class EmailService : IEmailService
 {
     private readonly IConfiguration _configuration;
     private readonly ILogger<EmailService> _logger;
+    private readonly ISmtpClientFactory _smtpClientFactory;
 
-    public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
+    public EmailService(IConfiguration configuration, ILogger<EmailService> logger, ISmtpClientFactory smtpClientFactory)
     {
         _configuration = configuration;
         _logger = logger;
+        _smtpClientFactory = smtpClientFactory;
     }
 
     public async Task SendEmailAsync(string toEmail, string toName, string subject, string htmlBody)
@@ -44,7 +46,7 @@ public class EmailService : IEmailService
             email.Subject = subject;
             email.Body = new TextPart(TextFormat.Html) { Text = htmlBody };
 
-            using var smtp = new SmtpClient();
+            using var smtp = _smtpClientFactory.CreateClient();
             await smtp.ConnectAsync(host, port, SecureSocketOptions.StartTls);
             await smtp.AuthenticateAsync(senderEmail, appPassword);
             await smtp.SendAsync(email);

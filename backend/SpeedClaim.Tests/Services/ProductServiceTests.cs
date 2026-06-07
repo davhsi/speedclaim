@@ -135,4 +135,31 @@ public class ProductServiceTests
         _mockProductRepo.Verify(r => r.Update(existingProduct), Times.Once);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
+
+    [Test]
+    public void DeleteProductAsync_NonExistingId_ThrowsKeyNotFoundException()
+    {
+        _mockProductRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((InsuranceProduct?)null);
+        Assert.ThrowsAsync<KeyNotFoundException>(async () => await _productService.DeleteProductAsync(Guid.NewGuid()));
+    }
+
+    [Test]
+    public async Task GetProductByIdAsync_ExistingId_ReturnsProduct()
+    {
+        var id = Guid.NewGuid();
+        var existingProduct = new InsuranceProduct { Id = id, Code = "L1", Name = "Name", Domain = "LIFE" };
+        _mockProductRepo.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(existingProduct);
+
+        var result = await _productService.GetProductByIdAsync(id);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Code, Is.EqualTo("L1"));
+    }
+
+    [Test]
+    public void GetProductByIdAsync_NonExistingId_ThrowsKeyNotFoundException()
+    {
+        _mockProductRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((InsuranceProduct?)null);
+        Assert.ThrowsAsync<KeyNotFoundException>(async () => await _productService.GetProductByIdAsync(Guid.NewGuid()));
+    }
 }

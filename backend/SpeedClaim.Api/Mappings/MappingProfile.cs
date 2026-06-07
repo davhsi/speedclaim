@@ -15,6 +15,8 @@ public class MappingProfile : Profile
             .ForCtorParam("Role", opt => opt.MapFrom(src => 
                 (src.UserRoles.FirstOrDefault() != null && src.UserRoles.FirstOrDefault()!.Role != null) ? src.UserRoles.FirstOrDefault()!.Role!.Code : "CUSTOMER"));
 
+        CreateMap<Address, SpeedClaim.Api.Dtos.Common.AddressDto>().ReverseMap();
+
         // Catalog Mappings
         CreateMap<InsuranceProduct, ProductDto>();
 

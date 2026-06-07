@@ -12,6 +12,7 @@ public class PremiumSchedule
     public string Status { get; set; } = "PENDING"; // PENDING, PAID, OVERDUE
     public Guid? PaymentId { get; set; }
 
+    // Navigation Properties
     public virtual Policy Policy { get; set; } = null!;
     public virtual PaymentTransaction? Payment { get; set; }
 }

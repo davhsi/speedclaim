@@ -13,6 +13,7 @@ public class UserRole
     public DateTimeOffset AssignedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? RevokedAt { get; set; }
 
-    public User User { get; set; }
-    public Role Role { get; set; }
+    // Navigation Properties
+    public virtual User User { get; set; }
+    public virtual Role Role { get; set; }
 }

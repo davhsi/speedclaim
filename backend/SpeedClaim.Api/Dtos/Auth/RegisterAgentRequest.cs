@@ -5,11 +5,14 @@ namespace SpeedClaim.Api.Dtos.Auth;
 public record RegisterAgentRequest(
     string Email,
     string Password,
-    string FullName,
+    string Salutation,
+    string FirstName,
+    string LastName,
     string Phone,
     AddressDto Address,
     string LicenseNumber,
     string AgencyName,
     string AadhaarNumber,
-    string PanNumber
+    string PanNumber,
+    SpeedClaim.Api.Models.Enums.MaritalStatus MaritalStatus
 );

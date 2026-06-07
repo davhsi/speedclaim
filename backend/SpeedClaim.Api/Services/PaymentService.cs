@@ -17,12 +17,14 @@ public class PaymentService : IPaymentService
     private readonly IEmailService _emailService;
     private readonly string _webhookSecret;
     private readonly string _publishableKey;
+    private readonly IStripeWrapper _stripeWrapper;
 
-    public PaymentService(IUnitOfWork unitOfWork, IConfiguration configuration, IEmailService emailService)
+    public PaymentService(IUnitOfWork unitOfWork, IConfiguration configuration, IEmailService emailService, IStripeWrapper stripeWrapper)
     {
         _unitOfWork = unitOfWork;
         _configuration = configuration;
         _emailService = emailService;
+        _stripeWrapper = stripeWrapper;
         _webhookSecret = _configuration.GetSection("Stripe")["WebhookSecret"] ?? string.Empty;
         _publishableKey = _configuration.GetSection("Stripe")["PublishableKey"] ?? string.Empty;
     }
@@ -49,8 +51,7 @@ public class PaymentService : IPaymentService
             }
         };
 
-        var service = new PaymentIntentService();
-        var paymentIntent = await service.CreateAsync(options);
+        var paymentIntent = await _stripeWrapper.CreatePaymentIntentAsync(options);
 
         var transaction = new PaymentTransaction
         {
@@ -79,7 +80,7 @@ public class PaymentService : IPaymentService
     {
         try
         {
-            var stripeEvent = EventUtility.ConstructEvent(json, stripeSignature, _webhookSecret);
+            var stripeEvent = _stripeWrapper.ConstructEvent(json, stripeSignature, _webhookSecret);
 
             // Idempotency check using StripeEventId
             var existingEvent = await _unitOfWork.PaymentTransactions.SingleOrDefaultAsync(t => t.StripeEventId == stripeEvent.Id);

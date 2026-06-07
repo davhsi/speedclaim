@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SpeedClaim.Api.Context;
@@ -11,9 +12,11 @@ using SpeedClaim.Api.Context;
 namespace SpeedClaim.Api.Migrations
 {
     [DbContext(typeof(SpeedClaimDbContext))]
-    partial class SpeedClaimDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260607075211_RefineUserNamingSchema")]
+    partial class RefineUserNamingSchema
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,49 +24,6 @@ namespace SpeedClaim.Api.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("SpeedClaim.Api.Models.Address", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("City")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("city");
-
-                    b.Property<string>("Country")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("country");
-
-                    b.Property<string>("PostalCode")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("postal_code");
-
-                    b.Property<string>("State")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("state");
-
-                    b.Property<string>("Street")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("street");
-
-                    b.HasKey("Id")
-                        .HasName("PK_addresses");
-
-                    b.ToTable("addresses");
-                });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.Agent", b =>
                 {
@@ -954,10 +914,6 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<Guid>("AddressId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("address_id");
-
                     b.Property<DateTime>("DateOfBirth")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("date_of_birth");
@@ -996,8 +952,6 @@ namespace SpeedClaim.Api.Migrations
 
                     b.HasKey("Id")
                         .HasName("PK_policy_insured_members");
-
-                    b.HasIndex("AddressId");
 
                     b.HasIndex("PolicyId");
 
@@ -1212,9 +1166,15 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("character varying(12)")
                         .HasColumnName("aadhaar_number");
 
-                    b.Property<Guid>("AddressId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("address_id");
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("city");
+
+                    b.Property<string>("Country")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("country");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -1262,12 +1222,6 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("last_name");
 
-                    b.Property<string>("MaritalStatus")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("marital_status");
-
                     b.Property<string>("PanNumber")
                         .IsRequired()
                         .HasMaxLength(10)
@@ -1285,6 +1239,11 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("text")
                         .HasColumnName("phone");
 
+                    b.Property<string>("PostalCode")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("postal_code");
+
                     b.Property<string>("ProfilePictureUrl")
                         .IsRequired()
                         .HasColumnType("text")
@@ -1295,6 +1254,16 @@ namespace SpeedClaim.Api.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
                         .HasColumnName("salutation");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("state");
+
+                    b.Property<string>("Street")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("street");
 
                     b.Property<string>("Timezone")
                         .IsRequired()
@@ -1307,8 +1276,6 @@ namespace SpeedClaim.Api.Migrations
                     b.HasIndex("AadhaarNumber")
                         .IsUnique()
                         .HasDatabaseName("uq_users_aadhaar");
-
-                    b.HasIndex("AddressId");
 
                     b.HasIndex("Email")
                         .IsUnique()
@@ -1730,21 +1697,12 @@ namespace SpeedClaim.Api.Migrations
 
             modelBuilder.Entity("SpeedClaim.Api.Models.PolicyInsuredMember", b =>
                 {
-                    b.HasOne("SpeedClaim.Api.Models.Address", "Address")
-                        .WithMany()
-                        .HasForeignKey("AddressId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("FK_policy_insured_members_addresses_address_id");
-
                     b.HasOne("SpeedClaim.Api.Models.Policy", "Policy")
                         .WithMany("InsuredMembers")
                         .HasForeignKey("PolicyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("FK_policy_insured_members_policies_policy_id");
-
-                    b.Navigation("Address");
 
                     b.Navigation("Policy");
                 });
@@ -1790,18 +1748,6 @@ namespace SpeedClaim.Api.Migrations
                         .HasConstraintName("FK_refresh_tokens_users_user_id");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("SpeedClaim.Api.Models.User", b =>
-                {
-                    b.HasOne("SpeedClaim.Api.Models.Address", "Address")
-                        .WithMany()
-                        .HasForeignKey("AddressId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("FK_users_addresses_address_id");
-
-                    b.Navigation("Address");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.UserConsent", b =>

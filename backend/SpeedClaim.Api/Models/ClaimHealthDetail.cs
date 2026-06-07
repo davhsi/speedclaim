@@ -14,6 +14,7 @@ public class ClaimHealthDetail
     public Guid? InsuredMemberId { get; set; }
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+    // Navigation Properties
     public virtual Claim Claim { get; set; } = null!;
     public virtual PolicyInsuredMember? InsuredMember { get; set; }
 }

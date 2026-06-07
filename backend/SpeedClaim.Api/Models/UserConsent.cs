@@ -13,5 +13,6 @@ public class UserConsent
     public DateTime GrantedAt { get; set; } = DateTime.UtcNow;
     public DateTime? WithdrawnAt { get; set; }
 
+    // Navigation Properties
     public virtual User User { get; set; } = null!;
 }

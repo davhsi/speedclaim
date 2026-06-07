@@ -76,7 +76,11 @@ builder.Services.AddScoped<IProductService, SpeedClaim.Api.Services.ProductServi
 builder.Services.AddScoped<IPolicyService, PolicyService>();
 builder.Services.AddScoped<IClaimService, ClaimService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
-builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IStripeWrapper, StripeWrapper>();
+
+// Infrastructure Services
+builder.Services.AddSingleton<ISmtpClientFactory, SmtpClientFactory>();
+builder.Services.AddTransient<IEmailService, EmailService>();
 builder.Services.AddScoped<IStorageService, LocalStorageService>();
 
 builder.Services.AddAutoMapper(config =>

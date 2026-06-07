@@ -32,6 +32,7 @@ public class SpeedClaimDbContext : DbContext
     public DbSet<UserConsent> UserConsents { get; set; } = null!;
     public DbSet<PaymentStatusHistory> PaymentStatusHistories { get; set; } = null!;
     public DbSet<PremiumSchedule> PremiumSchedules { get; set; } = null!;
+    public DbSet<Address> Addresses { get; set; } = null!;
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -49,6 +50,17 @@ public class SpeedClaimDbContext : DbContext
             }
         }
 
+        // Configuration for Address
+        modelBuilder.Entity<Address>(e =>
+        {
+            e.HasKey(x => x.Id).HasName("PK_addresses");
+            e.Property(x => x.Street).IsRequired().HasMaxLength(255);
+            e.Property(x => x.City).IsRequired().HasMaxLength(100);
+            e.Property(x => x.State).IsRequired().HasMaxLength(100);
+            e.Property(x => x.PostalCode).IsRequired().HasMaxLength(20);
+            e.Property(x => x.Country).IsRequired().HasMaxLength(100);
+        });
+
         // Configuration for Identity
         modelBuilder.Entity<User>(e =>
         {
@@ -56,6 +68,10 @@ public class SpeedClaimDbContext : DbContext
             e.HasIndex(x => x.Email).IsUnique().HasDatabaseName("uq_users_email");
             e.Property(x => x.Email).IsRequired().HasMaxLength(255);
             e.Property(x => x.PasswordHash).IsRequired().HasMaxLength(255);
+            e.Property(x => x.Salutation).HasMaxLength(20);
+            e.Property(x => x.FirstName).IsRequired().HasMaxLength(100);
+            e.Property(x => x.LastName).IsRequired().HasMaxLength(100);
+            e.Ignore(x => x.FullName);
             
             e.HasIndex(x => x.AadhaarNumber).IsUnique().HasDatabaseName("uq_users_aadhaar");
             e.Property(x => x.AadhaarNumber).IsRequired().HasMaxLength(12);
@@ -64,7 +80,10 @@ public class SpeedClaimDbContext : DbContext
             e.Property(x => x.PanNumber).IsRequired().HasMaxLength(10);
             
             e.Property(x => x.Gender).IsRequired().HasConversion<string>().HasMaxLength(20);
+            e.Property(x => x.MaritalStatus).IsRequired().HasConversion<string>().HasMaxLength(20);
             e.Property(x => x.KycStatus).IsRequired().HasMaxLength(20);
+
+            e.HasOne(x => x.Address).WithMany().HasForeignKey(x => x.AddressId).HasConstraintName("FK_users_addresses_address_id").OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Role>(e =>
@@ -180,9 +199,13 @@ public class SpeedClaimDbContext : DbContext
         modelBuilder.Entity<PolicyInsuredMember>(e =>
         {
             e.HasKey(x => x.Id).HasName("PK_policy_insured_members");
-            e.Property(x => x.FullName).IsRequired().HasMaxLength(200);
+            e.Property(x => x.Salutation).HasMaxLength(20);
+            e.Property(x => x.FirstName).IsRequired().HasMaxLength(100);
+            e.Property(x => x.LastName).IsRequired().HasMaxLength(100);
+            e.Ignore(x => x.FullName);
             e.Property(x => x.RelationToHolder).IsRequired().HasMaxLength(50);
             e.HasOne(x => x.Policy).WithMany(p => p.InsuredMembers).HasForeignKey(x => x.PolicyId).HasConstraintName("FK_policy_insured_members_policies_policy_id").OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Address).WithMany().HasForeignKey(x => x.AddressId).HasConstraintName("FK_policy_insured_members_addresses_address_id").OnDelete(DeleteBehavior.Restrict);
         });
 
         // Configuration for Documents

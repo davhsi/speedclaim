@@ -14,5 +14,6 @@ public class PolicyVersion
     public DateTimeOffset? EffectiveUntil { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
-    public Policy Policy { get; set; }
+    // Navigation Properties
+    public virtual Policy Policy { get; set; }
 }

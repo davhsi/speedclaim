@@ -1,0 +1,219 @@
+@baseUrl = http://localhost:5062/api
+@adminEmail = admin@speedclaim.com
+@adminPass = Admin@123
+@userEmail = customer@example.com
+@userPass = Customer@123
+@agentEmail = agent@speedclaim.com
+@agentPass = Agent@123
+
+# ==========================================
+# 1. AUTHENTICATION & REGISTRATION
+# ==========================================
+
+### 1.1 Register a new Customer
+# @name registerCustomer
+POST {{baseUrl}}/auth/register/customer
+Content-Type: application/json
+
+{
+  "email": "{{userEmail}}",
+  "password": "{{userPass}}",
+  "fullName": "John Doe",
+  "phone": "+19876543210"
+}
+
+### 1.2 Login as Customer
+# @name loginCustomer
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{userEmail}}",
+  "password": "{{userPass}}"
+}
+
+@userToken = {{loginCustomer.response.body.token}}
+
+### 1.3 Register a new Agent
+# @name registerAgent
+POST {{baseUrl}}/auth/register/agent
+Content-Type: application/json
+
+{
+  "email": "{{agentEmail}}",
+  "password": "{{agentPass}}",
+  "fullName": "Jane Agent",
+  "phone": "+19876543211",
+  "licenseNumber": "LIC-998877",
+  "agencyName": "Speedy Agency",
+  "aadhaarNumber": "123456789012",
+  "panNumber": "ABCDE1234F",
+  "address": {
+    "street": "123 Main St",
+    "city": "Mumbai",
+    "state": "MH",
+    "postalCode": "400001",
+    "country": "India"
+  }
+}
+
+### 1.4 Login as Agent
+# @name loginAgent
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{agentEmail}}",
+  "password": "{{agentPass}}"
+}
+
+@agentToken = {{loginAgent.response.body.token}}
+
+### 1.5 Login as Admin (Seed Data)
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{adminEmail}}",
+  "password": "{{adminPass}}"
+}
+
+@adminToken = {{loginAdmin.response.body.token}}
+
+# ==========================================
+# 2. CATALOG & PRODUCTS (Admin Only)
+# ==========================================
+
+### 2.1 Create Insurance Product
+# @name createProduct
+POST {{baseUrl}}/products
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "code": "HEALTH-PRM-2026",
+  "name": "Premium Health Shield",
+  "domain": "HEALTH",
+  "description": "Comprehensive health coverage with zero copay.",
+  "basePremium": 12000.00,
+  "isActive": true
+}
+
+@productId = {{createProduct.response.body.id}}
+
+### 2.2 List Products
+GET {{baseUrl}}/products?domain=HEALTH
+Authorization: Bearer {{userToken}}
+
+
+# ==========================================
+# 3. POLICIES (Agent issuing for Customer)
+# ==========================================
+
+### 3.1 Issue a Policy to a Customer
+# @name issuePolicy
+POST {{baseUrl}}/policies
+Authorization: Bearer {{agentToken}}
+Content-Type: application/json
+
+{
+  "userId": "{{loginCustomer.response.body.user.id}}",
+  "productId": "{{productId}}",
+  "premiumAmount": 15000.00,
+  "coverageAmount": 500000.00,
+  "paymentFrequency": "ANNUAL",
+  "startDate": "2026-06-01T00:00:00Z",
+  "endDate": "2027-05-31T23:59:59Z",
+  "domain": "HEALTH",
+  "healthDetail": {
+    "coversDental": true,
+    "deductible": 5000.00,
+    "networkType": "PPO"
+  }
+}
+
+@policyId = {{issuePolicy.response.body.id}}
+
+### 3.2 List Customer's Policies
+GET {{baseUrl}}/policies/user
+Authorization: Bearer {{userToken}}
+
+# ==========================================
+# 4. PAYMENTS & PREMIUMS
+# ==========================================
+
+### 4.1 Pay Premium (Generate Stripe Intent)
+# @name payPremium
+POST {{baseUrl}}/payments/create-intent
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "policyId": "{{policyId}}",
+  "amount": 15000.00,
+  "currency": "inr",
+  "description": "Annual Premium Payment for Health Shield"
+}
+
+# Note: The actual webhook for Stripe requires a valid signature. 
+# We test webhooks programmatically via unit tests.
+
+
+# ==========================================
+# 5. CLAIMS
+# ==========================================
+
+### 5.1 Submit a Claim
+# @name submitClaim
+POST {{baseUrl}}/claims
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "policyId": "{{policyId}}",
+  "amountRequested": 25000.00,
+  "description": "Hospitalization due to dengue fever.",
+  "incidentDate": "2026-06-05T10:00:00Z"
+}
+
+@claimId = {{submitClaim.response.body.id}}
+
+### 5.2 Get Claim Checklist (Mandatory Docs needed)
+GET {{baseUrl}}/claims/{{claimId}}/checklist
+Authorization: Bearer {{userToken}}
+
+### 5.3 Approve Claim (Admin/Surveyor)
+PUT {{baseUrl}}/claims/{{claimId}}/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "status": "APPROVED",
+  "remarks": "Documents verified. Approved for full amount.",
+  "approvedAmount": 25000.00
+}
+
+# ==========================================
+# 6. KYC & COMPLIANCE
+# ==========================================
+
+### 6.1 Submit KYC Documents
+POST {{baseUrl}}/kyc/submit
+Authorization: Bearer {{userToken}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="documentType"
+
+AADHAAR
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="dummy_aadhaar.pdf"
+Content-Type: application/pdf
+
+<PDF_BINARY_CONTENT_HERE>
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 6.2 View Audit Logs (Admin Only)
+GET {{baseUrl}}/compliance/audit-logs?entityName=Claim&pageNumber=1&pageSize=10
+Authorization: Bearer {{adminToken}}

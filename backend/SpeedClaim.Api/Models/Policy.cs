@@ -21,10 +21,10 @@ public abstract class Policy
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? DeletedAt { get; set; }
 
+    // Navigation Properties
     public User User { get; set; }
     public InsuranceProduct Product { get; set; }
     public Agent Agent { get; set; }
-    
     public ICollection<PolicyVersion> Versions { get; set; } = new List<PolicyVersion>();
     public ICollection<PolicyInsuredMember> InsuredMembers { get; set; } = new List<PolicyInsuredMember>();
     public virtual ICollection<PremiumSchedule> PremiumSchedules { get; set; } = new List<PremiumSchedule>();

@@ -14,10 +14,25 @@ public class RegisterUserRequestValidator : AbstractValidator<RegisterUserReques
 
         RuleFor(x => x.Password)
             .NotEmpty().WithMessage("Password is required.")
-            .MinimumLength(8).WithMessage("Password must be at least 8 characters.");
+            .MinimumLength(8).WithMessage("Password must be at least 8 characters.")
+            .Matches("[A-Z]").WithMessage("Password must contain at least one uppercase letter.")
+            .Matches("[a-z]").WithMessage("Password must contain at least one lowercase letter.")
+            .Matches("[0-9]").WithMessage("Password must contain at least one number.")
+            .Matches("[^a-zA-Z0-9]").WithMessage("Password must contain at least one special character.");
 
-        RuleFor(x => x.FullName)
-            .NotEmpty().WithMessage("Full Name is required.");
+        RuleFor(x => x.FirstName)
+            .NotEmpty().WithMessage("First Name is required.")
+            .MaximumLength(100).WithMessage("First Name cannot exceed 100 characters.");
+
+        RuleFor(x => x.LastName)
+            .NotEmpty().WithMessage("Last Name is required.")
+            .MaximumLength(100).WithMessage("Last Name cannot exceed 100 characters.");
+
+        RuleFor(x => x.Salutation)
+            .NotEmpty().WithMessage("Salutation is required.")
+            .Must(BeValidSalutation).WithMessage("Invalid salutation provided.")
+            .Must((request, salutation) => MatchGender(request.Gender, salutation))
+            .WithMessage("Salutation does not match the selected gender.");
 
         RuleFor(x => x.Phone)
             .NotEmpty().WithMessage("Phone number is required.");
@@ -37,6 +52,17 @@ public class RegisterUserRequestValidator : AbstractValidator<RegisterUserReques
         RuleFor(x => x.Gender)
             .IsInEnum().WithMessage("Invalid Gender selected.");
             
+        RuleFor(x => x.MaritalStatus)
+            .IsInEnum().WithMessage("Invalid Marital Status selected.");
+
+        RuleFor(x => x).Must(req => 
+        {
+            var isMrs = req.Salutation?.Equals("Mrs.", StringComparison.OrdinalIgnoreCase) == true;
+            if (isMrs && req.MaritalStatus != SpeedClaim.Api.Models.Enums.MaritalStatus.Married)
+                return false;
+            return true;
+        }).WithMessage("If Salutation is Mrs., Marital Status must strictly be Married.");
+            
         RuleFor(x => x.Address).NotNull().WithMessage("Address is required.");
         When(x => x.Address != null, () =>
         {
@@ -55,5 +81,23 @@ public class RegisterUserRequestValidator : AbstractValidator<RegisterUserReques
         if (dateOfBirth.Date > today.AddYears(-age)) age--;
         
         return age >= 18;
+    }
+
+    private bool BeValidSalutation(string salutation)
+    {
+        var validSalutations = new[] { "Mr.", "Mrs.", "Ms.", "Mx.", "Dr.", "Prof." };
+        return Array.Exists(validSalutations, s => s.Equals(salutation, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private bool MatchGender(SpeedClaim.Api.Models.Enums.Gender gender, string salutation)
+    {
+        var s = salutation?.ToLower();
+        if (gender == SpeedClaim.Api.Models.Enums.Gender.Male && (s == "mrs." || s == "ms."))
+            return false;
+        
+        if (gender == SpeedClaim.Api.Models.Enums.Gender.Female && s == "mr.")
+            return false;
+
+        return true;
     }
 }

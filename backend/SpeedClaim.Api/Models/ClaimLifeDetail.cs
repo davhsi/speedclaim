@@ -13,5 +13,6 @@ public class ClaimLifeDetail
     public string ClaimantRelation { get; set; } = string.Empty;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+    // Navigation Properties
     public virtual Claim Claim { get; set; } = null!;
 }

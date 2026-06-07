@@ -11,5 +11,6 @@ public class ClaimDocumentChecklist
     public bool IsReceived { get; set; }
     public DateTime? UpdatedAt { get; set; }
 
+    // Navigation Properties
     public virtual Claim Claim { get; set; } = null!;
 }

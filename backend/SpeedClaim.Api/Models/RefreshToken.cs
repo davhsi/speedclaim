@@ -13,5 +13,6 @@ public class RefreshToken
     public string IpAddress { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
-    public User User { get; set; }
+    // Navigation Properties
+    public virtual User User { get; set; }
 }

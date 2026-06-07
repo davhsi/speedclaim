@@ -50,17 +50,23 @@ public class AuthService : IAuthService
         {
             Email = request.Email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-            FullName = request.FullName,
+            Salutation = request.Salutation,
+            FirstName = request.FirstName,
+            LastName = request.LastName,
             Phone = request.Phone,
-            Street = request.Address.Street,
-            City = request.Address.City,
-            State = request.Address.State,
-            PostalCode = request.Address.PostalCode,
-            Country = request.Address.Country,
+            Address = new Address
+            {
+                Street = request.Address.Street,
+                City = request.Address.City,
+                State = request.Address.State,
+                PostalCode = request.Address.PostalCode,
+                Country = request.Address.Country
+            },
             DateOfBirth = request.DateOfBirth,
             AadhaarNumber = request.AadhaarNumber,
             PanNumber = request.PanNumber,
             Gender = request.Gender,
+            MaritalStatus = request.MaritalStatus,
             ProfilePictureUrl = "",
             IsActive = true
         };
@@ -105,15 +111,21 @@ public class AuthService : IAuthService
         {
             Email = request.Email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-            FullName = request.FullName,
+            Salutation = request.Salutation,
+            FirstName = request.FirstName,
+            LastName = request.LastName,
             Phone = request.Phone,
-            Street = request.Address.Street,
-            City = request.Address.City,
-            State = request.Address.State,
-            PostalCode = request.Address.PostalCode,
-            Country = request.Address.Country,
+            Address = new Address
+            {
+                Street = request.Address.Street,
+                City = request.Address.City,
+                State = request.Address.State,
+                PostalCode = request.Address.PostalCode,
+                Country = request.Address.Country
+            },
             AadhaarNumber = request.AadhaarNumber,
             PanNumber = request.PanNumber,
+            MaritalStatus = request.MaritalStatus,
             ProfilePictureUrl = "",
             IsActive = true
         };

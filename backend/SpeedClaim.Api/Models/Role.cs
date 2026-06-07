@@ -10,5 +10,6 @@ public class Role
     public string Description { get; set; }
     public int HierarchyLevel { get; set; } = 10;
     
-    public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+    // Navigation Properties
+    public virtual ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
 }

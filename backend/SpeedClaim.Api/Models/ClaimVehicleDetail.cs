@@ -12,5 +12,6 @@ public class ClaimVehicleDetail
     public string? SurveyorName { get; set; }
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+    // Navigation Properties
     public virtual Claim Claim { get; set; } = null!;
 }

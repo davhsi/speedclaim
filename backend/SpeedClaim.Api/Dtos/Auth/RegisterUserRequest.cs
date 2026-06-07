@@ -7,15 +7,18 @@ namespace SpeedClaim.Api.Dtos.Auth;
 public record RegisterUserRequest(
     string Email,
     string Password,
-    string FullName,
+    string Salutation,
+    string FirstName,
+    string LastName,
     string Phone,
     AddressDto Address,
     DateTime DateOfBirth,
     string AadhaarNumber,
     string PanNumber,
-    Gender Gender
+    Gender Gender,
+    MaritalStatus MaritalStatus
 )
 {
     public override string ToString() => 
-        $"RegisterUserRequest {{ Email = {Email}, FullName = {FullName}, Phone = {Phone}, Aadhaar = {(AadhaarNumber?.Length >= 4 ? new string('X', 8) + AadhaarNumber[^4..] : "MASKED")}, Pan = MASKED, Gender = {Gender} }}";
+        $"RegisterUserRequest {{ Email = {Email}, Name = {Salutation} {FirstName} {LastName}, Phone = {Phone}, Aadhaar = {(AadhaarNumber?.Length >= 4 ? new string('X', 8) + AadhaarNumber[^4..] : "MASKED")}, Pan = MASKED, Gender = {Gender}, MaritalStatus = {MaritalStatus} }}";
 }

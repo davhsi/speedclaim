@@ -12,6 +12,7 @@ public class PaymentStatusHistory
     public string? Remarks { get; set; }
     public DateTime ChangedAt { get; set; } = DateTime.UtcNow;
 
+    // Navigation Properties
     public virtual PaymentTransaction Payment { get; set; } = null!;
     public virtual User? ChangedBy { get; set; }
 }
