@@ -18,8 +18,10 @@ public class PolicyController : BaseApiController
         _policyService = policyService;
     }
 
+    /// <summary>Get all policies belonging to the authenticated customer</summary>
     [Authorize(Roles = "Customer")]
     [HttpGet("my")]
+    [ProducesResponseType(typeof(IEnumerable<PolicyDto>), 200)]
     public async Task<IActionResult> GetMyPolicies()
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId)) return Unauthorized();
@@ -27,8 +29,12 @@ public class PolicyController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>Download a plain-text policy document for a specific policy</summary>
+    /// <param name="id">Policy ID</param>
     [Authorize(Roles = "Customer")]
     [HttpGet("{id}/download")]
+    [ProducesResponseType(typeof(FileContentResult), 200)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> DownloadPolicy(Guid id)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId)) return Unauthorized();
@@ -36,8 +42,12 @@ public class PolicyController : BaseApiController
         return File(bytes, "text/plain", $"Policy_{id}.txt");
     }
 
+    /// <summary>Get all endorsement requests raised against a policy</summary>
+    /// <param name="id">Policy ID</param>
     [Authorize(Roles = "Customer")]
     [HttpGet("{id}/endorsements")]
+    [ProducesResponseType(typeof(IEnumerable<EndorsementDto>), 200)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> GetPolicyEndorsements(Guid id)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId)) return Unauthorized();
@@ -45,8 +55,12 @@ public class PolicyController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>Request a policy endorsement (amendment) such as address change or sum assured update</summary>
+    /// <param name="id">Policy ID</param>
     [Authorize(Roles = "Customer")]
     [HttpPost("{id}/endorsements")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> RequestEndorsement(Guid id, [FromBody] RequestEndorsementRequest request)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId)) return Unauthorized();
@@ -54,8 +68,10 @@ public class PolicyController : BaseApiController
         return Ok();
     }
 
+    /// <summary>Agent — get all policies belonging to customers assigned to the authenticated agent</summary>
     [Authorize(Roles = "Agent")]
     [HttpGet("assigned")]
+    [ProducesResponseType(typeof(IEnumerable<PolicyDto>), 200)]
     public async Task<IActionResult> GetAssignedCustomerPolicies()
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var agentId)) return Unauthorized();
@@ -63,8 +79,13 @@ public class PolicyController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>Get a policy by ID. Customers can only access their own policies</summary>
+    /// <param name="id">Policy ID</param>
     [Authorize(Roles = "Customer,Underwriter,Admin")]
     [HttpGet("{id}")]
+    [ProducesResponseType(typeof(PolicyDto), 200)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> GetPolicy(Guid id)
     {
         Guid? customerId = null;
@@ -77,8 +98,12 @@ public class PolicyController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>Get all nominees linked to a policy</summary>
+    /// <param name="id">Policy ID</param>
     [Authorize(Roles = "Customer")]
     [HttpGet("{id}/nominees")]
+    [ProducesResponseType(typeof(IEnumerable<PolicyNomineeDto>), 200)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> GetNominees(Guid id)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId)) return Unauthorized();
@@ -86,8 +111,14 @@ public class PolicyController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>Cancel an Active or Pending policy</summary>
+    /// <param name="id">Policy ID</param>
     [Authorize(Roles = "Customer")]
     [HttpPut("{id}/cancel")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(409)]
+    [ProducesResponseType(422)]
     public async Task<IActionResult> CancelPolicy(Guid id)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId)) return Unauthorized();
@@ -95,16 +126,23 @@ public class PolicyController : BaseApiController
         return Ok();
     }
 
+    /// <summary>Get all policies across all customers</summary>
     [Authorize(Roles = "Underwriter,Admin")]
     [HttpGet("all")]
+    [ProducesResponseType(typeof(IEnumerable<PolicyDto>), 200)]
     public async Task<IActionResult> GetAllPolicies()
     {
         var result = await _policyService.GetAllPoliciesAsync();
         return Ok(result);
     }
 
+    /// <summary>Get the status change history for a policy. Customers can only view their own policy history</summary>
+    /// <param name="id">Policy ID</param>
     [Authorize(Roles = "Underwriter,Admin,Customer")]
     [HttpGet("{id}/history")]
+    [ProducesResponseType(typeof(IEnumerable<PolicyStatusHistoryDto>), 200)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> GetPolicyHistory(Guid id)
     {
         Guid? customerId = null;
@@ -118,16 +156,23 @@ public class PolicyController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>Underwriter — get all endorsement requests awaiting review</summary>
     [Authorize(Roles = "Underwriter")]
     [HttpGet("endorsements/pending")]
+    [ProducesResponseType(typeof(IEnumerable<EndorsementDto>), 200)]
     public async Task<IActionResult> GetPendingEndorsements()
     {
         var result = await _policyService.GetPendingEndorsementsAsync();
         return Ok(result);
     }
 
+    /// <summary>Underwriter — approve or reject an endorsement request</summary>
+    /// <param name="endorsementId">Endorsement ID</param>
     [Authorize(Roles = "Underwriter")]
     [HttpPut("endorsements/{endorsementId}/review")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(422)]
     public async Task<IActionResult> ApproveRejectEndorsement(Guid endorsementId, [FromBody] ApproveRejectEndorsementRequest request)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var underwriterId)) return Unauthorized();
@@ -135,8 +180,13 @@ public class PolicyController : BaseApiController
         return Ok();
     }
 
+    /// <summary>Update nominee details (name, relationship, share percentage) on a policy</summary>
+    /// <param name="nomineeId">Nominee ID</param>
     [Authorize(Roles = "Customer")]
     [HttpPut("nominees/{nomineeId}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> UpdateNominee(Guid nomineeId, [FromBody] UpdateNomineeRequest request)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId)) return Unauthorized();

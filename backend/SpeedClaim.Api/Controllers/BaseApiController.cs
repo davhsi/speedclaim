@@ -6,6 +6,7 @@ namespace SpeedClaim.Api.Controllers;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/[controller]")]
+[ProducesResponseType(500)]
 public abstract class BaseApiController : ControllerBase
 {
 }

@@ -18,16 +18,27 @@ public class ProposalsController : BaseApiController
         _proposalService = proposalService;
     }
 
+    /// <summary>Generate a premium quote for a given product, age, sum assured, and tenure</summary>
+    /// <remarks>Does not create any record — purely a calculation based on the product's rate table.</remarks>
     [Authorize(Roles = "Customer,Agent")]
     [HttpPost("quote")]
+    [ProducesResponseType(typeof(GenerateQuoteResponse), 200)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> GenerateQuote([FromBody] GenerateQuoteRequest request)
     {
         var result = await _proposalService.GenerateQuoteAsync(request);
         return Ok(result);
     }
 
+    /// <summary>Submit a new insurance proposal</summary>
+    /// <remarks>
+    /// Creates a proposal in Submitted status. Supports Health, Life, and Motor domains.
+    /// Agents submitting on behalf of a customer must include the customer's ID.
+    /// </remarks>
     [Authorize(Roles = "Customer,Agent")]
     [HttpPost]
+    [ProducesResponseType(typeof(ProposalDto), 200)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> SubmitProposal([FromBody] SubmitProposalRequest request)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
@@ -37,8 +48,10 @@ public class ProposalsController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>Get all proposals for the authenticated customer or agent</summary>
     [Authorize(Roles = "Customer,Agent")]
     [HttpGet("my")]
+    [ProducesResponseType(typeof(IEnumerable<ProposalDto>), 200)]
     public async Task<IActionResult> GetMyProposals()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
@@ -48,8 +61,13 @@ public class ProposalsController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>Get a proposal by ID. Customers and agents can only access proposals they own</summary>
+    /// <param name="id">Proposal ID</param>
     [Authorize(Roles = "Customer,Agent,Underwriter,Admin")]
     [HttpGet("{id}")]
+    [ProducesResponseType(typeof(ProposalDto), 200)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> GetProposalById(string id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
@@ -58,8 +76,14 @@ public class ProposalsController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>Upload a KYC or supporting document against a proposal</summary>
+    /// <param name="id">Proposal ID</param>
     [Authorize(Roles = "Customer,Agent")]
     [HttpPost("{id}/upload")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> UploadDocument(string id, [FromForm] UploadDocumentRequest request)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
@@ -67,16 +91,23 @@ public class ProposalsController : BaseApiController
         return Ok(new { FilePath = result });
     }
 
+    /// <summary>Underwriter — get all submitted proposals pending review</summary>
     [Authorize(Roles = "Underwriter,Admin")]
     [HttpGet("all")]
+    [ProducesResponseType(typeof(IEnumerable<ProposalDto>), 200)]
     public async Task<IActionResult> GetAllProposals()
     {
         var result = await _proposalService.GetAllProposalsAsync();
         return Ok(result);
     }
 
+    /// <summary>Underwriter — approve or reject a proposal</summary>
+    /// <remarks>Approval creates a Policy (in Pending status) and a first premium schedule entry.</remarks>
+    /// <param name="id">Proposal ID</param>
     [Authorize(Roles = "Underwriter")]
     [HttpPost("{id}/review")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> ReviewProposal(string id, [FromBody] ApproveRejectProposalRequest request)
     {
         var underwriterId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
@@ -85,8 +116,12 @@ public class ProposalsController : BaseApiController
         return Ok();
     }
 
+    /// <summary>Underwriter — request additional documents from the customer before deciding</summary>
+    /// <param name="id">Proposal ID</param>
     [Authorize(Roles = "Underwriter")]
     [HttpPost("{id}/request-docs")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> RequestDocuments(string id, [FromBody] AdditionalDocumentRequest request)
     {
         var underwriterId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
@@ -95,8 +130,12 @@ public class ProposalsController : BaseApiController
         return Ok();
     }
 
+    /// <summary>Underwriter — append internal review notes to a proposal</summary>
+    /// <param name="id">Proposal ID</param>
     [Authorize(Roles = "Underwriter")]
     [HttpPut("{id}/notes")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> AddNotes(string id, [FromBody] AddUnderwriterNotesRequest request)
     {
         var underwriterId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;

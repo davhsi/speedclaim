@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using SpeedClaim.Api.Context;
+using SpeedClaim.Api.Swagger;
 using SpeedClaim.Api.Exceptions;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Repositories;
@@ -118,6 +119,22 @@ builder.Services.AddApiVersioning(options =>
 // Add OpenAPI via Swashbuckle
 builder.Services.AddSwaggerGen(options =>
 {
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "SpeedClaim API",
+        Version = "v1",
+        Description = "Insurance claims management platform API"
+    });
+
+    // Include XML doc comments
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (System.IO.File.Exists(xmlPath))
+        options.IncludeXmlComments(xmlPath);
+
+    // Auto-document roles and 401/403 from [Authorize] attributes
+    options.OperationFilter<AuthorizeOperationFilter>();
+
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",

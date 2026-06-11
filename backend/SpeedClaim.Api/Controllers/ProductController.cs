@@ -17,24 +17,32 @@ public class ProductController : BaseApiController
         _productService = productService;
     }
 
-    [AllowAnonymous] // or Authorize(Roles = "Customer, Agent") based on requirement
+    /// <summary>Get all active insurance products available for purchase</summary>
+    [AllowAnonymous]
     [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<ProductDto>), 200)]
     public async Task<IActionResult> GetProducts()
     {
         var result = await _productService.GetAvailableProductsAsync();
         return Ok(result);
     }
 
+    /// <summary>Get a single insurance product by ID including its configuration</summary>
+    /// <param name="id">Product ID</param>
     [AllowAnonymous]
     [HttpGet("{id}")]
+    [ProducesResponseType(typeof(ProductDto), 200)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> GetProductById(string id)
     {
         var result = await _productService.GetByIdAsync(id);
         return Ok(result);
     }
 
+    /// <summary>Admin — create a new insurance product</summary>
     [Authorize(Roles = "Admin")]
     [HttpPost]
+    [ProducesResponseType(typeof(ProductDto), 200)]
     public async Task<IActionResult> CreateProduct([FromBody] CreateProductRequest request)
     {
         var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
@@ -43,8 +51,13 @@ public class ProductController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>Admin — replace the premium rate table for a product</summary>
+    /// <remarks>All existing rates for the product are removed and replaced with the new set.</remarks>
+    /// <param name="id">Product ID</param>
     [Authorize(Roles = "Admin")]
     [HttpPut("{id}/rates")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> UpdateRates(string id, [FromBody] UpdatePremiumRatesRequest request)
     {
         var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
@@ -53,8 +66,12 @@ public class ProductController : BaseApiController
         return Ok();
     }
 
+    /// <summary>Admin — configure the document requirements for a product domain (Health, Life, Motor)</summary>
+    /// <param name="id">Product ID</param>
     [Authorize(Roles = "Admin")]
     [HttpPut("{id}/documents")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> ConfigureDocuments(string id, [FromBody] UpdateDocumentRequirementsRequest request)
     {
         var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
@@ -63,8 +80,13 @@ public class ProductController : BaseApiController
         return Ok();
     }
 
+    /// <summary>Admin — activate or deactivate an insurance product</summary>
+    /// <remarks>Inactive products are hidden from public listings and cannot be used in new proposals.</remarks>
+    /// <param name="id">Product ID</param>
     [Authorize(Roles = "Admin")]
     [HttpPut("{id}/status")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> ToggleStatus(string id, [FromBody] bool isActive)
     {
         var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;

@@ -21,8 +21,14 @@ public class ClaimsController : BaseApiController
     }
 
     // --- Customer Endpoints ---
+
+    /// <summary>Intimate (register) a new claim against an active policy</summary>
+    /// <remarks>Policy must be in Active status. Claim is created in Intimated state.</remarks>
     [Authorize(Roles = "Customer")]
     [HttpPost("intimate")]
+    [ProducesResponseType(typeof(ClaimDto), 200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(422)]
     public async Task<IActionResult> IntimateClaim([FromBody] IntimateClaimRequest request)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId)) return Unauthorized();
@@ -30,8 +36,13 @@ public class ClaimsController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>Upload a supporting document for a claim</summary>
+    /// <param name="id">Claim ID</param>
     [Authorize(Roles = "Customer")]
     [HttpPost("{id}/upload")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> UploadClaimDocument(Guid id, [FromForm] UploadDocumentRequest request)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId)) return Unauthorized();
@@ -39,8 +50,10 @@ public class ClaimsController : BaseApiController
         return Ok(new { FilePath = result });
     }
 
+    /// <summary>Get all claims belonging to the authenticated customer</summary>
     [Authorize(Roles = "Customer")]
     [HttpGet("my")]
+    [ProducesResponseType(typeof(IEnumerable<ClaimDto>), 200)]
     public async Task<IActionResult> GetMyClaims()
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId)) return Unauthorized();
@@ -48,8 +61,12 @@ public class ClaimsController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>Get the status history timeline for a specific claim</summary>
+    /// <param name="id">Claim ID</param>
     [Authorize(Roles = "Customer")]
     [HttpGet("{id}/history")]
+    [ProducesResponseType(typeof(IEnumerable<ClaimStatusHistoryDto>), 200)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> GetMyClaimHistory(Guid id)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId)) return Unauthorized();
@@ -57,8 +74,12 @@ public class ClaimsController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>Get a claim by ID. Customers can only access their own claims</summary>
+    /// <param name="id">Claim ID</param>
     [Authorize(Roles = "Customer,ClaimsOfficer,Admin")]
     [HttpGet("{id}")]
+    [ProducesResponseType(typeof(ClaimDto), 200)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> GetClaimById(Guid id)
     {
         Guid? customerId = null;
@@ -72,16 +93,23 @@ public class ClaimsController : BaseApiController
     }
 
     // --- Claims Officer Endpoints ---
+
+    /// <summary>Get all claims across all customers</summary>
     [Authorize(Roles = "ClaimsOfficer,Admin")]
     [HttpGet("all")]
+    [ProducesResponseType(typeof(IEnumerable<ClaimDto>), 200)]
     public async Task<IActionResult> GetAllClaims()
     {
         var result = await _claimService.GetAllClaimsAsync();
         return Ok(result);
     }
 
+    /// <summary>Self-assign a claim to the authenticated claims officer</summary>
+    /// <param name="id">Claim ID</param>
     [Authorize(Roles = "ClaimsOfficer")]
     [HttpPut("{id}/assign")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> AssignClaim(Guid id)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var officerId)) return Unauthorized();
@@ -89,19 +117,28 @@ public class ClaimsController : BaseApiController
         return Ok();
     }
 
+    /// <summary>Update the status of a claim manually</summary>
+    /// <param name="id">Claim ID</param>
     [Authorize(Roles = "ClaimsOfficer")]
     [HttpPut("{id}/status")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateClaimStatusRequest request)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var officerId)) return Unauthorized();
-        // The DTO UpdateClaimStatusRequest was from previous implementation, I'll map its string status to Enum
         if (!Enum.TryParse<ClaimStatus>(request.Status, true, out var claimStatus)) return BadRequest("Invalid Status");
         await _claimService.UpdateClaimStatusAsync(id, claimStatus, officerId, request.Remarks);
         return Ok();
     }
 
+    /// <summary>Approve or reject a claim and optionally set the approved payout amount</summary>
+    /// <param name="id">Claim ID</param>
     [Authorize(Roles = "ClaimsOfficer")]
     [HttpPut("{id}/approve")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> ApproveClaim(Guid id, [FromBody] ApproveRejectClaimRequest request)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var officerId)) return Unauthorized();
@@ -109,8 +146,13 @@ public class ClaimsController : BaseApiController
         return Ok();
     }
 
+    /// <summary>Mark an approved claim as financially settled</summary>
+    /// <param name="id">Claim ID</param>
     [Authorize(Roles = "ClaimsOfficer")]
     [HttpPut("{id}/settle")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(422)]
     public async Task<IActionResult> MarkSettled(Guid id)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var officerId)) return Unauthorized();
@@ -118,8 +160,13 @@ public class ClaimsController : BaseApiController
         return Ok();
     }
 
+    /// <summary>Assign a surveyor to a motor or property claim</summary>
+    /// <param name="id">Claim ID</param>
     [Authorize(Roles = "ClaimsOfficer")]
     [HttpPut("{id}/assign-surveyor")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(422)]
     public async Task<IActionResult> AssignSurveyor(Guid id, [FromBody] AssignSurveyorRequest request)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var officerId)) return Unauthorized();
@@ -127,8 +174,12 @@ public class ClaimsController : BaseApiController
         return Ok();
     }
 
+    /// <summary>Request additional documents from the customer for a claim</summary>
+    /// <param name="id">Claim ID</param>
     [Authorize(Roles = "ClaimsOfficer")]
     [HttpPost("{id}/request-docs")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> RequestDocuments(Guid id, [FromBody] string details)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var officerId)) return Unauthorized();
@@ -136,8 +187,13 @@ public class ClaimsController : BaseApiController
         return Ok();
     }
 
+    /// <summary>Approve cashless pre-authorisation for a cashless claim</summary>
+    /// <param name="id">Claim ID</param>
     [Authorize(Roles = "ClaimsOfficer")]
     [HttpPut("{id}/approve-preauth")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(422)]
     public async Task<IActionResult> ApprovePreAuth(Guid id)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var officerId)) return Unauthorized();
@@ -146,8 +202,11 @@ public class ClaimsController : BaseApiController
     }
 
     // --- Surveyor Endpoints ---
+
+    /// <summary>Get all motor/property claims assigned to the authenticated surveyor</summary>
     [Authorize(Roles = "Surveyor")]
     [HttpGet("surveyor/assigned")]
+    [ProducesResponseType(typeof(IEnumerable<ClaimDto>), 200)]
     public async Task<IActionResult> GetAssignedMotorClaims()
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var surveyorId)) return Unauthorized();
@@ -155,8 +214,13 @@ public class ClaimsController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>Upload a survey inspection report for a motor or property claim</summary>
+    /// <param name="id">Claim ID</param>
     [Authorize(Roles = "Surveyor,ClaimsOfficer")]
     [HttpPost("{id}/survey-report")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> UploadSurveyReport(Guid id, [FromForm] SubmitSurveyReportRequest request)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)) return Unauthorized();
