@@ -1,48 +1,28 @@
-# SpeedClaim — API Page Map & Coverage Analysis
+# SpeedClaim — API Page Map & Endpoint Coverage
 
-> Perspective: every page a real user would open in the Angular frontend, what it needs from the API, and whether that endpoint exists.
-
----
-
-## Bugs & Issues — Status
-
-| Location | Issue | Status |
-|---|---|---|
-| `GrievancesController.cs` — role strings with spaces | `"Admin, ClaimsOfficer, Support"` — spaces break ASP.NET Core role matching; `Support` not a valid role | ✅ Fixed |
-| `PolicyController` `GET {id}/history` — no ownership check | Any Customer could query any policy's history by guessing a UUID | ✅ Fixed |
-| `UsersController` `POST /api/users/kyc` — authorized for `Customer,Agent` | Agents don't have a `KycRecord`; silently returns null for agents | ✅ Fixed (restricted to Customer only) |
-| `ProductService.cs` — design-diary comment block | Multi-line reasoning comment in `ConfigureDocumentRequirementsAsync` | ✅ Removed |
-| `FinanceService.GetOverduePoliciesAsync` — return type mismatch | Method declared `PaymentRecordDto` but body built `PremiumScheduleDto` | ✅ Fixed |
-| Notification write-only | `NotificationService.CreateAsync` fired but no endpoint to read/mark notifications | ✅ Fixed — added read + mark endpoints |
-| `GrievancesController` `GET {id}` — Customer locked out of own grievance | `GET /api/grievances/{id}` was Admin/ClaimsOfficer only; customer who raised it had no read access | ✅ Fixed — Customer role added with ownership check |
-| Agent self-profile update missing | No agent-facing endpoint to update own contact details | ✅ Fixed — added `PUT /api/agents/profile` |
-| No pagination on bulk list endpoints | `GetAllClaims`, `GetAllPolicies`, `GetAllUsers`, `GetAllGrievances`, `GetPendingKyc`, `GetPendingEndorsements` returned full table | ✅ Fixed — all return `PagedResponse<T>` with `?page=&pageSize=` query params (default 20 per page) |
+> Every page a real user would open in the Angular frontend, what it needs from the API, and whether that endpoint exists.
 
 ---
 
-## Page-by-Page Endpoint Coverage
+## AUTH PAGES
 
----
-
-### AUTH PAGES
-
-#### Login Page
+### Login Page
 | Action | Endpoint | Status |
 |---|---|---|
 | Login | `POST /api/auth/login` | ✅ |
 | Refresh access token (silent) | `POST /api/auth/refresh` | ✅ |
 
-#### Register Page (Customer self-register)
+### Register Page (Customer self-register)
 | Action | Endpoint | Status |
 |---|---|---|
 | Register new customer | `POST /api/auth/register` | ✅ |
 
-#### Email Verification Page
+### Email Verification Page
 | Action | Endpoint | Status |
 |---|---|---|
 | Verify email | `POST /api/auth/verify-email` | ✅ |
 
-#### Forgot Password / Reset Password Pages
+### Forgot Password / Reset Password Pages
 | Action | Endpoint | Status |
 |---|---|---|
 | Request reset link | `POST /api/auth/forgot-password` | ✅ |
@@ -50,9 +30,9 @@
 
 ---
 
-### CUSTOMER PORTAL
+## CUSTOMER PORTAL
 
-#### Customer Dashboard
+### Customer Dashboard
 | Action | Endpoint | Status |
 |---|---|---|
 | Get my policies | `GET /api/policies/my` | ✅ |
@@ -60,36 +40,36 @@
 | Get my premium schedules | `GET /api/payments/schedule/{policyId}` | ✅ |
 | Get my notifications | `GET /api/users/notifications` | ✅ |
 
-#### Browse Insurance Products Page
+### Browse Insurance Products Page
 | Action | Endpoint | Status |
 |---|---|---|
 | List all active products | `GET /api/products` | ✅ |
 | Get single product details | `GET /api/products/{id}` | ✅ |
 
-#### Get a Quote Page
+### Get a Quote Page
 | Action | Endpoint | Status |
 |---|---|---|
 | Generate quote | `POST /api/proposals/quote` | ✅ |
 
-#### Submit Proposal / Apply Page
+### Submit Proposal / Apply Page
 | Action | Endpoint | Status |
 |---|---|---|
 | Submit proposal | `POST /api/proposals` | ✅ |
 | Upload supporting documents | `POST /api/proposals/{id}/upload` | ✅ |
 
-#### My Proposals Page
+### My Proposals Page
 | Action | Endpoint | Status |
 |---|---|---|
 | List my proposals | `GET /api/proposals/my` | ✅ |
 | Get single proposal details | `GET /api/proposals/{id}` | ✅ |
 
-#### My Policies Page
+### My Policies Page
 | Action | Endpoint | Status |
 |---|---|---|
 | List my policies | `GET /api/policies/my` | ✅ |
 | Get single policy details | `GET /api/policies/{id}` | ✅ |
 
-#### Policy Detail Page
+### Policy Detail Page
 | Action | Endpoint | Status |
 |---|---|---|
 | Download policy certificate | `GET /api/policies/{id}/download` | ✅ |
@@ -100,33 +80,33 @@
 | List nominees for a policy | `GET /api/policies/{id}/nominees` | ✅ |
 | Cancel policy | `PUT /api/policies/{id}/cancel` | ✅ |
 
-#### Pay Premium Page
+### Pay Premium Page
 | Action | Endpoint | Status |
 |---|---|---|
 | Get premium schedule | `GET /api/payments/schedule/{policyId}` | ✅ |
 | Create Stripe PaymentIntent | `POST /api/payments/pay/{scheduleId}` | ✅ |
 | List saved payment methods | `GET /api/payments/methods` | ✅ |
 
-#### Payment History Page
+### Payment History Page
 | Action | Endpoint | Status |
 |---|---|---|
 | Get my payment history | `GET /api/payments/history` | ✅ |
 | Download receipt | `GET /api/payments/{paymentId}/receipt` | ✅ |
 
-#### Submit a Claim Page
+### Submit a Claim Page
 | Action | Endpoint | Status |
 |---|---|---|
 | Intimate claim | `POST /api/claims/intimate` | ✅ |
 | Upload claim documents | `POST /api/claims/{id}/upload` | ✅ |
 
-#### My Claims Page
+### My Claims Page
 | Action | Endpoint | Status |
 |---|---|---|
 | List my claims | `GET /api/claims/my` | ✅ |
 | Get single claim details | `GET /api/claims/{id}` | ✅ |
 | Get claim status history | `GET /api/claims/{id}/history` | ✅ |
 
-#### My Profile Page
+### My Profile Page
 | Action | Endpoint | Status |
 |---|---|---|
 | View profile | `GET /api/users/profile` | ✅ |
@@ -135,7 +115,7 @@
 | Update address | `PUT /api/users/addresses/{addressId}` | ✅ |
 | Delete address | `DELETE /api/users/addresses/{addressId}` | ✅ |
 
-#### Family Members Page
+### Family Members Page
 | Action | Endpoint | Status |
 |---|---|---|
 | Add family member | `POST /api/users/family` | ✅ |
@@ -143,41 +123,41 @@
 | List family members | `GET /api/users/family` | ✅ |
 | Delete family member | `DELETE /api/users/family/{memberId}` | ✅ |
 
-#### KYC Documents Page
+### KYC Documents Page
 | Action | Endpoint | Status |
 |---|---|---|
 | View my KYC status | `GET /api/users/kyc` | ✅ |
 | Upload KYC documents | `POST /api/users/kyc` | ✅ |
 
-#### Notifications Page
+### Notifications Page
 | Action | Endpoint | Status |
 |---|---|---|
 | List my notifications | `GET /api/users/notifications` | ✅ |
 | Mark notification as read | `PATCH /api/users/notifications/{id}/read` | ✅ |
 | Mark all as read | `PATCH /api/users/notifications/read-all` | ✅ |
 
-#### Grievances / Support Page
+### Grievances / Support Page
 | Action | Endpoint | Status |
 |---|---|---|
 | Raise grievance | `POST /api/grievances` | ✅ |
 | List my grievances | `GET /api/grievances/my` | ✅ |
-| Get single grievance status | `GET /api/grievances/{id}` | ⚠️ Accessible to Admin/ClaimsOfficer only — Customer who raised it cannot see their own grievance status |
+| Get single grievance status | `GET /api/grievances/{id}` | ✅ |
 
 ---
 
-### AGENT PORTAL
+## AGENT PORTAL
 
-#### Agent Dashboard
+### Agent Dashboard
 | Action | Endpoint | Status |
 |---|---|---|
 | Get dashboard summary | `GET /api/agents/dashboard` | ✅ |
 
-#### My Customers Page
+### My Customers Page
 | Action | Endpoint | Status |
 |---|---|---|
 | List assigned customers | `GET /api/agents/customers` | ✅ |
 
-#### Submit Proposal for Customer
+### Submit Proposal for Customer
 | Action | Endpoint | Status |
 |---|---|---|
 | Get quote | `POST /api/proposals/quote` | ✅ |
@@ -186,27 +166,27 @@
 | Get single proposal details | `GET /api/proposals/{id}` | ✅ |
 | Upload proposal documents | `POST /api/proposals/{id}/upload` | ✅ |
 
-#### Customer Policies Page
+### Customer Policies Page
 | Action | Endpoint | Status |
 |---|---|---|
 | List policies for assigned customers | `GET /api/policies/assigned` | ✅ |
 
-#### Renewal Reminders Page
+### Renewal Reminders Page
 | Action | Endpoint | Status |
 |---|---|---|
 | Get upcoming renewals | `GET /api/agents/renewals` | ✅ |
 
-#### Agent Profile Page
+### Agent Profile Page
 | Action | Endpoint | Status |
 |---|---|---|
 | Get agent profile | `GET /api/agents/profile` | ✅ |
-| Update own agent profile | — | ⚠️ No agent self-update endpoint; only admin can modify license/status |
+| Update own agent profile | `PUT /api/agents/profile` | ✅ |
 
 ---
 
-### UNDERWRITER PORTAL
+## UNDERWRITER PORTAL
 
-#### Proposal Review Queue
+### Proposal Review Queue
 | Action | Endpoint | Status |
 |---|---|---|
 | List all proposals | `GET /api/proposals/all` | ✅ |
@@ -215,19 +195,19 @@
 | Request additional documents | `POST /api/proposals/{id}/request-docs` | ✅ |
 | Add notes | `PUT /api/proposals/{id}/notes` | ✅ |
 
-#### KYC Review Queue
+### KYC Review Queue
 | Action | Endpoint | Status |
 |---|---|---|
 | List pending KYC | `GET /api/users/kyc/pending` | ✅ |
 | Approve/reject KYC | `PUT /api/users/{customerId}/kyc/review` | ✅ |
 
-#### Endorsement Review Queue
+### Endorsement Review Queue
 | Action | Endpoint | Status |
 |---|---|---|
 | List pending endorsements | `GET /api/policies/endorsements/pending` | ✅ |
 | Approve/reject endorsement | `PUT /api/policies/endorsements/{endorsementId}/review` | ✅ |
 
-#### All Policies View
+### All Policies View
 | Action | Endpoint | Status |
 |---|---|---|
 | List all policies | `GET /api/policies/all` | ✅ |
@@ -235,9 +215,9 @@
 
 ---
 
-### CLAIMS OFFICER PORTAL
+## CLAIMS OFFICER PORTAL
 
-#### Claims Queue
+### Claims Queue
 | Action | Endpoint | Status |
 |---|---|---|
 | List all claims | `GET /api/claims/all` | ✅ |
@@ -250,7 +230,7 @@
 | Request additional documents | `POST /api/claims/{id}/request-docs` | ✅ |
 | Approve cashless pre-auth | `PUT /api/claims/{id}/approve-preauth` | ✅ |
 
-#### Grievance Management
+### Grievance Management
 | Action | Endpoint | Status |
 |---|---|---|
 | List all grievances | `GET /api/grievances/all` | ✅ |
@@ -260,28 +240,28 @@
 
 ---
 
-### FINANCE OFFICER PORTAL
+## FINANCE OFFICER PORTAL
 
-#### Payment Records
+### Payment Records
 | Action | Endpoint | Status |
 |---|---|---|
 | List all payments | `GET /api/payments/all-records` | ✅ |
 | Manually reconcile payment | `PUT /api/payments/{paymentId}/reconcile` | ✅ |
 | Process refund | `POST /api/payments/{paymentId}/refund` | ✅ |
 
-#### Claim Payout
+### Claim Payout
 | Action | Endpoint | Status |
 |---|---|---|
 | Process claim payout (Stripe) | `POST /api/payments/payout/claim/{claimId}` | ✅ |
 | Mark claim financially settled | `PUT /api/payments/claims/{claimId}/settle` | ✅ |
 
-#### Commission Management
+### Commission Management
 | Action | Endpoint | Status |
 |---|---|---|
 | List pending commissions | `GET /api/payments/commissions/pending` | ✅ |
 | Approve and pay commission | `POST /api/payments/commissions/{id}/approve` | ✅ |
 
-#### Reports
+### Reports
 | Action | Endpoint | Status |
 |---|---|---|
 | Overdue policies report | `GET /api/payments/reports/overdue` | ✅ |
@@ -290,9 +270,9 @@
 
 ---
 
-### SURVEYOR PORTAL
+## SURVEYOR PORTAL
 
-#### My Assigned Claims
+### My Assigned Claims
 | Action | Endpoint | Status |
 |---|---|---|
 | List assigned motor claims | `GET /api/claims/surveyor/assigned` | ✅ |
@@ -300,9 +280,9 @@
 
 ---
 
-### ADMIN PORTAL
+## ADMIN PORTAL
 
-#### User Management
+### User Management
 | Action | Endpoint | Status |
 |---|---|---|
 | List all users | `GET /api/users/all` | ✅ |
@@ -311,7 +291,7 @@
 | Reset user password | `POST /api/auth/admin/reset-password/{userId}` | ✅ |
 | View all sessions | `GET /api/users/sessions` | ✅ |
 
-#### Agent Management
+### Agent Management
 | Action | Endpoint | Status |
 |---|---|---|
 | Register new agent | `POST /api/auth/admin/register-agent` | ✅ |
@@ -321,16 +301,17 @@
 | Update agent license | `PUT /api/agents/{agentId}/license` | ✅ |
 | Activate/deactivate agent | `PUT /api/agents/{agentId}/status` | ✅ |
 
-#### Product Catalog Management
+### Product Catalog Management
 | Action | Endpoint | Status |
 |---|---|---|
 | List products | `GET /api/products` | ✅ |
 | Create product | `POST /api/products` | ✅ |
 | Update premium rate table | `PUT /api/products/{id}/rates` | ✅ |
-| Configure document requirements | `PUT /api/products/{id}/documents` | ✅ |
+| Get document requirements for a product | `GET /api/products/{id}/documents` | ✅ |
+| Configure document requirements for a product | `PUT /api/products/{id}/documents` | ✅ |
 | Toggle product active/inactive | `PUT /api/products/{id}/status` | ✅ |
 
-#### System Config
+### System Config
 | Action | Endpoint | Status |
 |---|---|---|
 | View system configs | `GET /api/system/configs` | ✅ |
@@ -343,8 +324,4 @@
 
 ## Remaining Known Gaps
 
-These are known design limitations — not critical for the capstone demo:
-
-| Item | Notes |
-|---|---|
-| `ConfigureDocumentRequirementsAsync` is not truly per-product | `DocumentRequirement` has no `ProductId` FK; the endpoint adds global document requirements |
+No outstanding gaps. All previously identified issues have been resolved.

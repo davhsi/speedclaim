@@ -1,8 +1,7 @@
-<USER_REQUEST>
-i went through ur gaps and arrived with another plan
+# SpeedClaim — Technical Specification v3.0
 
-# Insurance App — Technical Specification v3.0
 > Capstone Project | Domains: Health, Life, Motor | Stack: .NET Web API + Angular + PostgreSQL + Stripe + Azure Blob Storage (local first)
+>
 > **Changelog v3:** Fixed 5 logical data flow gaps — first premium chicken-and-egg, pre-issuance data collection, auth token storage, document entity_type ENUM, surveyor license tracking.
 
 ---
@@ -11,14 +10,14 @@ i went through ur gaps and arrived with another plan
 
 | Layer | Technology |
 |---|---|
-| Backend | .NET Web API (C#) |
+| Backend | .NET 10 Web API (C#) |
 | Frontend | Angular 22 |
 | Database | PostgreSQL |
 | Authentication | JWT — Access Token (15 min) + Refresh Token (7 days) |
 | Payment | Stripe (US sandbox) |
-| Email | SendGrid / SMTP via .NET MailKit |
+| Email | Gmail SMTP via MailKit |
 | File Storage | Local storage now → Azure Blob Storage later |
-| ORM | Entity Framework Core |
+| ORM | Entity Framework Core (Code-First) |
 
 ---
 
@@ -26,13 +25,13 @@ i went through ur gaps and arrived with another plan
 
 | Role | Description |
 |---|---|
-| `customer` | Registers, manages family members, completes KYC, buys policies, makes payments, raises claims and grievances |
-| `agent` | Onboards customers, creates proposals, views own dashboard — commissions, policies sold, customer list |
-| `underwriter` | Reviews proposals, assesses risk, approves or rejects policies, requests additional documents |
-| `claims_officer` | Processes claims, verifies documents, coordinates with surveyor, approves cashless pre-auth |
-| `finance_officer` | Reconciles Stripe payments, manages refunds and claim payouts, monitors premium schedules |
-| `surveyor` | Assigned to motor claims — inspects vehicle, submits surveyor report |
-| `admin` | Full system access — manages users, roles, products, branches, document requirements, system config |
+| `Customer` | Registers, manages family members, completes KYC, buys policies, makes payments, raises claims and grievances |
+| `Agent` | Onboards customers, creates proposals, views own dashboard — commissions, policies sold, customer list |
+| `Underwriter` | Reviews proposals, assesses risk, approves or rejects policies, requests additional documents |
+| `ClaimsOfficer` | Processes claims, verifies documents, coordinates with surveyor, approves cashless pre-auth |
+| `FinanceOfficer` | Reconciles Stripe payments, manages refunds and claim payouts, monitors premium schedules |
+| `Surveyor` | Assigned to motor claims — inspects vehicle, submits surveyor report |
+| `Admin` | Full system access — manages users, roles, products, branches, document requirements, system config |
 
 ---
 
@@ -41,9 +40,37 @@ i went through ur gaps and arrived with another plan
 ### Token Strategy
 
 - **Access Token** — short-lived (15 minutes), sent in `Authorization: Bearer <token>` header on every request
-- **Refresh Token** — long-lived (7 days), stored hashed in `sessions` table, used only to issue new access tokens
-- **OTP / Reset tokens** — short-lived (10–60 minutes), stored in `use
-<truncated 27307 bytes>
+- **Refresh Token** — long-lived (7 days), stored hashed in the `sessions` table, used only to issue new access tokens
+- **OTP / Reset tokens** — short-lived (10–60 minutes), stored in the `user_tokens` table, single-use
+- **Email verification tokens** — stored in `user_tokens`, expire after 24 hours
+
+### Flow
+
+1. `POST /api/auth/register` → account created (inactive), verification email sent
+2. `POST /api/auth/verify-email` → account activated
+3. `POST /api/auth/login` → returns `{ accessToken, refreshToken }`
+4. `POST /api/auth/refresh` → rotates both tokens; old refresh token revoked
+5. `POST /api/auth/logout` → revokes all active sessions for the user
+
+---
+
+## 4. Rate Limiting
+
+| Policy | Applies To | Limit |
+| --- | --- | --- |
+| `auth` | `/auth/login`, `/auth/register`, `/auth/forgot-password`, `/auth/reset-password` | 10 requests / 60s per IP |
+| Global | All other endpoints | 100 requests / 60s per IP |
+
+Returns **HTTP 429** when exceeded.
+
+---
+
+## 5. Database Schema Overview
+
+39 tables across 16 domains.
+
+| Domain | Tables | Count |
+| --- | --- | --- |
 | Auth & Users | users, sessions, user_tokens, addresses | 4 |
 | Customers | customers, customer_members | 2 |
 | KYC | kyc_records | 1 |
@@ -65,20 +92,4 @@ i went through ur gaps and arrived with another plan
 
 ---
 
-*Document version: 3.0 | Stack: .NET Web API + Angular + PostgreSQL + Stripe + Azure Blob*
-</USER_REQUEST>
-<ADDITIONAL_METADATA>
-The current local time is: 2026-06-09T17:08:24+05:30.
-
-The user's current state is as follows:
-Active Document: /Users/davishe/workspace/InsuranceApp/backend/SpeedClaim.Api/Controllers/ClaimsController.cs (LANGUAGE_CSHARP)
-Cursor is on line: 1
-Other open documents:
-- /Users/davishe/workspace/InsuranceApp/backend/SpeedClaim.Tests/Services/EmailServiceTests.cs (LANGUAGE_CSHARP)
-- /Users/davishe/workspace/InsuranceApp/backend/SpeedClaim.Api/Controllers/ComplianceController.cs (LANGUAGE_CSHARP)
-- /Users/davishe/workspace/InsuranceApp/backend/SpeedClaim.Api/Models/Enums/PolicyType.cs (LANGUAGE_CSHARP)
-- /Users/davishe/workspace/InsuranceApp/backend/SpeedClaim.Api/Models/Enums/EntityType.cs (LANGUAGE_CSHARP)
-- /Users/davishe/workspace/InsuranceApp/backend/SpeedClaim.Api/Models/AuditLog.cs (LANGUAGE_CSHARP)
-Running terminal commands:
-- dotnet run (in /Users/davishe/workspace/InsuranceApp/backend/SpeedClaim.Api, running for 1h40m26s)
-</ADDITIONAL_METADATA>
+> Document version: 3.0 | Stack: .NET 10 Web API + Angular + PostgreSQL + Stripe
