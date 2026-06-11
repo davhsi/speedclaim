@@ -43,7 +43,7 @@ public class AuthServiceTests
         _mockUnitOfWork.Setup(u => u.UserTokens).Returns(_mockUserTokenRepository.Object);
         _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
 
-        _authService = new AuthService(_mockUnitOfWork.Object, _mockJwtService.Object, _mockEmailService.Object);
+        _authService = new AuthService(_mockUnitOfWork.Object, _mockJwtService.Object, _mockEmailService.Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<AuthService>>());
     }
 
     [Test]
@@ -55,7 +55,7 @@ public class AuthServiceTests
         _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
             .ReturnsAsync(new User());
 
-        var ex = Assert.ThrowsAsync<Exception>(() => _authService.RegisterCustomerAsync(request));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() => _authService.RegisterCustomerAsync(request));
         Assert.That(ex.Message, Is.EqualTo("Email already registered"));
     }
 
@@ -88,7 +88,7 @@ public class AuthServiceTests
         _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
             .ReturnsAsync((User?)null);
 
-        var ex = Assert.ThrowsAsync<Exception>(() => _authService.LoginAsync(request));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() => _authService.LoginAsync(request));
         Assert.That(ex.Message, Is.EqualTo("Invalid credentials"));
     }
 
@@ -101,7 +101,7 @@ public class AuthServiceTests
         _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
             .ReturnsAsync(user);
 
-        var ex = Assert.ThrowsAsync<Exception>(() => _authService.LoginAsync(request));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() => _authService.LoginAsync(request));
         Assert.That(ex.Message, Is.EqualTo("Invalid credentials"));
     }
 
@@ -118,7 +118,7 @@ public class AuthServiceTests
         _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
             .ReturnsAsync(user);
 
-        var ex = Assert.ThrowsAsync<Exception>(() => _authService.LoginAsync(request));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() => _authService.LoginAsync(request));
         Assert.That(ex.Message, Is.EqualTo("Account is inactive"));
     }
 
@@ -161,7 +161,7 @@ public class AuthServiceTests
         _mockSessionRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Session, bool>>>()))
             .ReturnsAsync(new List<Session>());
 
-        var ex = Assert.ThrowsAsync<Exception>(() => _authService.RefreshTokenAsync(request));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() => _authService.RefreshTokenAsync(request));
         Assert.That(ex.Message, Is.EqualTo("Invalid refresh token format"));
     }
 
@@ -205,7 +205,7 @@ public class AuthServiceTests
         _mockUserTokenRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<UserToken, bool>>>()))
             .ReturnsAsync(new List<UserToken>());
             
-        var ex = Assert.ThrowsAsync<Exception>(() => _authService.VerifyEmailAsync("invalid"));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() => _authService.VerifyEmailAsync("invalid"));
         Assert.That(ex.Message, Is.EqualTo("Invalid or expired token"));
     }
 
@@ -288,7 +288,7 @@ public class AuthServiceTests
         _mockUserTokenRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<UserToken, bool>>>()))
             .ReturnsAsync(new List<UserToken>());
             
-        var ex = Assert.ThrowsAsync<Exception>(() => _authService.ResetPasswordCustomerAsync(request));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() => _authService.ResetPasswordCustomerAsync(request));
         Assert.That(ex.Message, Is.EqualTo("Invalid or expired token"));
     }
 
@@ -326,7 +326,7 @@ public class AuthServiceTests
     {
         _mockUserRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((User?)null);
         
-        var ex = Assert.ThrowsAsync<Exception>(() => _authService.ResetPasswordAsync(Guid.NewGuid().ToString(), "new", "admin"));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _authService.ResetPasswordAsync(Guid.NewGuid().ToString(), "new", "admin"));
         Assert.That(ex.Message, Is.EqualTo("User not found"));
     }
 
@@ -369,7 +369,7 @@ public class AuthServiceTests
 
         var addr = new AddressDto("1 St", null, "City", "State", "000001", "India");
         var request = new RegisterAgentRequest("agent@test.com", "pass", "Mr", "T", "A", "1", addr, null, false, "L", "Agency", "000000000000", "AAAAA0000A", MaritalStatus.Single);
-        var ex = Assert.ThrowsAsync<Exception>(() => _authService.RegisterAgentAsync(request, Guid.NewGuid().ToString()));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() => _authService.RegisterAgentAsync(request, Guid.NewGuid().ToString()));
         Assert.That(ex.Message, Is.EqualTo("Email already registered"));
     }
 
@@ -380,7 +380,7 @@ public class AuthServiceTests
         var request = new RefreshTokenRequest { RefreshToken = $"{sessionId}:sometoken" };
         _mockSessionRepository.Setup(r => r.GetByIdAsync(sessionId)).ReturnsAsync((Session?)null);
 
-        var ex = Assert.ThrowsAsync<Exception>(() => _authService.RefreshTokenAsync(request));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() => _authService.RefreshTokenAsync(request));
         Assert.That(ex.Message, Is.EqualTo("Invalid or expired refresh token"));
     }
 
@@ -399,7 +399,7 @@ public class AuthServiceTests
         _mockSessionRepository.Setup(r => r.GetByIdAsync(sessionId)).ReturnsAsync(session);
         var request = new RefreshTokenRequest { RefreshToken = $"{sessionId}:wrong_token" };
 
-        var ex = Assert.ThrowsAsync<Exception>(() => _authService.RefreshTokenAsync(request));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() => _authService.RefreshTokenAsync(request));
         Assert.That(ex.Message, Is.EqualTo("Invalid refresh token"));
     }
 
@@ -421,7 +421,7 @@ public class AuthServiceTests
         _mockUserRepository.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(new User { Id = userId, IsActive = false });
         var request = new RefreshTokenRequest { RefreshToken = $"{sessionId}:{rawToken}" };
 
-        var ex = Assert.ThrowsAsync<Exception>(() => _authService.RefreshTokenAsync(request));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() => _authService.RefreshTokenAsync(request));
         Assert.That(ex.Message, Is.EqualTo("User inactive or not found"));
     }
 
@@ -431,7 +431,7 @@ public class AuthServiceTests
         var tokenId = Guid.NewGuid();
         _mockUserTokenRepository.Setup(r => r.GetByIdAsync(tokenId)).ReturnsAsync((UserToken?)null);
 
-        var ex = Assert.ThrowsAsync<Exception>(() => _authService.VerifyEmailAsync($"{tokenId}:tok"));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() => _authService.VerifyEmailAsync($"{tokenId}:tok"));
         Assert.That(ex.Message, Is.EqualTo("Invalid or expired token"));
     }
 
@@ -450,7 +450,7 @@ public class AuthServiceTests
         };
         _mockUserTokenRepository.Setup(r => r.GetByIdAsync(tokenId)).ReturnsAsync(userToken);
 
-        var ex = Assert.ThrowsAsync<Exception>(() => _authService.VerifyEmailAsync($"{tokenId}:{rawToken}"));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() => _authService.VerifyEmailAsync($"{tokenId}:{rawToken}"));
         Assert.That(ex.Message, Is.EqualTo("Invalid token type"));
     }
 
@@ -468,7 +468,7 @@ public class AuthServiceTests
         };
         _mockUserTokenRepository.Setup(r => r.GetByIdAsync(tokenId)).ReturnsAsync(userToken);
 
-        var ex = Assert.ThrowsAsync<Exception>(() => _authService.VerifyEmailAsync($"{tokenId}:wrong"));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() => _authService.VerifyEmailAsync($"{tokenId}:wrong"));
         Assert.That(ex.Message, Is.EqualTo("Invalid or expired token"));
     }
 
@@ -488,7 +488,7 @@ public class AuthServiceTests
         _mockUserTokenRepository.Setup(r => r.GetByIdAsync(tokenId)).ReturnsAsync(userToken);
 
         var request = new ResetPasswordRequest { Token = $"{tokenId}:{rawToken}", NewPassword = "new" };
-        var ex = Assert.ThrowsAsync<Exception>(() => _authService.ResetPasswordCustomerAsync(request));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() => _authService.ResetPasswordCustomerAsync(request));
         Assert.That(ex.Message, Is.EqualTo("Invalid token type"));
     }
 
@@ -507,7 +507,7 @@ public class AuthServiceTests
         _mockUserTokenRepository.Setup(r => r.GetByIdAsync(tokenId)).ReturnsAsync(userToken);
 
         var request = new ResetPasswordRequest { Token = $"{tokenId}:wrong", NewPassword = "new" };
-        var ex = Assert.ThrowsAsync<Exception>(() => _authService.ResetPasswordCustomerAsync(request));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() => _authService.ResetPasswordCustomerAsync(request));
         Assert.That(ex.Message, Is.EqualTo("Invalid or expired token"));
     }
 }

@@ -41,7 +41,7 @@ public class ClaimServiceTests
         _mockUnitOfWork.Setup(u => u.SubmittedDocuments).Returns(_mockDocRepo.Object);
         _mockUnitOfWork.Setup(u => u.Customers).Returns(new Mock<IRepository<Customer>>().Object);
 
-        _claimService = new ClaimService(_mockUnitOfWork.Object, new Mock<IStorageService>().Object, new Mock<INotificationService>().Object);
+        _claimService = new ClaimService(_mockUnitOfWork.Object, new Mock<IStorageService>().Object, new Mock<INotificationService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ClaimService>>());
     }
 
     [Test]
@@ -97,7 +97,7 @@ public class ClaimServiceTests
         _mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(policy);
 
         // Act & Assert
-        Assert.ThrowsAsync<InvalidOperationException>(() => _claimService.IntimateClaimAsync(customerId, request));
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.UnprocessableException>(() => _claimService.IntimateClaimAsync(customerId, request));
     }
 
     [Test]
@@ -137,7 +137,7 @@ public class ClaimServiceTests
         _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
 
         // Act & Assert
-        Assert.ThrowsAsync<InvalidOperationException>(() => _claimService.AssignSurveyorAsync(claimId, Guid.NewGuid(), Guid.NewGuid(), "Test"));
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.UnprocessableException>(() => _claimService.AssignSurveyorAsync(claimId, Guid.NewGuid(), Guid.NewGuid(), "Test"));
     }
 
     [Test]
@@ -198,7 +198,7 @@ public class ClaimServiceTests
     {
         _mockClaimRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Claim?)null);
 
-        Assert.ThrowsAsync<KeyNotFoundException>(() => _claimService.GetClaimByIdAsync(Guid.NewGuid()));
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _claimService.GetClaimByIdAsync(Guid.NewGuid()));
     }
 
     [Test]
@@ -208,7 +208,7 @@ public class ClaimServiceTests
         var claim = new Claim { Id = claimId, CustomerId = Guid.NewGuid(), ClaimType = ClaimType.Health, Status = ClaimStatus.Intimated };
         _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
 
-        Assert.ThrowsAsync<UnauthorizedAccessException>(() => _claimService.GetClaimByIdAsync(claimId, Guid.NewGuid()));
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() => _claimService.GetClaimByIdAsync(claimId, Guid.NewGuid()));
     }
 
     [Test]
@@ -236,22 +236,24 @@ public class ClaimServiceTests
         var claim = new Claim { Id = claimId, CustomerId = Guid.NewGuid(), ClaimType = ClaimType.Health, Status = ClaimStatus.Intimated };
         _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
 
-        Assert.ThrowsAsync<KeyNotFoundException>(() => _claimService.GetClaimHistoryAsync(claimId, Guid.NewGuid()));
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _claimService.GetClaimHistoryAsync(claimId, Guid.NewGuid()));
     }
 
     [Test]
-    public async Task GetAllClaimsAsync_ReturnsAllClaims()
+    public async Task GetAllClaimsAsync_ReturnsPagedClaims()
     {
         var claims = new List<Claim>
         {
             new Claim { Id = Guid.NewGuid(), ClaimNumber = "CLM-001", ClaimType = ClaimType.Health, Status = ClaimStatus.Intimated },
             new Claim { Id = Guid.NewGuid(), ClaimNumber = "CLM-002", ClaimType = ClaimType.Accident, Status = ClaimStatus.UnderReview }
         };
-        _mockClaimRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(claims);
+        _mockClaimRepo.Setup(r => r.GetPagedAsync(1, 20, null, null))
+            .ReturnsAsync(((IEnumerable<Claim>)claims, claims.Count));
 
-        var result = await _claimService.GetAllClaimsAsync();
+        var result = await _claimService.GetAllClaimsAsync(1, 20);
 
-        Assert.That(result.Count(), Is.EqualTo(2));
+        Assert.That(result.Data.Count(), Is.EqualTo(2));
+        Assert.That(result.TotalRecords, Is.EqualTo(2));
     }
 
     [Test]
@@ -303,7 +305,7 @@ public class ClaimServiceTests
         var claim = new Claim { Id = claimId, ClaimType = ClaimType.Health, Status = ClaimStatus.Intimated, IsCashless = false };
         _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
 
-        Assert.ThrowsAsync<InvalidOperationException>(() => _claimService.ApproveCashlessPreAuthAsync(claimId, Guid.NewGuid()));
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.UnprocessableException>(() => _claimService.ApproveCashlessPreAuthAsync(claimId, Guid.NewGuid()));
     }
 
     [Test]
@@ -342,7 +344,7 @@ public class ClaimServiceTests
         _mockPolicyRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Policy?)null);
         var request = new IntimateClaimRequest(Guid.NewGuid(), null, ClaimType.Health, 1000, false, DateTime.UtcNow, "desc");
 
-        Assert.ThrowsAsync<ArgumentException>(() => _claimService.IntimateClaimAsync(Guid.NewGuid(), request));
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _claimService.IntimateClaimAsync(Guid.NewGuid(), request));
     }
 
     [Test]
@@ -432,7 +434,7 @@ public class ClaimServiceTests
         var mockStorage = new Mock<IStorageService>();
         mockStorage.Setup(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync("/storage/report.pdf");
-        var svc = new ClaimService(_mockUnitOfWork.Object, mockStorage.Object, new Mock<INotificationService>().Object);
+        var svc = new ClaimService(_mockUnitOfWork.Object, mockStorage.Object, new Mock<INotificationService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ClaimService>>());
 
         var request = new SubmitSurveyReportRequest(5000m, DateTime.UtcNow.AddDays(-1), "minor damage", mockFile.Object);
         var result = await svc.SubmitSurveyReportAsync(claimId, surveyorId, request);
@@ -454,7 +456,7 @@ public class ClaimServiceTests
         _mockUnitOfWork.Setup(u => u.Customers.GetByIdAsync(customerId)).ReturnsAsync(customer);
 
         var mockNotif = new Mock<INotificationService>();
-        var svc = new ClaimService(_mockUnitOfWork.Object, new Mock<IStorageService>().Object, mockNotif.Object);
+        var svc = new ClaimService(_mockUnitOfWork.Object, new Mock<IStorageService>().Object, mockNotif.Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ClaimService>>());
 
         await svc.UpdateClaimStatusAsync(claimId, ClaimStatus.UnderReview, Guid.NewGuid(), "reviewing");
 

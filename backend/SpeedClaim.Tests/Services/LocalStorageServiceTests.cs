@@ -69,7 +69,7 @@ public class LocalStorageServiceTests
     public void UploadFileAsync_NullStream_ThrowsArgumentException()
     {
         // Act & Assert
-        var ex = Assert.ThrowsAsync<ArgumentException>(async () => 
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(async () => 
             await _storageService.UploadFileAsync(null!, "test.pdf", "folder"));
         
         Assert.That(ex.Message, Does.Contain("No file provided"));
@@ -82,7 +82,7 @@ public class LocalStorageServiceTests
         using var stream = new MemoryStream();
 
         // Act & Assert
-        var ex = Assert.ThrowsAsync<ArgumentException>(async () => 
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(async () => 
             await _storageService.UploadFileAsync(stream, "test.pdf", "folder"));
         
         Assert.That(ex.Message, Does.Contain("No file provided"));
@@ -95,7 +95,7 @@ public class LocalStorageServiceTests
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("content"));
         
         // Act & Assert
-        var ex = Assert.ThrowsAsync<ArgumentException>(async () => 
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(async () => 
             await _storageService.UploadFileAsync(stream, "test.exe", "folder"));
         
         Assert.That(ex.Message, Does.Contain("Invalid file type"));
@@ -110,7 +110,7 @@ public class LocalStorageServiceTests
         mockStream.Setup(s => s.Length).Returns(11 * 1024 * 1024); // 11 MB
 
         // Act & Assert
-        var ex = Assert.ThrowsAsync<ArgumentException>(async () => 
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(async () => 
             await _storageService.UploadFileAsync(mockStream.Object, "test.pdf", "folder"));
         
         Assert.That(ex.Message, Does.Contain("exceeds the 10MB limit"));
@@ -140,7 +140,7 @@ public class LocalStorageServiceTests
     public void GetFileAsync_NonExistingFile_ThrowsFileNotFoundException()
     {
         // Act & Assert
-        Assert.ThrowsAsync<FileNotFoundException>(async () => 
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(async () =>
             await _storageService.GetFileAsync("nonexistent.pdf"));
     }
 

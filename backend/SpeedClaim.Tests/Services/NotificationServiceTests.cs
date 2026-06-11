@@ -85,7 +85,7 @@ public class NotificationServiceTests
 
         _mockNotificationRepo.Setup(r => r.GetByIdAsync(notificationId)).ReturnsAsync(notification);
 
-        Assert.ThrowsAsync<KeyNotFoundException>(() =>
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() =>
             _notificationService.MarkAsReadAsync(notificationId, Guid.NewGuid()));
     }
 

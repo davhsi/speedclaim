@@ -43,7 +43,7 @@ public class ProposalServiceTests
         _mockUnitOfWork.Setup(u => u.Policies).Returns(new Mock<IPolicyRepository>().Object);
         _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
 
-        _proposalService = new ProposalService(_mockUnitOfWork.Object, new Mock<INotificationService>().Object, new Mock<IStorageService>().Object);
+        _proposalService = new ProposalService(_mockUnitOfWork.Object, new Mock<INotificationService>().Object, new Mock<IStorageService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ProposalService>>());
     }
 
     [Test]
@@ -52,7 +52,7 @@ public class ProposalServiceTests
         _mockProductRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((InsuranceProduct?)null);
 
         var request = new GenerateQuoteRequest(Guid.NewGuid().ToString(), 30, "Male", 100000, 10);
-        var ex = Assert.ThrowsAsync<Exception>(() => _proposalService.GenerateQuoteAsync(request));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _proposalService.GenerateQuoteAsync(request));
         Assert.That(ex.Message, Is.EqualTo("Product not found"));
     }
 
@@ -64,7 +64,7 @@ public class ProposalServiceTests
         _mockRateRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<PremiumRateTable, bool>>>())).ReturnsAsync(new List<PremiumRateTable>());
 
         var request = new GenerateQuoteRequest(Guid.NewGuid().ToString(), 30, "Male", 100000, 10);
-        var ex = Assert.ThrowsAsync<Exception>(() => _proposalService.GenerateQuoteAsync(request));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _proposalService.GenerateQuoteAsync(request));
         Assert.That(ex.Message, Is.EqualTo("No applicable rate found for the given criteria"));
     }
 
@@ -181,7 +181,7 @@ public class ProposalServiceTests
     {
         _mockProposalRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Proposal?)null);
 
-        var ex = Assert.ThrowsAsync<Exception>(() => _proposalService.ApproveOrRejectProposalAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), true, ""));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _proposalService.ApproveOrRejectProposalAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), true, ""));
         Assert.That(ex.Message, Is.EqualTo("Proposal not found"));
     }
 
@@ -233,7 +233,7 @@ public class ProposalServiceTests
     {
         _mockProposalRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Proposal?)null);
 
-        Assert.ThrowsAsync<Exception>(() =>
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() =>
             _proposalService.AddUnderwriterNotesAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), "First note"));
     }
 
@@ -299,7 +299,7 @@ public class ProposalServiceTests
         _mockProposalRepo.Setup(r => r.GetByIdAsync(proposalId)).ReturnsAsync(proposal);
         _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync((Agent?)null);
 
-        Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() =>
             _proposalService.GetByIdAsync(proposalId.ToString(), Guid.NewGuid().ToString(), isAdmin: false));
     }
 
@@ -308,7 +308,7 @@ public class ProposalServiceTests
     {
         _mockProposalRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Proposal?)null);
 
-        Assert.ThrowsAsync<KeyNotFoundException>(() =>
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() =>
             _proposalService.GetByIdAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), isAdmin: true));
     }
 
@@ -327,7 +327,7 @@ public class ProposalServiceTests
         var mockDocRepo = new Mock<ISubmittedDocumentRepository>();
         _mockUnitOfWork.Setup(u => u.SubmittedDocuments).Returns(mockDocRepo.Object);
 
-        var proposalServiceWithStorage = new ProposalService(_mockUnitOfWork.Object, new Mock<INotificationService>().Object, mockStorageService.Object);
+        var proposalServiceWithStorage = new ProposalService(_mockUnitOfWork.Object, new Mock<INotificationService>().Object, mockStorageService.Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ProposalService>>());
 
         var mockFile = new Mock<Microsoft.AspNetCore.Http.IFormFile>();
         mockFile.Setup(f => f.FileName).Returns("doc.pdf");
@@ -352,7 +352,7 @@ public class ProposalServiceTests
         mockFile.Setup(f => f.Length).Returns(100);
         mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
 
-        Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() =>
             _proposalService.UploadDocumentAsync(proposalId.ToString(), Guid.NewGuid().ToString(), "ID_PROOF", mockFile.Object));
     }
 
@@ -398,7 +398,7 @@ public class ProposalServiceTests
         mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
         var mockStorage = new Mock<IStorageService>();
         mockStorage.Setup(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync("/path/id.pdf");
-        var svc = new ProposalService(_mockUnitOfWork.Object, new Mock<INotificationService>().Object, mockStorage.Object);
+        var svc = new ProposalService(_mockUnitOfWork.Object, new Mock<INotificationService>().Object, mockStorage.Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ProposalService>>());
 
         await svc.UploadDocumentAsync(proposalId.ToString(), agentUserId.ToString(), "ID_PROOF", mockFile.Object);
 
@@ -423,7 +423,7 @@ public class ProposalServiceTests
         _mockCustomerRepo.Setup(r => r.GetByIdAsync(customerId)).ReturnsAsync(customer);
 
         var mockNotif = new Mock<INotificationService>();
-        var svc = new ProposalService(_mockUnitOfWork.Object, mockNotif.Object, new Mock<IStorageService>().Object);
+        var svc = new ProposalService(_mockUnitOfWork.Object, mockNotif.Object, new Mock<IStorageService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ProposalService>>());
 
         await svc.ApproveOrRejectProposalAsync(proposalId.ToString(), Guid.NewGuid().ToString(), true, "Looks good");
 

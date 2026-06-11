@@ -126,7 +126,7 @@ public class AgentServiceTests
     {
         _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync((Agent?)null);
 
-        var ex = Assert.ThrowsAsync<Exception>(() => _agentService.AssignAgentToBranchAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), Guid.NewGuid().ToString()));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _agentService.AssignAgentToBranchAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), Guid.NewGuid().ToString()));
         Assert.That(ex.Message, Is.EqualTo("Agent not found"));
     }
 
@@ -137,7 +137,7 @@ public class AgentServiceTests
         _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync(agent);
         _mockBranchRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Branch?)null);
 
-        var ex = Assert.ThrowsAsync<Exception>(() => _agentService.AssignAgentToBranchAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), Guid.NewGuid().ToString()));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _agentService.AssignAgentToBranchAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), Guid.NewGuid().ToString()));
         Assert.That(ex.Message, Is.EqualTo("Branch not found"));
     }
 
@@ -164,7 +164,7 @@ public class AgentServiceTests
         _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync((Agent?)null);
         var request = new UpdateAgentLicenseRequest("LIC-123", DateTime.UtcNow.AddYears(1));
 
-        var ex = Assert.ThrowsAsync<Exception>(() => _agentService.UpdateAgentLicenseAsync(Guid.NewGuid().ToString(), request, Guid.NewGuid().ToString()));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _agentService.UpdateAgentLicenseAsync(Guid.NewGuid().ToString(), request, Guid.NewGuid().ToString()));
         Assert.That(ex.Message, Is.EqualTo("Agent not found"));
     }
 
@@ -190,7 +190,7 @@ public class AgentServiceTests
     {
         _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync((Agent?)null);
 
-        var ex = Assert.ThrowsAsync<Exception>(() => _agentService.ActivateDeactivateAgentAsync(Guid.NewGuid().ToString(), false, Guid.NewGuid().ToString()));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _agentService.ActivateDeactivateAgentAsync(Guid.NewGuid().ToString(), false, Guid.NewGuid().ToString()));
         Assert.That(ex.Message, Is.EqualTo("Agent not found"));
     }
 
@@ -216,7 +216,7 @@ public class AgentServiceTests
         var userId = Guid.NewGuid();
         _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync((Agent?)null);
 
-        Assert.ThrowsAsync<KeyNotFoundException>(() => _agentService.GetAgentProfileAsync(userId.ToString()));
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _agentService.GetAgentProfileAsync(userId.ToString()));
     }
 
     [Test]
@@ -279,6 +279,35 @@ public class AgentServiceTests
 
         Assert.That(result.BranchName, Is.EqualTo("North Branch"));
         Assert.That(result.BranchCity, Is.EqualTo("Chicago"));
+    }
+
+    // --- UpdateAgentProfileAsync tests ---
+
+    [Test]
+    public async Task UpdateAgentProfileAsync_Success_UpdatesUserFields()
+    {
+        var userId = Guid.NewGuid();
+        var user = new User { Id = userId, FirstName = "Old", LastName = "Name", Phone = "111", Salutation = Salutation.Mr };
+
+        _mockUserRepo.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
+
+        var request = new UpdateAgentProfileRequest("Ms", "New", "Name", "999");
+
+        await _agentService.UpdateAgentProfileAsync(userId.ToString(), request);
+
+        Assert.That(user.FirstName, Is.EqualTo("New"));
+        Assert.That(user.Phone, Is.EqualTo("999"));
+        Assert.That(user.Salutation, Is.EqualTo(Salutation.Ms));
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public void UpdateAgentProfileAsync_UserNotFound_ThrowsException()
+    {
+        _mockUserRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((User?)null);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() =>
+            _agentService.UpdateAgentProfileAsync(Guid.NewGuid().ToString(), new UpdateAgentProfileRequest("Mr", "A", "B", "123")));
     }
 
     // --- GetRenewalRemindersAsync tests ---

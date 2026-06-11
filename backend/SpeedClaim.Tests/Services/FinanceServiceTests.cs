@@ -41,7 +41,7 @@ public class FinanceServiceTests
         _mockUnitOfWork.Setup(u => u.StripeCustomers).Returns(new Mock<IRepository<SpeedClaim.Api.Models.StripeCustomer>>().Object);
         _mockUnitOfWork.Setup(u => u.Users).Returns(new Mock<IUserRepository>().Object);
 
-        _financeService = new FinanceService(_mockUnitOfWork.Object, _mockStripeWrapper.Object, _mockConfig.Object, _mockEmailService.Object, new Mock<INotificationService>().Object);
+        _financeService = new FinanceService(_mockUnitOfWork.Object, _mockStripeWrapper.Object, _mockConfig.Object, _mockEmailService.Object, new Mock<INotificationService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<FinanceService>>());
     }
 
     [Test]
@@ -111,7 +111,7 @@ public class FinanceServiceTests
         mockScheduleRepo.Setup(r => r.GetByIdAsync(scheduleId)).ReturnsAsync(schedule);
         _mockUnitOfWork.Setup(u => u.PremiumSchedules).Returns(mockScheduleRepo.Object);
 
-        Assert.ThrowsAsync<InvalidOperationException>(() => _financeService.PayPremiumAsync(Guid.NewGuid().ToString(), scheduleId.ToString(), new CreatePaymentIntentRequest()));
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() => _financeService.PayPremiumAsync(Guid.NewGuid().ToString(), scheduleId.ToString(), new CreatePaymentIntentRequest()));
     }
 
     [Test]
@@ -289,7 +289,7 @@ public class FinanceServiceTests
         mockPaymentRepo.Setup(r => r.GetByIdAsync(paymentId)).ReturnsAsync((PremiumPayment?)null);
         _mockUnitOfWork.Setup(u => u.PremiumPayments).Returns(mockPaymentRepo.Object);
 
-        Assert.ThrowsAsync<KeyNotFoundException>(() =>
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() =>
             _financeService.DownloadReceiptAsync(paymentId.ToString(), customerId.ToString()));
     }
 
@@ -304,7 +304,7 @@ public class FinanceServiceTests
         mockPaymentRepo.Setup(r => r.GetByIdAsync(paymentId)).ReturnsAsync(payment);
         _mockUnitOfWork.Setup(u => u.PremiumPayments).Returns(mockPaymentRepo.Object);
 
-        Assert.ThrowsAsync<InvalidOperationException>(() =>
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.UnprocessableException>(() =>
             _financeService.DownloadReceiptAsync(paymentId.ToString(), customerId.ToString()));
     }
 
@@ -345,7 +345,7 @@ public class FinanceServiceTests
         mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync((Claim?)null);
         _mockUnitOfWork.Setup(u => u.Claims).Returns(mockClaimRepo.Object);
 
-        Assert.ThrowsAsync<KeyNotFoundException>(() =>
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() =>
             _financeService.ProcessClaimPayoutAsync(claimId.ToString(), Guid.NewGuid().ToString()));
     }
 
@@ -359,7 +359,7 @@ public class FinanceServiceTests
         mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
         _mockUnitOfWork.Setup(u => u.Claims).Returns(mockClaimRepo.Object);
 
-        Assert.ThrowsAsync<InvalidOperationException>(() =>
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.UnprocessableException>(() =>
             _financeService.ProcessClaimPayoutAsync(claimId.ToString(), Guid.NewGuid().ToString()));
     }
 
@@ -410,7 +410,7 @@ public class FinanceServiceTests
         mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
         _mockUnitOfWork.Setup(u => u.Claims).Returns(mockClaimRepo.Object);
 
-        Assert.ThrowsAsync<InvalidOperationException>(() =>
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
             _financeService.MarkClaimFinanciallySettledAsync(claimId.ToString(), Guid.NewGuid().ToString()));
     }
 
@@ -527,7 +527,7 @@ public class FinanceServiceTests
         mockCustomerRepo.Setup(r => r.GetByIdAsync(customerId)).ReturnsAsync((SpeedClaim.Api.Models.Customer?)null);
         _mockUnitOfWork.Setup(u => u.Customers).Returns(mockCustomerRepo.Object);
 
-        Assert.ThrowsAsync<KeyNotFoundException>(() => _financeService.GetSavedPaymentMethodsAsync(customerId.ToString()));
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _financeService.GetSavedPaymentMethodsAsync(customerId.ToString()));
     }
 
     [Test]
@@ -605,7 +605,7 @@ public class FinanceServiceTests
     [Test]
     public void PayPremiumAsync_InvalidIds_ThrowsArgumentException()
     {
-        Assert.ThrowsAsync<ArgumentException>(() =>
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() =>
             _financeService.PayPremiumAsync("not-a-guid", Guid.NewGuid().ToString(), new CreatePaymentIntentRequest()));
     }
 }

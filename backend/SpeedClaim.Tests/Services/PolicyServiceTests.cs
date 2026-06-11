@@ -60,7 +60,7 @@ public class PolicyServiceTests
 
         _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync((Policy)null);
 
-        Assert.ThrowsAsync<KeyNotFoundException>(() => _policyService.DownloadPolicyDocumentAsync(policyId, customerId));
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _policyService.DownloadPolicyDocumentAsync(policyId, customerId));
     }
 
     [Test]
@@ -120,7 +120,7 @@ public class PolicyServiceTests
 
         _mockUnitOfWork.Setup(u => u.Endorsements.GetByIdAsync(endorsementId)).ReturnsAsync(endorsement);
 
-        Assert.ThrowsAsync<InvalidOperationException>(() => 
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.UnprocessableException>(() => 
             _policyService.ApproveRejectEndorsementAsync(endorsementId, true, "OK", underwriterId));
     }
 
@@ -153,7 +153,7 @@ public class PolicyServiceTests
 
         var request = new UpdateNomineeRequest("Jane Doe", "Spouse", DateTime.UtcNow.AddYears(-30), 100, false, null);
 
-        Assert.ThrowsAsync<KeyNotFoundException>(() =>
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() =>
             _policyService.UpdateNomineeAsync(nomineeId, customerId, request));
     }
 
@@ -172,7 +172,7 @@ public class PolicyServiceTests
 
         var request = new UpdateNomineeRequest("Jane", "Spouse", DateTime.UtcNow.AddYears(-25), 100, false, null);
 
-        Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() =>
             _policyService.UpdateNomineeAsync(nomineeId, customerId, request));
     }
 
@@ -221,7 +221,7 @@ public class PolicyServiceTests
     {
         _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Policy?)null);
 
-        Assert.ThrowsAsync<KeyNotFoundException>(() => _policyService.GetByIdAsync(Guid.NewGuid()));
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _policyService.GetByIdAsync(Guid.NewGuid()));
     }
 
     [Test]
@@ -231,7 +231,7 @@ public class PolicyServiceTests
         var policy = new Policy { Id = policyId, CustomerId = Guid.NewGuid(), Status = PolicyStatus.Active };
         _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
 
-        Assert.ThrowsAsync<UnauthorizedAccessException>(() => _policyService.GetByIdAsync(policyId, Guid.NewGuid()));
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() => _policyService.GetByIdAsync(policyId, Guid.NewGuid()));
     }
 
     [Test]
@@ -261,7 +261,7 @@ public class PolicyServiceTests
         var policy = new Policy { Id = policyId, CustomerId = Guid.NewGuid(), Status = PolicyStatus.Active };
         _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
 
-        Assert.ThrowsAsync<UnauthorizedAccessException>(() => _policyService.GetNomineesAsync(policyId, Guid.NewGuid()));
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() => _policyService.GetNomineesAsync(policyId, Guid.NewGuid()));
     }
 
     [Test]
@@ -287,7 +287,7 @@ public class PolicyServiceTests
         var policy = new Policy { Id = policyId, CustomerId = customerId, Status = PolicyStatus.Cancelled };
         _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
 
-        Assert.ThrowsAsync<InvalidOperationException>(() => _policyService.CancelPolicyAsync(policyId, customerId));
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() => _policyService.CancelPolicyAsync(policyId, customerId));
     }
 
     [Test]
@@ -297,7 +297,7 @@ public class PolicyServiceTests
         var policy = new Policy { Id = policyId, CustomerId = Guid.NewGuid(), Status = PolicyStatus.Active };
         _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
 
-        Assert.ThrowsAsync<KeyNotFoundException>(() => _policyService.CancelPolicyAsync(policyId, Guid.NewGuid()));
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _policyService.CancelPolicyAsync(policyId, Guid.NewGuid()));
     }
 
     [Test]
@@ -325,7 +325,7 @@ public class PolicyServiceTests
         var policy = new Policy { Id = policyId, CustomerId = Guid.NewGuid(), Status = PolicyStatus.Active };
         _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
 
-        Assert.ThrowsAsync<UnauthorizedAccessException>(() => _policyService.GetPolicyHistoryAsync(policyId, Guid.NewGuid()));
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() => _policyService.GetPolicyHistoryAsync(policyId, Guid.NewGuid()));
     }
 
     [Test]
@@ -353,11 +353,14 @@ public class PolicyServiceTests
         {
             new Endorsement { Id = Guid.NewGuid(), PolicyId = Guid.NewGuid(), EndorsementType = EndorsementType.NomineeChange, Description = "Change nominee", Status = EndorsementStatus.Requested }
         };
-        _mockUnitOfWork.Setup(u => u.Endorsements.FindAsync(It.IsAny<Expression<Func<Endorsement, bool>>>())).ReturnsAsync(endorsements);
+        _mockUnitOfWork.Setup(u => u.Endorsements.GetPagedAsync(
+            It.IsAny<int>(), It.IsAny<int>(),
+            It.IsAny<Expression<Func<Endorsement, bool>>>(), null))
+            .ReturnsAsync(((IEnumerable<Endorsement>)endorsements, endorsements.Count));
 
-        var result = await _policyService.GetPendingEndorsementsAsync();
+        var result = await _policyService.GetPendingEndorsementsAsync(1, 20);
 
-        Assert.That(result.Count(), Is.EqualTo(1));
+        Assert.That(result.Data.Count(), Is.EqualTo(1));
     }
 
     [Test]
@@ -381,7 +384,7 @@ public class PolicyServiceTests
         var policy = new Policy { Id = policyId, CustomerId = customerId, Status = PolicyStatus.Expired };
         _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
 
-        Assert.ThrowsAsync<InvalidOperationException>(() => _policyService.CancelPolicyAsync(policyId, customerId));
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.UnprocessableException>(() => _policyService.CancelPolicyAsync(policyId, customerId));
     }
 
     [Test]
@@ -412,7 +415,7 @@ public class PolicyServiceTests
         _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Policy?)null);
         var request = new RequestEndorsementRequest(EndorsementType.ContactUpdate, "Update contact", "old phone", "new phone");
 
-        Assert.ThrowsAsync<KeyNotFoundException>(() =>
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() =>
             _policyService.RequestEndorsementAsync(Guid.NewGuid(), Guid.NewGuid(), request));
     }
 
@@ -439,11 +442,13 @@ public class PolicyServiceTests
             new Policy { Id = Guid.NewGuid(), PolicyNumber = "POL-1" },
             new Policy { Id = Guid.NewGuid(), PolicyNumber = "POL-2" }
         };
-        _mockUnitOfWork.Setup(u => u.Policies.GetAllAsync()).ReturnsAsync(policies);
+        _mockUnitOfWork.Setup(u => u.Policies.GetPagedAsync(1, 20, null, null))
+            .ReturnsAsync(((IEnumerable<Policy>)policies, policies.Count));
 
-        var result = await _policyService.GetAllPoliciesAsync();
+        var result = await _policyService.GetAllPoliciesAsync(1, 20);
 
-        Assert.That(result.Count(), Is.EqualTo(2));
+        Assert.That(result.Data.Count(), Is.EqualTo(2));
+        Assert.That(result.TotalRecords, Is.EqualTo(2));
     }
 
     [Test]
@@ -451,7 +456,7 @@ public class PolicyServiceTests
     {
         _mockUnitOfWork.Setup(u => u.Endorsements.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Endorsement?)null);
 
-        Assert.ThrowsAsync<KeyNotFoundException>(() =>
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() =>
             _policyService.ApproveRejectEndorsementAsync(Guid.NewGuid(), true, "approved", Guid.NewGuid()));
     }
 
@@ -463,7 +468,7 @@ public class PolicyServiceTests
         var policy = new Policy { Id = policyId, CustomerId = Guid.NewGuid() };
         _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
 
-        Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() =>
             _policyService.GetPolicyEndorsementsAsync(policyId, customerId));
     }
 }

@@ -77,7 +77,7 @@ public class GrievanceServiceTests
         _mockCustomerRepo.Setup(r => r.GetByIdAsync(customerId)).ReturnsAsync((Customer?)null);
 
         // Act & Assert
-        Assert.ThrowsAsync<KeyNotFoundException>(() => _grievanceService.RaiseGrievanceAsync(customerId, request));
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _grievanceService.RaiseGrievanceAsync(customerId, request));
     }
 
     [Test]
@@ -141,18 +141,20 @@ public class GrievanceServiceTests
     }
 
     [Test]
-    public async Task GetAllGrievancesAsync_ReturnsAllGrievances()
+    public async Task GetAllGrievancesAsync_ReturnsPagedGrievances()
     {
         var grievances = new List<Grievance>
         {
             new Grievance { Id = Guid.NewGuid(), GrievanceNumber = "GRV-001", Category = GrievanceCategory.ClaimDelay, Description = "D", Status = GrievanceStatus.Open },
             new Grievance { Id = Guid.NewGuid(), GrievanceNumber = "GRV-002", Category = GrievanceCategory.PremiumIssue, Description = "D", Status = GrievanceStatus.InProgress }
         };
-        _mockGrievanceRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(grievances);
+        _mockGrievanceRepo.Setup(r => r.GetPagedAsync(1, 20, null, null))
+            .ReturnsAsync(((IEnumerable<Grievance>)grievances, grievances.Count));
 
-        var result = await _grievanceService.GetAllGrievancesAsync();
+        var result = await _grievanceService.GetAllGrievancesAsync(1, 20);
 
-        Assert.That(result.Count(), Is.EqualTo(2));
+        Assert.That(result.Data.Count(), Is.EqualTo(2));
+        Assert.That(result.TotalRecords, Is.EqualTo(2));
     }
 
     [Test]
@@ -169,11 +171,35 @@ public class GrievanceServiceTests
     }
 
     [Test]
+    public async Task GetGrievanceByIdAsync_CustomerAccessingOwnGrievance_Succeeds()
+    {
+        var id = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var grievance = new Grievance { Id = id, CustomerId = customerId, GrievanceNumber = "GRV-001", Category = GrievanceCategory.PremiumIssue, Description = "D", Status = GrievanceStatus.Open };
+        _mockGrievanceRepo.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(grievance);
+
+        var result = await _grievanceService.GetGrievanceByIdAsync(id, customerId);
+
+        Assert.That(result.Id, Is.EqualTo(id));
+    }
+
+    [Test]
+    public void GetGrievanceByIdAsync_CustomerAccessingOthersGrievance_ThrowsForbidden()
+    {
+        var id = Guid.NewGuid();
+        var grievance = new Grievance { Id = id, CustomerId = Guid.NewGuid(), GrievanceNumber = "GRV-001", Category = GrievanceCategory.PremiumIssue, Description = "D", Status = GrievanceStatus.Open };
+        _mockGrievanceRepo.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(grievance);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() =>
+            _grievanceService.GetGrievanceByIdAsync(id, Guid.NewGuid()));
+    }
+
+    [Test]
     public void GetGrievanceByIdAsync_NotFound_ThrowsKeyNotFound()
     {
         _mockGrievanceRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Grievance?)null);
 
-        Assert.ThrowsAsync<KeyNotFoundException>(() => _grievanceService.GetGrievanceByIdAsync(Guid.NewGuid()));
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _grievanceService.GetGrievanceByIdAsync(Guid.NewGuid()));
     }
 
     [Test]
@@ -181,7 +207,7 @@ public class GrievanceServiceTests
     {
         _mockGrievanceRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Grievance?)null);
 
-        Assert.ThrowsAsync<KeyNotFoundException>(() => _grievanceService.AssignGrievanceAsync(Guid.NewGuid(), Guid.NewGuid()));
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _grievanceService.AssignGrievanceAsync(Guid.NewGuid(), Guid.NewGuid()));
     }
 
     [Test]
@@ -202,7 +228,7 @@ public class GrievanceServiceTests
     {
         _mockGrievanceRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Grievance?)null);
 
-        Assert.ThrowsAsync<KeyNotFoundException>(() =>
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() =>
             _grievanceService.UpdateGrievanceStatusAsync(Guid.NewGuid(), new UpdateGrievanceStatusRequest(GrievanceStatus.Resolved, null)));
     }
 
@@ -236,7 +262,7 @@ public class GrievanceServiceTests
         _mockCustomerRepo.Setup(r => r.GetByIdAsync(customerId)).ReturnsAsync(customer);
         _mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(policy);
 
-        Assert.ThrowsAsync<InvalidOperationException>(() =>
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() =>
             _grievanceService.RaiseGrievanceAsync(customerId, new RaiseGrievanceRequest(policyId, null, GrievanceCategory.PolicyServicing, "Desc")));
     }
 
@@ -254,7 +280,7 @@ public class GrievanceServiceTests
         _mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(policy);
         _mockUnitOfWork.Setup(u => u.Claims.GetByIdAsync(claimId)).ReturnsAsync(claim);
 
-        Assert.ThrowsAsync<InvalidOperationException>(() =>
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() =>
             _grievanceService.RaiseGrievanceAsync(customerId, new RaiseGrievanceRequest(policyId, claimId, GrievanceCategory.ClaimDelay, "Desc")));
     }
 

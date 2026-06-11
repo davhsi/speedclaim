@@ -50,7 +50,7 @@ public class UserServiceTests
     public void GetProfileAsync_UserNotFound_ThrowsException()
     {
         _mockUserRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((User?)null);
-        var ex = Assert.ThrowsAsync<Exception>(() => _userService.GetProfileAsync(Guid.NewGuid().ToString()));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _userService.GetProfileAsync(Guid.NewGuid().ToString()));
         Assert.That(ex.Message, Is.EqualTo("User not found"));
     }
 
@@ -73,7 +73,7 @@ public class UserServiceTests
         var request = new UserDto(Guid.NewGuid(), "test@test.com", "Mr", "Jane", "Doe", "Jane Doe", "0987654321", "Customer", "Single", address, address);
         
         _mockUserRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((User?)null);
-        var ex = Assert.ThrowsAsync<Exception>(() => _userService.UpdateProfileAsync(Guid.NewGuid().ToString(), request));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _userService.UpdateProfileAsync(Guid.NewGuid().ToString(), request));
         Assert.That(ex.Message, Is.EqualTo("User not found"));
     }
 
@@ -97,16 +97,17 @@ public class UserServiceTests
     [Test]
     public async Task GetAllUsersAsync_ReturnsUserList()
     {
-        var users = new List<User> 
-        { 
+        var users = new List<User>
+        {
             new User { Id = Guid.NewGuid(), Email = "test1@test.com", Role = UserRole.Customer },
             new User { Id = Guid.NewGuid(), Email = "test2@test.com", Role = UserRole.Agent }
         };
-        _mockUserRepository.Setup(r => r.GetAllAsync()).ReturnsAsync(users);
+        _mockUserRepository.Setup(r => r.GetPagedAsync(1, 20, null, null))
+            .ReturnsAsync(((IEnumerable<User>)users, users.Count));
 
-        var result = await _userService.GetAllUsersAsync();
-        
-        var resultList = result.ToList();
+        var result = await _userService.GetAllUsersAsync(1, 20);
+
+        var resultList = result.Data.ToList();
         Assert.That(resultList.Count, Is.EqualTo(2));
         Assert.That(resultList[0].Email, Is.EqualTo("test1@test.com"));
         Assert.That(resultList[1].Role, Is.EqualTo("Agent"));
@@ -116,7 +117,7 @@ public class UserServiceTests
     public void UpdateUserRoleAsync_UserNotFound_ThrowsException()
     {
         _mockUserRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((User?)null);
-        var ex = Assert.ThrowsAsync<Exception>(() => _userService.UpdateUserRoleAsync(Guid.NewGuid().ToString(), "Admin"));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _userService.UpdateUserRoleAsync(Guid.NewGuid().ToString(), "Admin"));
         Assert.That(ex.Message, Is.EqualTo("User not found"));
     }
 
@@ -127,7 +128,7 @@ public class UserServiceTests
         var user = new User { Id = userId, Role = UserRole.Customer };
         _mockUserRepository.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
         
-        var ex = Assert.ThrowsAsync<Exception>(() => _userService.UpdateUserRoleAsync(userId.ToString(), "InvalidRoleName"));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() => _userService.UpdateUserRoleAsync(userId.ToString(), "InvalidRoleName"));
         Assert.That(ex.Message, Is.EqualTo("Invalid role"));
     }
 
@@ -148,7 +149,7 @@ public class UserServiceTests
     public void ApproveRejectKycAsync_KycRecordNotFound_ThrowsException()
     {
         _mockKycRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>())).ReturnsAsync((KycRecord?)null);
-        var ex = Assert.ThrowsAsync<Exception>(() => _userService.ApproveRejectKycAsync(Guid.NewGuid().ToString(), true, "", Guid.NewGuid().ToString()));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _userService.ApproveRejectKycAsync(Guid.NewGuid().ToString(), true, "", Guid.NewGuid().ToString()));
         Assert.That(ex.Message, Is.EqualTo("KYC Record not found"));
     }
 
@@ -171,7 +172,7 @@ public class UserServiceTests
     public void ActivateDeactivateUserAsync_UserNotFound_ThrowsException()
     {
         _mockUserRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((User?)null);
-        var ex = Assert.ThrowsAsync<Exception>(() => _userService.ActivateDeactivateUserAsync(Guid.NewGuid().ToString(), false, Guid.NewGuid().ToString()));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _userService.ActivateDeactivateUserAsync(Guid.NewGuid().ToString(), false, Guid.NewGuid().ToString()));
         Assert.That(ex.Message, Is.EqualTo("User not found"));
     }
 
@@ -247,13 +248,14 @@ public class UserServiceTests
         var userId = Guid.NewGuid();
         var user = new User { Id = userId, Email = "a@b.com", FirstName = "A", LastName = "B", Role = UserRole.Customer, Salutation = Salutation.Mr };
         var customer = new Customer { Id = Guid.NewGuid(), UserId = userId, MaritalStatus = MaritalStatus.Married };
-        _mockUserRepository.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<User> { user });
+        _mockUserRepository.Setup(r => r.GetPagedAsync(1, 20, null, null))
+            .ReturnsAsync(((IEnumerable<User>)new List<User> { user }, 1));
         _mockUnitOfWork.Setup(u => u.Users).Returns(_mockUserRepository.Object);
         _mockCustomerRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>())).ReturnsAsync(customer);
 
-        var result = await _userService.GetAllUsersAsync();
+        var result = await _userService.GetAllUsersAsync(1, 20);
 
-        Assert.That(result.First().MaritalStatus, Is.EqualTo("Married"));
+        Assert.That(result.Data.First().MaritalStatus, Is.EqualTo("Married"));
     }
 
     [Test]
@@ -299,7 +301,7 @@ public class UserServiceTests
         _mockUnitOfWork.Setup(u => u.CustomerMembers).Returns(mockMemberRepo.Object);
 
         var request = new UpdateFamilyMemberRequest(Salutation.Mr, "X", "Y", new DateTime(1990, 1, 1), Gender.Male, Relationship.Sibling, false);
-        Assert.ThrowsAsync<Exception>(() =>
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() =>
             _userService.UpdateFamilyMemberAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), request));
     }
 
@@ -419,7 +421,7 @@ public class UserServiceTests
         mockAddressRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Address, bool>>>())).ReturnsAsync((Address?)null);
         _mockUnitOfWork.Setup(u => u.Addresses).Returns(mockAddressRepo.Object);
 
-        Assert.ThrowsAsync<KeyNotFoundException>(() =>
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() =>
             _userService.DeleteAddressAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToString()));
     }
 
@@ -447,7 +449,7 @@ public class UserServiceTests
         mockMemberRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<CustomerMember, bool>>>())).ReturnsAsync((CustomerMember?)null);
         _mockUnitOfWork.Setup(u => u.CustomerMembers).Returns(mockMemberRepo.Object);
 
-        Assert.ThrowsAsync<KeyNotFoundException>(() =>
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() =>
             _userService.DeleteFamilyMemberAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToString()));
     }
 
@@ -483,13 +485,16 @@ public class UserServiceTests
         {
             new KycRecord { Id = Guid.NewGuid(), UserId = Guid.NewGuid(), KycStatus = KycStatus.Pending, IdType = IdType.Pan, IdNumber = "ABCDE1234F" }
         };
-        _mockKycRepository.Setup(r => r.GetPagedAsync(1, 100, It.IsAny<Expression<Func<KycRecord, bool>>>(), null))
-            .ReturnsAsync(((IEnumerable<KycRecord>)records, 1));
+        _mockKycRepository.Setup(r => r.GetPagedAsync(
+            It.IsAny<int>(), It.IsAny<int>(),
+            It.IsAny<Expression<Func<KycRecord, bool>>>(), null))
+            .ReturnsAsync(((IEnumerable<KycRecord>)records, records.Count));
         _mockUnitOfWork.Setup(u => u.KycRecords).Returns(_mockKycRepository.Object);
 
-        var result = await _userService.GetPendingKycAsync();
+        var result = await _userService.GetPendingKycAsync(1, 20);
 
-        Assert.That(result.Count(), Is.EqualTo(1));
+        Assert.That(result.Data.Count(), Is.EqualTo(1));
+        Assert.That(result.TotalRecords, Is.EqualTo(1));
     }
 
     [Test]

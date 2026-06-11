@@ -76,7 +76,7 @@ public class ProductServiceTests
 
         var request = new UpdatePremiumRatesRequest(new List<PremiumRateDto>());
         
-        var ex = Assert.ThrowsAsync<Exception>(() => _productService.UpdatePremiumRateTableAsync(Guid.NewGuid().ToString(), request, Guid.NewGuid().ToString()));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _productService.UpdatePremiumRateTableAsync(Guid.NewGuid().ToString(), request, Guid.NewGuid().ToString()));
         Assert.That(ex.Message, Is.EqualTo("Product not found"));
     }
 
@@ -121,7 +121,7 @@ public class ProductServiceTests
     {
         _mockProductRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((InsuranceProduct?)null);
 
-        var ex = Assert.ThrowsAsync<Exception>(() => _productService.ToggleProductStatusAsync(Guid.NewGuid().ToString(), false, Guid.NewGuid().ToString()));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _productService.ToggleProductStatusAsync(Guid.NewGuid().ToString(), false, Guid.NewGuid().ToString()));
         Assert.That(ex.Message, Is.EqualTo("Product not found"));
     }
 
@@ -161,6 +161,6 @@ public class ProductServiceTests
     {
         _mockUnitOfWork.Setup(u => u.InsuranceProducts.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((InsuranceProduct?)null);
 
-        Assert.ThrowsAsync<KeyNotFoundException>(() => _productService.GetByIdAsync(Guid.NewGuid().ToString()));
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _productService.GetByIdAsync(Guid.NewGuid().ToString()));
     }
 }
