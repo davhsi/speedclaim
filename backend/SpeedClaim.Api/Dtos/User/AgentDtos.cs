@@ -49,6 +49,13 @@ public record AgentProfileDto(
     string? BranchCity
 );
 
+public record UpdateAgentProfileRequest(
+    string Salutation,
+    string FirstName,
+    string LastName,
+    string Phone
+);
+
 public record RenewalReminderDto(
     Guid PolicyId,
     string PolicyNumber,

@@ -18,6 +18,8 @@ public class AgentsController : BaseApiController
         _agentService = agentService;
     }
 
+    #region Agent Endpoints
+
     /// <summary>Get all customers assigned to the authenticated agent via proposals</summary>
     [Authorize(Roles = "Agent")]
     [HttpGet("customers")]
@@ -55,6 +57,19 @@ public class AgentsController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>Update the authenticated agent's own contact details (name, phone)</summary>
+    [Authorize(Roles = "Agent")]
+    [HttpPut("profile")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateAgentProfileRequest request)
+    {
+        var agentId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        if (agentId == null) return Unauthorized();
+        await _agentService.UpdateAgentProfileAsync(agentId, request);
+        return Ok();
+    }
+
     /// <summary>Get policies with premiums due within the next 30 days for the agent's customers</summary>
     [Authorize(Roles = "Agent")]
     [HttpGet("renewals")]
@@ -66,6 +81,10 @@ public class AgentsController : BaseApiController
         var result = await _agentService.GetRenewalRemindersAsync(agentId);
         return Ok(result);
     }
+
+    #endregion
+
+    #region Admin Endpoints
 
     /// <summary>Admin — create a new branch office</summary>
     [Authorize(Roles = "Admin")]
@@ -131,4 +150,6 @@ public class AgentsController : BaseApiController
         await _agentService.ActivateDeactivateAgentAsync(agentId, isActive, adminId);
         return Ok();
     }
+
+    #endregion
 }

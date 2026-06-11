@@ -8,6 +8,7 @@ using SpeedClaim.Api.Dtos.User;
 using SpeedClaim.Api.Exceptions;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Models;
+using SpeedClaim.Api.Models.Enums;
 
 namespace SpeedClaim.Api.Services;
 
@@ -210,6 +211,23 @@ public class AgentService : IAgentService
 
         agent.IsActive = isActive;
         agent.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _unitOfWork.CompleteAsync();
+    }
+
+    public async Task UpdateAgentProfileAsync(string agentId, UpdateAgentProfileRequest request)
+    {
+        var aId = Guid.Parse(agentId);
+        var user = await _unitOfWork.Users.GetByIdAsync(aId);
+        if (user == null) throw new NotFoundException("User not found.");
+
+        if (Enum.TryParse<Salutation>(request.Salutation, out var salutation))
+            user.Salutation = salutation;
+
+        user.FirstName = request.FirstName;
+        user.LastName = request.LastName;
+        user.Phone = request.Phone;
+        user.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _unitOfWork.CompleteAsync();
     }

@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using SpeedClaim.Api.Dtos.Auth;
 using SpeedClaim.Api.Dtos.Financial;
 using SpeedClaim.Api.Dtos.User;
+using SpeedClaim.Api.Models.Enums;
 
 namespace SpeedClaim.Api.Interfaces;
 
@@ -11,6 +12,7 @@ public interface IAgentService
     Task<IEnumerable<UserDto>> GetAssignedCustomersAsync(string agentId);
     Task<AgentDashboardDto> GetAgentDashboardAsync(string agentId);
     Task<AgentProfileDto> GetAgentProfileAsync(string agentId);
+    Task UpdateAgentProfileAsync(string agentId, UpdateAgentProfileRequest request);
     Task<IEnumerable<RenewalReminderDto>> GetRenewalRemindersAsync(string agentId);
     
     // Admin - Branch & Agent Management
