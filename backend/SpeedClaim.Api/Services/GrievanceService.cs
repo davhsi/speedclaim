@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using SpeedClaim.Api.Dtos.Grievances;
+using SpeedClaim.Api.Exceptions;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Models;
 using SpeedClaim.Api.Models.Enums;
@@ -21,20 +22,20 @@ public class GrievanceService : IGrievanceService
     public async Task<GrievanceDto> RaiseGrievanceAsync(Guid customerId, RaiseGrievanceRequest request)
     {
         var customer = await _unitOfWork.Customers.GetByIdAsync(customerId);
-        if (customer == null) throw new KeyNotFoundException("Customer not found.");
+        if (customer == null) throw new NotFoundException("Customer not found.");
 
         if (request.PolicyId.HasValue)
         {
             var policy = await _unitOfWork.Policies.GetByIdAsync(request.PolicyId.Value);
             if (policy == null || policy.CustomerId != customerId)
-                throw new InvalidOperationException("Invalid policy.");
+                throw new ValidationException("Invalid policy.");
         }
 
         if (request.ClaimId.HasValue)
         {
             var claim = await _unitOfWork.Claims.GetByIdAsync(request.ClaimId.Value);
             if (claim == null || claim.CustomerId != customerId)
-                throw new InvalidOperationException("Invalid claim.");
+                throw new ValidationException("Invalid claim.");
         }
 
         var grievance = new Grievance
@@ -71,14 +72,14 @@ public class GrievanceService : IGrievanceService
     public async Task<GrievanceDto> GetGrievanceByIdAsync(Guid id)
     {
         var grievance = await _unitOfWork.Grievances.GetByIdAsync(id);
-        if (grievance == null) throw new KeyNotFoundException("Grievance not found.");
+        if (grievance == null) throw new NotFoundException("Grievance not found.");
         return MapToDto(grievance);
     }
 
     public async Task AssignGrievanceAsync(Guid grievanceId, Guid officerId)
     {
         var grievance = await _unitOfWork.Grievances.GetByIdAsync(grievanceId);
-        if (grievance == null) throw new KeyNotFoundException("Grievance not found.");
+        if (grievance == null) throw new NotFoundException("Grievance not found.");
 
         grievance.AssignedToId = officerId;
         grievance.Status = GrievanceStatus.InProgress;
@@ -91,7 +92,7 @@ public class GrievanceService : IGrievanceService
     public async Task UpdateGrievanceStatusAsync(Guid grievanceId, UpdateGrievanceStatusRequest request)
     {
         var grievance = await _unitOfWork.Grievances.GetByIdAsync(grievanceId);
-        if (grievance == null) throw new KeyNotFoundException("Grievance not found.");
+        if (grievance == null) throw new NotFoundException("Grievance not found.");
 
         grievance.Status = request.Status;
         

@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
+using SpeedClaim.Api.Exceptions;
 using SpeedClaim.Api.Interfaces;
 
 namespace SpeedClaim.Api.Services;
@@ -20,7 +21,7 @@ public class LocalStorageService : IStorageService
     {
         if (fileStream == null || fileStream.Length == 0)
         {
-            throw new ArgumentException("No file provided");
+            throw new ValidationException("No file provided");
         }
 
         var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp", ".pdf" };
@@ -28,12 +29,12 @@ public class LocalStorageService : IStorageService
         
         if (!allowedExtensions.Contains(extension))
         {
-            throw new ArgumentException("Invalid file type. Only JPG, PNG, WebP, and PDF are allowed.");
+            throw new ValidationException("Invalid file type. Only JPG, PNG, WebP, and PDF are allowed.");
         }
 
         if (fileStream.Length > 10 * 1024 * 1024) // 10 MB limit
         {
-            throw new ArgumentException("File size exceeds the 10MB limit.");
+            throw new ValidationException("File size exceeds the 10MB limit.");
         }
 
         // Relative path starting from wwwroot
@@ -63,7 +64,7 @@ public class LocalStorageService : IStorageService
         
         if (!File.Exists(absoluteFilePath))
         {
-            throw new FileNotFoundException("File not found", fileId);
+            throw new NotFoundException($"File not found: {fileId}");
         }
 
         Stream stream = new FileStream(absoluteFilePath, FileMode.Open, FileAccess.Read);

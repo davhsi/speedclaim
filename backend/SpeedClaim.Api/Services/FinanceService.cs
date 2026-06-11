@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using ClosedXML.Excel;
 
+using Microsoft.Extensions.Logging;
+using SpeedClaim.Api.Exceptions;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Models;
 using SpeedClaim.Api.Models.Enums;
@@ -22,36 +24,38 @@ public class FinanceService : IFinanceService
     private readonly IConfiguration _config;
     private readonly IEmailService _emailService;
     private readonly INotificationService _notifications;
+    private readonly ILogger<FinanceService> _logger;
 
-    public FinanceService(IUnitOfWork unitOfWork, IStripeWrapper stripeWrapper, IConfiguration config, IEmailService emailService, INotificationService notifications)
+    public FinanceService(IUnitOfWork unitOfWork, IStripeWrapper stripeWrapper, IConfiguration config, IEmailService emailService, INotificationService notifications, ILogger<FinanceService> logger)
     {
         _unitOfWork = unitOfWork;
         _stripeWrapper = stripeWrapper;
         _config = config;
         _emailService = emailService;
         _notifications = notifications;
+        _logger = logger;
     }
 
     public async Task<CreatePaymentIntentResponse> PayPremiumAsync(string customerId, string scheduleId, CreatePaymentIntentRequest request)
     {
         if (!Guid.TryParse(customerId, out var cid) || !Guid.TryParse(scheduleId, out var sid))
-            throw new ArgumentException("Invalid IDs.");
+            throw new ValidationException("Invalid IDs.");
 
         var schedule = await _unitOfWork.PremiumSchedules.GetByIdAsync(sid);
-        if (schedule == null) throw new KeyNotFoundException("Schedule not found.");
+        if (schedule == null) throw new NotFoundException("Schedule not found.");
 
         if (schedule.Status == PremiumScheduleStatus.Paid)
-            throw new InvalidOperationException("Schedule is already paid.");
+            throw new ConflictException("Schedule is already paid.");
 
         // Get or create a Stripe customer record so cards can be saved
         var customerRecord = await _unitOfWork.Customers.GetByIdAsync(cid);
-        if (customerRecord == null) throw new KeyNotFoundException("Customer not found.");
+        if (customerRecord == null) throw new NotFoundException("Customer not found.");
 
         var stripeCustomerRecord = await _unitOfWork.StripeCustomers.FirstOrDefaultAsync(sc => sc.UserId == customerRecord.UserId);
         if (stripeCustomerRecord == null)
         {
             var user = await _unitOfWork.Users.GetByIdAsync(customerRecord.UserId);
-            if (user == null) throw new KeyNotFoundException("User not found.");
+            if (user == null) throw new NotFoundException("User not found.");
 
             var stripeCustomer = await _stripeWrapper.CreateCustomerAsync(new CustomerCreateOptions
             {
@@ -102,6 +106,7 @@ public class FinanceService : IFinanceService
         await _unitOfWork.PremiumPayments.AddAsync(payment);
         await _unitOfWork.CompleteAsync();
 
+        _logger.LogInformation("Payment intent created for Customer {CustomerId}, Schedule {ScheduleId}, Amount {Amount}", customerId, scheduleId, schedule.Amount);
         return new CreatePaymentIntentResponse
         {
             ClientSecret = intent.ClientSecret,
@@ -112,7 +117,7 @@ public class FinanceService : IFinanceService
 
     public async Task<IEnumerable<PremiumScheduleDto>> GetPremiumScheduleAsync(string policyId, string customerId)
     {
-        if (!Guid.TryParse(policyId, out var pid)) throw new ArgumentException("Invalid Policy ID");
+        if (!Guid.TryParse(policyId, out var pid)) throw new ValidationException("Invalid Policy ID");
 
         var schedules = await _unitOfWork.PremiumSchedules.FindAsync(s => s.PolicyId == pid);
         return schedules.Select(s => new PremiumScheduleDto
@@ -130,7 +135,7 @@ public class FinanceService : IFinanceService
 
     public async Task<IEnumerable<PaymentRecordDto>> GetMyPaymentHistoryAsync(string customerId)
     {
-        if (!Guid.TryParse(customerId, out var cid)) throw new ArgumentException("Invalid Customer ID");
+        if (!Guid.TryParse(customerId, out var cid)) throw new ValidationException("Invalid Customer ID");
 
         var payments = await _unitOfWork.PremiumPayments.FindAsync(p => p.CustomerId == cid);
         return payments.Select(p => new PaymentRecordDto
@@ -150,15 +155,15 @@ public class FinanceService : IFinanceService
 
     public async Task<PaymentRecordDto> DownloadReceiptAsync(string paymentId, string customerId)
     {
-        if (!Guid.TryParse(paymentId, out var pid)) throw new ArgumentException("Invalid Payment ID");
-        if (!Guid.TryParse(customerId, out var cid)) throw new ArgumentException("Invalid Customer ID");
+        if (!Guid.TryParse(paymentId, out var pid)) throw new ValidationException("Invalid Payment ID");
+        if (!Guid.TryParse(customerId, out var cid)) throw new ValidationException("Invalid Customer ID");
 
         var payment = await _unitOfWork.PremiumPayments.GetByIdAsync(pid);
         if (payment == null || payment.CustomerId != cid)
-            throw new KeyNotFoundException("Payment not found or access denied.");
+            throw new NotFoundException("Payment not found or access denied.");
 
         if (payment.Status != PaymentStatus.Paid)
-            throw new InvalidOperationException("Receipt is only available for completed payments.");
+            throw new UnprocessableException("Receipt is only available for completed payments.");
 
         return new PaymentRecordDto
         {
@@ -177,10 +182,10 @@ public class FinanceService : IFinanceService
 
     public async Task<IEnumerable<SavedCardDto>> GetSavedPaymentMethodsAsync(string customerId)
     {
-        if (!Guid.TryParse(customerId, out var cid)) throw new ArgumentException("Invalid Customer ID");
+        if (!Guid.TryParse(customerId, out var cid)) throw new ValidationException("Invalid Customer ID");
 
         var customerRecord = await _unitOfWork.Customers.GetByIdAsync(cid);
-        if (customerRecord == null) throw new KeyNotFoundException("Customer not found.");
+        if (customerRecord == null) throw new NotFoundException("Customer not found.");
 
         var stripeCustomerRecord = await _unitOfWork.StripeCustomers.FirstOrDefaultAsync(sc => sc.UserId == customerRecord.UserId);
         if (stripeCustomerRecord == null) return Enumerable.Empty<SavedCardDto>();
@@ -214,9 +219,9 @@ public class FinanceService : IFinanceService
 
     public async Task ReconcilePaymentAsync(string paymentId, string financeOfficerId)
     {
-        if (!Guid.TryParse(paymentId, out var pid)) throw new ArgumentException("Invalid Payment ID");
+        if (!Guid.TryParse(paymentId, out var pid)) throw new ValidationException("Invalid Payment ID");
         var payment = await _unitOfWork.PremiumPayments.GetByIdAsync(pid);
-        if (payment == null) throw new KeyNotFoundException("Payment not found");
+        if (payment == null) throw new NotFoundException("Payment not found");
 
         if (payment.Status != PaymentStatus.Paid)
         {
@@ -263,6 +268,7 @@ public class FinanceService : IFinanceService
                 }
             }
 
+            _logger.LogInformation("Payment {PaymentId} reconciled as Paid", payment.Id);
             await _unitOfWork.CompleteAsync();
         }
     }
@@ -277,9 +283,9 @@ public class FinanceService : IFinanceService
 
     public async Task ProcessRefundAsync(string paymentId, string financeOfficerId)
     {
-        if (!Guid.TryParse(paymentId, out var pid)) throw new ArgumentException("Invalid Payment ID");
+        if (!Guid.TryParse(paymentId, out var pid)) throw new ValidationException("Invalid Payment ID");
         var payment = await _unitOfWork.PremiumPayments.GetByIdAsync(pid);
-        if (payment == null) throw new KeyNotFoundException("Payment not found");
+        if (payment == null) throw new NotFoundException("Payment not found");
 
         payment.Status = PaymentStatus.Refunded;
         
@@ -296,18 +302,18 @@ public class FinanceService : IFinanceService
 
     public async Task ProcessClaimPayoutAsync(string claimId, string financeOfficerId)
     {
-        if (!Guid.TryParse(claimId, out var cId)) throw new ArgumentException("Invalid Claim ID");
+        if (!Guid.TryParse(claimId, out var cId)) throw new ValidationException("Invalid Claim ID");
         var claim = await _unitOfWork.Claims.GetByIdAsync(cId);
-        if (claim == null) throw new KeyNotFoundException("Claim not found.");
+        if (claim == null) throw new NotFoundException("Claim not found.");
 
         if (claim.Status != ClaimStatus.Approved)
-            throw new InvalidOperationException("Claim must be approved before payout.");
+            throw new UnprocessableException("Claim must be approved before payout.");
 
         // In sandbox mode, we create a PaymentIntent to the customer as a payout simulation.
         // In production, this would use Stripe Transfers or Payouts API.
         var payoutAmount = (long)((claim.ClaimAmountApproved ?? 0) * 100);
         if (payoutAmount <= 0)
-            throw new InvalidOperationException("Approved claim amount must be greater than zero.");
+            throw new ValidationException("Approved claim amount must be greater than zero.");
 
         var options = new PaymentIntentCreateOptions
         {
@@ -323,6 +329,7 @@ public class FinanceService : IFinanceService
         };
 
         var intent = await _stripeWrapper.CreatePaymentIntentAsync(options);
+        _logger.LogInformation("Claim payout initiated for Claim {ClaimId}, Amount {Amount}, IntentId {IntentId}", cId, payoutAmount / 100m, intent.Id);
 
         // Mark claim as Settled and log the payout intent
         claim.Status = ClaimStatus.Settled;
@@ -346,12 +353,12 @@ public class FinanceService : IFinanceService
 
     public async Task MarkClaimFinanciallySettledAsync(string claimId, string financeOfficerId)
     {
-        if (!Guid.TryParse(claimId, out var cId)) throw new ArgumentException("Invalid Claim ID");
+        if (!Guid.TryParse(claimId, out var cId)) throw new ValidationException("Invalid Claim ID");
         var claim = await _unitOfWork.Claims.GetByIdAsync(cId);
-        if (claim == null) throw new KeyNotFoundException("Claim not found.");
+        if (claim == null) throw new NotFoundException("Claim not found.");
 
         if (claim.Status == ClaimStatus.Settled)
-            throw new InvalidOperationException("Claim is already marked as settled.");
+            throw new ConflictException("Claim is already marked as settled.");
 
         claim.Status = ClaimStatus.Settled;
         claim.SettlementDate = DateTime.UtcNow;
@@ -388,9 +395,9 @@ public class FinanceService : IFinanceService
 
     public async Task ApproveAndPayCommissionAsync(string commissionId, string financeOfficerId)
     {
-        if (!Guid.TryParse(commissionId, out var cid)) throw new ArgumentException("Invalid Commission ID");
+        if (!Guid.TryParse(commissionId, out var cid)) throw new ValidationException("Invalid Commission ID");
         var commission = await _unitOfWork.AgentCommissions.GetByIdAsync(cid);
-        if (commission == null) throw new KeyNotFoundException("Commission not found");
+        if (commission == null) throw new NotFoundException("Commission not found");
 
         commission.Status = "PAID";
         commission.PaidAt = DateTimeOffset.UtcNow;

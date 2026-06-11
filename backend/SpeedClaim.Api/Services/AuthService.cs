@@ -1,6 +1,8 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using SpeedClaim.Api.Dtos.Auth;
+using SpeedClaim.Api.Exceptions;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Models;
 using SpeedClaim.Api.Models.Enums;
@@ -12,19 +14,21 @@ public class AuthService : IAuthService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IJwtService _jwtService;
     private readonly IEmailService _emailService;
+    private readonly ILogger<AuthService> _logger;
 
-    public AuthService(IUnitOfWork unitOfWork, IJwtService jwtService, IEmailService emailService)
+    public AuthService(IUnitOfWork unitOfWork, IJwtService jwtService, IEmailService emailService, ILogger<AuthService> logger)
     {
         _unitOfWork = unitOfWork;
         _jwtService = jwtService;
         _emailService = emailService;
+        _logger = logger;
     }
 
     public async Task<RegistrationResponse> RegisterCustomerAsync(RegisterUserRequest request)
     {
         var existingUser = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
         if (existingUser != null)
-            throw new Exception("Email already registered");
+            throw new ConflictException("Email already registered");
 
         var salutation = Enum.TryParse<Salutation>(request.Salutation, ignoreCase: true, out var sal) ? sal : Salutation.Mr;
 
@@ -67,6 +71,7 @@ public class AuthService : IAuthService
         var verificationPayload = $"{userToken.Id}:{rawToken}";
         await _emailService.SendEmailVerificationAsync(user.Email, verificationPayload);
 
+        _logger.LogInformation("New customer registered: {Email}", request.Email);
         return new RegistrationResponse(user.Email, user.Role.ToString());
     }
 
@@ -74,10 +79,16 @@ public class AuthService : IAuthService
     {
         var user = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
         if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
-            throw new Exception("Invalid credentials");
+        {
+            _logger.LogWarning("Failed login attempt for email: {Email}", request.Email);
+            throw new ValidationException("Invalid credentials");
+        }
 
         if (!user.IsActive)
-            throw new Exception("Account is inactive");
+        {
+            _logger.LogWarning("Login attempt for inactive account: {Email}", request.Email);
+            throw new ForbiddenException("Account is inactive");
+        }
 
         var accessToken = _jwtService.GenerateAccessToken(user);
         var rawRefreshToken = _jwtService.GenerateRefreshToken();
@@ -99,6 +110,7 @@ public class AuthService : IAuthService
         // Return "{sessionId}:{rawToken}" so refresh can target the specific session directly
         var refreshTokenPayload = $"{session.Id}:{rawRefreshToken}";
 
+        _logger.LogInformation("User logged in: {UserId} ({Role})", user.Id, user.Role);
         var authUserDto = BuildAuthUserDto(user);
         return new AuthResponse(accessToken, refreshTokenPayload, authUserDto);
     }
@@ -106,18 +118,18 @@ public class AuthService : IAuthService
     public async Task<AuthResponse> RefreshTokenAsync(RefreshTokenRequest request)
     {
         if (!TryParsePayload(request.RefreshToken, out var sessionId, out var rawToken))
-            throw new Exception("Invalid refresh token format");
+            throw new ValidationException("Invalid refresh token format");
 
         var session = await _unitOfWork.Sessions.GetByIdAsync(sessionId);
         if (session == null || session.IsRevoked || session.ExpiresAt <= DateTime.UtcNow)
-            throw new Exception("Invalid or expired refresh token");
+            throw new ValidationException("Invalid or expired refresh token");
 
         if (!BCrypt.Net.BCrypt.Verify(rawToken, session.RefreshTokenHash))
-            throw new Exception("Invalid refresh token");
+            throw new ValidationException("Invalid refresh token");
 
         var user = await _unitOfWork.Users.GetByIdAsync(session.UserId);
         if (user == null || !user.IsActive)
-            throw new Exception("User inactive or not found");
+            throw new ForbiddenException("User inactive or not found");
 
         var newAccessToken = _jwtService.GenerateAccessToken(user);
         var newRawRefreshToken = _jwtService.GenerateRefreshToken();
@@ -141,17 +153,17 @@ public class AuthService : IAuthService
     public async Task VerifyEmailAsync(string token)
     {
         if (!TryParsePayload(token, out var tokenId, out var rawToken))
-            throw new Exception("Invalid or expired token");
+            throw new ValidationException("Invalid or expired token");
 
         var userToken = await _unitOfWork.UserTokens.GetByIdAsync(tokenId);
         if (userToken == null || userToken.IsUsed || userToken.ExpiresAt <= DateTime.UtcNow)
-            throw new Exception("Invalid or expired token");
+            throw new ValidationException("Invalid or expired token");
 
         if (userToken.TokenType != TokenType.EmailVerification)
-            throw new Exception("Invalid token type");
+            throw new ValidationException("Invalid token type");
 
         if (!BCrypt.Net.BCrypt.Verify(rawToken, userToken.TokenHash))
-            throw new Exception("Invalid or expired token");
+            throw new ValidationException("Invalid or expired token");
 
         userToken.IsUsed = true;
         var user = await _unitOfWork.Users.GetByIdAsync(userToken.UserId);
@@ -168,6 +180,7 @@ public class AuthService : IAuthService
         foreach (var session in activeSessions)
             session.IsRevoked = true;
         await _unitOfWork.CompleteAsync();
+        _logger.LogInformation("User logged out: {UserId}", userId);
     }
 
     public async Task ForgotPasswordAsync(string email)
@@ -194,17 +207,17 @@ public class AuthService : IAuthService
     public async Task ResetPasswordCustomerAsync(ResetPasswordRequest request)
     {
         if (!TryParsePayload(request.Token, out var tokenId, out var rawToken))
-            throw new Exception("Invalid or expired token");
+            throw new ValidationException("Invalid or expired token");
 
         var userToken = await _unitOfWork.UserTokens.GetByIdAsync(tokenId);
         if (userToken == null || userToken.IsUsed || userToken.ExpiresAt <= DateTime.UtcNow)
-            throw new Exception("Invalid or expired token");
+            throw new ValidationException("Invalid or expired token");
 
         if (userToken.TokenType != TokenType.PasswordReset)
-            throw new Exception("Invalid token type");
+            throw new ValidationException("Invalid token type");
 
         if (!BCrypt.Net.BCrypt.Verify(rawToken, userToken.TokenHash))
-            throw new Exception("Invalid or expired token");
+            throw new ValidationException("Invalid or expired token");
 
         userToken.IsUsed = true;
         var user = await _unitOfWork.Users.GetByIdAsync(userToken.UserId);
@@ -217,7 +230,7 @@ public class AuthService : IAuthService
     public async Task ResetPasswordAsync(string targetUserId, string newPassword, string adminId)
     {
         var user = await _unitOfWork.Users.GetByIdAsync(Guid.Parse(targetUserId));
-        if (user == null) throw new Exception("User not found");
+        if (user == null) throw new NotFoundException("User not found");
 
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
         await _unitOfWork.CompleteAsync();
@@ -227,7 +240,7 @@ public class AuthService : IAuthService
     {
         var existingUser = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
         if (existingUser != null)
-            throw new Exception("Email already registered");
+            throw new ConflictException("Email already registered");
 
         var salutation = Enum.TryParse<Salutation>(request.Salutation, ignoreCase: true, out var sal) ? sal : Salutation.Mr;
 

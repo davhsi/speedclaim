@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using SpeedClaim.Api.Dtos.Catalog;
+using SpeedClaim.Api.Exceptions;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Models;
 
@@ -87,7 +88,7 @@ public class ProductService : IProductService
     {
         var pId = Guid.Parse(productId);
         var product = await _unitOfWork.InsuranceProducts.GetByIdAsync(pId);
-        if (product == null) throw new Exception("Product not found");
+        if (product == null) throw new NotFoundException("Product not found");
 
         // Remove old rates
         var existingRates = await _unitOfWork.PremiumRateTables.FindAsync(r => r.ProductId == pId);
@@ -140,7 +141,7 @@ public class ProductService : IProductService
     {
         var pId = Guid.Parse(productId);
         var product = await _unitOfWork.InsuranceProducts.GetByIdAsync(pId);
-        if (product == null) throw new KeyNotFoundException("Product not found.");
+        if (product == null) throw new NotFoundException("Product not found.");
 
         return new ProductDto(
             product.Id, product.ProductName, product.Domain, product.Uin, product.Description,
@@ -153,7 +154,7 @@ public class ProductService : IProductService
     {
         var pId = Guid.Parse(productId);
         var product = await _unitOfWork.InsuranceProducts.GetByIdAsync(pId);
-        if (product == null) throw new Exception("Product not found");
+        if (product == null) throw new NotFoundException("Product not found");
 
         product.IsActive = isActive;
         product.UpdatedAt = DateTimeOffset.UtcNow;

@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using SpeedClaim.Api.Dtos.Sales;
+using SpeedClaim.Api.Exceptions;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Models;
 using SpeedClaim.Api.Models.Enums;
@@ -15,19 +17,21 @@ public class ProposalService : IProposalService
     private readonly IUnitOfWork _unitOfWork;
     private readonly INotificationService _notifications;
     private readonly IStorageService _storageService;
+    private readonly ILogger<ProposalService> _logger;
 
-    public ProposalService(IUnitOfWork unitOfWork, INotificationService notifications, IStorageService storageService)
+    public ProposalService(IUnitOfWork unitOfWork, INotificationService notifications, IStorageService storageService, ILogger<ProposalService> logger)
     {
         _unitOfWork = unitOfWork;
         _notifications = notifications;
         _storageService = storageService;
+        _logger = logger;
     }
 
     public async Task<GenerateQuoteResponse> GenerateQuoteAsync(GenerateQuoteRequest request)
     {
         var productId = Guid.Parse(request.ProductId);
         var product = await _unitOfWork.InsuranceProducts.GetByIdAsync(productId);
-        if (product == null) throw new Exception("Product not found");
+        if (product == null) throw new NotFoundException("Product not found");
 
         var rateTables = await _unitOfWork.PremiumRateTables.FindAsync(r => r.ProductId == productId);
         var applicableRate = rateTables.FirstOrDefault(r => 
@@ -35,7 +39,7 @@ public class ProposalService : IProposalService
             r.SumAssuredMin <= request.SumAssured && r.SumAssuredMax >= request.SumAssured);
 
         if (applicableRate == null)
-            throw new Exception("No applicable rate found for the given criteria");
+            throw new NotFoundException("No applicable rate found for the given criteria");
 
         // Basic quote math: AnnualPremium
         var premiumAmount = applicableRate.AnnualPremium;
@@ -50,7 +54,7 @@ public class ProposalService : IProposalService
         var productId = Guid.Parse(request.ProductId);
 
         var product = await _unitOfWork.InsuranceProducts.GetByIdAsync(productId);
-        if (product == null) throw new Exception("Product not found");
+        if (product == null) throw new NotFoundException("Product not found");
 
         var proposal = new Proposal
         {
@@ -152,6 +156,7 @@ public class ProposalService : IProposalService
         await _unitOfWork.Proposals.AddAsync(proposal);
         await _unitOfWork.CompleteAsync();
 
+        _logger.LogInformation("Proposal submitted: {ProposalNumber} for Customer {CustomerId}, Product {ProductId}", proposal.ProposalNumber, customerId, productId);
         return new ProposalDto(
             proposal.Id,
             proposal.ProposalNumber,
@@ -222,7 +227,7 @@ public class ProposalService : IProposalService
     {
         var pId = Guid.Parse(proposalId);
         var proposal = await _unitOfWork.Proposals.GetByIdAsync(pId);
-        if (proposal == null) throw new KeyNotFoundException("Proposal not found.");
+        if (proposal == null) throw new NotFoundException("Proposal not found.");
 
         if (!isAdmin)
         {
@@ -230,7 +235,7 @@ public class ProposalService : IProposalService
             var agent = await _unitOfWork.Agents.FirstOrDefaultAsync(a => a.UserId == uId);
             bool isOwner = proposal.CustomerId == uId
                 || (agent != null && proposal.AgentId == agent.Id);
-            if (!isOwner) throw new UnauthorizedAccessException("Access denied to this proposal.");
+            if (!isOwner) throw new ForbiddenException("Access denied to this proposal.");
         }
 
         return new ProposalDto(
@@ -245,16 +250,16 @@ public class ProposalService : IProposalService
         var uId = Guid.Parse(uploaderId);
 
         var proposal = await _unitOfWork.Proposals.GetByIdAsync(pId);
-        if (proposal == null) throw new KeyNotFoundException("Proposal not found.");
+        if (proposal == null) throw new NotFoundException("Proposal not found.");
 
         if (proposal.CustomerId != uId)
         {
             var agent = await _unitOfWork.Agents.FirstOrDefaultAsync(a => a.UserId == uId);
             if (agent == null || proposal.AgentId != agent.Id)
-                throw new UnauthorizedAccessException("Access denied to this proposal.");
+                throw new ForbiddenException("Access denied to this proposal.");
         }
 
-        if (file == null || file.Length == 0) throw new ArgumentException("Invalid file.");
+        if (file == null || file.Length == 0) throw new ValidationException("Invalid file.");
 
         using var stream = file.OpenReadStream();
         var storedPath = await _storageService.UploadFileAsync(stream, file.FileName, $"proposals/{pId}");
@@ -281,7 +286,7 @@ public class ProposalService : IProposalService
         var uId = Guid.Parse(underwriterId);
 
         var proposal = await _unitOfWork.Proposals.GetByIdAsync(pId);
-        if (proposal == null) throw new Exception("Proposal not found");
+        if (proposal == null) throw new NotFoundException("Proposal not found");
 
         proposal.Status = isApproved ? ProposalStatus.Approved : ProposalStatus.Rejected;
         proposal.UnderwriterId = uId;
@@ -330,6 +335,8 @@ public class ProposalService : IProposalService
 
         await _unitOfWork.CompleteAsync();
 
+        _logger.LogInformation("Proposal {ProposalNumber} {Decision} by Underwriter {UnderwriterId}", proposal.ProposalNumber, isApproved ? "approved" : "rejected", underwriterId);
+
         // Notify customer
         var customer = await _unitOfWork.Customers.GetByIdAsync(proposal.CustomerId);
         if (customer != null)
@@ -360,7 +367,7 @@ public class ProposalService : IProposalService
         var uId = Guid.Parse(underwriterId);
 
         var proposal = await _unitOfWork.Proposals.GetByIdAsync(pId);
-        if (proposal == null) throw new Exception("Proposal not found");
+        if (proposal == null) throw new NotFoundException("Proposal not found");
 
         proposal.Status = ProposalStatus.DocumentsPending;
         proposal.UnderwriterId = uId;
@@ -376,7 +383,7 @@ public class ProposalService : IProposalService
         var uId = Guid.Parse(underwriterId);
 
         var proposal = await _unitOfWork.Proposals.GetByIdAsync(pId);
-        if (proposal == null) throw new Exception("Proposal not found");
+        if (proposal == null) throw new NotFoundException("Proposal not found");
 
         // Append to existing notes if any
         var existing = proposal.UnderwriterNotes;

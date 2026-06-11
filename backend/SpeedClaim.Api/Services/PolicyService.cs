@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using SpeedClaim.Api.Dtos.Policies;
+using SpeedClaim.Api.Exceptions;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Models;
 using SpeedClaim.Api.Models.Enums;
@@ -30,9 +31,9 @@ public class PolicyService : IPolicyService
     {
         var policy = await _unitOfWork.Policies.GetByIdAsync(policyId);
         if (policy == null)
-            throw new KeyNotFoundException("Policy not found.");
+            throw new NotFoundException("Policy not found.");
         if (customerId.HasValue && policy.CustomerId != customerId.Value)
-            throw new UnauthorizedAccessException("Access denied to this policy.");
+            throw new ForbiddenException("Access denied to this policy.");
         return MapToDto(policy);
     }
 
@@ -40,7 +41,7 @@ public class PolicyService : IPolicyService
     {
         var policy = await _unitOfWork.Policies.GetByIdAsync(policyId);
         if (policy == null || policy.CustomerId != customerId)
-            throw new UnauthorizedAccessException("Access denied or policy not found.");
+            throw new ForbiddenException("Access denied or policy not found.");
 
         if (!policy.ProposalId.HasValue)
             return Enumerable.Empty<PolicyNomineeDto>();
@@ -54,13 +55,13 @@ public class PolicyService : IPolicyService
     {
         var policy = await _unitOfWork.Policies.GetByIdAsync(policyId);
         if (policy == null || policy.CustomerId != customerId)
-            throw new KeyNotFoundException("Policy not found.");
+            throw new NotFoundException("Policy not found.");
 
         if (policy.Status == PolicyStatus.Cancelled)
-            throw new InvalidOperationException("Policy is already cancelled.");
+            throw new ConflictException("Policy is already cancelled.");
 
         if (policy.Status != PolicyStatus.Active && policy.Status != PolicyStatus.Pending)
-            throw new InvalidOperationException("Only Active or Pending policies can be cancelled.");
+            throw new UnprocessableException("Only Active or Pending policies can be cancelled.");
 
         var oldStatus = policy.Status;
         policy.Status = PolicyStatus.Cancelled;
@@ -84,7 +85,7 @@ public class PolicyService : IPolicyService
     {
         var policy = await _unitOfWork.Policies.GetByIdAsync(policyId);
         if (policy == null || policy.CustomerId != customerId)
-            throw new KeyNotFoundException("Policy not found.");
+            throw new NotFoundException("Policy not found.");
 
         // Generate a text-based policy document on the fly
         var sb = new System.Text.StringBuilder();
@@ -109,7 +110,7 @@ public class PolicyService : IPolicyService
     {
         var policy = await _unitOfWork.Policies.GetByIdAsync(policyId);
         if (policy == null || policy.CustomerId != customerId)
-            throw new KeyNotFoundException("Policy not found.");
+            throw new NotFoundException("Policy not found.");
 
         var endorsement = new Endorsement
         {
@@ -146,7 +147,7 @@ public class PolicyService : IPolicyService
         {
             var policy = await _unitOfWork.Policies.GetByIdAsync(policyId);
             if (policy == null || policy.CustomerId != customerId.Value)
-                throw new UnauthorizedAccessException("Access denied to this policy.");
+                throw new ForbiddenException("Access denied to this policy.");
         }
 
         var history = await _unitOfWork.PolicyStatusHistories.FindAsync(h => h.PolicyId == policyId);
@@ -164,10 +165,10 @@ public class PolicyService : IPolicyService
     {
         var endorsement = await _unitOfWork.Endorsements.GetByIdAsync(endorsementId);
         if (endorsement == null)
-            throw new KeyNotFoundException("Endorsement not found.");
+            throw new NotFoundException("Endorsement not found.");
 
         if (endorsement.Status != EndorsementStatus.Requested)
-            throw new InvalidOperationException("Endorsement is not in Requested status.");
+            throw new UnprocessableException("Endorsement is not in Requested status.");
 
         endorsement.Status = isApproved ? EndorsementStatus.Approved : EndorsementStatus.Rejected;
         endorsement.ReviewedById = underwriterId;
@@ -203,20 +204,20 @@ public class PolicyService : IPolicyService
     public async Task UpdateNomineeAsync(Guid nomineeId, Guid customerId, UpdateNomineeRequest request)
     {
         var nominee = await _unitOfWork.Nominees.GetByIdAsync(nomineeId);
-        if (nominee == null) throw new KeyNotFoundException("Nominee not found.");
+        if (nominee == null) throw new NotFoundException("Nominee not found.");
 
         // Verify this nominee belongs to a policy owned by this customer
         if (nominee.PolicyId.HasValue)
         {
             var policy = await _unitOfWork.Policies.GetByIdAsync(nominee.PolicyId.Value);
             if (policy == null || policy.CustomerId != customerId)
-                throw new UnauthorizedAccessException("Access denied to this nominee.");
+                throw new ForbiddenException("Access denied to this nominee.");
         }
         else if (nominee.ProposalId != Guid.Empty)
         {
             var proposal = await _unitOfWork.Proposals.GetByIdAsync(nominee.ProposalId);
             if (proposal == null || proposal.CustomerId != customerId)
-                throw new UnauthorizedAccessException("Access denied to this nominee.");
+                throw new ForbiddenException("Access denied to this nominee.");
         }
 
         nominee.FullName = request.FullName;
@@ -235,7 +236,7 @@ public class PolicyService : IPolicyService
     {
         var policy = await _unitOfWork.Policies.GetByIdAsync(policyId);
         if (policy == null || policy.CustomerId != customerId)
-            throw new UnauthorizedAccessException("Access denied or policy not found");
+            throw new ForbiddenException("Access denied or policy not found");
 
         var endorsements = await _unitOfWork.Endorsements.FindAsync(e => e.PolicyId == policyId);
         return endorsements.Select(e => new EndorsementDto(

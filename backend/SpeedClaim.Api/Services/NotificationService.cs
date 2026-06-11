@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using SpeedClaim.Api.Dtos.SystemManagement;
+using SpeedClaim.Api.Exceptions;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Models;
 
@@ -46,7 +47,7 @@ public class NotificationService : INotificationService
     {
         var notification = await _unitOfWork.Notifications.GetByIdAsync(notificationId);
         if (notification == null || notification.UserId != userId)
-            throw new KeyNotFoundException("Notification not found.");
+            throw new NotFoundException("Notification not found.");
 
         notification.IsRead = true;
         _unitOfWork.Notifications.Update(notification);

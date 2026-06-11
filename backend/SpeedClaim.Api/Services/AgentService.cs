@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using SpeedClaim.Api.Dtos.Auth;
 using SpeedClaim.Api.Dtos.Common;
 using SpeedClaim.Api.Dtos.User;
+using SpeedClaim.Api.Exceptions;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Models;
 
@@ -79,10 +80,10 @@ public class AgentService : IAgentService
     {
         var aId = Guid.Parse(agentId);
         var agent = await _unitOfWork.Agents.FirstOrDefaultAsync(a => a.UserId == aId);
-        if (agent == null) throw new KeyNotFoundException("Agent not found.");
+        if (agent == null) throw new NotFoundException("Agent not found.");
 
         var user = await _unitOfWork.Users.GetByIdAsync(agent.UserId);
-        if (user == null) throw new KeyNotFoundException("User not found.");
+        if (user == null) throw new NotFoundException("User not found.");
 
         Branch? branch = null;
         if (agent.BranchId.HasValue)
@@ -177,10 +178,10 @@ public class AgentService : IAgentService
         var bId = Guid.Parse(branchId);
 
         var agent = await _unitOfWork.Agents.FirstOrDefaultAsync(a => a.UserId == aId);
-        if (agent == null) throw new Exception("Agent not found");
+        if (agent == null) throw new NotFoundException("Agent not found");
 
         var branch = await _unitOfWork.Branches.GetByIdAsync(bId);
-        if (branch == null) throw new Exception("Branch not found");
+        if (branch == null) throw new NotFoundException("Branch not found");
 
         agent.BranchId = bId;
         agent.UpdatedAt = DateTimeOffset.UtcNow;
@@ -192,7 +193,7 @@ public class AgentService : IAgentService
     {
         var aId = Guid.Parse(agentId);
         var agent = await _unitOfWork.Agents.FirstOrDefaultAsync(a => a.UserId == aId);
-        if (agent == null) throw new Exception("Agent not found");
+        if (agent == null) throw new NotFoundException("Agent not found");
 
         agent.LicenseNumber = request.LicenseNumber;
         agent.LicenseExpiry = request.LicenseExpiry;
@@ -205,7 +206,7 @@ public class AgentService : IAgentService
     {
         var aId = Guid.Parse(agentId);
         var agent = await _unitOfWork.Agents.FirstOrDefaultAsync(a => a.UserId == aId);
-        if (agent == null) throw new Exception("Agent not found");
+        if (agent == null) throw new NotFoundException("Agent not found");
 
         agent.IsActive = isActive;
         agent.UpdatedAt = DateTimeOffset.UtcNow;

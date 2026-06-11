@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using SpeedClaim.Api.Dtos.Auth;
 using SpeedClaim.Api.Dtos.Common;
 using SpeedClaim.Api.Dtos.User;
+using SpeedClaim.Api.Exceptions;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Models;
 using SpeedClaim.Api.Models.Enums;
@@ -26,7 +27,7 @@ public class UserService : IUserService
     {
         var uid = Guid.Parse(userId);
         var user = await _unitOfWork.Users.GetByIdAsync(uid);
-        if (user == null) throw new Exception("User not found");
+        if (user == null) throw new NotFoundException("User not found");
 
         var addresses = await _unitOfWork.Addresses.GetPagedAsync(1, 10, a => a.UserId == uid);
         var permanent = addresses.Items.FirstOrDefault(a => a.AddressType == AddressType.Permanent);
@@ -64,7 +65,7 @@ public class UserService : IUserService
     {
         var uid = Guid.Parse(userId);
         var user = await _unitOfWork.Users.GetByIdAsync(uid);
-        if (user == null) throw new Exception("User not found");
+        if (user == null) throw new NotFoundException("User not found");
 
         user.FirstName = request.FirstName;
         user.LastName = request.LastName;
@@ -113,7 +114,7 @@ public class UserService : IUserService
         var mId = Guid.Parse(memberId);
         var cId = Guid.Parse(customerId);
         var member = await _unitOfWork.CustomerMembers.FirstOrDefaultAsync(m => m.Id == mId && m.CustomerId == cId);
-        if (member == null) throw new Exception("Family member not found");
+        if (member == null) throw new NotFoundException("Family member not found");
 
         member.Salutation = request.Salutation;
         member.FirstName = request.FirstName;
@@ -193,7 +194,7 @@ public class UserService : IUserService
         var aId = Guid.Parse(addressId);
         var uId = Guid.Parse(userId);
         var address = await _unitOfWork.Addresses.FirstOrDefaultAsync(a => a.Id == aId && a.UserId == uId);
-        if (address == null) throw new Exception("Address not found");
+        if (address == null) throw new NotFoundException("Address not found");
 
         address.AddressType = request.AddressType;
         address.AddressLine1 = request.AddressLine1;
@@ -213,7 +214,7 @@ public class UserService : IUserService
         var aId = Guid.Parse(addressId);
         var uId = Guid.Parse(userId);
         var address = await _unitOfWork.Addresses.FirstOrDefaultAsync(a => a.Id == aId && a.UserId == uId);
-        if (address == null) throw new KeyNotFoundException("Address not found.");
+        if (address == null) throw new NotFoundException("Address not found.");
         _unitOfWork.Addresses.Delete(address);
         await _unitOfWork.CompleteAsync();
     }
@@ -223,7 +224,7 @@ public class UserService : IUserService
         var mId = Guid.Parse(memberId);
         var cId = Guid.Parse(customerId);
         var member = await _unitOfWork.CustomerMembers.FirstOrDefaultAsync(m => m.Id == mId && m.CustomerId == cId);
-        if (member == null) throw new KeyNotFoundException("Family member not found.");
+        if (member == null) throw new NotFoundException("Family member not found.");
         _unitOfWork.CustomerMembers.Delete(member);
         await _unitOfWork.CompleteAsync();
     }
@@ -278,7 +279,7 @@ public class UserService : IUserService
     {
         var uid = Guid.Parse(targetUserId);
         var user = await _unitOfWork.Users.GetByIdAsync(uid);
-        if (user == null) throw new Exception("User not found");
+        if (user == null) throw new NotFoundException("User not found");
 
         if (Enum.TryParse<UserRole>(role, out var parsedRole))
         {
@@ -287,7 +288,7 @@ public class UserService : IUserService
         }
         else
         {
-            throw new Exception("Invalid role");
+            throw new ValidationException("Invalid role");
         }
     }
 
@@ -304,7 +305,7 @@ public class UserService : IUserService
     {
         var uid = Guid.Parse(customerId);
         var kycRecord = await _unitOfWork.KycRecords.FirstOrDefaultAsync(k => k.UserId == uid);
-        if (kycRecord == null) throw new Exception("KYC Record not found");
+        if (kycRecord == null) throw new NotFoundException("KYC Record not found");
 
         kycRecord.KycStatus = isApproved ? KycStatus.Approved : KycStatus.Rejected;
         kycRecord.ReviewedAt = DateTimeOffset.UtcNow;
@@ -318,7 +319,7 @@ public class UserService : IUserService
     {
         var uid = Guid.Parse(targetUserId);
         var user = await _unitOfWork.Users.GetByIdAsync(uid);
-        if (user == null) throw new Exception("User not found");
+        if (user == null) throw new NotFoundException("User not found");
 
         user.IsActive = isActive;
         await _unitOfWork.CompleteAsync();
