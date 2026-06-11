@@ -2,8 +2,9 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SpeedClaim.Api.Interfaces;
+using SpeedClaim.Api.Dtos.Common;
 using SpeedClaim.Api.Dtos.Grievances;
+using SpeedClaim.Api.Interfaces;
 using System.Security.Claims;
 
 namespace SpeedClaim.Api.Controllers;
@@ -17,6 +18,8 @@ public class GrievancesController : BaseApiController
     {
         _grievanceService = grievanceService;
     }
+
+    #region Customer Endpoints
 
     /// <summary>Raise a new grievance against a policy or claim</summary>
     /// <remarks>PolicyId and ClaimId are optional. Grievance is opened in Open status.</remarks>
@@ -43,25 +46,36 @@ public class GrievancesController : BaseApiController
         return Ok(result);
     }
 
+    #endregion
+
+    #region Admin / Claims Officer Endpoints
+
     /// <summary>Get all grievances across all customers</summary>
     [Authorize(Roles = "Admin,ClaimsOfficer")]
     [HttpGet("all")]
-    [ProducesResponseType(typeof(IEnumerable<GrievanceDto>), 200)]
-    public async Task<IActionResult> GetAllGrievances()
+    [ProducesResponseType(typeof(PagedResponse<GrievanceDto>), 200)]
+    public async Task<IActionResult> GetAllGrievances([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
-        var result = await _grievanceService.GetAllGrievancesAsync();
+        var result = await _grievanceService.GetAllGrievancesAsync(page, pageSize);
         return Ok(result);
     }
 
-    /// <summary>Get a grievance by ID</summary>
+    /// <summary>Get a grievance by ID. Customers can only access their own grievances</summary>
     /// <param name="id">Grievance ID</param>
-    [Authorize(Roles = "Admin,ClaimsOfficer")]
+    [Authorize(Roles = "Admin,ClaimsOfficer,Customer")]
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(GrievanceDto), 200)]
+    [ProducesResponseType(403)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> GetGrievanceById(Guid id)
     {
-        var result = await _grievanceService.GetGrievanceByIdAsync(id);
+        Guid? customerId = null;
+        if (User.IsInRole("Customer"))
+        {
+            if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var cid)) return Unauthorized();
+            customerId = cid;
+        }
+        var result = await _grievanceService.GetGrievanceByIdAsync(id, customerId);
         return Ok(result);
     }
 
@@ -88,4 +102,6 @@ public class GrievancesController : BaseApiController
         await _grievanceService.UpdateGrievanceStatusAsync(id, request);
         return Ok();
     }
+
+    #endregion
 }

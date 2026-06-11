@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using SpeedClaim.Api.Dtos.Common;
 using SpeedClaim.Api.Dtos.Grievances;
 using SpeedClaim.Api.Exceptions;
 using SpeedClaim.Api.Interfaces;
@@ -63,16 +64,18 @@ public class GrievanceService : IGrievanceService
         return grievances.Select(MapToDto);
     }
 
-    public async Task<IEnumerable<GrievanceDto>> GetAllGrievancesAsync()
+    public async Task<PagedResponse<GrievanceDto>> GetAllGrievancesAsync(int page, int pageSize)
     {
-        var grievances = await _unitOfWork.Grievances.GetAllAsync();
-        return grievances.Select(MapToDto);
+        var (items, total) = await _unitOfWork.Grievances.GetPagedAsync(page, pageSize);
+        return new PagedResponse<GrievanceDto>(items.Select(MapToDto), page, pageSize, total);
     }
 
-    public async Task<GrievanceDto> GetGrievanceByIdAsync(Guid id)
+    public async Task<GrievanceDto> GetGrievanceByIdAsync(Guid id, Guid? requestingCustomerId = null)
     {
         var grievance = await _unitOfWork.Grievances.GetByIdAsync(id);
         if (grievance == null) throw new NotFoundException("Grievance not found.");
+        if (requestingCustomerId.HasValue && grievance.CustomerId != requestingCustomerId.Value)
+            throw new ForbiddenException("You do not have access to this grievance.");
         return MapToDto(grievance);
     }
 
