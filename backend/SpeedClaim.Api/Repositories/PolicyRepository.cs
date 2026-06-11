@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using SpeedClaim.Api.Context;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Models;
+using SpeedClaim.Api.Models.Enums;
 
 namespace SpeedClaim.Api.Repositories;
 
@@ -15,26 +16,29 @@ public class PolicyRepository : Repository<Policy>, IPolicyRepository
     {
     }
 
-    public async Task<VehiclePolicy?> GetVehiclePolicyByIdAsync(Guid id)
+    public async Task<Policy?> GetMotorPolicyByIdAsync(Guid id)
     {
-        return await Context.Policies.OfType<VehiclePolicy>()
+        return await Context.Policies
             .Include(p => p.Product)
-            .SingleOrDefaultAsync(p => p.Id == id);
+            .Include(p => p.MotorDetail)
+            .SingleOrDefaultAsync(p => p.Id == id && p.MotorDetail != null);
     }
 
-    public async Task<HealthPolicy?> GetHealthPolicyByIdAsync(Guid id)
+    public async Task<Policy?> GetHealthPolicyByIdAsync(Guid id)
     {
-        return await Context.Policies.OfType<HealthPolicy>()
+        return await Context.Policies
             .Include(p => p.Product)
-            .Include(p => p.InsuredMembers)
-            .SingleOrDefaultAsync(p => p.Id == id);
+            .Include(p => p.HealthDetail)
+            .Include(p => p.PolicyMembers)
+            .SingleOrDefaultAsync(p => p.Id == id && p.HealthDetail != null);
     }
 
-    public async Task<LifePolicy?> GetLifePolicyByIdAsync(Guid id)
+    public async Task<Policy?> GetLifePolicyByIdAsync(Guid id)
     {
-        return await Context.Policies.OfType<LifePolicy>()
+        return await Context.Policies
             .Include(p => p.Product)
-            .SingleOrDefaultAsync(p => p.Id == id);
+            .Include(p => p.LifeDetail)
+            .SingleOrDefaultAsync(p => p.Id == id && p.LifeDetail != null);
     }
 
     public override async Task<Policy?> GetByIdAsync(Guid id)

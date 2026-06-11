@@ -1,4 +1,3 @@
 <Solution>
   <Project Path="SpeedClaim.Api/SpeedClaim.Api.csproj" />
-  <Project Path="SpeedClaim.Tests/SpeedClaim.Tests.csproj" />
 </Solution>

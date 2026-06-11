@@ -1,15 +1,17 @@
-using Microsoft.Extensions.DependencyInjection;
-using NUnit.Framework;
-using Moq;
-using SpeedClaim.Api.Dtos.Claims;
-using SpeedClaim.Api.Models;
-using SpeedClaim.Api.Services;
-using SpeedClaim.Api.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Linq.Expressions;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Threading.Tasks;
+
+using Microsoft.AspNetCore.Http;
+using Moq;
+using NUnit.Framework;
+using SpeedClaim.Api.Dtos.Claims;
+using SpeedClaim.Api.Interfaces;
+using SpeedClaim.Api.Models;
+using SpeedClaim.Api.Models.Enums;
+using SpeedClaim.Api.Services;
 
 namespace SpeedClaim.Tests.Services;
 
@@ -19,12 +21,9 @@ public class ClaimServiceTests
     private Mock<IUnitOfWork> _mockUnitOfWork;
     private Mock<IClaimRepository> _mockClaimRepo;
     private Mock<IPolicyRepository> _mockPolicyRepo;
-    private Mock<IRepository<ClaimWorkflow>> _mockWorkflowRepo;
-    private Mock<IDocumentRepository> _mockDocRepo;
-    private Mock<IUserRepository> _mockUserRepo;
-    private Mock<IStorageService> _mockStorageService;
-    private Mock<IEmailService> _mockEmailService;
-    private Mock<IRepository<DocumentType>> _mockDocTypeRepo;
+    private Mock<IRepository<ClaimStatusHistory>> _mockHistoryRepo;
+    private Mock<ISubmittedDocumentRepository> _mockDocRepo;
+    
     private ClaimService _claimService;
 
     [SetUp]
@@ -33,272 +32,432 @@ public class ClaimServiceTests
         _mockUnitOfWork = new Mock<IUnitOfWork>();
         _mockClaimRepo = new Mock<IClaimRepository>();
         _mockPolicyRepo = new Mock<IPolicyRepository>();
-        _mockWorkflowRepo = new Mock<IRepository<ClaimWorkflow>>();
-        _mockDocRepo = new Mock<IDocumentRepository>();
-        _mockUserRepo = new Mock<IUserRepository>();
+        _mockHistoryRepo = new Mock<IRepository<ClaimStatusHistory>>();
+        _mockDocRepo = new Mock<ISubmittedDocumentRepository>();
 
         _mockUnitOfWork.Setup(u => u.Claims).Returns(_mockClaimRepo.Object);
         _mockUnitOfWork.Setup(u => u.Policies).Returns(_mockPolicyRepo.Object);
-        _mockUnitOfWork.Setup(u => u.ClaimWorkflows).Returns(_mockWorkflowRepo.Object);
-        _mockUnitOfWork.Setup(u => u.Documents).Returns(_mockDocRepo.Object);
-        _mockUnitOfWork.Setup(u => u.Users).Returns(_mockUserRepo.Object);
+        _mockUnitOfWork.Setup(u => u.ClaimStatusHistories).Returns(_mockHistoryRepo.Object);
+        _mockUnitOfWork.Setup(u => u.SubmittedDocuments).Returns(_mockDocRepo.Object);
+        _mockUnitOfWork.Setup(u => u.Customers).Returns(new Mock<IRepository<Customer>>().Object);
 
-        _mockDocTypeRepo = new Mock<IRepository<DocumentType>>();
-        _mockUnitOfWork.Setup(u => u.DocumentTypes).Returns(_mockDocTypeRepo.Object);
-
-        _mockStorageService = new Mock<IStorageService>();
-        _mockEmailService = new Mock<IEmailService>();
-
-        _claimService = new ClaimService(_mockUnitOfWork.Object, _mockStorageService.Object, _mockEmailService.Object);
+        _claimService = new ClaimService(_mockUnitOfWork.Object, new Mock<IStorageService>().Object, new Mock<INotificationService>().Object);
     }
 
     [Test]
-    public async Task SubmitClaimAsync_ValidRequest_CreatesClaimAndWorkflow()
+    public async Task IntimateClaimAsync_WithValidPolicy_CreatesClaim()
     {
-        var userId = Guid.NewGuid();
+        // Arrange
+        var customerId = Guid.NewGuid();
         var policyId = Guid.NewGuid();
-        var policy = new HealthPolicy { Id = policyId, UserId = userId, Status = "ACTIVE", Domain = "HEALTH", PolicyNumber = "POL123" };
-        var user = new User { Id = userId, Email = "test@example.com", FirstName = "Test", LastName = "User", Salutation = "Mr." };
         
-        _mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(policy);
-        _mockUserRepo.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
-        _mockDocTypeRepo.Setup(r => r.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<DocumentType, bool>>>()))
-            .ReturnsAsync(new List<DocumentType> { new DocumentType { Code = "DOC1", Name = "Doc", Domain = "HEALTH", IsSensitivePhiPii = true } });
+        var request = new IntimateClaimRequest(
+            policyId,
+            null,
+            ClaimType.Health,
+            15000,
+            true,
+            DateTime.UtcNow.AddDays(-2),
+            "Fell and broke arm"
+        );
 
-        var request = new SubmitClaimRequest 
-        { 
-            PolicyId = policyId, 
-            AmountRequested = 5000m, 
-            Description = "Accident", 
-            IncidentDate = DateTime.UtcNow.AddDays(-1) 
+        var policy = new Policy
+        {
+            Id = policyId,
+            CustomerId = customerId,
+            Status = PolicyStatus.Active
         };
 
-        var result = await _claimService.SubmitClaimAsync(userId, request);
+        _mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(policy);
 
+        // Act
+        var result = await _claimService.IntimateClaimAsync(customerId, request);
+
+        // Assert
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Status, Is.EqualTo("SUBMITTED"));
+        Assert.That(result.PolicyId, Is.EqualTo(policyId));
+        Assert.That(result.Status, Is.EqualTo(ClaimStatus.Intimated.ToString()));
+
         _mockClaimRepo.Verify(r => r.AddAsync(It.IsAny<Claim>()), Times.Once);
-        _mockWorkflowRepo.Verify(r => r.AddAsync(It.IsAny<ClaimWorkflow>()), Times.Once);
-        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Exactly(2));
-    }
-
-    [Test]
-    public void SubmitClaimAsync_PolicyNotActive_ThrowsArgumentException()
-    {
-        var userId = Guid.NewGuid();
-        var policyId = Guid.NewGuid();
-        var policy = new HealthPolicy { Id = policyId, UserId = userId, Status = "PENDING", Domain = "HEALTH" };
-        
-        _mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(policy);
-
-        var request = new SubmitClaimRequest 
-        { 
-            PolicyId = policyId, 
-            AmountRequested = 5000m, 
-            Description = "Accident", 
-            IncidentDate = DateTime.UtcNow 
-        };
-
-        var ex = Assert.ThrowsAsync<ArgumentException>(async () => await _claimService.SubmitClaimAsync(userId, request));
-        Assert.That(ex.Message, Does.Contain("status: PENDING"));
-    }
-
-    [Test]
-    public async Task UpdateClaimStatusAsync_ValidStatus_UpdatesStatusAndCreatesWorkflow()
-    {
-        var claimId = Guid.NewGuid();
-        var actorId = Guid.NewGuid();
-        var claim = new Claim { Id = claimId, Status = "SUBMITTED", SubmittedById = Guid.NewGuid(), ClaimNumber = "CLM1" };
-        var user = new User { Id = claim.SubmittedById, Email = "customer@example.com", FirstName = "Customer", LastName = "Name", Salutation = "Mr." };
-
-        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
-        _mockUserRepo.Setup(r => r.GetByIdAsync(claim.SubmittedById)).ReturnsAsync(user);
-
-        var request = new UpdateClaimStatusRequest 
-        { 
-            Status = "APPROVED", 
-            Remarks = "Looks good", 
-            ApprovedAmount = 4500m 
-        };
-
-        var result = await _claimService.UpdateClaimStatusAsync(claimId, actorId, request);
-
-        Assert.That(result.Status, Is.EqualTo("APPROVED"));
-        Assert.That(claim.ApprovedAmount, Is.EqualTo(4500m));
-        _mockWorkflowRepo.Verify(r => r.AddAsync(It.IsAny<ClaimWorkflow>()), Times.Once);
+        _mockHistoryRepo.Verify(r => r.AddAsync(It.IsAny<ClaimStatusHistory>()), Times.Once);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
 
     [Test]
-    public async Task GetAllClaimsAsync_ReturnsClaims()
+    public void IntimateClaimAsync_WithInactivePolicy_ThrowsException()
     {
-        var userId = Guid.NewGuid();
-        var claim = new Claim { Id = Guid.NewGuid(), SubmittedById = userId, ClaimNumber = "CLM1" };
-        var claims = new List<Claim> { claim };
-        _mockClaimRepo.Setup(r => r.GetPagedAsync(1, 10, It.IsAny<Expression<Func<Claim, bool>>>(), It.IsAny<Func<IQueryable<Claim>, IQueryable<Claim>>>()))
-            .ReturnsAsync((new List<Claim> { claim }, 1))
-            .Callback<int, int, Expression<Func<Claim, bool>>, Func<IQueryable<Claim>, IQueryable<Claim>>>((pn, ps, exp, incl) => {
-                // invoke the lambda to cover it
-                if (incl != null) {
-                    var mockQuery = new List<Claim>().AsQueryable();
-                    try { incl(mockQuery); } catch { /* Ignore EF Core async mock issues if they occur on Include */ }
-                }
-            });
+        // Arrange
+        var customerId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+        
+        var request = new IntimateClaimRequest(policyId, null, ClaimType.Health, 15000, true, DateTime.UtcNow, "Test");
 
-        var result = await _claimService.GetAllClaimsAsync(userId, 1, 10);
+        var policy = new Policy { Id = policyId, CustomerId = customerId, Status = PolicyStatus.Expired };
 
-        Assert.That(result.Data.Count(), Is.EqualTo(1));
+        _mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(policy);
+
+        // Act & Assert
+        Assert.ThrowsAsync<InvalidOperationException>(() => _claimService.IntimateClaimAsync(customerId, request));
     }
 
     [Test]
-    public async Task GetClaimChecklistAsync_ReturnsChecklist()
+    public async Task AssignSurveyorAsync_ForMotorClaim_UpdatesSurveyor()
+    {
+        // Arrange
+        var claimId = Guid.NewGuid();
+        var surveyorId = Guid.NewGuid();
+        var officerId = Guid.NewGuid();
+        
+        var claim = new Claim
+        {
+            Id = claimId,
+            ClaimType = ClaimType.Accident,
+            Status = ClaimStatus.Intimated
+        };
+
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+
+        // Act
+        await _claimService.AssignSurveyorAsync(claimId, surveyorId, officerId, "Assigning to John");
+
+        // Assert
+        Assert.That(claim.SurveyorId, Is.EqualTo(surveyorId));
+        Assert.That(claim.Status, Is.EqualTo(ClaimStatus.UnderReview));
+        _mockClaimRepo.Verify(r => r.Update(claim), Times.Once);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public void AssignSurveyorAsync_ForHealthClaim_ThrowsException()
+    {
+        // Arrange
+        var claimId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, ClaimType = ClaimType.Health };
+
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+
+        // Act & Assert
+        Assert.ThrowsAsync<InvalidOperationException>(() => _claimService.AssignSurveyorAsync(claimId, Guid.NewGuid(), Guid.NewGuid(), "Test"));
+    }
+
+    [Test]
+    public async Task ApproveOrRejectClaimAsync_WhenApproved_UpdatesStatusAndAmount()
+    {
+        // Arrange
+        var claimId = Guid.NewGuid();
+        var officerId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, Status = ClaimStatus.UnderReview };
+
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+        var request = new ApproveRejectClaimRequest(true, 10000, "Approved after review");
+
+        // Act
+        await _claimService.ApproveOrRejectClaimAsync(claimId, request, officerId);
+
+        // Assert
+        Assert.That(claim.Status, Is.EqualTo(ClaimStatus.Approved));
+        Assert.That(claim.ClaimAmountApproved, Is.EqualTo(10000));
+        _mockClaimRepo.Verify(r => r.Update(claim), Times.Once);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public async Task MarkClaimAsSettledAsync_WhenApproved_UpdatesToSettled()
+    {
+        // Arrange
+        var claimId = Guid.NewGuid();
+        var officerId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, Status = ClaimStatus.Approved };
+
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+
+        // Act
+        await _claimService.MarkClaimAsSettledAsync(claimId, officerId);
+
+        // Assert
+        Assert.That(claim.Status, Is.EqualTo(ClaimStatus.Settled));
+        Assert.That(claim.SettlementDate, Is.Not.Null);
+        _mockClaimRepo.Verify(r => r.Update(claim), Times.Once);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public async Task GetClaimByIdAsync_NullCustomerId_ReturnsClaim()
     {
         var claimId = Guid.NewGuid();
-        var checklists = new List<ClaimDocumentChecklist> { new ClaimDocumentChecklist { Id = Guid.NewGuid(), ClaimId = claimId, DocumentTypeCode = "DOC", IsReceived = true } };
-        _mockUnitOfWork.Setup(u => u.ClaimDocumentChecklists.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<ClaimDocumentChecklist, bool>>>())).ReturnsAsync(checklists);
+        var claim = new Claim { Id = claimId, ClaimNumber = "CLM-001", CustomerId = Guid.NewGuid(), ClaimType = ClaimType.Health, Status = ClaimStatus.Intimated };
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
 
-        var result = await _claimService.GetClaimChecklistAsync(claimId);
+        var result = await _claimService.GetClaimByIdAsync(claimId);
+
+        Assert.That(result.Id, Is.EqualTo(claimId));
+    }
+
+    [Test]
+    public void GetClaimByIdAsync_NotFound_ThrowsKeyNotFound()
+    {
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Claim?)null);
+
+        Assert.ThrowsAsync<KeyNotFoundException>(() => _claimService.GetClaimByIdAsync(Guid.NewGuid()));
+    }
+
+    [Test]
+    public void GetClaimByIdAsync_WrongCustomer_ThrowsUnauthorized()
+    {
+        var claimId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, CustomerId = Guid.NewGuid(), ClaimType = ClaimType.Health, Status = ClaimStatus.Intimated };
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+
+        Assert.ThrowsAsync<UnauthorizedAccessException>(() => _claimService.GetClaimByIdAsync(claimId, Guid.NewGuid()));
+    }
+
+    [Test]
+    public async Task GetClaimHistoryAsync_ValidClaim_ReturnsHistory()
+    {
+        var claimId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, CustomerId = customerId, ClaimType = ClaimType.Health, Status = ClaimStatus.UnderReview };
+        var history = new List<ClaimStatusHistory>
+        {
+            new ClaimStatusHistory { Id = Guid.NewGuid(), ClaimId = claimId, OldStatus = ClaimStatus.Intimated, NewStatus = ClaimStatus.UnderReview, ChangedAt = DateTimeOffset.UtcNow }
+        };
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+        _mockHistoryRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<ClaimStatusHistory, bool>>>())).ReturnsAsync(history);
+
+        var result = await _claimService.GetClaimHistoryAsync(claimId, customerId);
 
         Assert.That(result.Count(), Is.EqualTo(1));
     }
 
     [Test]
-    public void SubmitClaimAsync_PolicyNotFound_ThrowsArgumentException()
+    public void GetClaimHistoryAsync_WrongCustomer_ThrowsKeyNotFound()
+    {
+        var claimId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, CustomerId = Guid.NewGuid(), ClaimType = ClaimType.Health, Status = ClaimStatus.Intimated };
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+
+        Assert.ThrowsAsync<KeyNotFoundException>(() => _claimService.GetClaimHistoryAsync(claimId, Guid.NewGuid()));
+    }
+
+    [Test]
+    public async Task GetAllClaimsAsync_ReturnsAllClaims()
+    {
+        var claims = new List<Claim>
+        {
+            new Claim { Id = Guid.NewGuid(), ClaimNumber = "CLM-001", ClaimType = ClaimType.Health, Status = ClaimStatus.Intimated },
+            new Claim { Id = Guid.NewGuid(), ClaimNumber = "CLM-002", ClaimType = ClaimType.Accident, Status = ClaimStatus.UnderReview }
+        };
+        _mockClaimRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(claims);
+
+        var result = await _claimService.GetAllClaimsAsync();
+
+        Assert.That(result.Count(), Is.EqualTo(2));
+    }
+
+    [Test]
+    public async Task UpdateClaimStatusAsync_ValidClaim_UpdatesStatus()
+    {
+        var claimId = Guid.NewGuid();
+        var officerId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, CustomerId = Guid.NewGuid(), ClaimType = ClaimType.Health, Status = ClaimStatus.Intimated };
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+        _mockUnitOfWork.Setup(u => u.Customers.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Customer?)null);
+
+        await _claimService.UpdateClaimStatusAsync(claimId, ClaimStatus.UnderReview, officerId, "Reviewing");
+
+        Assert.That(claim.Status, Is.EqualTo(ClaimStatus.UnderReview));
+    }
+
+    [Test]
+    public async Task RequestAdditionalDocumentsAsync_SetsPendingStatus()
+    {
+        var claimId = Guid.NewGuid();
+        var officerId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, CustomerId = Guid.NewGuid(), ClaimType = ClaimType.Health, Status = ClaimStatus.UnderReview };
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+        _mockUnitOfWork.Setup(u => u.Customers.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Customer?)null);
+
+        await _claimService.RequestAdditionalDocumentsAsync(claimId, "Need hospital bill", officerId);
+
+        Assert.That(claim.Status, Is.EqualTo(ClaimStatus.DocumentsPending));
+    }
+
+    [Test]
+    public async Task ApproveCashlessPreAuthAsync_CashlessClaim_ApprovesPreAuth()
+    {
+        var claimId = Guid.NewGuid();
+        var officerId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, CustomerId = Guid.NewGuid(), ClaimType = ClaimType.Health, Status = ClaimStatus.Intimated, IsCashless = true };
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+        _mockUnitOfWork.Setup(u => u.Customers.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Customer?)null);
+
+        await _claimService.ApproveCashlessPreAuthAsync(claimId, officerId);
+
+        Assert.That(claim.Status, Is.EqualTo(ClaimStatus.PreAuthApproved));
+    }
+
+    [Test]
+    public void ApproveCashlessPreAuthAsync_NonCashlessClaim_ThrowsInvalidOperation()
+    {
+        var claimId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, ClaimType = ClaimType.Health, Status = ClaimStatus.Intimated, IsCashless = false };
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+
+        Assert.ThrowsAsync<InvalidOperationException>(() => _claimService.ApproveCashlessPreAuthAsync(claimId, Guid.NewGuid()));
+    }
+
+    [Test]
+    public async Task GetAssignedMotorClaimsAsync_ReturnsSurveyorClaims()
+    {
+        var surveyorId = Guid.NewGuid();
+        var claims = new List<Claim>
+        {
+            new Claim { Id = Guid.NewGuid(), SurveyorId = surveyorId, ClaimType = ClaimType.Accident, Status = ClaimStatus.UnderReview }
+        };
+        _mockClaimRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Claim, bool>>>())).ReturnsAsync(claims);
+
+        var result = await _claimService.GetAssignedMotorClaimsAsync(surveyorId);
+
+        Assert.That(result.Count(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task ApproveOrRejectClaimAsync_Rejected_SetsRejectionReason()
+    {
+        var claimId = Guid.NewGuid();
+        var officerId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, CustomerId = Guid.NewGuid(), ClaimType = ClaimType.Health, Status = ClaimStatus.UnderReview };
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+        _mockUnitOfWork.Setup(u => u.Customers.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Customer?)null);
+
+        await _claimService.ApproveOrRejectClaimAsync(claimId, new ApproveRejectClaimRequest(false, null, "Fraudulent claim"), officerId);
+
+        Assert.That(claim.Status, Is.EqualTo(ClaimStatus.Rejected));
+        Assert.That(claim.RejectionReason, Is.EqualTo("Fraudulent claim"));
+    }
+
+    [Test]
+    public void IntimateClaimAsync_PolicyNotFound_ThrowsArgumentException()
     {
         _mockPolicyRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Policy?)null);
-        var request = new SubmitClaimRequest { PolicyId = Guid.NewGuid() };
-        Assert.ThrowsAsync<ArgumentException>(async () => await _claimService.SubmitClaimAsync(Guid.NewGuid(), request));
+        var request = new IntimateClaimRequest(Guid.NewGuid(), null, ClaimType.Health, 1000, false, DateTime.UtcNow, "desc");
+
+        Assert.ThrowsAsync<ArgumentException>(() => _claimService.IntimateClaimAsync(Guid.NewGuid(), request));
     }
 
     [Test]
-    public void SubmitClaimAsync_UnauthorizedUser_ThrowsUnauthorizedAccessException()
+    public async Task GetMyClaimsAsync_ReturnsClaims()
     {
-        var policy = new HealthPolicy { UserId = Guid.NewGuid() };
-        _mockPolicyRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(policy);
-
-        var docTypes = new List<DocumentType> { new DocumentType { Code = "DOC1", Domain = "VEHICLE", Name = "Doc" } };
-        _mockUnitOfWork.Setup(u => u.DocumentTypes.FindAsync(It.IsAny<Expression<Func<DocumentType, bool>>>())).ReturnsAsync(docTypes);
-
-        var request = new SubmitClaimRequest { PolicyId = Guid.NewGuid() };
-        Assert.ThrowsAsync<UnauthorizedAccessException>(async () => await _claimService.SubmitClaimAsync(Guid.NewGuid(), request));
-    }
-
-    [Test]
-    public async Task SubmitClaimAsync_HealthDomainWithDetails_CreatesClaim()
-    {
-        var userId = Guid.NewGuid();
-        var policy = new HealthPolicy { Id = Guid.NewGuid(), UserId = userId, Status = "ACTIVE", Domain = "HEALTH", PolicyNumber = "POL123" };
-        _mockPolicyRepo.Setup(r => r.GetByIdAsync(policy.Id)).ReturnsAsync(policy);
-        _mockDocTypeRepo.Setup(r => r.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<DocumentType, bool>>>())).ReturnsAsync(new List<DocumentType>());
-
-        var request = new SubmitClaimRequest 
-        { 
-            PolicyId = policy.Id, 
-            HealthDetail = new ClaimHealthDetailDto 
-            {
-                HospitalName = "Hospital", 
-                Diagnosis = "Diagnosis", 
-                TreatingDoctor = "Dr", 
-                AdmissionDate = DateTime.UtcNow, 
-                IsCashless = true
-            }
+        var customerId = Guid.NewGuid();
+        var claims = new List<Claim>
+        {
+            new Claim { Id = Guid.NewGuid(), CustomerId = customerId, ClaimNumber = "CLM-001", PolicyId = Guid.NewGuid(), Status = ClaimStatus.Intimated }
         };
+        _mockClaimRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Claim, bool>>>())).ReturnsAsync(claims);
 
-        var result = await _claimService.SubmitClaimAsync(userId, request);
-        Assert.That(result, Is.Not.Null);
+        var result = await _claimService.GetMyClaimsAsync(customerId);
+
+        Assert.That(result.Count(), Is.EqualTo(1));
     }
 
     [Test]
-    public async Task SubmitClaimAsync_VehicleDomainWithDetails_CreatesClaim()
+    public async Task UploadClaimDocumentAsync_ValidClaim_ReturnsPath()
     {
-        var userId = Guid.NewGuid();
-        var policy = new VehiclePolicy { Id = Guid.NewGuid(), UserId = userId, Status = "ACTIVE", Domain = "VEHICLE", PolicyNumber = "POL123" };
-        _mockPolicyRepo.Setup(r => r.GetByIdAsync(policy.Id)).ReturnsAsync(policy);
-        _mockDocTypeRepo.Setup(r => r.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<DocumentType, bool>>>())).ReturnsAsync(new List<DocumentType>());
+        var claimId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, CustomerId = customerId, Status = ClaimStatus.UnderReview, ClaimNumber = "CLM-001", PolicyId = Guid.NewGuid() };
 
-        var request = new SubmitClaimRequest 
-        { 
-            PolicyId = policy.Id, 
-            VehicleDetail = new ClaimVehicleDetailDto 
-            {
-                AccidentLocation = "Location", 
-                FirNumber = "FIR123", 
-                RepairEstimate = 5000m, 
-                IsTotalLoss = false, 
-                SurveyorName = "Surveyor"
-            }
-        };
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
 
-        var result = await _claimService.SubmitClaimAsync(userId, request);
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.FileName).Returns("doc.pdf");
+        mockFile.Setup(f => f.Length).Returns(1024);
+
+        var result = await _claimService.UploadClaimDocumentAsync(claimId, customerId, "medical_bill", mockFile.Object);
+
         Assert.That(result, Is.Not.Null);
+        _mockDocRepo.Verify(r => r.AddAsync(It.IsAny<SubmittedDocument>()), Times.Once);
     }
 
     [Test]
-    public async Task SubmitClaimAsync_LifeDomainWithDetails_CreatesClaim()
+    public async Task UploadClaimDocumentAsync_IntimatedClaim_AdvancesToUnderReview()
     {
-        var userId = Guid.NewGuid();
-        var policy = new LifePolicy { Id = Guid.NewGuid(), UserId = userId, Status = "ACTIVE", Domain = "LIFE", PolicyNumber = "POL123" };
-        _mockPolicyRepo.Setup(r => r.GetByIdAsync(policy.Id)).ReturnsAsync(policy);
-        _mockDocTypeRepo.Setup(r => r.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<DocumentType, bool>>>())).ReturnsAsync(new List<DocumentType>());
+        var claimId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, CustomerId = customerId, Status = ClaimStatus.Intimated, ClaimNumber = "CLM-001", PolicyId = Guid.NewGuid() };
 
-        var request = new SubmitClaimRequest 
-        { 
-            PolicyId = policy.Id, 
-            LifeDetail = new ClaimLifeDetailDto 
-            {
-                CauseOfDeath = "Cause", 
-                PlaceOfDeath = "Place", 
-                DeathCertificateNumber = "CERT123", 
-                CertifyingDoctor = "Dr", 
-                ClaimantName = "Claimant", 
-                ClaimantRelation = "Relation"
-            }
-        };
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
 
-        var result = await _claimService.SubmitClaimAsync(userId, request);
-        Assert.That(result, Is.Not.Null);
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.FileName).Returns("doc.pdf");
+        mockFile.Setup(f => f.Length).Returns(1024);
+
+        await _claimService.UploadClaimDocumentAsync(claimId, customerId, "medical_bill", mockFile.Object);
+
+        _mockHistoryRepo.Verify(r => r.AddAsync(It.IsAny<ClaimStatusHistory>()), Times.Once);
     }
 
     [Test]
-    public async Task SubmitClaimAsync_WithAttachments_UploadsFiles()
+    public async Task AssignClaimAsync_ValidClaim_SetsOfficer()
     {
-        var userId = Guid.NewGuid();
-        var policy = new HealthPolicy { Id = Guid.NewGuid(), UserId = userId, Status = "ACTIVE", Domain = "HEALTH", PolicyNumber = "POL123" };
-        _mockPolicyRepo.Setup(r => r.GetByIdAsync(policy.Id)).ReturnsAsync(policy);
-        _mockDocTypeRepo.Setup(r => r.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<DocumentType, bool>>>())).ReturnsAsync(new List<DocumentType>());
+        var claimId = Guid.NewGuid();
+        var officerId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, CustomerId = Guid.NewGuid(), Status = ClaimStatus.Intimated, ClaimNumber = "CLM-001", PolicyId = Guid.NewGuid() };
 
-        var mockFile = new Mock<Microsoft.AspNetCore.Http.IFormFile>();
-        mockFile.Setup(f => f.FileName).Returns("test.pdf");
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+
+        await _claimService.AssignClaimAsync(claimId, officerId);
+
+        Assert.That(claim.AssignedOfficerId, Is.EqualTo(officerId));
+        _mockHistoryRepo.Verify(r => r.AddAsync(It.IsAny<ClaimStatusHistory>()), Times.Once);
+    }
+
+    [Test]
+    public async Task SubmitSurveyReportAsync_ValidClaim_UploadsReport()
+    {
+        var claimId = Guid.NewGuid();
+        var surveyorId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, SurveyorId = surveyorId, CustomerId = Guid.NewGuid(), Status = ClaimStatus.UnderReview, ClaimNumber = "CLM-001", PolicyId = Guid.NewGuid() };
+
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+        var mockMotorRepo = new Mock<IRepository<MotorClaimDetail>>();
+        mockMotorRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<MotorClaimDetail, bool>>>())).ReturnsAsync((MotorClaimDetail?)null);
+        _mockUnitOfWork.Setup(u => u.MotorClaimDetails).Returns(mockMotorRepo.Object);
+
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.FileName).Returns("report.pdf");
+        mockFile.Setup(f => f.Length).Returns(2048);
         mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
 
-        var request = new SubmitClaimRequest 
-        { 
-            PolicyId = policy.Id,
-            Attachments = new List<Microsoft.AspNetCore.Http.IFormFile> { mockFile.Object }
-        };
+        var mockStorage = new Mock<IStorageService>();
+        mockStorage.Setup(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync("/storage/report.pdf");
+        var svc = new ClaimService(_mockUnitOfWork.Object, mockStorage.Object, new Mock<INotificationService>().Object);
 
-        _mockStorageService.Setup(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync("file-path-uuid");
+        var request = new SubmitSurveyReportRequest(5000m, DateTime.UtcNow.AddDays(-1), "minor damage", mockFile.Object);
+        var result = await svc.SubmitSurveyReportAsync(claimId, surveyorId, request);
 
-        var result = await _claimService.SubmitClaimAsync(userId, request);
-        
-        _mockStorageService.Verify(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), "test.pdf", userId.ToString()), Times.Once);
-        _mockDocRepo.Verify(r => r.AddAsync(It.IsAny<Document>()), Times.Once);
+        Assert.That(result, Is.EqualTo("/storage/report.pdf"));
+        _mockDocRepo.Verify(r => r.AddAsync(It.IsAny<SubmittedDocument>()), Times.Once);
     }
 
     [Test]
-    public void UpdateClaimStatusAsync_ClaimNotFound_ThrowsArgumentException()
+    public async Task UpdateClaimStatusInternalAsync_NotifiesCustomer()
     {
-        _mockClaimRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Claim?)null);
-        var request = new UpdateClaimStatusRequest { Status = "APPROVED" };
-        Assert.ThrowsAsync<ArgumentException>(async () => await _claimService.UpdateClaimStatusAsync(Guid.NewGuid(), Guid.NewGuid(), request));
-    }
+        var claimId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, CustomerId = customerId, Status = ClaimStatus.Intimated, ClaimNumber = "CLM-001", PolicyId = Guid.NewGuid() };
+        var customer = new Customer { Id = customerId, UserId = userId };
 
-    [Test]
-    public void UpdateClaimStatusAsync_InvalidStatus_ThrowsArgumentException()
-    {
-        var claim = new Claim { Status = "SUBMITTED" };
-        _mockClaimRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(claim);
-        var request = new UpdateClaimStatusRequest { Status = "INVALID_STATUS" };
-        Assert.ThrowsAsync<ArgumentException>(async () => await _claimService.UpdateClaimStatusAsync(Guid.NewGuid(), Guid.NewGuid(), request));
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+        _mockUnitOfWork.Setup(u => u.Customers.GetByIdAsync(customerId)).ReturnsAsync(customer);
+
+        var mockNotif = new Mock<INotificationService>();
+        var svc = new ClaimService(_mockUnitOfWork.Object, new Mock<IStorageService>().Object, mockNotif.Object);
+
+        await svc.UpdateClaimStatusAsync(claimId, ClaimStatus.UnderReview, Guid.NewGuid(), "reviewing");
+
+        mockNotif.Verify(n => n.CreateAsync(userId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
 }

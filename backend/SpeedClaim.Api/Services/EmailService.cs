@@ -1,62 +1,102 @@
 using System;
 using System.Threading.Tasks;
-using MailKit.Net.Smtp;
-using MailKit.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MimeKit;
 using MimeKit.Text;
 using SpeedClaim.Api.Interfaces;
+using SpeedClaim.Api.Models;
 
 namespace SpeedClaim.Api.Services;
 
 public class EmailService : IEmailService
 {
+    private readonly ISmtpClientFactory _smtpClientFactory;
     private readonly IConfiguration _configuration;
     private readonly ILogger<EmailService> _logger;
-    private readonly ISmtpClientFactory _smtpClientFactory;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public EmailService(IConfiguration configuration, ILogger<EmailService> logger, ISmtpClientFactory smtpClientFactory)
+    public EmailService(
+        ISmtpClientFactory smtpClientFactory, 
+        IConfiguration configuration,
+        ILogger<EmailService> logger,
+        IUnitOfWork unitOfWork)
     {
+        _smtpClientFactory = smtpClientFactory;
         _configuration = configuration;
         _logger = logger;
-        _smtpClientFactory = smtpClientFactory;
+        _unitOfWork = unitOfWork;
     }
 
-    public async Task SendEmailAsync(string toEmail, string toName, string subject, string htmlBody)
+    public async Task SendEmailAsync(string to, string subject, string body)
     {
         try
         {
-            var host = _configuration.GetSection("SmtpSettings")["Host"] ?? "smtp.gmail.com";
-            var port = int.Parse(_configuration.GetSection("SmtpSettings")["Port"] ?? "587");
-            var senderName = _configuration.GetSection("SmtpSettings")["SenderName"] ?? "SpeedClaim";
-            var senderEmail = _configuration.GetSection("SmtpSettings")["SenderEmail"] ?? "noreply@speedclaim.com";
-            var appPassword = _configuration.GetSection("SmtpSettings")["AppPassword"];
-
-            // If dummy password is still there, skip actual sending to avoid exceptions breaking the flow
-            if (string.IsNullOrEmpty(appPassword) || appPassword == "dummy_password")
-            {
-                _logger.LogWarning("Email sending skipped: Dummy or missing AppPassword. Target: {ToEmail}, Subject: {Subject}", toEmail, subject);
-                return;
-            }
-
             var email = new MimeMessage();
-            email.From.Add(new MailboxAddress(senderName, senderEmail));
-            email.To.Add(new MailboxAddress(toName, toEmail));
+            var fromAddress = _configuration["EmailSettings:FromAddress"] ?? "noreply@speedclaim.local";
+            email.From.Add(MailboxAddress.Parse(fromAddress));
+            email.To.Add(MailboxAddress.Parse(to));
             email.Subject = subject;
-            email.Body = new TextPart(TextFormat.Html) { Text = htmlBody };
+            email.Body = new TextPart(TextFormat.Html) { Text = body };
 
             using var smtp = _smtpClientFactory.CreateClient();
-            await smtp.ConnectAsync(host, port, SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(senderEmail, appPassword);
+            var host = _configuration["EmailSettings:SmtpHost"] ?? "smtp.gmail.com";
+            var port = int.TryParse(_configuration["EmailSettings:SmtpPort"], out var p) ? p : 587;
+            var user = _configuration["EmailSettings:SmtpUser"] ?? "dummy";
+            var pass = _configuration["EmailSettings:SmtpPass"] ?? "dummy";
+
+            await smtp.ConnectAsync(host, port, MailKit.Security.SecureSocketOptions.StartTls);
+            if (!string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(pass))
+            {
+                await smtp.AuthenticateAsync(user, pass);
+            }
             await smtp.SendAsync(email);
             await smtp.DisconnectAsync(true);
-            
-            _logger.LogInformation("Email sent successfully to {ToEmail}", toEmail);
+
+            _logger.LogInformation("Email sent successfully to {To}", to);
+
+            // Log to database
+            var emailLog = new EmailLog
+            {
+                Id = Guid.NewGuid(),
+                RecipientEmail = to,
+                Subject = subject,
+                SentAt = DateTimeOffset.UtcNow,
+                Status = "Sent",
+                CreatedAt = DateTimeOffset.UtcNow
+            };
+            await _unitOfWork.EmailLogs.AddAsync(emailLog);
+            await _unitOfWork.CompleteAsync();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to send email to {ToEmail}", toEmail);
+            _logger.LogError(ex, "Failed to send email to {To}", to);
+            var emailLog = new EmailLog
+            {
+                Id = Guid.NewGuid(),
+                RecipientEmail = to,
+                Subject = subject,
+                SentAt = null,
+                Status = "Failed",
+                CreatedAt = DateTimeOffset.UtcNow
+            };
+            await _unitOfWork.EmailLogs.AddAsync(emailLog);
+            await _unitOfWork.CompleteAsync();
+            throw; // Re-throw to inform callers if needed
         }
+    }
+
+    public async Task SendEmailVerificationAsync(string to, string token)
+    {
+        var subject = "Verify Your SpeedClaim Account";
+        var body = $"<p>Please verify your account using this token: <strong>{token}</strong></p>";
+        await SendEmailAsync(to, subject, body);
+    }
+
+    public async Task SendPasswordResetAsync(string to, string token)
+    {
+        var subject = "Reset Your SpeedClaim Password";
+        var body = $"<p>You can reset your password using this token: <strong>{token}</strong></p>";
+        await SendEmailAsync(to, subject, body);
     }
 }

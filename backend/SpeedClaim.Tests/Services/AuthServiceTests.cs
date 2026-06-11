@@ -1,313 +1,513 @@
-using Microsoft.Extensions.Configuration;
-using NUnit.Framework;
-using Moq;
-using SpeedClaim.Api.Dtos.Auth;
-using SpeedClaim.Api.Models;
-using SpeedClaim.Api.Services;
-using SpeedClaim.Api.Interfaces;
-using AutoMapper;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using Moq;
+using NUnit.Framework;
+using SpeedClaim.Api.Dtos.Auth;
+using SpeedClaim.Api.Dtos.Common;
+using SpeedClaim.Api.Interfaces;
+using SpeedClaim.Api.Models;
+using SpeedClaim.Api.Models.Enums;
+using SpeedClaim.Api.Services;
 
 namespace SpeedClaim.Tests.Services;
 
 [TestFixture]
 public class AuthServiceTests
 {
-    private Mock<IUnitOfWork> _mockUnitOfWork;
-    private Mock<IUserRepository> _mockUserRepo;
-    private Mock<IRepository<Role>> _mockRoleRepo;
-    private Mock<IRefreshTokenRepository> _mockRefreshTokenRepo;
-    private Mock<IEmailService> _mockEmailService;
-    private Mock<IJwtService> _mockJwtService;
-    private Mock<IMapper> _mockMapper;
-    private Mock<IConfiguration> _mockConfig;
-    private AuthService _authService;
+    private Mock<IUnitOfWork> _mockUnitOfWork = null!;
+    private Mock<IUserRepository> _mockUserRepository = null!;
+    private Mock<IRepository<Customer>> _mockCustomerRepository = null!;
+    private Mock<IRepository<Session>> _mockSessionRepository = null!;
+    private Mock<IRepository<UserToken>> _mockUserTokenRepository = null!;
+    private Mock<IJwtService> _mockJwtService = null!;
+    private Mock<IEmailService> _mockEmailService = null!;
+    private AuthService _authService = null!;
 
     [SetUp]
     public void Setup()
     {
         _mockUnitOfWork = new Mock<IUnitOfWork>();
-        _mockUserRepo = new Mock<IUserRepository>();
-        _mockRoleRepo = new Mock<IRepository<Role>>();
-        _mockRefreshTokenRepo = new Mock<IRefreshTokenRepository>();
-
-        _mockUnitOfWork.Setup(u => u.Users).Returns(_mockUserRepo.Object);
-        _mockUnitOfWork.Setup(u => u.Roles).Returns(_mockRoleRepo.Object);
-        _mockUnitOfWork.Setup(u => u.RefreshTokens).Returns(_mockRefreshTokenRepo.Object);
-
-        _mockConfig = new Mock<IConfiguration>();
-        _mockConfig = new Mock<IConfiguration>();
-        var jwtSection = new Mock<IConfigurationSection>();
-        jwtSection.Setup(x => x["Key"]).Returns("SuperSecretKeyThatIsAtLeast32BytesLong!");
-        jwtSection.Setup(x => x["Issuer"]).Returns("SpeedClaim");
-        jwtSection.Setup(x => x["Audience"]).Returns("SpeedClaimUsers");
-        jwtSection.Setup(x => x["DurationInMinutes"]).Returns("60");
-        _mockConfig.Setup(c => c.GetSection("JwtSettings")).Returns(jwtSection.Object);
-
-        _mockEmailService = new Mock<IEmailService>();
+        _mockUserRepository = new Mock<IUserRepository>();
+        _mockCustomerRepository = new Mock<IRepository<Customer>>();
+        _mockSessionRepository = new Mock<IRepository<Session>>();
+        _mockUserTokenRepository = new Mock<IRepository<UserToken>>();
         _mockJwtService = new Mock<IJwtService>();
-        _mockMapper = new Mock<IMapper>();
+        _mockEmailService = new Mock<IEmailService>();
 
-        _authService = new AuthService(_mockUnitOfWork.Object, _mockJwtService.Object, _mockConfig.Object, _mockMapper.Object, _mockEmailService.Object);
+        _mockUnitOfWork.Setup(u => u.Users).Returns(_mockUserRepository.Object);
+        _mockUnitOfWork.Setup(u => u.Customers).Returns(_mockCustomerRepository.Object);
+        _mockUnitOfWork.Setup(u => u.Sessions).Returns(_mockSessionRepository.Object);
+        _mockUnitOfWork.Setup(u => u.UserTokens).Returns(_mockUserTokenRepository.Object);
+        _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
+
+        _authService = new AuthService(_mockUnitOfWork.Object, _mockJwtService.Object, _mockEmailService.Object);
     }
 
     [Test]
-    public async Task RegisterUserAsync_ValidRequest_CreatesUser()
+    public void RegisterCustomerAsync_EmailExists_ThrowsException()
     {
-        var request = new RegisterUserRequest(
-            "test@example.com", 
-            "Password123!", 
-            "Mr.",
-            "John",
-            "Doe", 
-            "1234567890", 
-            new SpeedClaim.Api.Dtos.Common.AddressDto("123 Main St", "City", "State", "12345", "Country"), 
-            DateTime.UtcNow.AddYears(-30), 
-            "123412341234", 
-            "ABCDE1234F", 
-            SpeedClaim.Api.Models.Enums.Gender.Male,
-            SpeedClaim.Api.Models.Enums.MaritalStatus.Single
-        );
+        var address = new AddressDto("123 St", null, "City", "State", "12345", "Country");
+        var request = new RegisterUserRequest("test@test.com", "pass", "Mr", "John", "Doe", "123", address, null, true, DateTime.UtcNow, "A", "P", Gender.Male, MaritalStatus.Single);
         
-        _mockUserRepo.Setup(r => r.AnyAsync(It.IsAny<Expression<Func<User, bool>>>())).ReturnsAsync(false);
-        _mockRoleRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Role, bool>>>())).ReturnsAsync(new Role { Id = Guid.NewGuid(), Code = "Customer" });
-        _mockUserRepo.Setup(r => r.AddAsync(It.IsAny<User>())).Callback<User>(u => u.Id = Guid.NewGuid());
-        
-        var result = await _authService.RegisterUserAsync(request);
+        _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
+            .ReturnsAsync(new User());
 
-        Assert.That(result, Is.Not.Null);
-        _mockUserRepo.Verify(r => r.AddAsync(It.IsAny<User>()), Times.Once);
-        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Exactly(2));
+        var ex = Assert.ThrowsAsync<Exception>(() => _authService.RegisterCustomerAsync(request));
+        Assert.That(ex.Message, Is.EqualTo("Email already registered"));
     }
 
     [Test]
-    public void RegisterUserAsync_DuplicateEmail_ThrowsArgumentException()
+    public async Task RegisterCustomerAsync_ValidRequest_Success()
     {
-        var request = new RegisterUserRequest(
-            "test@example.com", 
-            "Password123!", 
-            "Mr.",
-            "John",
-            "Doe", 
-            "1234567890", 
-            new SpeedClaim.Api.Dtos.Common.AddressDto("123 Main St", "City", "State", "12345", "Country"), 
-            DateTime.UtcNow.AddYears(-30), 
-            "123412341234", 
-            "ABCDE1234F", 
-            SpeedClaim.Api.Models.Enums.Gender.Male,
-            SpeedClaim.Api.Models.Enums.MaritalStatus.Single
-        );
+        var address = new AddressDto("123 St", null, "City", "State", "12345", "Country");
+        var request = new RegisterUserRequest("new@test.com", "pass", "Mr", "John", "Doe", "123", address, null, true, DateTime.UtcNow, "A", "P", Gender.Male, MaritalStatus.Single);
         
-        _mockUserRepo.Setup(r => r.AnyAsync(It.IsAny<Expression<Func<User, bool>>>())).ReturnsAsync(true);
+        _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
+            .ReturnsAsync((User?)null);
+        _mockJwtService.Setup(j => j.GenerateRefreshToken()).Returns("verify_token");
 
-        var ex = Assert.ThrowsAsync<ArgumentException>(async () => await _authService.RegisterUserAsync(request));
-        Assert.That(ex.Message, Does.Contain("Email is already registered"));
+        var result = await _authService.RegisterCustomerAsync(request);
+
+        Assert.That(result.Email, Is.EqualTo("new@test.com"));
+        Assert.That(result.Role, Is.EqualTo("Customer"));
+        
+        _mockUserRepository.Verify(r => r.AddAsync(It.IsAny<User>()), Times.Once);
+        _mockCustomerRepository.Verify(r => r.AddAsync(It.IsAny<Customer>()), Times.Once);
+        _mockUserTokenRepository.Verify(r => r.AddAsync(It.IsAny<UserToken>()), Times.Once);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+        _mockEmailService.Verify(e => e.SendEmailVerificationAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
 
     [Test]
-    public async Task LoginAsync_ValidCredentials_ReturnsAuthResponse()
+    public void LoginAsync_UserNotFound_ThrowsException()
     {
-        var email = "test@example.com";
-        var password = "Password123!";
+        var request = new LoginRequest("none@test.com", "password");
+        _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
+            .ReturnsAsync((User?)null);
+
+        var ex = Assert.ThrowsAsync<Exception>(() => _authService.LoginAsync(request));
+        Assert.That(ex.Message, Is.EqualTo("Invalid credentials"));
+    }
+
+    [Test]
+    public void LoginAsync_InvalidPassword_ThrowsException()
+    {
+        var request = new LoginRequest("test@test.com", "wrongpassword");
+        var user = new User { PasswordHash = BCrypt.Net.BCrypt.HashPassword("correctpassword") };
+        
+        _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
+            .ReturnsAsync(user);
+
+        var ex = Assert.ThrowsAsync<Exception>(() => _authService.LoginAsync(request));
+        Assert.That(ex.Message, Is.EqualTo("Invalid credentials"));
+    }
+
+    [Test]
+    public void LoginAsync_UserInactive_ThrowsException()
+    {
+        var request = new LoginRequest("test@test.com", "password");
         var user = new User 
         { 
-            Id = Guid.NewGuid(), 
-            Email = email, 
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
-            UserRoles = new List<UserRole> { new UserRole { Role = new Role { Code = "Customer" } } }
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("password"),
+            IsActive = false
         };
+        
+        _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
+            .ReturnsAsync(user);
 
-        _mockUserRepo.Setup(r => r.GetUserByEmailWithRolesAsync(email)).ReturnsAsync(user);
+        var ex = Assert.ThrowsAsync<Exception>(() => _authService.LoginAsync(request));
+        Assert.That(ex.Message, Is.EqualTo("Account is inactive"));
+    }
 
-        var request = new LoginRequest(email, password);
+    [Test]
+    public async Task LoginAsync_ValidCredentials_Success()
+    {
+        var request = new LoginRequest("test@test.com", "password");
+        var user = new User 
+        { 
+            Id = Guid.NewGuid(),
+            Email = "test@test.com",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("password"),
+            IsActive = true,
+            Role = UserRole.Customer,
+            FirstName = "Jane",
+            LastName = "Doe",
+            Salutation = Salutation.Ms
+        };
+        
+        _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
+            .ReturnsAsync(user);
+        
+        _mockJwtService.Setup(j => j.GenerateAccessToken(It.IsAny<User>())).Returns("access_token");
+        _mockJwtService.Setup(j => j.GenerateRefreshToken()).Returns("refresh_token");
+
         var result = await _authService.LoginAsync(request);
 
-        Assert.That(result, Is.Not.Null);
-        _mockRefreshTokenRepo.Verify(r => r.AddAsync(It.IsAny<RefreshToken>()), Times.Once);
+        Assert.That(result.AccessToken, Is.EqualTo("access_token"));
+        Assert.That(result.RefreshToken, Does.EndWith(":refresh_token"));
+        Assert.That(result.User.Email, Is.EqualTo("test@test.com"));
+        
+        _mockSessionRepository.Verify(r => r.AddAsync(It.IsAny<Session>()), Times.Once);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
 
     [Test]
-    public void LoginAsync_InvalidEmail_ThrowsUnauthorizedAccessException()
+    public void RefreshTokenAsync_InvalidToken_ThrowsException()
     {
-        _mockUserRepo.Setup(r => r.GetUserByEmailWithRolesAsync(It.IsAny<string>())).ReturnsAsync((User?)null);
+        var request = new RefreshTokenRequest { RefreshToken = "invalid" };
+        _mockSessionRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Session, bool>>>()))
+            .ReturnsAsync(new List<Session>());
 
-        var request = new LoginRequest("wrong@example.com", "pass");
-
-        Assert.ThrowsAsync<UnauthorizedAccessException>(async () => await _authService.LoginAsync(request));
+        var ex = Assert.ThrowsAsync<Exception>(() => _authService.RefreshTokenAsync(request));
+        Assert.That(ex.Message, Is.EqualTo("Invalid refresh token format"));
     }
 
     [Test]
-    public void LoginAsync_InvalidPassword_ThrowsUnauthorizedAccessException()
+    public async Task RefreshTokenAsync_ValidToken_Success()
     {
-        var email = "test@example.com";
-        var user = new User 
-        { 
-            Email = email, 
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("RealPassword123!")
+        var userId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        var session = new Session
+        {
+            Id = sessionId,
+            UserId = userId,
+            RefreshTokenHash = BCrypt.Net.BCrypt.HashPassword("valid_refresh"),
+            IsRevoked = false,
+            ExpiresAt = DateTime.UtcNow.AddDays(1)
         };
-        _mockUserRepo.Setup(r => r.GetUserByEmailWithRolesAsync(email)).ReturnsAsync(user);
+        // New token format: "{sessionId}:{rawToken}"
+        var request = new RefreshTokenRequest { RefreshToken = $"{sessionId}:valid_refresh" };
 
-        var request = new LoginRequest(email, "WrongPassword");
+        _mockSessionRepository.Setup(r => r.GetByIdAsync(sessionId)).ReturnsAsync(session);
 
-        var ex = Assert.ThrowsAsync<UnauthorizedAccessException>(async () => await _authService.LoginAsync(request));
-        Assert.That(ex.Message, Does.Contain("Invalid email or password."));
+        var user = new User { Id = userId, IsActive = true, Email = "test@test.com", Role = UserRole.Customer };
+        _mockUserRepository.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
+
+        _mockJwtService.Setup(j => j.GenerateAccessToken(It.IsAny<User>())).Returns("new_access");
+        _mockJwtService.Setup(j => j.GenerateRefreshToken()).Returns("new_refresh");
+
+        var result = await _authService.RefreshTokenAsync(request);
+
+        Assert.That(session.IsRevoked, Is.True);
+        Assert.That(result.AccessToken, Is.EqualTo("new_access"));
+        Assert.That(result.RefreshToken, Does.EndWith(":new_refresh"));
+
+        _mockSessionRepository.Verify(r => r.AddAsync(It.IsAny<Session>()), Times.Once);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+    
+    [Test]
+    public void VerifyEmailAsync_InvalidToken_ThrowsException()
+    {
+        _mockUserTokenRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<UserToken, bool>>>()))
+            .ReturnsAsync(new List<UserToken>());
+            
+        var ex = Assert.ThrowsAsync<Exception>(() => _authService.VerifyEmailAsync("invalid"));
+        Assert.That(ex.Message, Is.EqualTo("Invalid or expired token"));
     }
 
     [Test]
-    public void LoginAsync_InactiveUser_ThrowsUnauthorizedAccessException()
+    public async Task VerifyEmailAsync_ValidToken_Success()
     {
-        var email = "test@example.com";
-        var password = "Password123!";
-        var user = new User 
-        { 
-            Email = email, 
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
-            IsActive = false
+        var userId = Guid.NewGuid();
+        var tokenId = Guid.NewGuid();
+        var userToken = new UserToken
+        {
+            Id = tokenId,
+            UserId = userId,
+            TokenType = TokenType.EmailVerification,
+            TokenHash = BCrypt.Net.BCrypt.HashPassword("valid_token"),
+            IsUsed = false,
+            ExpiresAt = DateTime.UtcNow.AddDays(1)
         };
-        _mockUserRepo.Setup(r => r.GetUserByEmailWithRolesAsync(email)).ReturnsAsync(user);
+        // New token format: "{tokenId}:{rawToken}"
+        var token = $"{tokenId}:valid_token";
 
-        var request = new LoginRequest(email, password);
+        _mockUserTokenRepository.Setup(r => r.GetByIdAsync(tokenId)).ReturnsAsync(userToken);
 
-        var ex = Assert.ThrowsAsync<UnauthorizedAccessException>(async () => await _authService.LoginAsync(request));
-        Assert.That(ex.Message, Does.Contain("account has been deactivated"));
+        var user = new User { Id = userId, IsEmailVerified = false };
+        _mockUserRepository.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
+
+        await _authService.VerifyEmailAsync(token);
+        
+        Assert.That(userToken.IsUsed, Is.True);
+        Assert.That(user.IsEmailVerified, Is.True);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
 
     [Test]
-    public void RegisterUserAsync_DuplicateAadhaar_ThrowsArgumentException()
+    public async Task LogoutAsync_Success()
     {
-        var request = new RegisterUserRequest("test@example.com", "Pass123!", "Mr.", "John", "Doe", "123", new SpeedClaim.Api.Dtos.Common.AddressDto("S", "C", "S", "Z", "C"), DateTime.UtcNow, "123412341234", "ABC", SpeedClaim.Api.Models.Enums.Gender.Male, SpeedClaim.Api.Models.Enums.MaritalStatus.Single);
+        var userId = Guid.NewGuid();
+        var session1 = new Session { IsRevoked = false };
+        var session2 = new Session { IsRevoked = false };
         
-        // Mock any email
-        _mockUserRepo.SetupSequence(r => r.AnyAsync(It.IsAny<Expression<Func<User, bool>>>()))
-            .ReturnsAsync(false) // Email check
-            .ReturnsAsync(true); // Aadhaar check
-
-        var ex = Assert.ThrowsAsync<ArgumentException>(async () => await _authService.RegisterUserAsync(request));
-        Assert.That(ex.Message, Does.Contain("Aadhaar Number is already registered"));
+        _mockSessionRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Session, bool>>>()))
+            .ReturnsAsync(new List<Session> { session1, session2 });
+            
+        await _authService.LogoutAsync(userId.ToString());
+        
+        Assert.That(session1.IsRevoked, Is.True);
+        Assert.That(session2.IsRevoked, Is.True);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
 
     [Test]
-    public void RegisterUserAsync_DuplicatePan_ThrowsArgumentException()
+    public async Task ForgotPasswordAsync_UserNotFound_SilentSuccess()
     {
-        var request = new RegisterUserRequest("test@example.com", "Pass123!", "Mr.", "John", "Doe", "123", new SpeedClaim.Api.Dtos.Common.AddressDto("S", "C", "S", "Z", "C"), DateTime.UtcNow, "123412341234", "ABCDE1234F", SpeedClaim.Api.Models.Enums.Gender.Male, SpeedClaim.Api.Models.Enums.MaritalStatus.Single);
+        _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
+            .ReturnsAsync((User?)null);
+            
+        await _authService.ForgotPasswordAsync("none@test.com");
         
-        _mockUserRepo.SetupSequence(r => r.AnyAsync(It.IsAny<Expression<Func<User, bool>>>()))
-            .ReturnsAsync(false) // Email check
-            .ReturnsAsync(false) // Aadhaar check
-            .ReturnsAsync(true); // PAN check
-
-        var ex = Assert.ThrowsAsync<ArgumentException>(async () => await _authService.RegisterUserAsync(request));
-        Assert.That(ex.Message, Does.Contain("PAN Number is already registered"));
+        _mockUserTokenRepository.Verify(r => r.AddAsync(It.IsAny<UserToken>()), Times.Never);
     }
 
     [Test]
-    public async Task RegisterAgentAsync_ValidRequest_CreatesAgent()
+    public async Task ForgotPasswordAsync_ValidUser_Success()
     {
-        var request = new RegisterAgentRequest("agent@example.com", "Pass123!", "Ms.", "Jane", "Doe", "123", new SpeedClaim.Api.Dtos.Common.AddressDto("S", "C", "S", "Z", "C"), "1234", "ABC", "LIC123", "Agency", SpeedClaim.Api.Models.Enums.MaritalStatus.Single);
+        var user = new User { Email = "test@test.com" };
+        _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
+            .ReturnsAsync(user);
+        _mockJwtService.Setup(j => j.GenerateRefreshToken()).Returns("reset_token");
+
+        await _authService.ForgotPasswordAsync("test@test.com");
         
-        _mockUserRepo.Setup(r => r.AnyAsync(It.IsAny<Expression<Func<User, bool>>>())).ReturnsAsync(false);
-        _mockRoleRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Role, bool>>>())).ReturnsAsync(new Role { Id = Guid.NewGuid(), Code = "Agent" });
+        _mockUserTokenRepository.Verify(r => r.AddAsync(It.IsAny<UserToken>()), Times.Once);
+        _mockEmailService.Verify(e => e.SendPasswordResetAsync("test@test.com", It.IsAny<string>()), Times.Once);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public void ResetPasswordCustomerAsync_InvalidToken_ThrowsException()
+    {
+        var request = new ResetPasswordRequest { Token = "invalid", NewPassword = "new" };
+        _mockUserTokenRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<UserToken, bool>>>()))
+            .ReturnsAsync(new List<UserToken>());
+            
+        var ex = Assert.ThrowsAsync<Exception>(() => _authService.ResetPasswordCustomerAsync(request));
+        Assert.That(ex.Message, Is.EqualTo("Invalid or expired token"));
+    }
+
+    [Test]
+    public async Task ResetPasswordCustomerAsync_ValidToken_Success()
+    {
+        var userId = Guid.NewGuid();
+        var tokenId = Guid.NewGuid();
+        var userToken = new UserToken
+        {
+            Id = tokenId,
+            UserId = userId,
+            TokenType = TokenType.PasswordReset,
+            TokenHash = BCrypt.Net.BCrypt.HashPassword("valid"),
+            IsUsed = false,
+            ExpiresAt = DateTime.UtcNow.AddDays(1)
+        };
+        // New token format: "{tokenId}:{rawToken}"
+        var request = new ResetPasswordRequest { Token = $"{tokenId}:valid", NewPassword = "newpassword" };
+
+        _mockUserTokenRepository.Setup(r => r.GetByIdAsync(tokenId)).ReturnsAsync(userToken);
+
+        var user = new User { Id = userId, PasswordHash = "old" };
+        _mockUserRepository.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
+
+        await _authService.ResetPasswordCustomerAsync(request);
         
+        Assert.That(userToken.IsUsed, Is.True);
+        Assert.That(BCrypt.Net.BCrypt.Verify("newpassword", user.PasswordHash), Is.True);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public void ResetPasswordAsync_AdminReset_UserNotFound_ThrowsException()
+    {
+        _mockUserRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((User?)null);
+        
+        var ex = Assert.ThrowsAsync<Exception>(() => _authService.ResetPasswordAsync(Guid.NewGuid().ToString(), "new", "admin"));
+        Assert.That(ex.Message, Is.EqualTo("User not found"));
+    }
+
+    [Test]
+    public async Task ResetPasswordAsync_AdminReset_Success()
+    {
+        var user = new User { Id = Guid.NewGuid(), PasswordHash = "old" };
+        _mockUserRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(user);
+        
+        await _authService.ResetPasswordAsync(user.Id.ToString(), "newpassword", "admin123");
+        
+        Assert.That(BCrypt.Net.BCrypt.Verify("newpassword", user.PasswordHash), Is.True);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public async Task RegisterAgentAsync_NewEmail_CreatesAgent()
+    {
+        _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>())).ReturnsAsync((User?)null);
         var mockAgentRepo = new Mock<IRepository<Agent>>();
         _mockUnitOfWork.Setup(u => u.Agents).Returns(mockAgentRepo.Object);
 
-        var result = await _authService.RegisterAgentAsync(request);
+        var addr = new AddressDto("123 Main St", null, "Mumbai", "MH", "400001", "India");
+        var request = new RegisterAgentRequest("agent@test.com", "pass123", "Mr", "Test", "Agent", "9999999999", addr, null, false, "LIC-001", "TestAgency", "123456789012", "ABCDE1234F", MaritalStatus.Single);
 
-        Assert.That(result, Is.Not.Null);
-        _mockUserRepo.Verify(r => r.AddAsync(It.IsAny<User>()), Times.Once);
+        var result = await _authService.RegisterAgentAsync(request, Guid.NewGuid().ToString());
+
+        Assert.That(result.Email, Is.EqualTo("agent@test.com"));
+        Assert.That(result.Role, Is.EqualTo("Agent"));
         mockAgentRepo.Verify(r => r.AddAsync(It.IsAny<Agent>()), Times.Once);
-        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Exactly(2));
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
 
     [Test]
-    public void RegisterAgentAsync_DuplicateEmail_ThrowsArgumentException()
+    public void RegisterAgentAsync_EmailAlreadyExists_ThrowsException()
     {
-        var request = new RegisterAgentRequest("agent@example.com", "Pass123!", "Ms.", "Jane", "Doe", "123", new SpeedClaim.Api.Dtos.Common.AddressDto("S", "C", "S", "Z", "C"), "1234", "ABC", "LIC123", "Agency", SpeedClaim.Api.Models.Enums.MaritalStatus.Single);
-        _mockUserRepo.Setup(r => r.AnyAsync(It.IsAny<Expression<Func<User, bool>>>())).ReturnsAsync(true);
+        _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>())).ReturnsAsync(new User { Email = "agent@test.com" });
+        var mockAgentRepo = new Mock<IRepository<Agent>>();
+        _mockUnitOfWork.Setup(u => u.Agents).Returns(mockAgentRepo.Object);
 
-        var ex = Assert.ThrowsAsync<ArgumentException>(async () => await _authService.RegisterAgentAsync(request));
-        Assert.That(ex.Message, Does.Contain("Email is already registered"));
+        var addr = new AddressDto("1 St", null, "City", "State", "000001", "India");
+        var request = new RegisterAgentRequest("agent@test.com", "pass", "Mr", "T", "A", "1", addr, null, false, "L", "Agency", "000000000000", "AAAAA0000A", MaritalStatus.Single);
+        var ex = Assert.ThrowsAsync<Exception>(() => _authService.RegisterAgentAsync(request, Guid.NewGuid().ToString()));
+        Assert.That(ex.Message, Is.EqualTo("Email already registered"));
     }
 
     [Test]
-    public void RegisterAgentAsync_DuplicateAadhaar_ThrowsArgumentException()
+    public void RefreshTokenAsync_SessionNullOrExpired_ThrowsException()
     {
-        var request = new RegisterAgentRequest("agent@ex.com", "pass", "Mr.", "Agent", "Smith", "+123", new SpeedClaim.Api.Dtos.Common.AddressDto("1", "1", "1", "1", "1"), "LIC123", "Agency", "A123", "P123", SpeedClaim.Api.Models.Enums.MaritalStatus.Single);
-        
-        _mockUserRepo.SetupSequence(r => r.AnyAsync(It.IsAny<Expression<Func<User, bool>>>()))
-            .ReturnsAsync(false) // Email check
-            .ReturnsAsync(true); // Aadhaar check
+        var sessionId = Guid.NewGuid();
+        var request = new RefreshTokenRequest { RefreshToken = $"{sessionId}:sometoken" };
+        _mockSessionRepository.Setup(r => r.GetByIdAsync(sessionId)).ReturnsAsync((Session?)null);
 
-        var ex = Assert.ThrowsAsync<ArgumentException>(async () => await _authService.RegisterAgentAsync(request));
-        Assert.That(ex.Message, Does.Contain("Aadhaar Number is already registered"));
+        var ex = Assert.ThrowsAsync<Exception>(() => _authService.RefreshTokenAsync(request));
+        Assert.That(ex.Message, Is.EqualTo("Invalid or expired refresh token"));
     }
 
     [Test]
-    public void RegisterAgentAsync_DuplicatePan_ThrowsArgumentException()
+    public void RefreshTokenAsync_BcryptVerifyFails_ThrowsException()
     {
-        var request = new RegisterAgentRequest("agent@ex.com", "pass", "Mr.", "Agent", "Smith", "+123", new SpeedClaim.Api.Dtos.Common.AddressDto("1", "1", "1", "1", "1"), "LIC123", "Agency", "A123", "P123", SpeedClaim.Api.Models.Enums.MaritalStatus.Single);
-        
-        _mockUserRepo.SetupSequence(r => r.AnyAsync(It.IsAny<Expression<Func<User, bool>>>()))
-            .ReturnsAsync(false) // Email check
-            .ReturnsAsync(false) // Aadhaar check
-            .ReturnsAsync(true); // Pan check
-
-        var ex = Assert.ThrowsAsync<ArgumentException>(async () => await _authService.RegisterAgentAsync(request));
-        Assert.That(ex.Message, Does.Contain("PAN Number is already registered"));
-    }
-
-    [Test]
-    public async Task RefreshTokenAsync_ValidToken_ReturnsNewTokens()
-    {
-        var oldToken = new RefreshToken 
-        { 
-            TokenHash = "old_token", 
-            ExpiresAt = DateTime.UtcNow.AddDays(1), 
+        var sessionId = Guid.NewGuid();
+        var session = new Session
+        {
+            Id = sessionId,
+            UserId = Guid.NewGuid(),
+            RefreshTokenHash = BCrypt.Net.BCrypt.HashPassword("correct_token"),
             IsRevoked = false,
-            User = new User { Id = Guid.NewGuid(), FirstName = "John", LastName = "Doe", Salutation = "Mr." }
+            ExpiresAt = DateTime.UtcNow.AddDays(1)
         };
+        _mockSessionRepository.Setup(r => r.GetByIdAsync(sessionId)).ReturnsAsync(session);
+        var request = new RefreshTokenRequest { RefreshToken = $"{sessionId}:wrong_token" };
 
-        _mockRefreshTokenRepo.Setup(r => r.GetByTokenWithUserAsync("old_token")).ReturnsAsync(oldToken);
-
-        var request = new RefreshTokenRequest("old_token");
-        var result = await _authService.RefreshTokenAsync(request);
-
-        Assert.That(result, Is.Not.Null);
-        Assert.That(oldToken.IsRevoked, Is.True);
-        _mockRefreshTokenRepo.Verify(r => r.Update(oldToken), Times.Once);
-        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Exactly(2));
+        var ex = Assert.ThrowsAsync<Exception>(() => _authService.RefreshTokenAsync(request));
+        Assert.That(ex.Message, Is.EqualTo("Invalid refresh token"));
     }
 
     [Test]
-    public void RefreshTokenAsync_ExpiredToken_ThrowsUnauthorizedAccessException()
+    public void RefreshTokenAsync_UserInactive_ThrowsException()
     {
-        var oldToken = new RefreshToken 
-        { 
-            ExpiresAt = DateTime.UtcNow.AddDays(-1), 
-            IsRevoked = false
+        var sessionId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var rawToken = "my_token";
+        var session = new Session
+        {
+            Id = sessionId,
+            UserId = userId,
+            RefreshTokenHash = BCrypt.Net.BCrypt.HashPassword(rawToken),
+            IsRevoked = false,
+            ExpiresAt = DateTime.UtcNow.AddDays(1)
         };
+        _mockSessionRepository.Setup(r => r.GetByIdAsync(sessionId)).ReturnsAsync(session);
+        _mockUserRepository.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(new User { Id = userId, IsActive = false });
+        var request = new RefreshTokenRequest { RefreshToken = $"{sessionId}:{rawToken}" };
 
-        _mockRefreshTokenRepo.Setup(r => r.GetByTokenWithUserAsync("old_token")).ReturnsAsync(oldToken);
-
-        var ex = Assert.ThrowsAsync<UnauthorizedAccessException>(async () => await _authService.RefreshTokenAsync(new RefreshTokenRequest("old_token")));
-        Assert.That(ex.Message, Does.Contain("expired"));
+        var ex = Assert.ThrowsAsync<Exception>(() => _authService.RefreshTokenAsync(request));
+        Assert.That(ex.Message, Is.EqualTo("User inactive or not found"));
     }
 
     [Test]
-    public void RefreshTokenAsync_RevokedToken_ThrowsUnauthorizedAccessException()
+    public void VerifyEmailAsync_TokenNullOrExpired_ThrowsException()
     {
-        var oldToken = new RefreshToken 
-        { 
-            ExpiresAt = DateTime.UtcNow.AddDays(1), 
-            IsRevoked = true
+        var tokenId = Guid.NewGuid();
+        _mockUserTokenRepository.Setup(r => r.GetByIdAsync(tokenId)).ReturnsAsync((UserToken?)null);
+
+        var ex = Assert.ThrowsAsync<Exception>(() => _authService.VerifyEmailAsync($"{tokenId}:tok"));
+        Assert.That(ex.Message, Is.EqualTo("Invalid or expired token"));
+    }
+
+    [Test]
+    public void VerifyEmailAsync_WrongTokenType_ThrowsException()
+    {
+        var tokenId = Guid.NewGuid();
+        var rawToken = "tok";
+        var userToken = new UserToken
+        {
+            Id = tokenId,
+            TokenType = TokenType.PasswordReset,
+            TokenHash = BCrypt.Net.BCrypt.HashPassword(rawToken),
+            IsUsed = false,
+            ExpiresAt = DateTime.UtcNow.AddDays(1)
         };
+        _mockUserTokenRepository.Setup(r => r.GetByIdAsync(tokenId)).ReturnsAsync(userToken);
 
-        _mockRefreshTokenRepo.Setup(r => r.GetByTokenWithUserAsync("old_token")).ReturnsAsync(oldToken);
+        var ex = Assert.ThrowsAsync<Exception>(() => _authService.VerifyEmailAsync($"{tokenId}:{rawToken}"));
+        Assert.That(ex.Message, Is.EqualTo("Invalid token type"));
+    }
 
-        var ex = Assert.ThrowsAsync<UnauthorizedAccessException>(async () => await _authService.RefreshTokenAsync(new RefreshTokenRequest("old_token")));
-        Assert.That(ex.Message, Does.Contain("revoked"));
+    [Test]
+    public void VerifyEmailAsync_BcryptVerifyFails_ThrowsException()
+    {
+        var tokenId = Guid.NewGuid();
+        var userToken = new UserToken
+        {
+            Id = tokenId,
+            TokenType = TokenType.EmailVerification,
+            TokenHash = BCrypt.Net.BCrypt.HashPassword("correct"),
+            IsUsed = false,
+            ExpiresAt = DateTime.UtcNow.AddDays(1)
+        };
+        _mockUserTokenRepository.Setup(r => r.GetByIdAsync(tokenId)).ReturnsAsync(userToken);
+
+        var ex = Assert.ThrowsAsync<Exception>(() => _authService.VerifyEmailAsync($"{tokenId}:wrong"));
+        Assert.That(ex.Message, Is.EqualTo("Invalid or expired token"));
+    }
+
+    [Test]
+    public void ResetPasswordCustomerAsync_WrongTokenType_ThrowsException()
+    {
+        var tokenId = Guid.NewGuid();
+        var rawToken = "tok";
+        var userToken = new UserToken
+        {
+            Id = tokenId,
+            TokenType = TokenType.EmailVerification,
+            TokenHash = BCrypt.Net.BCrypt.HashPassword(rawToken),
+            IsUsed = false,
+            ExpiresAt = DateTime.UtcNow.AddDays(1)
+        };
+        _mockUserTokenRepository.Setup(r => r.GetByIdAsync(tokenId)).ReturnsAsync(userToken);
+
+        var request = new ResetPasswordRequest { Token = $"{tokenId}:{rawToken}", NewPassword = "new" };
+        var ex = Assert.ThrowsAsync<Exception>(() => _authService.ResetPasswordCustomerAsync(request));
+        Assert.That(ex.Message, Is.EqualTo("Invalid token type"));
+    }
+
+    [Test]
+    public void ResetPasswordCustomerAsync_BcryptVerifyFails_ThrowsException()
+    {
+        var tokenId = Guid.NewGuid();
+        var userToken = new UserToken
+        {
+            Id = tokenId,
+            TokenType = TokenType.PasswordReset,
+            TokenHash = BCrypt.Net.BCrypt.HashPassword("correct"),
+            IsUsed = false,
+            ExpiresAt = DateTime.UtcNow.AddDays(1)
+        };
+        _mockUserTokenRepository.Setup(r => r.GetByIdAsync(tokenId)).ReturnsAsync(userToken);
+
+        var request = new ResetPasswordRequest { Token = $"{tokenId}:wrong", NewPassword = "new" };
+        var ex = Assert.ThrowsAsync<Exception>(() => _authService.ResetPasswordCustomerAsync(request));
+        Assert.That(ex.Message, Is.EqualTo("Invalid or expired token"));
     }
 }

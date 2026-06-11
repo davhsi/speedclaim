@@ -1,9 +1,17 @@
 namespace SpeedClaim.Api.Dtos.Catalog;
 
 public record CreateProductRequest(
-    string Code,
-    string Name,
+    string ProductName,
     string Domain,
+    string Uin,
     string Description,
-    decimal? MaxCoverage
+    int MinAge,
+    int MaxAge,
+    decimal MinSumAssured,
+    decimal MaxSumAssured,
+    int MinTenureYears,
+    int MaxTenureYears,
+    int WaitingPeriodDays,
+    bool AllowsFamilyFloater,
+    int MaxFamilyMembers
 );

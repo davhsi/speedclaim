@@ -8,6 +8,7 @@ public interface IUserRepository : IRepository<User>
 {
     Task<User?> GetUserByEmailAsync(string email);
     Task<User?> GetUserByEmailWithRolesAsync(string email);
+    Task<User?> GetUserProfileAsync(Guid userId);
     Task<User?> GetUserWithRefreshTokensAsync(Guid userId);
     Task<bool> IsEmailRegisteredAsync(string email);
     Task<bool> IsAadhaarRegisteredAsync(string aadhaar);

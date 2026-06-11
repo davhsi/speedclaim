@@ -18,7 +18,7 @@ public class ClaimRepository : Repository<Claim>, IClaimRepository
     public async Task<Claim?> GetClaimWithDetailsAsync(Guid claimId)
     {
         return await Context.Claims
-            .Include(c => c.Workflows.OrderByDescending(w => w.TransitionedAt))
+            .Include(c => c.StatusHistory.OrderByDescending(w => w.ChangedAt))
             .Include(c => c.Documents)
             .SingleOrDefaultAsync(c => c.Id == claimId);
     }

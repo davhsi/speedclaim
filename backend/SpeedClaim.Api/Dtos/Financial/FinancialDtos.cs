@@ -5,7 +5,8 @@ namespace SpeedClaim.Api.Dtos.Financial;
 public class PremiumScheduleDto
 {
     public Guid Id { get; set; }
-    public Guid PolicyId { get; set; }
+    public Guid? PolicyId { get; set; }
+    public Guid? ProposalId { get; set; }
     public int InstallmentNumber { get; set; }
     public decimal AmountDue { get; set; }
     public DateTime DueDate { get; set; }
@@ -13,13 +14,42 @@ public class PremiumScheduleDto
     public Guid? PaymentId { get; set; }
 }
 
-public class PaymentStatusHistoryDto
+public class PaymentRecordDto
 {
     public Guid Id { get; set; }
-    public Guid PaymentId { get; set; }
-    public string? OldStatus { get; set; }
-    public string NewStatus { get; set; } = string.Empty;
-    public Guid? ChangedById { get; set; }
-    public string? Remarks { get; set; }
-    public DateTime ChangedAt { get; set; }
+    public Guid? PolicyId { get; set; }
+    public Guid? ProposalId { get; set; }
+    public Guid CustomerId { get; set; }
+    public decimal Amount { get; set; }
+    public string Currency { get; set; } = "USD";
+    public string PaymentType { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public DateTimeOffset? PaidAt { get; set; }
+    public string ReceiptUrl { get; set; } = string.Empty;
 }
+
+public class AgentCommissionDto
+{
+    public Guid Id { get; set; }
+    public Guid AgentId { get; set; }
+    public Guid PolicyId { get; set; }
+    public decimal CommissionAmount { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public DateTimeOffset? PaidAt { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+public class PaymentSummaryDto
+{
+    public decimal TotalCollected { get; set; }
+    public int SuccessfulPayments { get; set; }
+    public int FailedPayments { get; set; }
+}
+
+public record SavedCardDto(
+    string PaymentMethodId,
+    string Brand,
+    string Last4,
+    int ExpMonth,
+    int ExpYear
+);

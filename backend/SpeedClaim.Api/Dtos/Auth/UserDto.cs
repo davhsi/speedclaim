@@ -12,5 +12,6 @@ public record UserDto(
     string Phone,
     string Role,
     string MaritalStatus,
-    SpeedClaim.Api.Dtos.Common.AddressDto Address
+    SpeedClaim.Api.Dtos.Common.AddressDto? PermanentAddress,
+    SpeedClaim.Api.Dtos.Common.AddressDto? CurrentAddress
 );

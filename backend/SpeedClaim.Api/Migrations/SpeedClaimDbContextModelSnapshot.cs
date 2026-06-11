@@ -29,6 +29,23 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("AddressLine1")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("address_line1");
+
+                    b.Property<string>("AddressLine2")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("address_line2");
+
+                    b.Property<string>("AddressType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("address_type");
+
                     b.Property<string>("City")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -41,11 +58,19 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("country");
 
-                    b.Property<string>("PostalCode")
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<bool>("IsSameAsPermanent")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_same_as_permanent");
+
+                    b.Property<string>("Pincode")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
-                        .HasColumnName("postal_code");
+                        .HasColumnName("pincode");
 
                     b.Property<string>("State")
                         .IsRequired()
@@ -53,14 +78,18 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("state");
 
-                    b.Property<string>("Street")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("street");
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
 
                     b.HasKey("Id")
                         .HasName("PK_addresses");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("addresses");
                 });
@@ -72,16 +101,26 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("AgencyName")
+                    b.Property<string>("AgentCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("agent_code");
+
+                    b.Property<string>("AgentType")
                         .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("agency_name");
+                        .HasColumnName("agent_type");
+
+                    b.Property<Guid?>("BranchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("branch_id");
 
                     b.Property<decimal>("CommissionRate")
-                        .HasColumnType("numeric")
+                        .HasColumnType("decimal(5,2)")
                         .HasColumnName("commission_rate");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
@@ -89,15 +128,19 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_active");
 
+                    b.Property<DateTime>("LicenseExpiry")
+                        .HasColumnType("date")
+                        .HasColumnName("license_expiry");
+
                     b.Property<string>("LicenseNumber")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasColumnName("license_number");
 
-                    b.Property<DateTime>("LicenseValidUntil")
+                    b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("license_valid_until");
+                        .HasColumnName("updated_at");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
@@ -106,15 +149,65 @@ namespace SpeedClaim.Api.Migrations
                     b.HasKey("Id")
                         .HasName("PK_agents");
 
-                    b.HasIndex("LicenseNumber")
-                        .IsUnique()
-                        .HasDatabaseName("uq_agents_license_number");
+                    b.HasIndex("BranchId");
 
                     b.HasIndex("UserId")
                         .IsUnique()
                         .HasDatabaseName("uq_agents_user_id");
 
                     b.ToTable("agents");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.AgentCommission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AgentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("agent_id");
+
+                    b.Property<decimal>("CommissionAmount")
+                        .HasColumnType("decimal(10,2)")
+                        .HasColumnName("commission_amount");
+
+                    b.Property<decimal>("CommissionRate")
+                        .HasColumnType("decimal(5,2)")
+                        .HasColumnName("commission_rate");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("PaidAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("paid_at");
+
+                    b.Property<Guid>("PolicyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("policy_id");
+
+                    b.Property<Guid>("PremiumPaymentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("premium_payment_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id")
+                        .HasName("PK_agent_commissions");
+
+                    b.HasIndex("AgentId");
+
+                    b.HasIndex("PolicyId");
+
+                    b.HasIndex("PremiumPaymentId");
+
+                    b.ToTable("agent_commissions");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.AuditLog", b =>
@@ -126,13 +219,9 @@ namespace SpeedClaim.Api.Migrations
 
                     b.Property<string>("Action")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("action");
-
-                    b.Property<Guid?>("ActorId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("actor_id");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -149,20 +238,17 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnName("entity_type");
 
                     b.Property<string>("IpAddress")
-                        .HasColumnType("text")
+                        .HasMaxLength(45)
+                        .HasColumnType("character varying(45)")
                         .HasColumnName("ip_address");
 
-                    b.Property<string>("NewValues")
+                    b.Property<string>("NewValue")
                         .HasColumnType("jsonb")
-                        .HasColumnName("new_values");
+                        .HasColumnName("new_value");
 
-                    b.Property<string>("OldValues")
+                    b.Property<string>("OldValue")
                         .HasColumnType("jsonb")
-                        .HasColumnName("old_values");
-
-                    b.Property<string>("UserAgent")
-                        .HasColumnType("text")
-                        .HasColumnName("user_agent");
+                        .HasColumnName("old_value");
 
                     b.Property<Guid?>("UserId")
                         .HasColumnType("uuid")
@@ -173,10 +259,67 @@ namespace SpeedClaim.Api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.HasIndex("EntityType", "EntityId")
-                        .HasDatabaseName("idx_audit_logs_composite");
-
                     b.ToTable("audit_logs");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.Branch", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("address");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("city");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("email");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("phone");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("state");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("PK_branches");
+
+                    b.ToTable("branches");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.Claim", b =>
@@ -186,33 +329,41 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<decimal?>("ApprovedAmount")
-                        .HasColumnType("decimal(14,2)")
-                        .HasColumnName("approved_amount");
-
-                    b.Property<Guid?>("AssignedAdjusterId")
+                    b.Property<Guid?>("AssignedOfficerId")
                         .HasColumnType("uuid")
-                        .HasColumnName("assigned_adjuster_id");
+                        .HasColumnName("assigned_officer_id");
+
+                    b.Property<decimal?>("ClaimAmountApproved")
+                        .HasColumnType("decimal(15,2)")
+                        .HasColumnName("claim_amount_approved");
+
+                    b.Property<decimal>("ClaimAmountRequested")
+                        .HasColumnType("decimal(15,2)")
+                        .HasColumnName("claim_amount_requested");
 
                     b.Property<string>("ClaimNumber")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
                         .HasColumnName("claim_number");
 
-                    b.Property<decimal>("ClaimedAmount")
-                        .HasColumnType("decimal(14,2)")
-                        .HasColumnName("claimed_amount");
+                    b.Property<string>("ClaimType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("claim_type");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<Guid?>("ClaimantMemberId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("claimant_member_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<string>("Domain")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("domain");
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("customer_id");
 
                     b.Property<DateTime>("IncidentDate")
                         .HasColumnType("timestamp with time zone")
@@ -223,117 +374,579 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("text")
                         .HasColumnName("incident_description");
 
-                    b.Property<bool>("IsAutomatedProcessed")
+                    b.Property<DateTime>("IntimationDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("intimation_date");
+
+                    b.Property<bool>("IsCashless")
                         .HasColumnType("boolean")
-                        .HasColumnName("is_automated_processed");
+                        .HasColumnName("is_cashless");
 
                     b.Property<Guid>("PolicyId")
                         .HasColumnType("uuid")
                         .HasColumnName("policy_id");
 
-                    b.Property<short>("Priority")
-                        .HasColumnType("smallint")
-                        .HasColumnName("priority");
-
                     b.Property<string>("RejectionReason")
                         .HasColumnType("text")
                         .HasColumnName("rejection_reason");
 
-                    b.Property<decimal>("RiskScore")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("decimal(5,2)")
-                        .HasDefaultValue(0.00m)
-                        .HasColumnName("risk_score");
+                    b.Property<DateTime?>("SettlementDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("settlement_date");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
                         .HasColumnName("status");
 
-                    b.Property<Guid>("SubmittedById")
+                    b.Property<Guid?>("SurveyorId")
                         .HasColumnType("uuid")
-                        .HasColumnName("submitted_by_id");
+                        .HasColumnName("surveyor_id");
 
-                    b.Property<DateTime?>("UpdatedAt")
+                    b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
                     b.HasKey("Id")
                         .HasName("PK_claims");
 
-                    b.HasIndex("AssignedAdjusterId");
+                    b.HasIndex("AssignedOfficerId");
 
                     b.HasIndex("ClaimNumber")
                         .IsUnique()
                         .HasDatabaseName("uq_claims_claim_number");
 
+                    b.HasIndex("ClaimantMemberId");
+
+                    b.HasIndex("CustomerId");
+
                     b.HasIndex("PolicyId");
 
-                    b.HasIndex("SubmittedById");
+                    b.HasIndex("SurveyorId");
 
-                    b.HasIndex("Id", "Domain")
-                        .IsUnique()
-                        .HasDatabaseName("UQ_claim_id_domain");
-
-                    b.ToTable("claims", t =>
-                        {
-                            t.HasCheckConstraint("CK_claims_priority", "priority IN (1, 2, 3)");
-
-                            t.HasCheckConstraint("CK_claims_status", "status IN ('SUBMITTED', 'UNDER_REVIEW', 'ESCALATED', 'APPROVED', 'REJECTED', 'SETTLED', 'CLOSED')");
-                        });
+                    b.ToTable("claims");
                 });
 
-            modelBuilder.Entity("SpeedClaim.Api.Models.ClaimDocumentChecklist", b =>
+            modelBuilder.Entity("SpeedClaim.Api.Models.ClaimStatusHistory", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("changed_at");
+
+                    b.Property<Guid?>("ChangedById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("changed_by_id");
+
                     b.Property<Guid>("ClaimId")
                         .HasColumnType("uuid")
                         .HasColumnName("claim_id");
 
-                    b.Property<string>("DocumentTypeCode")
+                    b.Property<string>("NewStatus")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
-                        .HasColumnName("document_type_code");
+                        .HasColumnName("new_status");
 
-                    b.Property<string>("Domain")
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("notes");
+
+                    b.Property<string>("OldStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("old_status");
+
+                    b.HasKey("Id")
+                        .HasName("PK_claim_status_history");
+
+                    b.HasIndex("ChangedById");
+
+                    b.HasIndex("ClaimId");
+
+                    b.ToTable("claim_status_histories");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.Customer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("AnnualIncome")
+                        .HasColumnType("decimal(15,2)")
+                        .HasColumnName("annual_income");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime?>("DateOfBirth")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("date_of_birth");
+
+                    b.Property<string>("Gender")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("gender");
+
+                    b.Property<string>("MaritalStatus")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("marital_status");
+
+                    b.Property<string>("Occupation")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("occupation");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("PK_customers");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("customers");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222222"),
+                            AnnualIncome = 150000m,
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 6, 7, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            DateOfBirth = new DateTime(1995, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Gender = "Male",
+                            MaritalStatus = "Single",
+                            Occupation = "Software Engineer",
+                            UserId = new Guid("11111111-1111-1111-1111-111111111111")
+                        });
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.CustomerMember", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("customer_id");
+
+                    b.Property<DateTime>("DateOfBirth")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("date_of_birth");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("first_name");
+
+                    b.Property<string>("Gender")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("gender");
+
+                    b.Property<bool>("IsDependent")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_dependent");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("last_name");
+
+                    b.Property<string>("Relationship")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("relationship");
+
+                    b.Property<string>("Salutation")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
-                        .HasColumnName("domain");
+                        .HasColumnName("salutation");
 
-                    b.Property<bool>("IsReceived")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_received");
-
-                    b.Property<DateTime?>("UpdatedAt")
+                    b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
                     b.HasKey("Id")
-                        .HasName("PK_claim_document_checklist");
+                        .HasName("PK_customer_members");
 
-                    b.HasIndex("ClaimId", "DocumentTypeCode")
-                        .IsUnique()
-                        .HasDatabaseName("uq_claim_document_checklist_claim_id_document_type_code");
+                    b.HasIndex("CustomerId");
 
-                    b.ToTable("claim_document_checklists");
+                    b.ToTable("customer_members");
                 });
 
-            modelBuilder.Entity("SpeedClaim.Api.Models.ClaimHealthDetail", b =>
+            modelBuilder.Entity("SpeedClaim.Api.Models.DocumentRequirement", b =>
                 {
-                    b.Property<Guid>("ClaimId")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("DocumentKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("document_key");
+
+                    b.Property<string>("Domain")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("domain");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("entity_type");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<bool>("IsMandatory")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_mandatory");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("label");
+
+                    b.HasKey("Id")
+                        .HasName("PK_document_requirements");
+
+                    b.ToTable("document_requirements");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000001"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 6, 7, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "",
+                            DocumentKey = "AADHAAR",
+                            Domain = "ALL",
+                            EntityType = "Kyc",
+                            IsActive = true,
+                            IsMandatory = false,
+                            Label = "Aadhaar Card"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000002"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 6, 7, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "",
+                            DocumentKey = "PAN",
+                            Domain = "ALL",
+                            EntityType = "Kyc",
+                            IsActive = true,
+                            IsMandatory = false,
+                            Label = "PAN Card"
+                        });
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.EmailLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("text")
+                        .HasColumnName("error_message");
+
+                    b.Property<string>("ProviderMessageId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("provider_message_id");
+
+                    b.Property<string>("RecipientEmail")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("recipient_email");
+
+                    b.Property<DateTimeOffset?>("SentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("sent_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("subject");
+
+                    b.Property<string>("TemplateKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("template_key");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("VariablesUsed")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("variables_used");
+
+                    b.HasKey("Id")
+                        .HasName("PK_email_logs");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("email_logs");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.EmailTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("BodyHtml")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("body_html");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("subject");
+
+                    b.Property<string>("TemplateKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("template_key");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("PK_email_templates");
+
+                    b.ToTable("email_templates");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.Endorsement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("EndorsementType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("endorsement_type");
+
+                    b.Property<string>("NewValue")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("new_value");
+
+                    b.Property<string>("OldValue")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("old_value");
+
+                    b.Property<Guid>("PolicyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("policy_id");
+
+                    b.Property<Guid>("RequestedById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("requested_by_id");
+
+                    b.Property<DateTimeOffset?>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reviewed_at");
+
+                    b.Property<Guid?>("ReviewedById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reviewed_by_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("PK_endorsements");
+
+                    b.HasIndex("PolicyId");
+
+                    b.HasIndex("RequestedById");
+
+                    b.HasIndex("ReviewedById");
+
+                    b.ToTable("endorsements");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.Grievance", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("AssignedToId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("assigned_to_id");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("category");
+
+                    b.Property<Guid?>("ClaimId")
                         .HasColumnType("uuid")
                         .HasColumnName("claim_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("customer_id");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("GrievanceNumber")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("grievance_number");
+
+                    b.Property<Guid?>("PolicyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("policy_id");
+
+                    b.Property<string>("ResolutionNotes")
+                        .HasColumnType("text")
+                        .HasColumnName("resolution_notes");
+
+                    b.Property<DateTimeOffset?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("resolved_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("PK_grievances");
+
+                    b.HasIndex("AssignedToId");
+
+                    b.HasIndex("ClaimId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("GrievanceNumber")
+                        .IsUnique()
+                        .HasDatabaseName("uq_grievances_grievance_number");
+
+                    b.HasIndex("PolicyId");
+
+                    b.ToTable("grievances");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.HealthClaimDetail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<DateTime>("AdmissionDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("admission_date");
+
+                    b.Property<Guid>("ClaimId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("claim_id");
 
                     b.Property<string>("Diagnosis")
                         .IsRequired()
@@ -344,347 +957,106 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("discharge_date");
 
+                    b.Property<string>("HospitalAddress")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("hospital_address");
+
                     b.Property<string>("HospitalName")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
                         .HasColumnName("hospital_name");
 
-                    b.Property<Guid?>("InsuredMemberId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("insured_member_id");
-
-                    b.Property<bool>("IsCashless")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_cashless");
-
-                    b.Property<string>("TreatingDoctor")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("treating_doctor");
-
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<DateTimeOffset?>("PreAuthApprovedAt")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
+                        .HasColumnName("pre_auth_approved_at");
 
-                    b.HasKey("ClaimId")
-                        .HasName("PK_claim_health_details");
+                    b.Property<DateTimeOffset?>("PreAuthRequestedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("pre_auth_requested_at");
 
-                    b.HasIndex("InsuredMemberId");
-
-                    b.ToTable("claim_health_details");
-                });
-
-            modelBuilder.Entity("SpeedClaim.Api.Models.ClaimLifeDetail", b =>
-                {
-                    b.Property<Guid>("ClaimId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("claim_id");
-
-                    b.Property<string>("CauseOfDeath")
+                    b.Property<string>("TpaReferenceNumber")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("cause_of_death");
-
-                    b.Property<string>("CertifyingDoctor")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("certifying_doctor");
-
-                    b.Property<string>("ClaimantName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("claimant_name");
-
-                    b.Property<string>("ClaimantRelation")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("claimant_relation");
-
-                    b.Property<string>("DeathCertificateNumber")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("death_certificate_number");
+                        .HasColumnName("tpa_reference_number");
 
-                    b.Property<string>("PlaceOfDeath")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("place_of_death");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.HasKey("ClaimId")
-                        .HasName("PK_claim_life_details");
-
-                    b.ToTable("claim_life_details");
-                });
-
-            modelBuilder.Entity("SpeedClaim.Api.Models.ClaimVehicleDetail", b =>
-                {
-                    b.Property<Guid>("ClaimId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("claim_id");
-
-                    b.Property<string>("AccidentLocation")
+                    b.Property<string>("TreatmentType")
                         .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("accident_location");
-
-                    b.Property<string>("FirNumber")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("fir_number");
-
-                    b.Property<bool>("IsTotalLoss")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_total_loss");
-
-                    b.Property<decimal>("RepairEstimate")
-                        .HasColumnType("decimal(14,2)")
-                        .HasColumnName("repair_estimate");
-
-                    b.Property<string>("SurveyorName")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("surveyor_name");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.HasKey("ClaimId")
-                        .HasName("PK_claim_vehicle_details");
-
-                    b.ToTable("claim_vehicle_details");
-                });
-
-            modelBuilder.Entity("SpeedClaim.Api.Models.ClaimWorkflow", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("ActorId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("actor_id");
-
-                    b.Property<Guid>("ClaimId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("claim_id");
-
-                    b.Property<string>("FromStatus")
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)")
-                        .HasColumnName("from_status");
-
-                    b.Property<string>("Remarks")
-                        .HasColumnType("text")
-                        .HasColumnName("remarks");
-
-                    b.Property<string>("ToStatus")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)")
-                        .HasColumnName("to_status");
-
-                    b.Property<DateTime>("TransitionedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("transitioned_at");
+                        .HasColumnName("treatment_type");
 
                     b.HasKey("Id")
-                        .HasName("PK_claim_workflow");
+                        .HasName("PK_health_claim_details");
 
-                    b.HasIndex("ActorId");
+                    b.HasIndex("ClaimId")
+                        .IsUnique();
 
-                    b.HasIndex("ClaimId");
-
-                    b.ToTable("claim_workflows");
+                    b.ToTable("health_claim_details");
                 });
 
-            modelBuilder.Entity("SpeedClaim.Api.Models.Document", b =>
+            modelBuilder.Entity("SpeedClaim.Api.Models.HealthDetail", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<Guid?>("ClaimId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("claim_id");
+                    b.Property<decimal>("CopayPercentage")
+                        .HasColumnType("decimal(5,2)")
+                        .HasColumnName("copay_percentage");
 
-                    b.Property<DateTime?>("DeletedAt")
+                    b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
+                        .HasColumnName("created_at");
 
-                    b.Property<string>("DocumentTypeCode")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("document_type_code");
+                    b.Property<bool>("MaternityCovered")
+                        .HasColumnType("boolean")
+                        .HasColumnName("maternity_covered");
 
-                    b.Property<string>("Domain")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("domain");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)")
-                        .HasColumnName("file_name");
-
-                    b.Property<string>("FilePath")
+                    b.Property<string>("NetworkHospitalCoverage")
                         .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("file_path");
+                        .HasColumnName("network_hospital_coverage");
 
                     b.Property<Guid?>("PolicyId")
                         .HasColumnType("uuid")
                         .HasColumnName("policy_id");
 
-                    b.Property<string>("RejectionReason")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("rejection_reason");
+                    b.Property<string>("PreExistingConditions")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("pre_existing_conditions");
 
-                    b.Property<Guid?>("ReviewedById")
+                    b.Property<Guid>("ProposalId")
                         .HasColumnType("uuid")
-                        .HasColumnName("reviewed_by_id");
+                        .HasColumnName("proposal_id");
 
-                    b.Property<DateTime>("UploadedAt")
+                    b.Property<decimal>("RoomRentLimit")
+                        .HasColumnType("decimal(10,2)")
+                        .HasColumnName("room_rent_limit");
+
+                    b.Property<string>("TpaName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("tpa_name");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("uploaded_at");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.Property<string>("VerificationStatus")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("verification_status");
+                        .HasColumnName("updated_at");
 
                     b.HasKey("Id")
-                        .HasName("PK_documents");
+                        .HasName("PK_health_details");
 
-                    b.HasIndex("ClaimId");
+                    b.HasIndex("PolicyId")
+                        .IsUnique();
 
-                    b.HasIndex("ReviewedById");
+                    b.HasIndex("ProposalId")
+                        .IsUnique();
 
-                    b.HasIndex("UserId");
-
-                    b.ToTable("documents", t =>
-                        {
-                            t.HasCheckConstraint("CK_doc_verification", "verification_status IN ('PENDING', 'VERIFIED', 'REJECTED')");
-                        });
-                });
-
-            modelBuilder.Entity("SpeedClaim.Api.Models.DocumentType", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("code");
-
-                    b.Property<string>("Domain")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("domain");
-
-                    b.Property<bool>("IsSensitivePhiPii")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_sensitive_phi_pii");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)")
-                        .HasColumnName("name");
-
-                    b.HasKey("Id")
-                        .HasName("PK_document_types");
-
-                    b.HasIndex("Code", "Domain")
-                        .IsUnique()
-                        .HasDatabaseName("UQ_doctype_code_domain");
-
-                    b.ToTable("document_types");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000001"),
-                            Code = "AADHAAR",
-                            Domain = "AUTH",
-                            IsSensitivePhiPii = true,
-                            Name = "Aadhaar Card"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000002"),
-                            Code = "PAN",
-                            Domain = "AUTH",
-                            IsSensitivePhiPii = true,
-                            Name = "PAN Card"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000003"),
-                            Code = "PHOTOGRAPH",
-                            Domain = "AUTH",
-                            IsSensitivePhiPii = false,
-                            Name = "Passport Size Photograph"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000004"),
-                            Code = "ADDRESS_PROOF",
-                            Domain = "AUTH",
-                            IsSensitivePhiPii = false,
-                            Name = "Proof of Address"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000005"),
-                            Code = "SUPPORTING_DOC",
-                            Domain = "HEALTH",
-                            IsSensitivePhiPii = true,
-                            Name = "Supporting Document"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000006"),
-                            Code = "SUPPORTING_DOC",
-                            Domain = "VEHICLE",
-                            IsSensitivePhiPii = false,
-                            Name = "Supporting Document"
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000007"),
-                            Code = "SUPPORTING_DOC",
-                            Domain = "LIFE",
-                            IsSensitivePhiPii = true,
-                            Name = "Supporting Document"
-                        });
+                    b.ToTable("health_details");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.InsuranceProduct", b =>
@@ -694,11 +1066,17 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("code");
+                    b.Property<bool>("AllowsFamilyFloater")
+                        .HasColumnType("boolean")
+                        .HasColumnName("allows_family_floater");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by_id");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -707,133 +1085,523 @@ namespace SpeedClaim.Api.Migrations
 
                     b.Property<string>("Domain")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
+                        .HasColumnType("text")
                         .HasColumnName("domain");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
                         .HasColumnName("is_active");
 
-                    b.Property<decimal?>("MaxCoverage")
-                        .HasColumnType("numeric")
-                        .HasColumnName("max_coverage");
+                    b.Property<int>("MaxAge")
+                        .HasColumnType("integer")
+                        .HasColumnName("max_age");
 
-                    b.Property<string>("Name")
+                    b.Property<int>("MaxFamilyMembers")
+                        .HasColumnType("integer")
+                        .HasColumnName("max_family_members");
+
+                    b.Property<decimal>("MaxSumAssured")
+                        .HasColumnType("decimal(15,2)")
+                        .HasColumnName("max_sum_assured");
+
+                    b.Property<int>("MaxTenureYears")
+                        .HasColumnType("integer")
+                        .HasColumnName("max_tenure_years");
+
+                    b.Property<int>("MinAge")
+                        .HasColumnType("integer")
+                        .HasColumnName("min_age");
+
+                    b.Property<decimal>("MinSumAssured")
+                        .HasColumnType("decimal(15,2)")
+                        .HasColumnName("min_sum_assured");
+
+                    b.Property<int>("MinTenureYears")
+                        .HasColumnType("integer")
+                        .HasColumnName("min_tenure_years");
+
+                    b.Property<string>("ProductName")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("product_name");
+
+                    b.Property<string>("Uin")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("uin");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<int>("WaitingPeriodDays")
+                        .HasColumnType("integer")
+                        .HasColumnName("waiting_period_days");
 
                     b.HasKey("Id")
                         .HasName("PK_insurance_products");
 
-                    b.HasIndex("Code")
-                        .IsUnique()
-                        .HasDatabaseName("uq_insurance_products_code");
+                    b.HasIndex("CreatedById");
 
-                    b.HasIndex("Id", "Domain")
+                    b.HasIndex("Uin")
                         .IsUnique()
-                        .HasDatabaseName("UQ_product_id_domain");
+                        .HasDatabaseName("uq_insurance_products_uin");
 
                     b.ToTable("insurance_products");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("10000000-1111-1111-1111-111111111111"),
+                            AllowsFamilyFloater = false,
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 6, 7, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Basic term life insurance",
+                            Domain = "LIFE",
+                            IsActive = true,
+                            MaxAge = 60,
+                            MaxFamilyMembers = 1,
+                            MaxSumAssured = 5000000m,
+                            MaxTenureYears = 30,
+                            MinAge = 18,
+                            MinSumAssured = 100000m,
+                            MinTenureYears = 5,
+                            ProductName = "Term Life Basic",
+                            Uin = "UIN123",
+                            WaitingPeriodDays = 0
+                        });
                 });
 
-            modelBuilder.Entity("SpeedClaim.Api.Models.PaymentStatusHistory", b =>
+            modelBuilder.Entity("SpeedClaim.Api.Models.KycRecord", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<DateTime>("ChangedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("changed_at");
-
-                    b.Property<Guid?>("ChangedById")
-                        .HasColumnType("uuid")
-                        .HasColumnName("changed_by_id");
-
-                    b.Property<string>("NewStatus")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("new_status");
-
-                    b.Property<string>("OldStatus")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("old_status");
-
-                    b.Property<Guid>("PaymentId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("payment_id");
-
-                    b.Property<string>("Remarks")
-                        .HasColumnType("text")
-                        .HasColumnName("remarks");
-
-                    b.HasKey("Id")
-                        .HasName("PK_payment_status_history");
-
-                    b.HasIndex("ChangedById");
-
-                    b.HasIndex("PaymentId");
-
-                    b.ToTable("payment_status_histories");
-                });
-
-            modelBuilder.Entity("SpeedClaim.Api.Models.PaymentTransaction", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("numeric")
-                        .HasColumnName("amount");
-
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<string>("Currency")
+                    b.Property<string>("IdNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("id_number");
+
+                    b.Property<string>("IdType")
                         .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("currency");
+                        .HasColumnName("id_type");
 
-                    b.Property<Guid>("PolicyId")
+                    b.Property<string>("KycStatus")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("kyc_status");
+
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("text")
+                        .HasColumnName("rejection_reason");
+
+                    b.Property<DateTimeOffset?>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reviewed_at");
+
+                    b.Property<Guid?>("ReviewedById")
                         .HasColumnType("uuid")
-                        .HasColumnName("policy_id");
+                        .HasColumnName("reviewed_by_id");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("status");
-
-                    b.Property<string>("StripeEventId")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("stripe_event_id");
-
-                    b.Property<string>("StripePaymentIntentId")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("stripe_payment_intent_id");
-
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
-                    b.HasKey("Id");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("PK_kyc_records");
+
+                    b.HasIndex("ReviewedById");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.HasIndex("IdType", "IdNumber")
+                        .IsUnique()
+                        .HasDatabaseName("uq_kyc_records_id_type_number");
+
+                    b.ToTable("kyc_records");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("33333333-3333-3333-3333-333333333333"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 6, 7, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            IdNumber = "999988887777",
+                            IdType = "Aadhaar",
+                            KycStatus = "Approved",
+                            UserId = new Guid("11111111-1111-1111-1111-111111111111")
+                        });
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.LifeClaimDetail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("CauseOfDeath")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("cause_of_death");
+
+                    b.Property<string>("CertifyingDoctor")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("certifying_doctor");
+
+                    b.Property<Guid>("ClaimId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("claim_id");
+
+                    b.Property<string>("ClaimReason")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("claim_reason");
+
+                    b.Property<string>("ClaimantName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("claimant_name");
+
+                    b.Property<string>("ClaimantRelationship")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("claimant_relationship");
+
+                    b.Property<string>("DeathCertificateNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("death_certificate_number");
+
+                    b.Property<string>("PlaceOfDeath")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("place_of_death");
+
+                    b.HasKey("Id")
+                        .HasName("PK_life_claim_details");
+
+                    b.HasIndex("ClaimId")
+                        .IsUnique();
+
+                    b.ToTable("life_claim_details");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.LifeDetail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<decimal>("DeathBenefit")
+                        .HasColumnType("decimal(15,2)")
+                        .HasColumnName("death_benefit");
+
+                    b.Property<bool>("LoanEligible")
+                        .HasColumnType("boolean")
+                        .HasColumnName("loan_eligible");
+
+                    b.Property<decimal>("MaturityBenefit")
+                        .HasColumnType("decimal(15,2)")
+                        .HasColumnName("maturity_benefit");
+
+                    b.Property<Guid?>("PolicyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("policy_id");
+
+                    b.Property<string>("PolicySubtype")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("policy_subtype");
+
+                    b.Property<Guid>("ProposalId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("proposal_id");
+
+                    b.Property<bool>("SurrenderValueApplicable")
+                        .HasColumnType("boolean")
+                        .HasColumnName("surrender_value_applicable");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("PK_life_details");
+
+                    b.HasIndex("PolicyId")
+                        .IsUnique();
+
+                    b.HasIndex("ProposalId")
+                        .IsUnique();
+
+                    b.ToTable("life_details");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.MotorClaimDetail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AccidentLocation")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("accident_location");
+
+                    b.Property<Guid>("ClaimId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("claim_id");
+
+                    b.Property<decimal>("EstimatedRepairCost")
+                        .HasColumnType("decimal(10,2)")
+                        .HasColumnName("estimated_repair_cost");
+
+                    b.Property<string>("FirNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("fir_number");
+
+                    b.Property<string>("GarageName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("garage_name");
+
+                    b.Property<DateTime?>("SurveyDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("survey_date");
+
+                    b.Property<string>("SurveyorRemarks")
+                        .HasColumnType("text")
+                        .HasColumnName("surveyor_remarks");
+
+                    b.HasKey("Id")
+                        .HasName("PK_motor_claim_details");
+
+                    b.HasIndex("ClaimId")
+                        .IsUnique();
+
+                    b.ToTable("motor_claim_details");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.MotorDetail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ChassisNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("chassis_number");
+
+                    b.Property<string>("CoverType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("cover_type");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("EngineNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("engine_number");
+
+                    b.Property<decimal>("Idv")
+                        .HasColumnType("decimal(10,2)")
+                        .HasColumnName("idv");
+
+                    b.Property<int>("ManufactureYear")
+                        .HasColumnType("integer")
+                        .HasColumnName("manufacture_year");
+
+                    b.Property<Guid?>("PolicyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("policy_id");
+
+                    b.Property<Guid>("ProposalId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("proposal_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("VehicleMake")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("vehicle_make");
+
+                    b.Property<string>("VehicleModel")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("vehicle_model");
+
+                    b.Property<string>("VehicleNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("vehicle_number");
+
+                    b.Property<string>("VehicleType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("vehicle_type");
+
+                    b.HasKey("Id")
+                        .HasName("PK_motor_details");
+
+                    b.HasIndex("PolicyId")
+                        .IsUnique();
+
+                    b.HasIndex("ProposalId")
+                        .IsUnique();
+
+                    b.ToTable("motor_details");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.Nominee", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AppointeeName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("appointee_name");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime>("DateOfBirth")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("date_of_birth");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("full_name");
+
+                    b.Property<bool>("IsMinor")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_minor");
+
+                    b.Property<Guid?>("PolicyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("policy_id");
+
+                    b.Property<Guid>("ProposalId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("proposal_id");
+
+                    b.Property<string>("Relationship")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("relationship");
+
+                    b.Property<decimal>("SharePercentage")
+                        .HasColumnType("decimal(5,2)")
+                        .HasColumnName("share_percentage");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("PK_nominees");
 
                     b.HasIndex("PolicyId");
 
-                    b.HasIndex("StripePaymentIntentId")
-                        .IsUnique();
+                    b.HasIndex("ProposalId");
 
-                    b.ToTable("payment_transactions");
+                    b.ToTable("nominees");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_read");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("message");
+
+                    b.Property<string>("RedirectUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("redirect_url");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("type");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("PK_notifications");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("notifications");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.Policy", b =>
@@ -847,9 +1615,172 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("agent_id");
 
-                    b.Property<decimal>("CoverageAmount")
-                        .HasColumnType("numeric")
-                        .HasColumnName("coverage_amount");
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("customer_id");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("end_date");
+
+                    b.Property<DateTimeOffset?>("IssuedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("issued_at");
+
+                    b.Property<string>("PaymentFrequency")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("payment_frequency");
+
+                    b.Property<string>("PolicyNumber")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("policy_number");
+
+                    b.Property<string>("PolicyType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("policy_type");
+
+                    b.Property<decimal>("PremiumAmount")
+                        .HasColumnType("decimal(10,2)")
+                        .HasColumnName("premium_amount");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("product_id");
+
+                    b.Property<Guid?>("ProposalId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("proposal_id");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("start_date");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("status");
+
+                    b.Property<decimal>("SumAssured")
+                        .HasColumnType("decimal(15,2)")
+                        .HasColumnName("sum_assured");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("PK_policies");
+
+                    b.HasIndex("AgentId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("PolicyNumber")
+                        .IsUnique()
+                        .HasDatabaseName("uq_policies_policy_number");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("ProposalId")
+                        .IsUnique();
+
+                    b.ToTable("policies");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.PolicyMember", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CustomerMemberId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("customer_member_id");
+
+                    b.Property<Guid>("PolicyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("policy_id");
+
+                    b.HasKey("Id")
+                        .HasName("PK_policy_members");
+
+                    b.HasIndex("CustomerMemberId");
+
+                    b.HasIndex("PolicyId");
+
+                    b.ToTable("policy_members");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.PolicyStatusHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("changed_at");
+
+                    b.Property<Guid?>("ChangedById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("changed_by_id");
+
+                    b.Property<string>("NewStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("new_status");
+
+                    b.Property<string>("OldStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("old_status");
+
+                    b.Property<Guid>("PolicyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("policy_id");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("reason");
+
+                    b.HasKey("Id")
+                        .HasName("PK_policy_status_history");
+
+                    b.HasIndex("ChangedById");
+
+                    b.HasIndex("PolicyId");
+
+                    b.ToTable("policy_status_histories");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.PremiumPayment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(10,2)")
+                        .HasColumnName("amount");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -861,192 +1792,121 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("character varying(3)")
                         .HasColumnName("currency");
 
-                    b.Property<DateTimeOffset?>("DeletedAt")
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("customer_id");
+
+                    b.Property<DateTimeOffset?>("PaidAt")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
+                        .HasColumnName("paid_at");
 
-                    b.Property<string>("Domain")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("domain");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("end_date");
-
-                    b.Property<string>("PaymentFrequency")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("payment_frequency");
-
-                    b.Property<string>("PolicyNumber")
+                    b.Property<string>("PaymentMethod")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
-                        .HasColumnName("policy_number");
+                        .HasColumnName("payment_method");
 
-                    b.Property<decimal>("PremiumAmount")
-                        .HasColumnType("numeric")
-                        .HasColumnName("premium_amount");
-
-                    b.Property<Guid>("ProductId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("product_id");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("start_date");
-
-                    b.Property<string>("Status")
+                    b.Property<string>("PaymentType")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("status");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("payment_type");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.Property<string>("domain")
-                        .IsRequired()
-                        .HasMaxLength(8)
-                        .HasColumnType("character varying(8)");
-
-                    b.HasKey("Id")
-                        .HasName("PK_policies");
-
-                    b.HasIndex("AgentId");
-
-                    b.HasIndex("PolicyNumber")
-                        .IsUnique()
-                        .HasDatabaseName("uq_policy_num")
-                        .HasFilter("deleted_at IS NULL");
-
-                    b.HasIndex("ProductId");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("Id", "Domain")
-                        .IsUnique()
-                        .HasDatabaseName("UQ_policy_id_domain");
-
-                    b.ToTable("policies", t =>
-                        {
-                            t.HasCheckConstraint("CK_policies_payment_frequency", "payment_frequency IN ('MONTHLY', 'QUARTERLY', 'ANNUAL')");
-
-                            t.HasCheckConstraint("CK_policies_status", "status IN ('ACTIVE', 'LAPSED', 'CANCELLED', 'EXPIRED', 'CLAIMED')");
-
-                            t.Property("domain")
-                                .HasColumnName("domain1");
-                        });
-
-                    b.HasDiscriminator<string>("domain").HasValue("Policy");
-
-                    b.UseTphMappingStrategy();
-                });
-
-            modelBuilder.Entity("SpeedClaim.Api.Models.PolicyInsuredMember", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("AddressId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("address_id");
-
-                    b.Property<DateTime>("DateOfBirth")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("date_of_birth");
-
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("first_name");
-
-                    b.Property<bool>("IsPrimary")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_primary");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("last_name");
-
-                    b.Property<Guid>("PolicyId")
+                    b.Property<Guid?>("PolicyId")
                         .HasColumnType("uuid")
                         .HasColumnName("policy_id");
 
-                    b.Property<string>("RelationToHolder")
+                    b.Property<Guid?>("ProposalId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("proposal_id");
+
+                    b.Property<string>("ReceiptUrl")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("receipt_url");
+
+                    b.Property<Guid?>("ScheduleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("schedule_id");
+
+                    b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
-                        .HasColumnName("relation_to_holder");
+                        .HasColumnName("status");
 
-                    b.Property<string>("Salutation")
+                    b.Property<string>("StripeChargeId")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("salutation");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("stripe_charge_id");
+
+                    b.Property<string>("StripePaymentIntentId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("stripe_payment_intent_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
 
                     b.HasKey("Id")
-                        .HasName("PK_policy_insured_members");
+                        .HasName("PK_premium_payments");
 
-                    b.HasIndex("AddressId");
+                    b.HasIndex("CustomerId");
 
                     b.HasIndex("PolicyId");
 
-                    b.ToTable("policy_insured_members");
+                    b.HasIndex("ProposalId");
+
+                    b.HasIndex("ScheduleId")
+                        .IsUnique();
+
+                    b.ToTable("premium_payments");
                 });
 
-            modelBuilder.Entity("SpeedClaim.Api.Models.PolicyVersion", b =>
+            modelBuilder.Entity("SpeedClaim.Api.Models.PremiumRateTable", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<decimal>("CoverageAmount")
-                        .HasColumnType("numeric")
-                        .HasColumnName("coverage_amount");
+                    b.Property<int>("AgeMax")
+                        .HasColumnType("integer")
+                        .HasColumnName("age_max");
+
+                    b.Property<int>("AgeMin")
+                        .HasColumnType("integer")
+                        .HasColumnName("age_min");
+
+                    b.Property<decimal>("AnnualPremium")
+                        .HasColumnType("decimal(10,2)")
+                        .HasColumnName("annual_premium");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<DateTimeOffset>("EffectiveFrom")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("effective_from");
-
-                    b.Property<DateTimeOffset?>("EffectiveUntil")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("effective_until");
-
-                    b.Property<Guid>("PolicyId")
+                    b.Property<Guid>("ProductId")
                         .HasColumnType("uuid")
-                        .HasColumnName("policy_id");
+                        .HasColumnName("product_id");
 
-                    b.Property<decimal>("PremiumAmount")
-                        .HasColumnType("numeric")
-                        .HasColumnName("premium_amount");
+                    b.Property<decimal>("SumAssuredMax")
+                        .HasColumnType("decimal(15,2)")
+                        .HasColumnName("sum_assured_max");
 
-                    b.Property<int>("VersionNumber")
-                        .HasColumnType("integer")
-                        .HasColumnName("version_number");
+                    b.Property<decimal>("SumAssuredMin")
+                        .HasColumnType("decimal(15,2)")
+                        .HasColumnName("sum_assured_min");
 
                     b.HasKey("Id")
-                        .HasName("PK_policy_versions");
+                        .HasName("PK_premium_rate_tables");
 
-                    b.HasIndex("PolicyId", "VersionNumber")
-                        .IsUnique()
-                        .HasDatabaseName("uq_policy_versions_policy_id_version_number");
+                    b.HasIndex("ProductId");
 
-                    b.ToTable("policy_versions");
+                    b.ToTable("premium_rate_tables");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.PremiumSchedule", b =>
@@ -1056,9 +1916,13 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<decimal>("AmountDue")
-                        .HasColumnType("decimal(12,2)")
-                        .HasColumnName("amount_due");
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(10,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
 
                     b.Property<DateTime>("DueDate")
                         .HasColumnType("timestamp with time zone")
@@ -1072,30 +1936,134 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("payment_id");
 
-                    b.Property<Guid>("PolicyId")
+                    b.Property<Guid?>("PolicyId")
                         .HasColumnType("uuid")
                         .HasColumnName("policy_id");
 
+                    b.Property<Guid?>("ProposalId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("proposal_id");
+
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
                         .HasColumnName("status");
 
-                    b.HasKey("Id")
-                        .HasName("PK_premium_schedule");
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
 
-                    b.HasIndex("PaymentId");
+                    b.HasKey("Id")
+                        .HasName("PK_premium_schedules");
 
                     b.HasIndex("PolicyId");
 
-                    b.HasIndex("DueDate", "Status")
-                        .HasDatabaseName("idx_premium_schedule_due");
+                    b.HasIndex("ProposalId");
 
                     b.ToTable("premium_schedules");
                 });
 
-            modelBuilder.Entity("SpeedClaim.Api.Models.RefreshToken", b =>
+            modelBuilder.Entity("SpeedClaim.Api.Models.Proposal", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("AgentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("agent_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("customer_id");
+
+                    b.Property<string>("PaymentFrequency")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("payment_frequency");
+
+                    b.Property<string>("PolicyType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("policy_type");
+
+                    b.Property<decimal>("PremiumAmount")
+                        .HasColumnType("decimal(10,2)")
+                        .HasColumnName("premium_amount");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("product_id");
+
+                    b.Property<string>("ProposalNumber")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("proposal_number");
+
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("text")
+                        .HasColumnName("rejection_reason");
+
+                    b.Property<DateTimeOffset?>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reviewed_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset?>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("submitted_at");
+
+                    b.Property<decimal>("SumAssured")
+                        .HasColumnType("decimal(15,2)")
+                        .HasColumnName("sum_assured");
+
+                    b.Property<int>("TenureYears")
+                        .HasColumnType("integer")
+                        .HasColumnName("tenure_years");
+
+                    b.Property<Guid?>("UnderwriterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("underwriter_id");
+
+                    b.Property<string>("UnderwriterNotes")
+                        .HasColumnType("text")
+                        .HasColumnName("underwriter_notes");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("PK_proposals");
+
+                    b.HasIndex("AgentId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("ProposalNumber")
+                        .IsUnique()
+                        .HasDatabaseName("uq_proposals_proposal_number");
+
+                    b.HasIndex("UnderwriterId");
+
+                    b.ToTable("proposals");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.ProposalMember", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -1106,97 +2074,262 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<DateTimeOffset>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("expires_at");
-
-                    b.Property<string>("IpAddress")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("ip_address");
-
-                    b.Property<bool>("IsRevoked")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_revoked");
-
-                    b.Property<string>("TokenHash")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("token_hash");
-
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid>("CustomerMemberId")
                         .HasColumnType("uuid")
-                        .HasColumnName("user_id");
+                        .HasColumnName("customer_member_id");
+
+                    b.Property<Guid>("ProposalId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("proposal_id");
 
                     b.HasKey("Id")
-                        .HasName("PK_refresh_tokens");
+                        .HasName("PK_proposal_members");
 
-                    b.HasIndex("TokenHash")
-                        .IsUnique()
-                        .HasDatabaseName("uq_refresh_tokens_token_hash");
+                    b.HasIndex("CustomerMemberId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("ProposalId");
 
-                    b.ToTable("refresh_tokens");
+                    b.ToTable("proposal_members");
                 });
 
-            modelBuilder.Entity("SpeedClaim.Api.Models.Role", b =>
+            modelBuilder.Entity("SpeedClaim.Api.Models.Session", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("Code")
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("IpAddress")
                         .IsRequired()
+                        .HasMaxLength(45)
+                        .HasColumnType("character varying(45)")
+                        .HasColumnName("ip_address");
+
+                    b.Property<bool>("IsRevoked")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_revoked");
+
+                    b.Property<string>("RefreshTokenHash")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("refresh_token_hash");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UserAgent")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("user_agent");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("PK_sessions");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("sessions");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.StripeCustomer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("StripeCustomerId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("stripe_customer_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("PK_stripe_customers");
+
+                    b.HasIndex("StripeCustomerId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("stripe_customers");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.SubmittedDocument", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("DocumentKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("document_key");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("entity_id");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("entity_type");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("file_path");
+
+                    b.Property<int>("FileSizeKb")
+                        .HasColumnType("integer")
+                        .HasColumnName("file_size_kb");
+
+                    b.Property<string>("MimeType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("mime_type");
+
+                    b.Property<string>("OriginalFilename")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("original_filename");
+
+                    b.Property<string>("StoredFilename")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("stored_filename");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("uploaded_at");
+
+                    b.Property<Guid>("UploadedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("uploaded_by");
+
+                    b.HasKey("Id")
+                        .HasName("PK_submitted_documents");
+
+                    b.HasIndex("EntityId");
+
+                    b.ToTable("submitted_documents");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.Surveyor", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<DateTime?>("LicenseExpiry")
+                        .HasColumnType("date")
+                        .HasColumnName("license_expiry");
+
+                    b.Property<string>("LicenseNumber")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
-                        .HasColumnName("code");
+                        .HasColumnName("license_number");
+
+                    b.Property<string>("Specialization")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("specialization");
+
+                    b.Property<string>("SurveyorType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("surveyor_type");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("PK_surveyors");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasDatabaseName("uq_surveyors_user_id");
+
+                    b.ToTable("surveyors");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.SystemConfig", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ConfigKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("config_key");
+
+                    b.Property<string>("ConfigValue")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("config_value");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("description");
 
-                    b.Property<int>("HierarchyLevel")
-                        .HasColumnType("integer")
-                        .HasColumnName("hierarchy_level");
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by_id");
 
                     b.HasKey("Id")
-                        .HasName("PK_roles");
+                        .HasName("PK_system_configs");
 
-                    b.HasIndex("Code")
-                        .IsUnique()
-                        .HasDatabaseName("uq_roles_code");
+                    b.HasIndex("UpdatedById");
 
-                    b.ToTable("roles", t =>
-                        {
-                            t.HasCheckConstraint("CK_roles_hierarchy_level", "hierarchy_level > 0");
-                        });
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("11111111-1111-1111-1111-111111111111"),
-                            Code = "Customer",
-                            Description = "Standard customer",
-                            HierarchyLevel = 10
-                        },
-                        new
-                        {
-                            Id = new Guid("22222222-2222-2222-2222-222222222222"),
-                            Code = "Agent",
-                            Description = "Insurance agent",
-                            HierarchyLevel = 20
-                        },
-                        new
-                        {
-                            Id = new Guid("33333333-3333-3333-3333-333333333333"),
-                            Code = "Admin",
-                            Description = "System administrator",
-                            HierarchyLevel = 50
-                        });
+                    b.ToTable("system_configs");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.User", b =>
@@ -1206,27 +2339,9 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("AadhaarNumber")
-                        .IsRequired()
-                        .HasMaxLength(12)
-                        .HasColumnType("character varying(12)")
-                        .HasColumnName("aadhaar_number");
-
-                    b.Property<Guid>("AddressId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("address_id");
-
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
-
-                    b.Property<DateTime?>("DateOfBirth")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("date_of_birth");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -1240,21 +2355,17 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("first_name");
 
-                    b.Property<string>("Gender")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("gender");
-
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
                         .HasColumnName("is_active");
 
-                    b.Property<string>("KycStatus")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("kyc_status");
+                    b.Property<bool>("IsEmailVerified")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_email_verified");
+
+                    b.Property<DateTime?>("LastLoginAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_login_at");
 
                     b.Property<string>("LastName")
                         .IsRequired()
@@ -1262,266 +2373,124 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("last_name");
 
-                    b.Property<string>("MaritalStatus")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("marital_status");
-
-                    b.Property<string>("PanNumber")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)")
-                        .HasColumnName("pan_number");
-
                     b.Property<string>("PasswordHash")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
+                        .HasColumnType("text")
                         .HasColumnName("password_hash");
 
                     b.Property<string>("Phone")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
                         .HasColumnName("phone");
 
-                    b.Property<string>("ProfilePictureUrl")
+                    b.Property<string>("Role")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("profile_picture_url");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("role");
 
                     b.Property<string>("Salutation")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
                         .HasColumnName("salutation");
 
-                    b.Property<string>("Timezone")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("timezone");
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
 
                     b.HasKey("Id")
                         .HasName("PK_users");
-
-                    b.HasIndex("AadhaarNumber")
-                        .IsUnique()
-                        .HasDatabaseName("uq_users_aadhaar");
-
-                    b.HasIndex("AddressId");
 
                     b.HasIndex("Email")
                         .IsUnique()
                         .HasDatabaseName("uq_users_email");
 
-                    b.HasIndex("PanNumber")
+                    b.HasIndex("Phone")
                         .IsUnique()
-                        .HasDatabaseName("uq_users_pan");
+                        .HasDatabaseName("uq_users_phone");
 
                     b.ToTable("users");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("11111111-1111-1111-1111-111111111111"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 6, 7, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Email = "davish.std@gmail.com",
+                            FirstName = "Davish",
+                            IsActive = true,
+                            IsEmailVerified = true,
+                            LastName = "Dev",
+                            PasswordHash = "$2a$11$O.SrE3dQ5wjiWGc20uH7HuIuFwnrCYiuROffc9k/nk6./69E2z2.S",
+                            Phone = "9998887776",
+                            Role = "Admin",
+                            Salutation = "Mr"
+                        });
                 });
 
-            modelBuilder.Entity("SpeedClaim.Api.Models.UserConsent", b =>
+            modelBuilder.Entity("SpeedClaim.Api.Models.UserToken", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("ConsentType")
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<bool>("IsUsed")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_used");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("token_hash");
+
+                    b.Property<string>("TokenType")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
-                        .HasColumnName("consent_type");
-
-                    b.Property<string>("ConsentVersion")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("consent_version");
-
-                    b.Property<DateTime>("GrantedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("granted_at");
-
-                    b.Property<string>("IpAddress")
-                        .HasColumnType("text")
-                        .HasColumnName("ip_address");
-
-                    b.Property<bool>("IsGranted")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_granted");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.Property<DateTime?>("WithdrawnAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("withdrawn_at");
-
-                    b.HasKey("Id")
-                        .HasName("PK_user_consents");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("user_consents");
-                });
-
-            modelBuilder.Entity("SpeedClaim.Api.Models.UserRole", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<decimal?>("ApprovalLimit")
-                        .HasColumnType("numeric")
-                        .HasColumnName("approval_limit");
-
-                    b.Property<DateTimeOffset>("AssignedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("assigned_at");
-
-                    b.Property<string>("Domain")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("domain");
-
-                    b.Property<DateTimeOffset?>("RevokedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("revoked_at");
-
-                    b.Property<Guid>("RoleId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("role_id");
+                        .HasColumnName("token_type");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
 
                     b.HasKey("Id")
-                        .HasName("PK_user_roles");
-
-                    b.HasIndex("RoleId");
+                        .HasName("PK_user_tokens");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("user_roles");
+                    b.ToTable("user_tokens");
                 });
 
-            modelBuilder.Entity("SpeedClaim.Api.Models.HealthPolicy", b =>
+            modelBuilder.Entity("SpeedClaim.Api.Models.Address", b =>
                 {
-                    b.HasBaseType("SpeedClaim.Api.Models.Policy");
-
-                    b.Property<bool>("CoversDental")
-                        .HasColumnType("boolean")
-                        .HasColumnName("covers_dental");
-
-                    b.Property<decimal>("Deductible")
-                        .HasColumnType("numeric")
-                        .HasColumnName("deductible");
-
-                    b.Property<string>("NetworkType")
+                    b.HasOne("SpeedClaim.Api.Models.User", "User")
+                        .WithMany("Addresses")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("network_type");
+                        .HasConstraintName("FK_addresses_users_user_id");
 
-                    b.ToTable("policies", t =>
-                        {
-                            t.HasCheckConstraint("CK_policies_payment_frequency", "payment_frequency IN ('MONTHLY', 'QUARTERLY', 'ANNUAL')");
-
-                            t.HasCheckConstraint("CK_policies_status", "status IN ('ACTIVE', 'LAPSED', 'CANCELLED', 'EXPIRED', 'CLAIMED')");
-
-                            t.Property("domain")
-                                .HasColumnName("domain1");
-                        });
-
-                    b.HasDiscriminator().HasValue("HEALTH");
-                });
-
-            modelBuilder.Entity("SpeedClaim.Api.Models.LifePolicy", b =>
-                {
-                    b.HasBaseType("SpeedClaim.Api.Models.Policy");
-
-                    b.Property<bool>("HasAccidentalRider")
-                        .HasColumnType("boolean")
-                        .HasColumnName("has_accidental_rider");
-
-                    b.Property<string>("NomineeName")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("nominee_name");
-
-                    b.Property<string>("NomineePhone")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("nominee_phone");
-
-                    b.Property<string>("NomineeRelation")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("nominee_relation");
-
-                    b.ToTable("policies", t =>
-                        {
-                            t.HasCheckConstraint("CK_policies_payment_frequency", "payment_frequency IN ('MONTHLY', 'QUARTERLY', 'ANNUAL')");
-
-                            t.HasCheckConstraint("CK_policies_status", "status IN ('ACTIVE', 'LAPSED', 'CANCELLED', 'EXPIRED', 'CLAIMED')");
-
-                            t.Property("domain")
-                                .HasColumnName("domain1");
-                        });
-
-                    b.HasDiscriminator().HasValue("LIFE");
-                });
-
-            modelBuilder.Entity("SpeedClaim.Api.Models.VehiclePolicy", b =>
-                {
-                    b.HasBaseType("SpeedClaim.Api.Models.Policy");
-
-                    b.Property<decimal>("InsuredDeclaredValue")
-                        .HasColumnType("numeric")
-                        .HasColumnName("insured_declared_value");
-
-                    b.Property<bool>("IsComprehensive")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_comprehensive");
-
-                    b.Property<string>("Make")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("make");
-
-                    b.Property<int>("ManufactureYear")
-                        .HasColumnType("integer")
-                        .HasColumnName("manufacture_year");
-
-                    b.Property<string>("Model")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("model");
-
-                    b.Property<string>("VehicleNumber")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("vehicle_number");
-
-                    b.ToTable("policies", t =>
-                        {
-                            t.HasCheckConstraint("CK_policies_payment_frequency", "payment_frequency IN ('MONTHLY', 'QUARTERLY', 'ANNUAL')");
-
-                            t.HasCheckConstraint("CK_policies_status", "status IN ('ACTIVE', 'LAPSED', 'CANCELLED', 'EXPIRED', 'CLAIMED')");
-
-                            t.Property("domain")
-                                .HasColumnName("domain1");
-                        });
-
-                    b.HasDiscriminator().HasValue("VEHICLE");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.Agent", b =>
                 {
+                    b.HasOne("SpeedClaim.Api.Models.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .HasConstraintName("FK_agents_branches_branch_id");
+
                     b.HasOne("SpeedClaim.Api.Models.User", "User")
                         .WithOne("Agent")
                         .HasForeignKey("SpeedClaim.Api.Models.Agent", "UserId")
@@ -1529,175 +2498,358 @@ namespace SpeedClaim.Api.Migrations
                         .IsRequired()
                         .HasConstraintName("FK_agents_users_user_id");
 
+                    b.Navigation("Branch");
+
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("SpeedClaim.Api.Models.AuditLog", b =>
+            modelBuilder.Entity("SpeedClaim.Api.Models.AgentCommission", b =>
                 {
-                    b.HasOne("SpeedClaim.Api.Models.User", null)
-                        .WithMany("AuditLogs")
-                        .HasForeignKey("UserId");
-                });
-
-            modelBuilder.Entity("SpeedClaim.Api.Models.Claim", b =>
-                {
-                    b.HasOne("SpeedClaim.Api.Models.User", "AssignedAdjuster")
+                    b.HasOne("SpeedClaim.Api.Models.Agent", "Agent")
                         .WithMany()
-                        .HasForeignKey("AssignedAdjusterId")
-                        .HasConstraintName("FK_claims_users_assigned_adjuster_id");
+                        .HasForeignKey("AgentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_agent_commissions_agents_agent_id");
 
                     b.HasOne("SpeedClaim.Api.Models.Policy", "Policy")
                         .WithMany()
                         .HasForeignKey("PolicyId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("FK_claims_policies_policy_id");
+                        .HasConstraintName("FK_agent_commissions_policies_policy_id");
 
-                    b.HasOne("SpeedClaim.Api.Models.User", "SubmittedBy")
+                    b.HasOne("SpeedClaim.Api.Models.PremiumPayment", "PremiumPayment")
                         .WithMany()
-                        .HasForeignKey("SubmittedById")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("PremiumPaymentId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("FK_claims_users_submitted_by_id");
+                        .HasConstraintName("FK_agent_commissions_premium_payments_payment_id");
 
-                    b.Navigation("AssignedAdjuster");
+                    b.Navigation("Agent");
 
                     b.Navigation("Policy");
 
-                    b.Navigation("SubmittedBy");
+                    b.Navigation("PremiumPayment");
                 });
 
-            modelBuilder.Entity("SpeedClaim.Api.Models.ClaimDocumentChecklist", b =>
+            modelBuilder.Entity("SpeedClaim.Api.Models.AuditLog", b =>
                 {
-                    b.HasOne("SpeedClaim.Api.Models.Claim", "Claim")
-                        .WithMany("DocumentChecklists")
-                        .HasForeignKey("ClaimId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_checklist_claim");
+                    b.HasOne("SpeedClaim.Api.Models.User", "User")
+                        .WithMany("AuditLogs")
+                        .HasForeignKey("UserId");
 
-                    b.Navigation("Claim");
+                    b.Navigation("User");
                 });
 
-            modelBuilder.Entity("SpeedClaim.Api.Models.ClaimHealthDetail", b =>
+            modelBuilder.Entity("SpeedClaim.Api.Models.Claim", b =>
                 {
-                    b.HasOne("SpeedClaim.Api.Models.Claim", "Claim")
-                        .WithOne("HealthDetail")
-                        .HasForeignKey("SpeedClaim.Api.Models.ClaimHealthDetail", "ClaimId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_claim_health_details_claims_claim_id");
-
-                    b.HasOne("SpeedClaim.Api.Models.PolicyInsuredMember", "InsuredMember")
-                        .WithMany("ClaimHealthDetails")
-                        .HasForeignKey("InsuredMemberId")
-                        .HasConstraintName("FK_claim_health_details_policy_insured_members_insured_member_id");
-
-                    b.Navigation("Claim");
-
-                    b.Navigation("InsuredMember");
-                });
-
-            modelBuilder.Entity("SpeedClaim.Api.Models.ClaimLifeDetail", b =>
-                {
-                    b.HasOne("SpeedClaim.Api.Models.Claim", "Claim")
-                        .WithOne("LifeDetail")
-                        .HasForeignKey("SpeedClaim.Api.Models.ClaimLifeDetail", "ClaimId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_claim_life_details_claims_claim_id");
-
-                    b.Navigation("Claim");
-                });
-
-            modelBuilder.Entity("SpeedClaim.Api.Models.ClaimVehicleDetail", b =>
-                {
-                    b.HasOne("SpeedClaim.Api.Models.Claim", "Claim")
-                        .WithOne("VehicleDetail")
-                        .HasForeignKey("SpeedClaim.Api.Models.ClaimVehicleDetail", "ClaimId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_claim_vehicle_details_claims_claim_id");
-
-                    b.Navigation("Claim");
-                });
-
-            modelBuilder.Entity("SpeedClaim.Api.Models.ClaimWorkflow", b =>
-                {
-                    b.HasOne("SpeedClaim.Api.Models.User", "Actor")
+                    b.HasOne("SpeedClaim.Api.Models.User", "AssignedOfficer")
                         .WithMany()
-                        .HasForeignKey("ActorId")
+                        .HasForeignKey("AssignedOfficerId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("FK_claims_users_assigned_officer_id");
+
+                    b.HasOne("SpeedClaim.Api.Models.CustomerMember", "ClaimantMember")
+                        .WithMany()
+                        .HasForeignKey("ClaimantMemberId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("FK_claims_customer_members_claimant_member_id");
+
+                    b.HasOne("SpeedClaim.Api.Models.Customer", "Customer")
+                        .WithMany("Claims")
+                        .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("FK_claim_workflow_users_actor_id");
+                        .HasConstraintName("FK_claims_customers_customer_id");
+
+                    b.HasOne("SpeedClaim.Api.Models.Policy", "Policy")
+                        .WithMany("Claims")
+                        .HasForeignKey("PolicyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_claims_policies_policy_id");
+
+                    b.HasOne("SpeedClaim.Api.Models.Surveyor", "Surveyor")
+                        .WithMany("Claims")
+                        .HasForeignKey("SurveyorId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("FK_claims_surveyors");
+
+                    b.Navigation("AssignedOfficer");
+
+                    b.Navigation("ClaimantMember");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Policy");
+
+                    b.Navigation("Surveyor");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.ClaimStatusHistory", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.User", "ChangedBy")
+                        .WithMany()
+                        .HasForeignKey("ChangedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("FK_claim_status_history_users_changed_by_id");
 
                     b.HasOne("SpeedClaim.Api.Models.Claim", "Claim")
-                        .WithMany("Workflows")
+                        .WithMany("StatusHistory")
                         .HasForeignKey("ClaimId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("FK_claim_workflow_claims_claim_id");
+                        .HasConstraintName("FK_claim_status_history_claims_claim_id");
 
-                    b.Navigation("Actor");
+                    b.Navigation("ChangedBy");
 
                     b.Navigation("Claim");
                 });
 
-            modelBuilder.Entity("SpeedClaim.Api.Models.Document", b =>
+            modelBuilder.Entity("SpeedClaim.Api.Models.Customer", b =>
                 {
-                    b.HasOne("SpeedClaim.Api.Models.Claim", "Claim")
-                        .WithMany("Documents")
-                        .HasForeignKey("ClaimId")
+                    b.HasOne("SpeedClaim.Api.Models.User", "User")
+                        .WithOne("Customer")
+                        .HasForeignKey("SpeedClaim.Api.Models.Customer", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_documents_claims_claim_id");
+                        .IsRequired()
+                        .HasConstraintName("FK_customers_users_user_id");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.CustomerMember", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.Customer", "Customer")
+                        .WithMany("CustomerMembers")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_customer_members_customers_customer_id");
+
+                    b.Navigation("Customer");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.EmailLog", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.Endorsement", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.Policy", "Policy")
+                        .WithMany("Endorsements")
+                        .HasForeignKey("PolicyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_endorsements_policies_policy_id");
+
+                    b.HasOne("SpeedClaim.Api.Models.User", "RequestedBy")
+                        .WithMany()
+                        .HasForeignKey("RequestedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_endorsements_users_requested_by");
 
                     b.HasOne("SpeedClaim.Api.Models.User", "ReviewedBy")
                         .WithMany()
                         .HasForeignKey("ReviewedById")
-                        .HasConstraintName("FK_documents_users_reviewed_by_id");
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("FK_endorsements_users_reviewed_by");
 
-                    b.HasOne("SpeedClaim.Api.Models.User", "User")
+                    b.Navigation("Policy");
+
+                    b.Navigation("RequestedBy");
+
+                    b.Navigation("ReviewedBy");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.Grievance", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.User", "AssignedTo")
                         .WithMany()
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("AssignedToId");
+
+                    b.HasOne("SpeedClaim.Api.Models.Claim", "Claim")
+                        .WithMany()
+                        .HasForeignKey("ClaimId");
+
+                    b.HasOne("SpeedClaim.Api.Models.Customer", "Customer")
+                        .WithMany("Grievances")
+                        .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_documents_users_user_id");
+                        .IsRequired();
+
+                    b.HasOne("SpeedClaim.Api.Models.Policy", "Policy")
+                        .WithMany()
+                        .HasForeignKey("PolicyId");
+
+                    b.Navigation("AssignedTo");
 
                     b.Navigation("Claim");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Policy");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.HealthClaimDetail", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.Claim", "Claim")
+                        .WithOne("HealthDetail")
+                        .HasForeignKey("SpeedClaim.Api.Models.HealthClaimDetail", "ClaimId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_health_claim_details_claims");
+
+                    b.Navigation("Claim");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.HealthDetail", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.Policy", "Policy")
+                        .WithOne("HealthDetail")
+                        .HasForeignKey("SpeedClaim.Api.Models.HealthDetail", "PolicyId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("FK_health_details_policies");
+
+                    b.HasOne("SpeedClaim.Api.Models.Proposal", "Proposal")
+                        .WithOne("HealthDetail")
+                        .HasForeignKey("SpeedClaim.Api.Models.HealthDetail", "ProposalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_health_details_proposals");
+
+                    b.Navigation("Policy");
+
+                    b.Navigation("Proposal");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.InsuranceProduct", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.User", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById");
+
+                    b.Navigation("CreatedBy");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.KycRecord", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.User", "ReviewedBy")
+                        .WithMany()
+                        .HasForeignKey("ReviewedById");
+
+                    b.HasOne("SpeedClaim.Api.Models.User", "User")
+                        .WithOne("KycRecord")
+                        .HasForeignKey("SpeedClaim.Api.Models.KycRecord", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_kyc_records_users_user_id");
 
                     b.Navigation("ReviewedBy");
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("SpeedClaim.Api.Models.PaymentStatusHistory", b =>
+            modelBuilder.Entity("SpeedClaim.Api.Models.LifeClaimDetail", b =>
                 {
-                    b.HasOne("SpeedClaim.Api.Models.User", "ChangedBy")
-                        .WithMany("StatusChanges")
-                        .HasForeignKey("ChangedById")
-                        .HasConstraintName("FK_payment_status_history_users_changed_by_id");
-
-                    b.HasOne("SpeedClaim.Api.Models.PaymentTransaction", "Payment")
-                        .WithMany("StatusHistories")
-                        .HasForeignKey("PaymentId")
+                    b.HasOne("SpeedClaim.Api.Models.Claim", "Claim")
+                        .WithOne("LifeDetail")
+                        .HasForeignKey("SpeedClaim.Api.Models.LifeClaimDetail", "ClaimId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("FK_payment_status_history_payment_transactions_payment_id");
+                        .HasConstraintName("FK_life_claim_details_claims");
 
-                    b.Navigation("ChangedBy");
-
-                    b.Navigation("Payment");
+                    b.Navigation("Claim");
                 });
 
-            modelBuilder.Entity("SpeedClaim.Api.Models.PaymentTransaction", b =>
+            modelBuilder.Entity("SpeedClaim.Api.Models.LifeDetail", b =>
                 {
                     b.HasOne("SpeedClaim.Api.Models.Policy", "Policy")
-                        .WithMany()
+                        .WithOne("LifeDetail")
+                        .HasForeignKey("SpeedClaim.Api.Models.LifeDetail", "PolicyId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("FK_life_details_policies");
+
+                    b.HasOne("SpeedClaim.Api.Models.Proposal", "Proposal")
+                        .WithOne("LifeDetail")
+                        .HasForeignKey("SpeedClaim.Api.Models.LifeDetail", "ProposalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_life_details_proposals");
+
+                    b.Navigation("Policy");
+
+                    b.Navigation("Proposal");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.MotorClaimDetail", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.Claim", "Claim")
+                        .WithOne("MotorDetail")
+                        .HasForeignKey("SpeedClaim.Api.Models.MotorClaimDetail", "ClaimId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_motor_claim_details_claims");
+
+                    b.Navigation("Claim");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.MotorDetail", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.Policy", "Policy")
+                        .WithOne("MotorDetail")
+                        .HasForeignKey("SpeedClaim.Api.Models.MotorDetail", "PolicyId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("FK_motor_details_policies");
+
+                    b.HasOne("SpeedClaim.Api.Models.Proposal", "Proposal")
+                        .WithOne("MotorDetail")
+                        .HasForeignKey("SpeedClaim.Api.Models.MotorDetail", "ProposalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_motor_details_proposals");
+
+                    b.Navigation("Policy");
+
+                    b.Navigation("Proposal");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.Nominee", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.Policy", "Policy")
+                        .WithMany("Nominees")
                         .HasForeignKey("PolicyId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("FK_nominees_policies");
+
+                    b.HasOne("SpeedClaim.Api.Models.Proposal", "Proposal")
+                        .WithMany("Nominees")
+                        .HasForeignKey("ProposalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_nominees_proposals");
+
+                    b.Navigation("Policy");
+
+                    b.Navigation("Proposal");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.Notification", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Policy");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.Policy", b =>
@@ -1705,193 +2857,363 @@ namespace SpeedClaim.Api.Migrations
                     b.HasOne("SpeedClaim.Api.Models.Agent", "Agent")
                         .WithMany()
                         .HasForeignKey("AgentId")
+                        .OnDelete(DeleteBehavior.SetNull)
                         .HasConstraintName("FK_policies_agents_agent_id");
 
+                    b.HasOne("SpeedClaim.Api.Models.Customer", "Customer")
+                        .WithMany("Policies")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_policies_customers_customer_id");
+
+                    b.HasOne("SpeedClaim.Api.Models.InsuranceProduct", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_policies_products_product_id");
+
+                    b.HasOne("SpeedClaim.Api.Models.Proposal", "Proposal")
+                        .WithOne()
+                        .HasForeignKey("SpeedClaim.Api.Models.Policy", "ProposalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("FK_policies_proposals_proposal_id");
+
+                    b.Navigation("Agent");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Proposal");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.PolicyMember", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.CustomerMember", "CustomerMember")
+                        .WithMany()
+                        .HasForeignKey("CustomerMemberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SpeedClaim.Api.Models.Policy", "Policy")
+                        .WithMany("PolicyMembers")
+                        .HasForeignKey("PolicyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_policy_members_policies");
+
+                    b.Navigation("CustomerMember");
+
+                    b.Navigation("Policy");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.PolicyStatusHistory", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.User", "ChangedBy")
+                        .WithMany()
+                        .HasForeignKey("ChangedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("FK_policy_status_history_users_changed_by_id");
+
+                    b.HasOne("SpeedClaim.Api.Models.Policy", "Policy")
+                        .WithMany("StatusHistory")
+                        .HasForeignKey("PolicyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_policy_status_history_policies_policy_id");
+
+                    b.Navigation("ChangedBy");
+
+                    b.Navigation("Policy");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.PremiumPayment", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.Customer", "Customer")
+                        .WithMany("Payments")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SpeedClaim.Api.Models.Policy", "Policy")
+                        .WithMany("PremiumPayments")
+                        .HasForeignKey("PolicyId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("FK_premium_payments_policies");
+
+                    b.HasOne("SpeedClaim.Api.Models.Proposal", "Proposal")
+                        .WithMany("PremiumPayments")
+                        .HasForeignKey("ProposalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("FK_premium_payments_proposals");
+
+                    b.HasOne("SpeedClaim.Api.Models.PremiumSchedule", "Schedule")
+                        .WithOne("Payment")
+                        .HasForeignKey("SpeedClaim.Api.Models.PremiumPayment", "ScheduleId")
+                        .HasConstraintName("FK_premium_payments_schedules");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Policy");
+
+                    b.Navigation("Proposal");
+
+                    b.Navigation("Schedule");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.PremiumRateTable", b =>
+                {
                     b.HasOne("SpeedClaim.Api.Models.InsuranceProduct", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("FK_policies_insurance_products_product_id");
-
-                    b.HasOne("SpeedClaim.Api.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_policies_users_user_id");
-
-                    b.Navigation("Agent");
+                        .HasConstraintName("FK_premium_rate_tables_products");
 
                     b.Navigation("Product");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("SpeedClaim.Api.Models.PolicyInsuredMember", b =>
-                {
-                    b.HasOne("SpeedClaim.Api.Models.Address", "Address")
-                        .WithMany()
-                        .HasForeignKey("AddressId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("FK_policy_insured_members_addresses_address_id");
-
-                    b.HasOne("SpeedClaim.Api.Models.Policy", "Policy")
-                        .WithMany("InsuredMembers")
-                        .HasForeignKey("PolicyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_policy_insured_members_policies_policy_id");
-
-                    b.Navigation("Address");
-
-                    b.Navigation("Policy");
-                });
-
-            modelBuilder.Entity("SpeedClaim.Api.Models.PolicyVersion", b =>
-                {
-                    b.HasOne("SpeedClaim.Api.Models.Policy", "Policy")
-                        .WithMany("Versions")
-                        .HasForeignKey("PolicyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_policy_versions_policies_policy_id");
-
-                    b.Navigation("Policy");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.PremiumSchedule", b =>
                 {
-                    b.HasOne("SpeedClaim.Api.Models.PaymentTransaction", "Payment")
-                        .WithMany("PremiumSchedules")
-                        .HasForeignKey("PaymentId")
-                        .HasConstraintName("FK_premium_schedule_payment_transactions_payment_id");
-
                     b.HasOne("SpeedClaim.Api.Models.Policy", "Policy")
                         .WithMany("PremiumSchedules")
                         .HasForeignKey("PolicyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_premium_schedule_policies_policy_id");
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("FK_premium_schedules_policies");
 
-                    b.Navigation("Payment");
+                    b.HasOne("SpeedClaim.Api.Models.Proposal", "Proposal")
+                        .WithMany("PremiumSchedules")
+                        .HasForeignKey("ProposalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("FK_premium_schedules_proposals");
 
                     b.Navigation("Policy");
+
+                    b.Navigation("Proposal");
                 });
 
-            modelBuilder.Entity("SpeedClaim.Api.Models.RefreshToken", b =>
+            modelBuilder.Entity("SpeedClaim.Api.Models.Proposal", b =>
                 {
-                    b.HasOne("SpeedClaim.Api.Models.User", "User")
-                        .WithMany("RefreshTokens")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_refresh_tokens_users_user_id");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("SpeedClaim.Api.Models.User", b =>
-                {
-                    b.HasOne("SpeedClaim.Api.Models.Address", "Address")
+                    b.HasOne("SpeedClaim.Api.Models.Agent", "Agent")
                         .WithMany()
-                        .HasForeignKey("AddressId")
+                        .HasForeignKey("AgentId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("FK_proposals_agents_agent_id");
+
+                    b.HasOne("SpeedClaim.Api.Models.Customer", "Customer")
+                        .WithMany("Proposals")
+                        .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("FK_users_addresses_address_id");
+                        .HasConstraintName("FK_proposals_customers_customer_id");
 
-                    b.Navigation("Address");
+                    b.HasOne("SpeedClaim.Api.Models.InsuranceProduct", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_proposals_products_product_id");
+
+                    b.HasOne("SpeedClaim.Api.Models.User", "Underwriter")
+                        .WithMany()
+                        .HasForeignKey("UnderwriterId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("FK_proposals_users_underwriter_id");
+
+                    b.Navigation("Agent");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Underwriter");
                 });
 
-            modelBuilder.Entity("SpeedClaim.Api.Models.UserConsent", b =>
+            modelBuilder.Entity("SpeedClaim.Api.Models.ProposalMember", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.CustomerMember", "CustomerMember")
+                        .WithMany()
+                        .HasForeignKey("CustomerMemberId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_proposal_members_customer_members_customer_member_id");
+
+                    b.HasOne("SpeedClaim.Api.Models.Proposal", "Proposal")
+                        .WithMany("ProposalMembers")
+                        .HasForeignKey("ProposalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_proposal_members_proposals_proposal_id");
+
+                    b.Navigation("CustomerMember");
+
+                    b.Navigation("Proposal");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.Session", b =>
                 {
                     b.HasOne("SpeedClaim.Api.Models.User", "User")
-                        .WithMany("Consents")
+                        .WithMany("Sessions")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("FK_user_consents_users_user_id");
+                        .HasConstraintName("FK_sessions_users_user_id");
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("SpeedClaim.Api.Models.UserRole", b =>
+            modelBuilder.Entity("SpeedClaim.Api.Models.StripeCustomer", b =>
                 {
-                    b.HasOne("SpeedClaim.Api.Models.Role", "Role")
-                        .WithMany("UserRoles")
-                        .HasForeignKey("RoleId")
+                    b.HasOne("SpeedClaim.Api.Models.User", "User")
+                        .WithOne()
+                        .HasForeignKey("SpeedClaim.Api.Models.StripeCustomer", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("FK_user_roles_roles_role_id");
+                        .HasConstraintName("FK_stripe_customers_users_user_id");
 
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.SubmittedDocument", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.Claim", "Claim")
+                        .WithMany("Documents")
+                        .HasForeignKey("EntityId")
+                        .HasConstraintName("FK_submitted_documents_claims_claim_id");
+
+                    b.Navigation("Claim");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.Surveyor", b =>
+                {
                     b.HasOne("SpeedClaim.Api.Models.User", "User")
-                        .WithMany("UserRoles")
+                        .WithOne("Surveyor")
+                        .HasForeignKey("SpeedClaim.Api.Models.Surveyor", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_surveyors_users_user_id");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.SystemConfig", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.User", "UpdatedBy")
+                        .WithMany()
+                        .HasForeignKey("UpdatedById");
+
+                    b.Navigation("UpdatedBy");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.UserToken", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.User", "User")
+                        .WithMany("UserTokens")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("FK_user_roles_users_user_id");
-
-                    b.Navigation("Role");
+                        .HasConstraintName("FK_user_tokens_users_user_id");
 
                     b.Navigation("User");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.Claim", b =>
                 {
-                    b.Navigation("DocumentChecklists");
-
                     b.Navigation("Documents");
 
                     b.Navigation("HealthDetail");
 
                     b.Navigation("LifeDetail");
 
-                    b.Navigation("VehicleDetail");
+                    b.Navigation("MotorDetail");
 
-                    b.Navigation("Workflows");
+                    b.Navigation("StatusHistory");
                 });
 
-            modelBuilder.Entity("SpeedClaim.Api.Models.PaymentTransaction", b =>
+            modelBuilder.Entity("SpeedClaim.Api.Models.Customer", b =>
                 {
-                    b.Navigation("PremiumSchedules");
+                    b.Navigation("Claims");
 
-                    b.Navigation("StatusHistories");
+                    b.Navigation("CustomerMembers");
+
+                    b.Navigation("Grievances");
+
+                    b.Navigation("Payments");
+
+                    b.Navigation("Policies");
+
+                    b.Navigation("Proposals");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.Policy", b =>
                 {
-                    b.Navigation("InsuredMembers");
+                    b.Navigation("Claims");
+
+                    b.Navigation("Endorsements");
+
+                    b.Navigation("HealthDetail");
+
+                    b.Navigation("LifeDetail");
+
+                    b.Navigation("MotorDetail");
+
+                    b.Navigation("Nominees");
+
+                    b.Navigation("PolicyMembers");
+
+                    b.Navigation("PremiumPayments");
 
                     b.Navigation("PremiumSchedules");
 
-                    b.Navigation("Versions");
+                    b.Navigation("StatusHistory");
                 });
 
-            modelBuilder.Entity("SpeedClaim.Api.Models.PolicyInsuredMember", b =>
+            modelBuilder.Entity("SpeedClaim.Api.Models.PremiumSchedule", b =>
                 {
-                    b.Navigation("ClaimHealthDetails");
+                    b.Navigation("Payment");
                 });
 
-            modelBuilder.Entity("SpeedClaim.Api.Models.Role", b =>
+            modelBuilder.Entity("SpeedClaim.Api.Models.Proposal", b =>
                 {
-                    b.Navigation("UserRoles");
+                    b.Navigation("HealthDetail");
+
+                    b.Navigation("LifeDetail");
+
+                    b.Navigation("MotorDetail");
+
+                    b.Navigation("Nominees");
+
+                    b.Navigation("PremiumPayments");
+
+                    b.Navigation("PremiumSchedules");
+
+                    b.Navigation("ProposalMembers");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.Surveyor", b =>
+                {
+                    b.Navigation("Claims");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.User", b =>
                 {
-                    b.Navigation("Agent")
-                        .IsRequired();
+                    b.Navigation("Addresses");
+
+                    b.Navigation("Agent");
 
                     b.Navigation("AuditLogs");
 
-                    b.Navigation("Consents");
+                    b.Navigation("Customer");
 
-                    b.Navigation("RefreshTokens");
+                    b.Navigation("KycRecord");
 
-                    b.Navigation("StatusChanges");
+                    b.Navigation("Sessions");
 
-                    b.Navigation("UserRoles");
+                    b.Navigation("Surveyor");
+
+                    b.Navigation("UserTokens");
                 });
 #pragma warning restore 612, 618
         }

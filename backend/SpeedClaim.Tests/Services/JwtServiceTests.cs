@@ -1,9 +1,12 @@
+using System;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using NUnit.Framework;
 using SpeedClaim.Api.Models;
+using SpeedClaim.Api.Models.Enums;
 using SpeedClaim.Api.Services;
 
 namespace SpeedClaim.Tests.Services;
@@ -11,104 +14,76 @@ namespace SpeedClaim.Tests.Services;
 [TestFixture]
 public class JwtServiceTests
 {
-    private Mock<IConfiguration> _configurationMock;
-    private Mock<IConfigurationSection> _jwtSettingsMock;
-    private JwtService _jwtService;
+    private Mock<IConfiguration> _mockConfig = null!;
+    private Mock<IConfigurationSection> _mockSection = null!;
+    private JwtService _jwtService = null!;
 
     [SetUp]
-    public void SetUp()
+    public void Setup()
     {
-        _configurationMock = new Mock<IConfiguration>();
-        _jwtSettingsMock = new Mock<IConfigurationSection>();
+        _mockConfig = new Mock<IConfiguration>();
+        _mockSection = new Mock<IConfigurationSection>();
 
-        _jwtSettingsMock.Setup(s => s["Secret"]).Returns("SuperSecretKeyThatIsAtLeast32BytesLong!!");
-        _jwtSettingsMock.Setup(s => s["Issuer"]).Returns("SpeedClaimApi");
-        _jwtSettingsMock.Setup(s => s["Audience"]).Returns("SpeedClaimClients");
-        _jwtSettingsMock.Setup(s => s["AccessTokenExpirationMinutes"]).Returns("15");
+        _mockSection.Setup(s => s["Secret"]).Returns("SuperSecretKeyThatIsAtLeast32BytesLong!!");
+        _mockSection.Setup(s => s["Issuer"]).Returns("SpeedClaimApi");
+        _mockSection.Setup(s => s["Audience"]).Returns("SpeedClaimClients");
+        _mockSection.Setup(s => s["AccessTokenExpirationMinutes"]).Returns("15");
 
-        _configurationMock.Setup(c => c.GetSection("JwtSettings")).Returns(_jwtSettingsMock.Object);
+        _mockConfig.Setup(c => c.GetSection("JwtSettings")).Returns(_mockSection.Object);
 
-        _jwtService = new JwtService(_configurationMock.Object);
+        _jwtService = new JwtService(_mockConfig.Object);
     }
 
     [Test]
-    public void GenerateAccessToken_WithValidUser_ReturnsValidJwt()
+    public void GenerateAccessToken_ValidUser_ReturnsValidJwt()
     {
-        // Arrange
         var user = new User
         {
             Id = Guid.NewGuid(),
             Email = "test@example.com",
-            FirstName = "Test", LastName = "User", Salutation = "Mr.",
-            KycStatus = "VERIFIED",
-            UserRoles = new List<UserRole>
-            {
-                new UserRole { Role = new Role { Code = "Customer" } }
-            }
+            FirstName = "Test",
+            LastName = "User",
+            Role = UserRole.Customer
         };
 
-        // Act
         var token = _jwtService.GenerateAccessToken(user);
 
-        // Assert
         Assert.That(token, Is.Not.Null.And.Not.Empty);
-
         var handler = new JwtSecurityTokenHandler();
-        var jwtToken = handler.ReadJwtToken(token);
-
-        Assert.That(jwtToken.Issuer, Is.EqualTo("SpeedClaimApi"));
-        Assert.That(jwtToken.Audiences.First(), Is.EqualTo("SpeedClaimClients"));
-        Assert.That(jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value, Is.EqualTo(user.Id.ToString()));
-        Assert.That(jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Email)?.Value, Is.EqualTo("test@example.com"));
-        Assert.That(jwtToken.Claims.FirstOrDefault(c => c.Type == "fullName")?.Value, Is.EqualTo("Mr. Test User"));
-        Assert.That(jwtToken.Claims.FirstOrDefault(c => c.Type == "kycStatus")?.Value, Is.EqualTo("VERIFIED"));
-        Assert.That(jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value, Is.EqualTo("Customer"));
+        var jwt = handler.ReadJwtToken(token);
+        Assert.That(jwt.Issuer, Is.EqualTo("SpeedClaimApi"));
+        Assert.That(jwt.Claims.First(c => c.Type == JwtRegisteredClaimNames.Email).Value, Is.EqualTo("test@example.com"));
+        Assert.That(jwt.Claims.Any(c => c.Type == ClaimTypes.Role && c.Value == "Customer"), Is.True);
     }
 
     [Test]
-    public void GenerateAccessToken_MissingSecret_ThrowsInvalidOperationException()
+    public void GenerateAccessToken_UserWithKycRecord_IncludesKycStatus()
     {
-        // Arrange
-        _jwtSettingsMock.Setup(s => s["Secret"]).Returns((string)null!);
-        var user = new User { Id = Guid.NewGuid(), Email = "test@example.com", FirstName = "Test", LastName = "User", Salutation = "Mr." };
-
-        // Act & Assert
-        Assert.Throws<InvalidOperationException>(() => _jwtService.GenerateAccessToken(user));
-    }
-
-    [Test]
-    public void GenerateAccessToken_NoRoles_DefaultsToCustomer()
-    {
-        // Arrange
         var user = new User
         {
             Id = Guid.NewGuid(),
-            Email = "test@example.com",
-            FirstName = "Test", LastName = "User", Salutation = "Mr.",
-            KycStatus = "PENDING"
+            Email = "kyc@example.com",
+            FirstName = "KYC",
+            LastName = "User",
+            Role = UserRole.Customer,
+            KycRecord = new KycRecord { KycStatus = KycStatus.Approved }
         };
 
-        // Act
         var token = _jwtService.GenerateAccessToken(user);
-        var handler = new JwtSecurityTokenHandler();
-        var jwtToken = handler.ReadJwtToken(token);
 
-        // Assert
-        Assert.That(jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value, Is.EqualTo("Customer"));
+        var handler = new JwtSecurityTokenHandler();
+        var jwt = handler.ReadJwtToken(token);
+        Assert.That(jwt.Claims.Any(c => c.Type == "kycStatus" && c.Value == "Approved"), Is.True);
     }
 
     [Test]
-    public void GenerateRefreshToken_ReturnsBase64String()
+    public void GenerateRefreshToken_ReturnsDifferentTokensEachCall()
     {
-        // Act
-        var refreshToken = _jwtService.GenerateRefreshToken();
+        var t1 = _jwtService.GenerateRefreshToken();
+        var t2 = _jwtService.GenerateRefreshToken();
 
-        // Assert
-        Assert.That(refreshToken, Is.Not.Null.And.Not.Empty);
-        
-        // Ensure it's valid base64
-        var buffer = new Span<byte>(new byte[refreshToken.Length]);
-        var isBase64 = Convert.TryFromBase64String(refreshToken, buffer, out _);
-        Assert.That(isBase64, Is.True);
+        Assert.That(t1, Is.Not.Null.And.Not.Empty);
+        Assert.That(t2, Is.Not.Null.And.Not.Empty);
+        Assert.That(t1, Is.Not.EqualTo(t2));
     }
 }

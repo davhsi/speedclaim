@@ -1,17 +1,16 @@
-using Microsoft.Extensions.DependencyInjection;
-using NUnit.Framework;
-using AutoMapper;
-using Moq;
-using SpeedClaim.Api.Dtos.Policies;
-using SpeedClaim.Api.Mappings;
-using SpeedClaim.Api.Models;
-using SpeedClaim.Api.Services;
-using SpeedClaim.Api.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using Moq;
+using NUnit.Framework;
+using SpeedClaim.Api.Dtos.Policies;
+using SpeedClaim.Api.Interfaces;
+using SpeedClaim.Api.Models;
+using SpeedClaim.Api.Models.Enums;
+using SpeedClaim.Api.Services;
 
 namespace SpeedClaim.Tests.Services;
 
@@ -19,224 +18,452 @@ namespace SpeedClaim.Tests.Services;
 public class PolicyServiceTests
 {
     private Mock<IUnitOfWork> _mockUnitOfWork;
-    private Mock<IPolicyRepository> _mockPolicyRepo;
-    private Mock<IRepository<InsuranceProduct>> _mockProductRepo;
-    private Mock<IRepository<Agent>> _mockAgentRepo;
-    private IMapper _mapper;
+    private Mock<IStorageService> _mockStorageService;
     private PolicyService _policyService;
 
     [SetUp]
     public void Setup()
     {
-        _mockUnitOfWork = new Mock<IUnitOfWork>();
-        _mockPolicyRepo = new Mock<IPolicyRepository>();
-        _mockProductRepo = new Mock<IRepository<InsuranceProduct>>();
-        _mockAgentRepo = new Mock<IRepository<Agent>>();
+        _mockUnitOfWork = new Mock<IUnitOfWork>() { DefaultValue = DefaultValue.Mock };
+        _mockStorageService = new Mock<IStorageService>();
 
-        _mockUnitOfWork.Setup(u => u.Policies).Returns(_mockPolicyRepo.Object);
-        _mockUnitOfWork.Setup(u => u.Products).Returns(_mockProductRepo.Object);
-        _mockUnitOfWork.Setup(u => u.Agents).Returns(_mockAgentRepo.Object);
-
-        var services = new ServiceCollection();
-        services.AddLogging();
-        services.AddAutoMapper(config => config.AddProfile<MappingProfile>());
-        var provider = services.BuildServiceProvider();
-        _mapper = provider.GetRequiredService<IMapper>();
-
-        _policyService = new PolicyService(_mockUnitOfWork.Object, _mapper);
+        _policyService = new PolicyService(_mockUnitOfWork.Object, _mockStorageService.Object);
     }
 
     [Test]
-    public async Task IssuePolicyAsync_ValidRequest_IssuesPendingPolicy()
+    public async Task GetMyPoliciesAsync_ReturnsMappedPolicies()
     {
-        var productId = Guid.NewGuid();
-        var userId = Guid.NewGuid();
-        var product = new InsuranceProduct { Id = productId, Domain = "HEALTH" };
-        
-        _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
-        _mockPolicyRepo.Setup(r => r.AddAsync(It.IsAny<Policy>())).Callback<Policy>(p => p.Id = Guid.NewGuid());
-        _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
-        _mockPolicyRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(new HealthPolicy { Status = "PENDING" });
-
-        var request = new CreatePolicyRequest(
-            UserId: userId,
-            ProductId: productId,
-            PremiumAmount: 5000m,
-            CoverageAmount: 1000000m,
-            PaymentFrequency: "YEARLY",
-            StartDate: DateTime.UtcNow,
-            EndDate: DateTime.UtcNow.AddYears(1),
-            Domain: "HEALTH",
-            HealthDetail: new PolicyHealthDetailDto(true, 5000m, "TPA"),
-            VehicleDetail: null,
-            LifeDetail: null
-        );
-
-        var result = await _policyService.IssuePolicyAsync(request, null);
-
-        Assert.That(result, Is.Not.Null);
-        Assert.That(result.Status, Is.EqualTo("PENDING"));
-        _mockPolicyRepo.Verify(r => r.AddAsync(It.IsAny<Policy>()), Times.Once);
-    }
-
-    [Test]
-    public void IssuePolicyAsync_InvalidDomain_ThrowsArgumentException()
-    {
-        var productId = Guid.NewGuid();
-        var userId = Guid.NewGuid();
-        var product = new InsuranceProduct { Id = productId, Domain = "HEALTH" };
-        
-        _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
-
-        var request = new CreatePolicyRequest(
-            UserId: userId,
-            ProductId: productId,
-            PremiumAmount: 5000m,
-            CoverageAmount: 1000000m,
-            PaymentFrequency: "YEARLY",
-            StartDate: DateTime.UtcNow,
-            EndDate: DateTime.UtcNow.AddYears(1),
-            Domain: "VEHICLE", // Mismatch
-            HealthDetail: null,
-            VehicleDetail: null,
-            LifeDetail: null
-        );
-
-        var ex = Assert.ThrowsAsync<ArgumentException>(async () => await _policyService.IssuePolicyAsync(request, null));
-        Assert.That(ex.Message, Does.Contain("domain does not match"));
-    }
-
-    [Test]
-    public async Task GetPoliciesByUserAsync_ReturnsUserPolicies()
-    {
-        var userId = Guid.NewGuid();
+        // Arrange
+        var customerId = Guid.NewGuid();
         var policies = new List<Policy>
         {
-            new HealthPolicy { UserId = userId, Status = "ACTIVE", Domain = "HEALTH", PolicyNumber = "H1" },
-            new VehiclePolicy { UserId = userId, Status = "PENDING", Domain = "VEHICLE", PolicyNumber = "V1" }
+            new Policy { Id = Guid.NewGuid(), CustomerId = customerId, PolicyNumber = "POL-1" },
+            new Policy { Id = Guid.NewGuid(), CustomerId = customerId, PolicyNumber = "POL-2" }
         };
 
-        _mockPolicyRepo.Setup(r => r.GetPagedAsync(1, 10, It.IsAny<Expression<Func<Policy, bool>>>(), It.IsAny<Func<System.Linq.IQueryable<Policy>, System.Linq.IQueryable<Policy>>>())).ReturnsAsync((policies, policies.Count));
+        _mockUnitOfWork.Setup(u => u.Policies.FindAsync(It.IsAny<Expression<Func<Policy, bool>>>()))
+            .ReturnsAsync(policies);
 
-        var result = await _policyService.GetPoliciesByUserAsync(userId, 1, 10);
+        // Act
+        var result = await _policyService.GetMyPoliciesAsync(customerId);
 
-        Assert.That(result.Data.Count(), Is.EqualTo(2));
+        // Assert
+        Assert.That(result.Count(), Is.EqualTo(2));
+        Assert.That(result.First().PolicyNumber, Is.EqualTo("POL-1"));
     }
 
     [Test]
-    public void IssuePolicyAsync_InvalidProduct_ThrowsArgumentException()
+    public void DownloadPolicyDocumentAsync_PolicyNotFound_ThrowsException()
     {
-        _mockProductRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((InsuranceProduct?)null);
+        var policyId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
 
-        var request = new CreatePolicyRequest(Guid.NewGuid(), Guid.NewGuid(), 5000m, 1000000m, "YEARLY", DateTime.UtcNow, DateTime.UtcNow.AddYears(1), "HEALTH", null, null, null);
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync((Policy)null);
 
-        var ex = Assert.ThrowsAsync<ArgumentException>(async () => await _policyService.IssuePolicyAsync(request, null));
-        Assert.That(ex.Message, Does.Contain("Invalid product ID."));
+        Assert.ThrowsAsync<KeyNotFoundException>(() => _policyService.DownloadPolicyDocumentAsync(policyId, customerId));
     }
 
     [Test]
-    public void IssuePolicyAsync_UnknownDomain_ThrowsArgumentException()
+    public async Task DownloadPolicyDocumentAsync_ValidPolicy_ReturnsGeneratedDocument()
     {
-        var productId = Guid.NewGuid();
-        var product = new InsuranceProduct { Id = productId, Domain = "HOME" };
-        _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
+        var policyId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var policy = new Policy { Id = policyId, CustomerId = customerId, PolicyNumber = "POL-TEST-001" };
 
-        var request = new CreatePolicyRequest(Guid.NewGuid(), productId, 5000m, 1000000m, "YEARLY", DateTime.UtcNow, DateTime.UtcNow.AddYears(1), "HOME", null, null, null);
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
 
-        var ex = Assert.ThrowsAsync<ArgumentException>(async () => await _policyService.IssuePolicyAsync(request, null));
-        Assert.That(ex.Message, Does.Contain("Unknown domain"));
+        var result = await _policyService.DownloadPolicyDocumentAsync(policyId, customerId);
+
+        Assert.That(result, Is.Not.Empty);
+        var text = System.Text.Encoding.UTF8.GetString(result);
+        Assert.That(text, Does.Contain("POLICY DOCUMENT"));
+        Assert.That(text, Does.Contain("POL-TEST-001"));
     }
 
     [Test]
-    public async Task IssuePolicyAsync_VehicleDomain_MonthlyFrequency_WithAgent_IssuesPolicy()
+    public async Task DownloadPolicyDocumentAsync_Success_ReturnsByteArray()
     {
-        var productId = Guid.NewGuid();
-        var userId = Guid.NewGuid();
-        var agentUserId = Guid.NewGuid();
-        var agentId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var policy = new Policy { Id = policyId, CustomerId = customerId };
 
-        var product = new InsuranceProduct { Id = productId, Domain = "VEHICLE" };
-        var agent = new Agent { Id = agentId, UserId = agentUserId };
-        
-        _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
-        _mockAgentRepo.Setup(r => r.SingleOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync(agent);
-        
-        Policy capturedPolicy = null;
-        _mockPolicyRepo.Setup(r => r.AddAsync(It.IsAny<Policy>())).Callback<Policy>(p => 
-        { 
-            p.Id = Guid.NewGuid(); 
-            capturedPolicy = p; 
-        });
-        
-        _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
-        _mockPolicyRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(() => capturedPolicy);
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
 
-        var request = new CreatePolicyRequest(
-            UserId: userId,
-            ProductId: productId,
-            PremiumAmount: 12000m,
-            CoverageAmount: 500000m,
-            PaymentFrequency: "MONTHLY",
-            StartDate: DateTime.UtcNow,
-            EndDate: DateTime.UtcNow.AddYears(1),
-            Domain: "VEHICLE",
-            HealthDetail: null,
-            VehicleDetail: new PolicyVehicleDetailDto("KA011234", "Toyota", "Camry", 2020, 450000m, true),
-            LifeDetail: null
-        );
-
-        var result = await _policyService.IssuePolicyAsync(request, agentUserId);
+        var result = await _policyService.DownloadPolicyDocumentAsync(policyId, customerId);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(capturedPolicy, Is.InstanceOf<VehiclePolicy>());
-        Assert.That(capturedPolicy.AgentId, Is.EqualTo(agentId));
-        Assert.That(capturedPolicy.PremiumSchedules.Count, Is.EqualTo(12));
+        Assert.That(result.Length, Is.GreaterThan(0));
     }
 
     [Test]
-    public async Task IssuePolicyAsync_LifeDomain_QuarterlyFrequency_IssuesPolicy()
+    public async Task RequestEndorsementAsync_Success_AddsEndorsement()
     {
-        var productId = Guid.NewGuid();
-        var product = new InsuranceProduct { Id = productId, Domain = "LIFE" };
-        _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
-        
-        Policy capturedPolicy = null;
-        _mockPolicyRepo.Setup(r => r.AddAsync(It.IsAny<Policy>())).Callback<Policy>(p => 
-        { 
-            p.Id = Guid.NewGuid(); 
-            capturedPolicy = p; 
-        });
-        
-        _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
-        _mockPolicyRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(() => capturedPolicy);
+        var policyId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var policy = new Policy { Id = policyId, CustomerId = customerId };
+        var request = new RequestEndorsementRequest(EndorsementType.AddressChange, "Moving", null, null);
 
-        var request = new CreatePolicyRequest(Guid.NewGuid(), productId, 4000m, 1000000m, "QUARTERLY", DateTime.UtcNow, DateTime.UtcNow.AddYears(1), "LIFE", null, null, new PolicyLifeDetailDto("Jane Doe", "Spouse", "123456", false));
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
 
-        var result = await _policyService.IssuePolicyAsync(request, null);
+        await _policyService.RequestEndorsementAsync(policyId, customerId, request);
 
-        Assert.That(result, Is.Not.Null);
-        Assert.That(capturedPolicy, Is.InstanceOf<LifePolicy>());
-        Assert.That(capturedPolicy.PremiumSchedules.Count, Is.EqualTo(4));
-    }
-
-    [Test]
-    public void GetPolicyByIdAsync_NotFound_ThrowsKeyNotFoundException()
-    {
-        _mockPolicyRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Policy?)null);
-        Assert.ThrowsAsync<KeyNotFoundException>(async () => await _policyService.GetPolicyByIdAsync(Guid.NewGuid()));
-    }
-
-    [Test]
-    public async Task IssuePolicyAsync_AnnualFrequency_GeneratesSchedules()
-    {
-        var product = new InsuranceProduct { Id = Guid.NewGuid(), Code = "PRD1", Domain = "HEALTH" };
-        var request = new CreatePolicyRequest(Guid.NewGuid(), product.Id, 1000m, 50000m, "ANNUAL", DateTime.UtcNow, DateTime.UtcNow.AddYears(1), "HEALTH", null, null, null);
-
-        _mockProductRepo.Setup(r => r.GetByIdAsync(product.Id)).ReturnsAsync(product);
-        _mockPolicyRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(new HealthPolicy { Status = "PENDING", PaymentFrequency = "ANNUAL" });
-
-        var result = await _policyService.IssuePolicyAsync(request);
-
+        _mockUnitOfWork.Verify(u => u.Endorsements.AddAsync(It.Is<Endorsement>(e => e.PolicyId == policyId && e.EndorsementType == EndorsementType.AddressChange)), Times.Once);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public void ApproveRejectEndorsementAsync_InvalidStatus_ThrowsException()
+    {
+        var endorsementId = Guid.NewGuid();
+        var underwriterId = Guid.NewGuid();
+        var endorsement = new Endorsement { Id = endorsementId, Status = EndorsementStatus.Approved };
+
+        _mockUnitOfWork.Setup(u => u.Endorsements.GetByIdAsync(endorsementId)).ReturnsAsync(endorsement);
+
+        Assert.ThrowsAsync<InvalidOperationException>(() => 
+            _policyService.ApproveRejectEndorsementAsync(endorsementId, true, "OK", underwriterId));
+    }
+
+    [Test]
+    public async Task ApproveRejectEndorsementAsync_Success_UpdatesStatus()
+    {
+        var endorsementId = Guid.NewGuid();
+        var underwriterId = Guid.NewGuid();
+        var endorsement = new Endorsement { Id = endorsementId, Status = EndorsementStatus.Requested };
+
+        _mockUnitOfWork.Setup(u => u.Endorsements.GetByIdAsync(endorsementId)).ReturnsAsync(endorsement);
+
+        await _policyService.ApproveRejectEndorsementAsync(endorsementId, true, "OK", underwriterId);
+
+        Assert.That(endorsement.Status, Is.EqualTo(EndorsementStatus.Approved));
+        Assert.That(endorsement.ReviewedById, Is.EqualTo(underwriterId));
+        _mockUnitOfWork.Verify(u => u.Endorsements.Update(endorsement), Times.Once);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    // --- UpdateNomineeAsync tests ---
+
+    [Test]
+    public void UpdateNomineeAsync_NomineeNotFound_ThrowsKeyNotFound()
+    {
+        var nomineeId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+
+        _mockUnitOfWork.Setup(u => u.Nominees.GetByIdAsync(nomineeId)).ReturnsAsync((Nominee?)null);
+
+        var request = new UpdateNomineeRequest("Jane Doe", "Spouse", DateTime.UtcNow.AddYears(-30), 100, false, null);
+
+        Assert.ThrowsAsync<KeyNotFoundException>(() =>
+            _policyService.UpdateNomineeAsync(nomineeId, customerId, request));
+    }
+
+    [Test]
+    public void UpdateNomineeAsync_WrongCustomer_ThrowsUnauthorized()
+    {
+        var nomineeId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+
+        var nominee = new Nominee { Id = nomineeId, PolicyId = policyId };
+        var policy = new Policy { Id = policyId, CustomerId = Guid.NewGuid() }; // Different customer
+
+        _mockUnitOfWork.Setup(u => u.Nominees.GetByIdAsync(nomineeId)).ReturnsAsync(nominee);
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
+
+        var request = new UpdateNomineeRequest("Jane", "Spouse", DateTime.UtcNow.AddYears(-25), 100, false, null);
+
+        Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            _policyService.UpdateNomineeAsync(nomineeId, customerId, request));
+    }
+
+    [Test]
+    public async Task UpdateNomineeAsync_ValidRequest_UpdatesNomineeFields()
+    {
+        var nomineeId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+        var dob = DateTime.UtcNow.AddYears(-28);
+
+        var nominee = new Nominee { Id = nomineeId, PolicyId = policyId, FullName = "Old Name" };
+        var policy = new Policy { Id = policyId, CustomerId = customerId };
+
+        _mockUnitOfWork.Setup(u => u.Nominees.GetByIdAsync(nomineeId)).ReturnsAsync(nominee);
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
+        _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
+
+        var request = new UpdateNomineeRequest("Jane Doe", "Spouse", dob, 100m, false, null);
+
+        await _policyService.UpdateNomineeAsync(nomineeId, customerId, request);
+
+        Assert.That(nominee.FullName, Is.EqualTo("Jane Doe"));
+        Assert.That(nominee.Relationship, Is.EqualTo("Spouse"));
+        Assert.That(nominee.DateOfBirth, Is.EqualTo(dob));
+        Assert.That(nominee.SharePercentage, Is.EqualTo(100m));
+        Assert.That(nominee.UpdatedAt, Is.Not.Null);
+        _mockUnitOfWork.Verify(u => u.Nominees.Update(nominee), Times.Once);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public async Task GetByIdAsync_NullCustomer_ReturnsPolicy()
+    {
+        var policyId = Guid.NewGuid();
+        var policy = new Policy { Id = policyId, PolicyNumber = "POL-001", CustomerId = Guid.NewGuid(), Status = PolicyStatus.Active };
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
+
+        var result = await _policyService.GetByIdAsync(policyId);
+
+        Assert.That(result.Id, Is.EqualTo(policyId));
+    }
+
+    [Test]
+    public void GetByIdAsync_NotFound_ThrowsKeyNotFound()
+    {
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Policy?)null);
+
+        Assert.ThrowsAsync<KeyNotFoundException>(() => _policyService.GetByIdAsync(Guid.NewGuid()));
+    }
+
+    [Test]
+    public void GetByIdAsync_WrongCustomer_ThrowsUnauthorized()
+    {
+        var policyId = Guid.NewGuid();
+        var policy = new Policy { Id = policyId, CustomerId = Guid.NewGuid(), Status = PolicyStatus.Active };
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
+
+        Assert.ThrowsAsync<UnauthorizedAccessException>(() => _policyService.GetByIdAsync(policyId, Guid.NewGuid()));
+    }
+
+    [Test]
+    public async Task GetNomineesAsync_PolicyWithProposal_ReturnsNominees()
+    {
+        var policyId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var proposalId = Guid.NewGuid();
+        var policy = new Policy { Id = policyId, CustomerId = customerId, ProposalId = proposalId, Status = PolicyStatus.Active };
+        var nominees = new List<Nominee>
+        {
+            new Nominee { Id = Guid.NewGuid(), ProposalId = proposalId, FullName = "Jane Doe", Relationship = "Spouse", DateOfBirth = new DateTime(1990, 1, 1), SharePercentage = 100 }
+        };
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
+        _mockUnitOfWork.Setup(u => u.Nominees.FindAsync(It.IsAny<Expression<Func<Nominee, bool>>>())).ReturnsAsync(nominees);
+
+        var result = await _policyService.GetNomineesAsync(policyId, customerId);
+
+        Assert.That(result.Count(), Is.EqualTo(1));
+        Assert.That(result.First().FullName, Is.EqualTo("Jane Doe"));
+    }
+
+    [Test]
+    public void GetNomineesAsync_WrongCustomer_ThrowsUnauthorized()
+    {
+        var policyId = Guid.NewGuid();
+        var policy = new Policy { Id = policyId, CustomerId = Guid.NewGuid(), Status = PolicyStatus.Active };
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
+
+        Assert.ThrowsAsync<UnauthorizedAccessException>(() => _policyService.GetNomineesAsync(policyId, Guid.NewGuid()));
+    }
+
+    [Test]
+    public async Task CancelPolicyAsync_ActivePolicy_SetsCancelled()
+    {
+        var policyId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var policy = new Policy { Id = policyId, CustomerId = customerId, Status = PolicyStatus.Active };
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
+
+        await _policyService.CancelPolicyAsync(policyId, customerId);
+
+        Assert.That(policy.Status, Is.EqualTo(PolicyStatus.Cancelled));
+        _mockUnitOfWork.Verify(u => u.PolicyStatusHistories.AddAsync(It.Is<PolicyStatusHistory>(h =>
+            h.OldStatus == PolicyStatus.Active && h.NewStatus == PolicyStatus.Cancelled)), Times.Once);
+    }
+
+    [Test]
+    public void CancelPolicyAsync_AlreadyCancelled_ThrowsInvalidOperation()
+    {
+        var policyId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var policy = new Policy { Id = policyId, CustomerId = customerId, Status = PolicyStatus.Cancelled };
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
+
+        Assert.ThrowsAsync<InvalidOperationException>(() => _policyService.CancelPolicyAsync(policyId, customerId));
+    }
+
+    [Test]
+    public void CancelPolicyAsync_WrongCustomer_ThrowsKeyNotFound()
+    {
+        var policyId = Guid.NewGuid();
+        var policy = new Policy { Id = policyId, CustomerId = Guid.NewGuid(), Status = PolicyStatus.Active };
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
+
+        Assert.ThrowsAsync<KeyNotFoundException>(() => _policyService.CancelPolicyAsync(policyId, Guid.NewGuid()));
+    }
+
+    [Test]
+    public async Task GetPolicyHistoryAsync_WithCustomerId_VerifiesOwnershipAndReturnsHistory()
+    {
+        var policyId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var policy = new Policy { Id = policyId, CustomerId = customerId, Status = PolicyStatus.Active };
+        var history = new List<PolicyStatusHistory>
+        {
+            new PolicyStatusHistory { Id = Guid.NewGuid(), PolicyId = policyId, OldStatus = PolicyStatus.Pending, NewStatus = PolicyStatus.Active, ChangedAt = DateTimeOffset.UtcNow }
+        };
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
+        _mockUnitOfWork.Setup(u => u.PolicyStatusHistories.FindAsync(It.IsAny<Expression<Func<PolicyStatusHistory, bool>>>())).ReturnsAsync(history);
+
+        var result = await _policyService.GetPolicyHistoryAsync(policyId, customerId);
+
+        Assert.That(result.Count(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public void GetPolicyHistoryAsync_WrongCustomer_ThrowsUnauthorized()
+    {
+        var policyId = Guid.NewGuid();
+        var policy = new Policy { Id = policyId, CustomerId = Guid.NewGuid(), Status = PolicyStatus.Active };
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
+
+        Assert.ThrowsAsync<UnauthorizedAccessException>(() => _policyService.GetPolicyHistoryAsync(policyId, Guid.NewGuid()));
+    }
+
+    [Test]
+    public async Task GetPolicyEndorsementsAsync_ValidPolicy_ReturnsEndorsements()
+    {
+        var policyId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var policy = new Policy { Id = policyId, CustomerId = customerId, Status = PolicyStatus.Active };
+        var endorsements = new List<Endorsement>
+        {
+            new Endorsement { Id = Guid.NewGuid(), PolicyId = policyId, EndorsementType = EndorsementType.AddressChange, Description = "New address", Status = EndorsementStatus.Requested }
+        };
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
+        _mockUnitOfWork.Setup(u => u.Endorsements.FindAsync(It.IsAny<Expression<Func<Endorsement, bool>>>())).ReturnsAsync(endorsements);
+
+        var result = await _policyService.GetPolicyEndorsementsAsync(policyId, customerId);
+
+        Assert.That(result.Count(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task GetPendingEndorsementsAsync_ReturnsOnlyRequested()
+    {
+        var endorsements = new List<Endorsement>
+        {
+            new Endorsement { Id = Guid.NewGuid(), PolicyId = Guid.NewGuid(), EndorsementType = EndorsementType.NomineeChange, Description = "Change nominee", Status = EndorsementStatus.Requested }
+        };
+        _mockUnitOfWork.Setup(u => u.Endorsements.FindAsync(It.IsAny<Expression<Func<Endorsement, bool>>>())).ReturnsAsync(endorsements);
+
+        var result = await _policyService.GetPendingEndorsementsAsync();
+
+        Assert.That(result.Count(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task GetNomineesAsync_NoPolicyProposalId_ReturnsEmpty()
+    {
+        var policyId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var policy = new Policy { Id = policyId, CustomerId = customerId, ProposalId = null };
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
+
+        var result = await _policyService.GetNomineesAsync(policyId, customerId);
+
+        Assert.That(result, Is.Empty);
+    }
+
+    [Test]
+    public void CancelPolicyAsync_PolicyNotActiveOrPending_ThrowsInvalidOperation()
+    {
+        var policyId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var policy = new Policy { Id = policyId, CustomerId = customerId, Status = PolicyStatus.Expired };
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
+
+        Assert.ThrowsAsync<InvalidOperationException>(() => _policyService.CancelPolicyAsync(policyId, customerId));
+    }
+
+    [Test]
+    public async Task DownloadPolicyDocumentAsync_WithIssuedAt_IncludesIssuedAtLine()
+    {
+        var policyId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var policy = new Policy
+        {
+            Id = policyId, CustomerId = customerId, PolicyNumber = "POL-1",
+            Status = PolicyStatus.Active, PolicyType = PolicyType.Individual,
+            SumAssured = 500000, PremiumAmount = 12000,
+            PaymentFrequency = "Annual",
+            StartDate = new DateTime(2025, 1, 1), EndDate = new DateTime(2026, 1, 1),
+            IssuedAt = DateTimeOffset.UtcNow
+        };
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
+
+        var result = await _policyService.DownloadPolicyDocumentAsync(policyId, customerId);
+
+        var text = System.Text.Encoding.UTF8.GetString(result);
+        Assert.That(text, Does.Contain("Issued At"));
+    }
+
+    [Test]
+    public void RequestEndorsementAsync_PolicyNotFound_ThrowsKeyNotFound()
+    {
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Policy?)null);
+        var request = new RequestEndorsementRequest(EndorsementType.ContactUpdate, "Update contact", "old phone", "new phone");
+
+        Assert.ThrowsAsync<KeyNotFoundException>(() =>
+            _policyService.RequestEndorsementAsync(Guid.NewGuid(), Guid.NewGuid(), request));
+    }
+
+    [Test]
+    public async Task GetAssignedCustomerPoliciesAsync_ReturnsAgentPolicies()
+    {
+        var agentId = Guid.NewGuid();
+        var policies = new List<Policy>
+        {
+            new Policy { Id = Guid.NewGuid(), AgentId = agentId, PolicyNumber = "POL-A1" }
+        };
+        _mockUnitOfWork.Setup(u => u.Policies.FindAsync(It.IsAny<Expression<Func<Policy, bool>>>())).ReturnsAsync(policies);
+
+        var result = await _policyService.GetAssignedCustomerPoliciesAsync(agentId);
+
+        Assert.That(result.Count(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task GetAllPoliciesAsync_ReturnsAll()
+    {
+        var policies = new List<Policy>
+        {
+            new Policy { Id = Guid.NewGuid(), PolicyNumber = "POL-1" },
+            new Policy { Id = Guid.NewGuid(), PolicyNumber = "POL-2" }
+        };
+        _mockUnitOfWork.Setup(u => u.Policies.GetAllAsync()).ReturnsAsync(policies);
+
+        var result = await _policyService.GetAllPoliciesAsync();
+
+        Assert.That(result.Count(), Is.EqualTo(2));
+    }
+
+    [Test]
+    public void ApproveRejectEndorsementAsync_NotFound_ThrowsKeyNotFound()
+    {
+        _mockUnitOfWork.Setup(u => u.Endorsements.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Endorsement?)null);
+
+        Assert.ThrowsAsync<KeyNotFoundException>(() =>
+            _policyService.ApproveRejectEndorsementAsync(Guid.NewGuid(), true, "approved", Guid.NewGuid()));
+    }
+
+    [Test]
+    public void GetPolicyEndorsementsAsync_AccessDenied_ThrowsUnauthorized()
+    {
+        var policyId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var policy = new Policy { Id = policyId, CustomerId = Guid.NewGuid() };
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
+
+        Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            _policyService.GetPolicyEndorsementsAsync(policyId, customerId));
     }
 }

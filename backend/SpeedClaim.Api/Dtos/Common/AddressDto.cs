@@ -1,7 +1,8 @@
 namespace SpeedClaim.Api.Dtos.Common;
 
 public record AddressDto(
-    string Street,
+    string Line1,
+    string? Line2,
     string City,
     string State,
     string PostalCode,

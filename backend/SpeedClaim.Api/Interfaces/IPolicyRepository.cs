@@ -7,7 +7,7 @@ namespace SpeedClaim.Api.Interfaces;
 
 public interface IPolicyRepository : IRepository<Policy>
 {
-    Task<VehiclePolicy?> GetVehiclePolicyByIdAsync(Guid id);
-    Task<HealthPolicy?> GetHealthPolicyByIdAsync(Guid id);
-    Task<LifePolicy?> GetLifePolicyByIdAsync(Guid id);
+    Task<Policy?> GetMotorPolicyByIdAsync(Guid id);
+    Task<Policy?> GetHealthPolicyByIdAsync(Guid id);
+    Task<Policy?> GetLifePolicyByIdAsync(Guid id);
 }

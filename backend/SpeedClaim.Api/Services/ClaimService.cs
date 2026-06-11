@@ -1,11 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using SpeedClaim.Api.Context;
+using Microsoft.AspNetCore.Http;
 using SpeedClaim.Api.Dtos.Claims;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Models;
+using SpeedClaim.Api.Models.Enums;
 
 namespace SpeedClaim.Api.Services;
 
@@ -13,238 +14,318 @@ public class ClaimService : IClaimService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IStorageService _storageService;
-    private readonly IEmailService _emailService;
+    private readonly INotificationService _notifications;
 
-    public ClaimService(IUnitOfWork unitOfWork, IStorageService storageService, IEmailService emailService)
+    public ClaimService(IUnitOfWork unitOfWork, IStorageService storageService, INotificationService notifications)
     {
         _unitOfWork = unitOfWork;
         _storageService = storageService;
-        _emailService = emailService;
+        _notifications = notifications;
     }
 
-    public async Task<SpeedClaim.Api.Dtos.Common.PagedResponse<ClaimResponse>> GetAllClaimsAsync(Guid userId, int pageNumber, int pageSize)
+    private ClaimDto MapToDto(Claim claim)
     {
-        var (claims, totalCount) = await _unitOfWork.Claims.GetPagedAsync(
-            pageNumber,
-            pageSize,
-            c => c.SubmittedById == userId,
-            query => query.Include(c => c.Policy).Include(c => c.Workflows)
+        return new ClaimDto(
+            claim.Id,
+            claim.ClaimNumber,
+            claim.PolicyId,
+            claim.CustomerId,
+            claim.ClaimantMemberId,
+            claim.ClaimType.ToString(),
+            claim.ClaimAmountRequested,
+            claim.ClaimAmountApproved,
+            claim.IsCashless,
+            claim.Status.ToString(),
+            claim.IntimationDate,
+            claim.IncidentDate,
+            claim.IncidentDescription,
+            claim.AssignedOfficerId,
+            claim.SurveyorId,
+            claim.SettlementDate,
+            claim.RejectionReason,
+            claim.CreatedAt,
+            claim.UpdatedAt
         );
-
-        var claimDtos = claims.Select(c => new ClaimResponse(
-            c.Id,
-            c.ClaimNumber,
-            c.Status,
-            c.ClaimedAmount,
-            c.CreatedAt
-        )).ToList();
-
-        return new SpeedClaim.Api.Dtos.Common.PagedResponse<ClaimResponse>(claimDtos, pageNumber, pageSize, totalCount);
     }
 
-    public async Task<IEnumerable<ClaimDocumentChecklistDto>> GetClaimChecklistAsync(Guid claimId)
+    public async Task<ClaimDto> IntimateClaimAsync(Guid customerId, IntimateClaimRequest request)
     {
-        var checklists = await _unitOfWork.ClaimDocumentChecklists.FindAsync(c => c.ClaimId == claimId);
-        return checklists.Select(c => new ClaimDocumentChecklistDto
-        {
-            Id = c.Id,
-            ClaimId = c.ClaimId,
-            DocumentTypeCode = c.DocumentTypeCode,
-            IsReceived = c.IsReceived
-        });
-    }
-
-    public async Task<ClaimResponse> SubmitClaimAsync(Guid userId, SubmitClaimRequest request)
-    {
-        // 1. Validate Policy
         var policy = await _unitOfWork.Policies.GetByIdAsync(request.PolicyId);
-        if (policy == null)
-            throw new ArgumentException("Policy not found.");
+        if (policy == null || policy.CustomerId != customerId)
+            throw new ArgumentException("Policy not found or does not belong to the customer.");
 
-        if (policy.UserId != userId)
-            throw new UnauthorizedAccessException("You are not authorized to file a claim against this policy.");
+        if (policy.Status != PolicyStatus.Active)
+            throw new InvalidOperationException("Claim can only be intimated for an active policy.");
 
-        if (policy.Status != "ACTIVE")
-            throw new ArgumentException($"Cannot file a claim against a policy with status: {policy.Status}");
-
-        // 2. Create Claim
-        var claimId = Guid.NewGuid();
-        var claimNumber = $"CLM-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 6).ToUpper()}";
-        
         var claim = new Claim
         {
-            Id = claimId,
-            ClaimNumber = claimNumber,
-            PolicyId = policy.Id,
-            SubmittedById = userId,
-            Status = "SUBMITTED",
-            ClaimedAmount = request.AmountRequested,
-            IncidentDescription = request.Description,
-            IncidentDate = request.IncidentDate.ToUniversalTime(),
-            Domain = policy.Domain, // Infer from policy
-            CreatedAt = DateTime.UtcNow
+            Id = Guid.NewGuid(),
+            ClaimNumber = $"CLM-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 6).ToUpper()}",
+            PolicyId = request.PolicyId,
+            CustomerId = customerId,
+            ClaimantMemberId = request.ClaimantMemberId,
+            ClaimType = request.ClaimType,
+            ClaimAmountRequested = request.ClaimAmountRequested,
+            IsCashless = request.IsCashless,
+            Status = ClaimStatus.Intimated,
+            IntimationDate = DateTime.UtcNow,
+            IncidentDate = request.IncidentDate,
+            IncidentDescription = request.IncidentDescription,
+            CreatedAt = DateTimeOffset.UtcNow
         };
-        
-        if (policy.Domain == "HEALTH" && request.HealthDetail != null)
-        {
-            claim.HealthDetail = new ClaimHealthDetail
-            {
-                ClaimId = claimId,
-                HospitalName = request.HealthDetail.HospitalName,
-                Diagnosis = request.HealthDetail.Diagnosis,
-                TreatingDoctor = request.HealthDetail.TreatingDoctor,
-                AdmissionDate = request.HealthDetail.AdmissionDate.ToUniversalTime(),
-                DischargeDate = request.HealthDetail.DischargeDate?.ToUniversalTime(),
-                IsCashless = request.HealthDetail.IsCashless,
-                InsuredMemberId = request.HealthDetail.InsuredMemberId
-            };
-        }
-        else if (policy.Domain == "VEHICLE" && request.VehicleDetail != null)
-        {
-            claim.VehicleDetail = new ClaimVehicleDetail
-            {
-                ClaimId = claimId,
-                AccidentLocation = request.VehicleDetail.AccidentLocation,
-                FirNumber = request.VehicleDetail.FirNumber,
-                RepairEstimate = request.VehicleDetail.RepairEstimate,
-                IsTotalLoss = request.VehicleDetail.IsTotalLoss,
-                SurveyorName = request.VehicleDetail.SurveyorName
-            };
-        }
-        else if (policy.Domain == "LIFE" && request.LifeDetail != null)
-        {
-            claim.LifeDetail = new ClaimLifeDetail
-            {
-                ClaimId = claimId,
-                CauseOfDeath = request.LifeDetail.CauseOfDeath,
-                PlaceOfDeath = request.LifeDetail.PlaceOfDeath,
-                DeathCertificateNumber = request.LifeDetail.DeathCertificateNumber,
-                CertifyingDoctor = request.LifeDetail.CertifyingDoctor,
-                ClaimantName = request.LifeDetail.ClaimantName,
-                ClaimantRelation = request.LifeDetail.ClaimantRelation
-            };
-        }
 
-        // Initialize document checklist based on domain (simplified version)
-        var docTypes = await _unitOfWork.DocumentTypes.FindAsync(dt => dt.Domain == policy.Domain);
-        foreach (var dt in docTypes)
-        {
-            claim.DocumentChecklists.Add(new ClaimDocumentChecklist
-            {
-                Id = Guid.NewGuid(),
-                ClaimId = claimId,
-                Domain = policy.Domain,
-                DocumentTypeCode = dt.Code,
-                IsReceived = false
-            });
-        }
-
-        await _unitOfWork.Claims.AddAsync(claim);
-
-        // 3. Create initial Workflow history
-        var workflow = new ClaimWorkflow
+        var history = new ClaimStatusHistory
         {
             Id = Guid.NewGuid(),
             ClaimId = claim.Id,
-            ActorId = userId,
-            FromStatus = null,
-            ToStatus = "SUBMITTED",
-            Remarks = "Claim submitted by customer.",
-            TransitionedAt = DateTime.UtcNow
+            OldStatus = ClaimStatus.Intimated,
+            NewStatus = ClaimStatus.Intimated,
+            ChangedById = customerId,
+            Notes = "Claim intimated by customer.",
+            ChangedAt = DateTimeOffset.UtcNow
         };
-        await _unitOfWork.ClaimWorkflows.AddAsync(workflow);
+
+        await _unitOfWork.Claims.AddAsync(claim);
+        await _unitOfWork.ClaimStatusHistories.AddAsync(history);
         await _unitOfWork.CompleteAsync();
 
-        var user = await _unitOfWork.Users.GetByIdAsync(userId);
-        if (user != null)
-        {
-            var subject = $"Claim Submitted: {claim.ClaimNumber}";
-            var body = $"<h1>Claim Submitted</h1><p>Dear {user.FullName}, your claim for {policy.Domain} policy {policy.PolicyNumber} has been submitted successfully.</p>";
-            await _emailService.SendEmailAsync(user.Email, user.FullName, subject, body);
-        }
-
-        // 4. Handle Attachments
-        if (request.Attachments != null && request.Attachments.Any())
-        {
-            foreach (var file in request.Attachments)
-            {
-                // Upload to local storage
-                var fileId = await _storageService.UploadFileAsync(file.OpenReadStream(), file.FileName, userId.ToString());
-
-                var document = new Document
-                {
-                    Id = Guid.NewGuid(),
-                    ClaimId = claim.Id,
-                    UserId = userId,
-                    Domain = policy.Domain,
-                    DocumentTypeCode = "SUPPORTING_DOC", // Default for now, ideally parsed or user-selected
-                    FileName = file.FileName,
-                    FilePath = fileId,
-                    VerificationStatus = "PENDING",
-                    UploadedAt = DateTime.UtcNow
-                };
-
-                await _unitOfWork.Documents.AddAsync(document);
-            }
-        }
-
-        await _unitOfWork.CompleteAsync();
-
-        return new ClaimResponse(
-            claim.Id,
-            claim.ClaimNumber,
-            claim.Status,
-            claim.ClaimedAmount,
-            claim.CreatedAt
-        );
+        return MapToDto(claim);
     }
 
-    public async Task<ClaimResponse> UpdateClaimStatusAsync(Guid claimId, Guid actorId, UpdateClaimStatusRequest request)
+    public async Task<string> UploadClaimDocumentAsync(Guid claimId, Guid customerId, string documentType, IFormFile file)
+    {
+        var claim = await _unitOfWork.Claims.GetByIdAsync(claimId);
+        if (claim == null || claim.CustomerId != customerId)
+            throw new KeyNotFoundException("Claim not found or access denied.");
+
+        if (file == null || file.Length == 0)
+            throw new ArgumentException("Invalid file.");
+        var doc = new SubmittedDocument
+        {
+            Id = Guid.NewGuid(),
+            EntityType = EntityType.Claim,
+            EntityId = claimId,
+            DocumentKey = documentType,
+            OriginalFilename = file.FileName,
+            StoredFilename = $"{Guid.NewGuid()}_{file.FileName}",
+            FilePath = $"/uploads/claims/{claimId}/",
+            UploadedBy = customerId,
+            UploadedAt = DateTime.UtcNow
+        };
+
+        await _unitOfWork.SubmittedDocuments.AddAsync(doc);
+        
+        if (claim.Status == ClaimStatus.Intimated)
+        {
+            await UpdateClaimStatusInternalAsync(claim, ClaimStatus.UnderReview, customerId, "Documents uploaded, moving to review.");
+        }
+        else
+        {
+            await _unitOfWork.CompleteAsync();
+        }
+
+        return doc.FilePath;
+    }
+
+    public async Task<IEnumerable<ClaimDto>> GetMyClaimsAsync(Guid customerId)
+    {
+        var claims = await _unitOfWork.Claims.FindAsync(c => c.CustomerId == customerId);
+        return claims.Select(MapToDto);
+    }
+
+    public async Task<ClaimDto> GetClaimByIdAsync(Guid claimId, Guid? customerId = null)
     {
         var claim = await _unitOfWork.Claims.GetByIdAsync(claimId);
         if (claim == null)
-            throw new ArgumentException("Claim not found.");
+            throw new KeyNotFoundException("Claim not found.");
+        if (customerId.HasValue && claim.CustomerId != customerId.Value)
+            throw new UnauthorizedAccessException("Access denied to this claim.");
+        return MapToDto(claim);
+    }
 
-        var validStatuses = new[] { "SUBMITTED", "UNDER_REVIEW", "ESCALATED", "APPROVED", "REJECTED", "SETTLED", "CLOSED" };
-        if (!validStatuses.Contains(request.Status.ToUpper()))
-            throw new ArgumentException($"Invalid status. Allowed values: {string.Join(", ", validStatuses)}");
+    public async Task<IEnumerable<ClaimStatusHistoryDto>> GetClaimHistoryAsync(Guid claimId, Guid? customerId = null)
+    {
+        var claim = await _unitOfWork.Claims.GetByIdAsync(claimId);
+        if (claim == null || (customerId.HasValue && claim.CustomerId != customerId.Value))
+            throw new KeyNotFoundException("Claim not found.");
 
-        var oldStatus = claim.Status;
-        claim.Status = request.Status.ToUpper();
+        var history = await _unitOfWork.ClaimStatusHistories.FindAsync(h => h.ClaimId == claimId);
+        return history
+            .OrderBy(h => h.ChangedAt)
+            .Select(h => new ClaimStatusHistoryDto(
+                h.Id,
+                h.ClaimId,
+                h.OldStatus.ToString(),
+                h.NewStatus.ToString(),
+                h.ChangedById,
+                h.Notes,
+                h.ChangedAt));
+    }
+
+    public async Task<IEnumerable<ClaimDto>> GetAllClaimsAsync()
+    {
+        var claims = await _unitOfWork.Claims.GetAllAsync();
+        return claims.Select(MapToDto);
+    }
+
+    public async Task AssignClaimAsync(Guid claimId, Guid officerId)
+    {
+        var claim = await _unitOfWork.Claims.GetByIdAsync(claimId);
+        if (claim == null) throw new KeyNotFoundException("Claim not found.");
+
+        claim.AssignedOfficerId = officerId;
+        claim.UpdatedAt = DateTimeOffset.UtcNow;
         
-        if (request.ApprovedAmount.HasValue && request.Status.ToUpper() == "APPROVED")
+        await UpdateClaimStatusInternalAsync(claim, ClaimStatus.UnderReview, officerId, "Claim assigned to officer.");
+    }
+
+    public async Task UpdateClaimStatusAsync(Guid claimId, ClaimStatus status, Guid officerId, string notes)
+    {
+        var claim = await _unitOfWork.Claims.GetByIdAsync(claimId);
+        if (claim == null) throw new KeyNotFoundException("Claim not found.");
+
+        await UpdateClaimStatusInternalAsync(claim, status, officerId, notes);
+    }
+
+    public async Task RequestAdditionalDocumentsAsync(Guid claimId, string details, Guid officerId)
+    {
+        var claim = await _unitOfWork.Claims.GetByIdAsync(claimId);
+        if (claim == null) throw new KeyNotFoundException("Claim not found.");
+
+        await UpdateClaimStatusInternalAsync(claim, ClaimStatus.DocumentsPending, officerId, $"Additional documents requested: {details}");
+    }
+
+    public async Task ApproveOrRejectClaimAsync(Guid claimId, ApproveRejectClaimRequest request, Guid officerId)
+    {
+        var claim = await _unitOfWork.Claims.GetByIdAsync(claimId);
+        if (claim == null) throw new KeyNotFoundException("Claim not found.");
+
+        var newStatus = request.IsApproved ? ClaimStatus.Approved : ClaimStatus.Rejected;
+        
+        if (request.IsApproved)
         {
-            claim.ApprovedAmount = request.ApprovedAmount.Value;
+            if (!request.ApprovedAmount.HasValue || request.ApprovedAmount.Value <= 0)
+                throw new ArgumentException("Approved amount must be specified and greater than zero.");
+            claim.ClaimAmountApproved = request.ApprovedAmount.Value;
+        }
+        else
+        {
+            claim.RejectionReason = request.Reason;
         }
 
-        var workflow = new ClaimWorkflow
+        await UpdateClaimStatusInternalAsync(claim, newStatus, officerId, request.Reason);
+    }
+
+    public async Task ApproveCashlessPreAuthAsync(Guid claimId, Guid officerId)
+    {
+        var claim = await _unitOfWork.Claims.GetByIdAsync(claimId);
+        if (claim == null) throw new KeyNotFoundException("Claim not found.");
+        
+        if (!claim.IsCashless) throw new InvalidOperationException("Claim is not a cashless claim.");
+
+        await UpdateClaimStatusInternalAsync(claim, ClaimStatus.PreAuthApproved, officerId, "Cashless Pre-Auth Approved.");
+    }
+
+    public async Task AssignSurveyorAsync(Guid claimId, Guid surveyorId, Guid officerId, string notes)
+    {
+        var claim = await _unitOfWork.Claims.GetByIdAsync(claimId);
+        if (claim == null) throw new KeyNotFoundException("Claim not found.");
+
+        if (claim.ClaimType != ClaimType.Accident && claim.ClaimType != ClaimType.Theft && claim.ClaimType != ClaimType.NaturalDamage)
+            throw new InvalidOperationException("Surveyor can only be assigned to Motor or Property related claims.");
+
+        claim.SurveyorId = surveyorId;
+        await UpdateClaimStatusInternalAsync(claim, ClaimStatus.UnderReview, officerId, $"Surveyor assigned. Notes: {notes}");
+    }
+
+    public async Task MarkClaimAsSettledAsync(Guid claimId, Guid officerId)
+    {
+        var claim = await _unitOfWork.Claims.GetByIdAsync(claimId);
+        if (claim == null) throw new KeyNotFoundException("Claim not found.");
+        
+        if (claim.Status != ClaimStatus.Approved)
+            throw new InvalidOperationException("Claim must be approved before settlement.");
+
+        claim.SettlementDate = DateTime.UtcNow;
+        await UpdateClaimStatusInternalAsync(claim, ClaimStatus.Settled, officerId, "Claim financially settled.");
+    }
+
+    public async Task<IEnumerable<ClaimDto>> GetAssignedMotorClaimsAsync(Guid surveyorId)
+    {
+        var claims = await _unitOfWork.Claims.FindAsync(c => c.SurveyorId == surveyorId);
+        return claims.Select(MapToDto);
+    }
+
+    public async Task<string> SubmitSurveyReportAsync(Guid claimId, Guid surveyorId, SubmitSurveyReportRequest request)
+    {
+        var claim = await _unitOfWork.Claims.GetByIdAsync(claimId);
+        if (claim == null || claim.SurveyorId != surveyorId)
+            throw new KeyNotFoundException("Claim not found or surveyor not assigned to this claim.");
+
+        if (request.ReportDocument == null || request.ReportDocument.Length == 0)
+            throw new ArgumentException("Invalid report file.");
+
+        // Upload using storage service
+        using var stream = request.ReportDocument.OpenReadStream();
+        var storedPath = await _storageService.UploadFileAsync(stream, request.ReportDocument.FileName, $"claims/{claimId}/survey");
+
+        var doc = new SubmittedDocument
+        {
+            Id = Guid.NewGuid(),
+            EntityType = EntityType.Claim,
+            EntityId = claimId,
+            DocumentKey = "SurveyorReport",
+            OriginalFilename = request.ReportDocument.FileName,
+            StoredFilename = $"survey_{Guid.NewGuid()}_{request.ReportDocument.FileName}",
+            FilePath = storedPath, 
+            UploadedBy = surveyorId,
+            UploadedAt = DateTime.UtcNow
+        };
+
+        await _unitOfWork.SubmittedDocuments.AddAsync(doc);
+        
+        // Update MotorClaimDetail if present
+        var motorDetail = await _unitOfWork.MotorClaimDetails.FirstOrDefaultAsync(m => m.ClaimId == claimId);
+        if (motorDetail != null)
+        {
+            motorDetail.EstimatedRepairCost = request.EstimatedRepairCost;
+            motorDetail.SurveyDate = request.SurveyDate.ToUniversalTime();
+            motorDetail.SurveyorRemarks = request.Remarks;
+        }
+
+        await UpdateClaimStatusInternalAsync(claim, ClaimStatus.UnderReview, surveyorId, $"Surveyor report uploaded. Remarks: {request.Remarks}");
+        return doc.FilePath;
+    }
+
+    private async Task UpdateClaimStatusInternalAsync(Claim claim, ClaimStatus newStatus, Guid changedById, string notes)
+    {
+        var history = new ClaimStatusHistory
         {
             Id = Guid.NewGuid(),
             ClaimId = claim.Id,
-            ActorId = actorId,
-            FromStatus = oldStatus,
-            ToStatus = claim.Status,
-            Remarks = request.Remarks,
-            TransitionedAt = DateTime.UtcNow
+            OldStatus = claim.Status,
+            NewStatus = newStatus,
+            ChangedById = changedById,
+            Notes = notes,
+            ChangedAt = DateTimeOffset.UtcNow
         };
 
-        await _unitOfWork.ClaimWorkflows.AddAsync(workflow);
+        claim.Status = newStatus;
+        claim.UpdatedAt = DateTimeOffset.UtcNow;
+
+        _unitOfWork.Claims.Update(claim);
+        await _unitOfWork.ClaimStatusHistories.AddAsync(history);
         await _unitOfWork.CompleteAsync();
 
-        var user = await _unitOfWork.Users.GetByIdAsync(claim.SubmittedById);
-        if (user != null)
+        // Notify the customer about claim status change
+        var customer = await _unitOfWork.Customers.GetByIdAsync(claim.CustomerId);
+        if (customer != null)
         {
-            var subject = $"Claim Status Updated: {claim.ClaimNumber}";
-            var body = $"<h1>Claim Update</h1><p>Dear {user.FullName}, your claim {claim.ClaimNumber} status has changed from {oldStatus} to {claim.Status}.</p><p>Remarks: {request.Remarks}</p>";
-            await _emailService.SendEmailAsync(user.Email, user.FullName, subject, body);
+            await _notifications.CreateAsync(
+                customer.UserId,
+                "Claim Status Updated",
+                $"Your claim {claim.ClaimNumber} status has changed to: {newStatus}.",
+                "claim");
         }
-
-        return new ClaimResponse(
-            claim.Id,
-            claim.ClaimNumber,
-            claim.Status,
-            claim.ClaimedAmount,
-            claim.CreatedAt
-        );
     }
 }

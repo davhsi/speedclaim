@@ -1,15 +1,13 @@
-using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SpeedClaim.Api.Dtos.Catalog;
 using SpeedClaim.Api.Interfaces;
-
-using Asp.Versioning;
+using System.Security.Claims;
 
 namespace SpeedClaim.Api.Controllers;
 
-[ApiVersion("1.0")]
+[Authorize]
 public class ProductController : BaseApiController
 {
     private readonly IProductService _productService;
@@ -19,46 +17,59 @@ public class ProductController : BaseApiController
         _productService = productService;
     }
 
+    [AllowAnonymous] // or Authorize(Roles = "Customer, Agent") based on requirement
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] string? domain, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+    public async Task<IActionResult> GetProducts()
     {
-        if (!string.IsNullOrEmpty(domain))
-        {
-            var domainProducts = await _productService.GetProductsByDomainAsync(domain, pageNumber, pageSize);
-            return Ok(domainProducts);
-        }
-        var products = await _productService.GetAllProductsAsync(pageNumber, pageSize);
-        return Ok(products);
+        var result = await _productService.GetAvailableProductsAsync();
+        return Ok(result);
     }
 
-    [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id)
+    [AllowAnonymous]
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetProductById(string id)
     {
-        var product = await _productService.GetProductByIdAsync(id);
-        return Ok(product);
+        var result = await _productService.GetByIdAsync(id);
+        return Ok(result);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost]
-    [Authorize] // Ideally restrict to Admins later
-    public async Task<IActionResult> Create([FromBody] CreateProductRequest request)
+    public async Task<IActionResult> CreateProduct([FromBody] CreateProductRequest request)
     {
-        var product = await _productService.CreateProductAsync(request);
-        return CreatedAtAction(nameof(GetById), new { id = product.Id }, product);
+        var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        if (adminId == null) return Unauthorized();
+        var result = await _productService.CreateProductAsync(request, adminId);
+        return Ok(result);
     }
 
-    [HttpPut("{id:guid}")]
-    [Authorize]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductRequest request)
+    [Authorize(Roles = "Admin")]
+    [HttpPut("{id}/rates")]
+    public async Task<IActionResult> UpdateRates(string id, [FromBody] UpdatePremiumRatesRequest request)
     {
-        var product = await _productService.UpdateProductAsync(id, request);
-        return Ok(product);
+        var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        if (adminId == null) return Unauthorized();
+        await _productService.UpdatePremiumRateTableAsync(id, request, adminId);
+        return Ok();
     }
 
-    [HttpDelete("{id:guid}")]
-    [Authorize]
-    public async Task<IActionResult> Delete(Guid id)
+    [Authorize(Roles = "Admin")]
+    [HttpPut("{id}/documents")]
+    public async Task<IActionResult> ConfigureDocuments(string id, [FromBody] UpdateDocumentRequirementsRequest request)
     {
-        await _productService.DeleteProductAsync(id);
-        return NoContent();
+        var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        if (adminId == null) return Unauthorized();
+        await _productService.ConfigureDocumentRequirementsAsync(id, request, adminId);
+        return Ok();
+    }
+
+    [Authorize(Roles = "Admin")]
+    [HttpPut("{id}/status")]
+    public async Task<IActionResult> ToggleStatus(string id, [FromBody] bool isActive)
+    {
+        var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        if (adminId == null) return Unauthorized();
+        await _productService.ToggleProductStatusAsync(id, isActive, adminId);
+        return Ok();
     }
 }

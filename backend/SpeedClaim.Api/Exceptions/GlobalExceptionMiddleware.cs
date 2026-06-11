@@ -62,7 +62,7 @@ public class GlobalExceptionMiddleware
             type = $"https://httpstatuses.com/{statusCode}",
             title = exception.GetType().Name,
             status = statusCode,
-            detail = statusCode == 500 && !isDevelopment ? "An internal server error occurred." : exception.Message,
+            detail = statusCode == 500 && !isDevelopment ? "An internal server error occurred." : (exception.InnerException != null ? $"{exception.Message} - Inner: {exception.InnerException.Message}" : exception.Message),
             traceId = context.TraceIdentifier
         }, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 

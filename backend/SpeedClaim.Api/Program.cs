@@ -32,6 +32,8 @@ builder.Services.AddDbContext<SpeedClaimDbContext>(options =>
 // 3. Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["Secret"];
+if (string.IsNullOrWhiteSpace(secretKey))
+    throw new InvalidOperationException("JwtSettings:Secret must be configured in appsettings.");
 
 builder.Services.AddAuthentication(options =>
 {
@@ -48,12 +50,16 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey ?? "fallbackSecretKeyShouldNotBeUsedInProd32bytes"))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
     };
 });
 
 builder.Services.AddAuthorization();
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
 
 // Add FluentValidation
 builder.Services.AddFluentValidationAutoValidation();
@@ -64,18 +70,24 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPolicyRepository, PolicyRepository>();
 builder.Services.AddScoped<IClaimRepository, ClaimRepository>();
-builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-builder.Services.AddScoped<IPaymentTransactionRepository, PaymentTransactionRepository>();
-builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
+    builder.Services.AddScoped<IPremiumPaymentRepository, PremiumPaymentRepository>();
+builder.Services.AddScoped<ISubmittedDocumentRepository, SubmittedDocumentRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Add DI Services
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProductService, SpeedClaim.Api.Services.ProductService>();
 builder.Services.AddScoped<IPolicyService, PolicyService>();
 builder.Services.AddScoped<IClaimService, ClaimService>();
-builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IFinanceService, FinanceService>();
+builder.Services.AddScoped<IAgentService, AgentService>();
+builder.Services.AddScoped<IProposalService, ProposalService>();
+builder.Services.AddScoped<ISystemService, SystemService>();
+builder.Services.AddScoped<IGrievanceService, GrievanceService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IStripeWrapper, StripeWrapper>();
 
 // Infrastructure Services
@@ -83,10 +95,7 @@ builder.Services.AddSingleton<ISmtpClientFactory, SmtpClientFactory>();
 builder.Services.AddTransient<IEmailService, EmailService>();
 builder.Services.AddScoped<IStorageService, LocalStorageService>();
 
-builder.Services.AddAutoMapper(config =>
-{
-    config.AddProfile<SpeedClaim.Api.Mappings.MappingProfile>();
-});
+
 
 // Configure API Versioning
 builder.Services.AddApiVersioning(options =>

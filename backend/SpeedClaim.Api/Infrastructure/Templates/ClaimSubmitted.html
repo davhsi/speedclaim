@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claim Submitted</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { padding: 20px; max-width: 600px; margin: 0 auto; }
+        .header { background-color: #17a2b8; color: white; padding: 10px; text-align: center; }
+        .content { padding: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Claim Submitted Successfully</h2>
+        </div>
+        <div class="content">
+            <p>Dear {{FullName}},</p>
+            <p>Your claim <strong>{{ClaimNumber}}</strong> for policy <strong>{{PolicyNumber}}</strong> has been submitted successfully.</p>
+            <p>It is currently under review by our agents. We will notify you once the status changes.</p>
+            <p>Thank you for choosing SpeedClaim.</p>
+        </div>
+    </div>
+</body>
+</html>

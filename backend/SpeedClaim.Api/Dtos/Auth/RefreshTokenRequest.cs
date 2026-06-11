@@ -1,5 +1,6 @@
 namespace SpeedClaim.Api.Dtos.Auth;
 
-public record RefreshTokenRequest(
-    string RefreshToken
-);
+public class RefreshTokenRequest
+{
+    public string RefreshToken { get; set; } = string.Empty;
+}

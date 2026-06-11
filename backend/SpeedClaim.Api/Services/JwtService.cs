@@ -23,15 +23,15 @@ public class JwtService : IJwtService
         var jwtSettings = _configuration.GetSection("JwtSettings");
         var secretKey = jwtSettings["Secret"] ?? throw new InvalidOperationException("JWT Secret not configured");
 
-        var userRole = user.UserRoles?.FirstOrDefault()?.Role;
-        var roleCode = userRole?.Code ?? "Customer";
+        var roleCode = user.Role.ToString();
+        var kycStatus = user.KycRecord?.KycStatus.ToString() ?? "Pending";
 
         var claims = new[]
         {
             new System.Security.Claims.Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new System.Security.Claims.Claim(JwtRegisteredClaimNames.Email, user.Email),
             new System.Security.Claims.Claim("fullName", user.FullName),
-            new System.Security.Claims.Claim("kycStatus", user.KycStatus)
+            new System.Security.Claims.Claim("kycStatus", kycStatus.ToString())
         };
 
         var identityClaims = new List<System.Security.Claims.Claim>(claims);

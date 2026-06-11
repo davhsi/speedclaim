@@ -63,14 +63,27 @@ public class RegisterUserRequestValidator : AbstractValidator<RegisterUserReques
             return true;
         }).WithMessage("If Salutation is Mrs., Marital Status must strictly be Married.");
             
-        RuleFor(x => x.Address).NotNull().WithMessage("Address is required.");
-        When(x => x.Address != null, () =>
+        RuleFor(x => x.PermanentAddress).NotNull().WithMessage("Permanent Address is required.");
+        When(x => x.PermanentAddress != null, () =>
         {
-            RuleFor(x => x.Address.Street).NotEmpty().WithMessage("Street is required.");
-            RuleFor(x => x.Address.City).NotEmpty().WithMessage("City is required.");
-            RuleFor(x => x.Address.State).NotEmpty().WithMessage("State is required.");
-            RuleFor(x => x.Address.PostalCode).NotEmpty().WithMessage("Postal Code is required.");
-            RuleFor(x => x.Address.Country).NotEmpty().WithMessage("Country is required.");
+            RuleFor(x => x.PermanentAddress.Line1).NotEmpty().WithMessage("Line 1 is required.");
+            RuleFor(x => x.PermanentAddress.City).NotEmpty().WithMessage("City is required.");
+            RuleFor(x => x.PermanentAddress.State).NotEmpty().WithMessage("State is required.");
+            RuleFor(x => x.PermanentAddress.PostalCode).NotEmpty().WithMessage("Postal Code is required.");
+            RuleFor(x => x.PermanentAddress.Country).NotEmpty().WithMessage("Country is required.");
+        });
+
+        When(x => !x.IsSameAsPermanent, () =>
+        {
+            RuleFor(x => x.CurrentAddress).NotNull().WithMessage("Current Address is required when not same as permanent.");
+            When(x => x.CurrentAddress != null, () =>
+            {
+                RuleFor(x => x.CurrentAddress!.Line1).NotEmpty().WithMessage("Line 1 is required.");
+                RuleFor(x => x.CurrentAddress!.City).NotEmpty().WithMessage("City is required.");
+                RuleFor(x => x.CurrentAddress!.State).NotEmpty().WithMessage("State is required.");
+                RuleFor(x => x.CurrentAddress!.PostalCode).NotEmpty().WithMessage("Postal Code is required.");
+                RuleFor(x => x.CurrentAddress!.Country).NotEmpty().WithMessage("Country is required.");
+            });
         });
     }
 

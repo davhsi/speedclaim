@@ -2,9 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using AutoMapper;
-using SpeedClaim.Api.Context;
 using SpeedClaim.Api.Dtos.Catalog;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Models;
@@ -14,89 +11,153 @@ namespace SpeedClaim.Api.Services;
 public class ProductService : IProductService
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
 
-    public ProductService(IUnitOfWork unitOfWork, IMapper mapper)
+    public ProductService(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork;
-        _mapper = mapper;
     }
 
-    public async Task<SpeedClaim.Api.Dtos.Common.PagedResponse<ProductDto>> GetAllProductsAsync(int pageNumber, int pageSize)
+    public async Task<IEnumerable<ProductDto>> GetAvailableProductsAsync()
     {
-        var (products, totalCount) = await _unitOfWork.Products.GetPagedAsync(pageNumber, pageSize);
-        var productDtos = _mapper.Map<IEnumerable<ProductDto>>(products);
-        return new SpeedClaim.Api.Dtos.Common.PagedResponse<ProductDto>(productDtos, pageNumber, pageSize, totalCount);
+        var products = await _unitOfWork.InsuranceProducts.FindAsync(p => p.IsActive);
+        return products.Select(p => new ProductDto(
+            p.Id,
+            p.ProductName,
+            p.Domain,
+            p.Uin,
+            p.Description,
+            p.MinAge,
+            p.MaxAge,
+            p.MinSumAssured,
+            p.MaxSumAssured,
+            p.MinTenureYears,
+            p.MaxTenureYears,
+            p.WaitingPeriodDays,
+            p.AllowsFamilyFloater,
+            p.MaxFamilyMembers,
+            p.IsActive
+        ));
     }
 
-    public async Task<SpeedClaim.Api.Dtos.Common.PagedResponse<ProductDto>> GetProductsByDomainAsync(string domain, int pageNumber, int pageSize)
+    public async Task<ProductDto> CreateProductAsync(CreateProductRequest request, string adminId)
     {
-        var (products, totalCount) = await _unitOfWork.Products.GetPagedAsync(pageNumber, pageSize, p => p.Domain.ToUpper() == domain.ToUpper());
-        var productDtos = _mapper.Map<IEnumerable<ProductDto>>(products);
-        return new SpeedClaim.Api.Dtos.Common.PagedResponse<ProductDto>(productDtos, pageNumber, pageSize, totalCount);
-    }
-
-    public async Task<ProductDto> GetProductByIdAsync(Guid id)
-    {
-        var product = await _unitOfWork.Products.GetByIdAsync(id);
-        if (product == null)
-            throw new KeyNotFoundException($"Product with ID {id} not found.");
-            
-        return _mapper.Map<ProductDto>(product);
-    }
-
-    public async Task<ProductDto> CreateProductAsync(CreateProductRequest request)
-    {
-        // Check if code/domain combo exists
-        var existingProduct = await _unitOfWork.Products
-            .SingleOrDefaultAsync(p => p.Code == request.Code && p.Domain == request.Domain.ToUpper());
-        var exists = existingProduct != null;
-            
-        if (exists)
-            throw new InvalidOperationException($"Product with code {request.Code} and domain {request.Domain} already exists.");
-
         var product = new InsuranceProduct
         {
-            Id = Guid.NewGuid(),
-            Code = request.Code,
-            Name = request.Name,
-            Domain = request.Domain.ToUpper(),
+            ProductName = request.ProductName,
+            Domain = request.Domain,
+            Uin = request.Uin,
             Description = request.Description,
-            MaxCoverage = request.MaxCoverage,
-            IsActive = true
+            MinAge = request.MinAge,
+            MaxAge = request.MaxAge,
+            MinSumAssured = request.MinSumAssured,
+            MaxSumAssured = request.MaxSumAssured,
+            MinTenureYears = request.MinTenureYears,
+            MaxTenureYears = request.MaxTenureYears,
+            WaitingPeriodDays = request.WaitingPeriodDays,
+            AllowsFamilyFloater = request.AllowsFamilyFloater,
+            MaxFamilyMembers = request.MaxFamilyMembers,
+            IsActive = true,
+            CreatedById = Guid.Parse(adminId),
+            CreatedAt = DateTimeOffset.UtcNow
         };
 
-        await _unitOfWork.Products.AddAsync(product);
+        await _unitOfWork.InsuranceProducts.AddAsync(product);
         await _unitOfWork.CompleteAsync();
 
-        return _mapper.Map<ProductDto>(product);
+        return new ProductDto(
+            product.Id,
+            product.ProductName,
+            product.Domain,
+            product.Uin,
+            product.Description,
+            product.MinAge,
+            product.MaxAge,
+            product.MinSumAssured,
+            product.MaxSumAssured,
+            product.MinTenureYears,
+            product.MaxTenureYears,
+            product.WaitingPeriodDays,
+            product.AllowsFamilyFloater,
+            product.MaxFamilyMembers,
+            product.IsActive
+        );
     }
 
-    public async Task<ProductDto> UpdateProductAsync(Guid id, UpdateProductRequest request)
+    public async Task UpdatePremiumRateTableAsync(string productId, UpdatePremiumRatesRequest request, string adminId)
     {
-        var product = await _unitOfWork.Products.GetByIdAsync(id);
-        if (product == null)
-            throw new KeyNotFoundException($"Product with ID {id} not found.");
+        var pId = Guid.Parse(productId);
+        var product = await _unitOfWork.InsuranceProducts.GetByIdAsync(pId);
+        if (product == null) throw new Exception("Product not found");
 
-        product.Name = request.Name;
-        product.Description = request.Description;
-        product.MaxCoverage = request.MaxCoverage;
-        product.IsActive = request.IsActive;
+        // Remove old rates
+        var existingRates = await _unitOfWork.PremiumRateTables.FindAsync(r => r.ProductId == pId);
+        foreach (var rate in existingRates)
+        {
+            _unitOfWork.PremiumRateTables.Delete(rate);
+        }
 
-        _unitOfWork.Products.Update(product);
+        // Add new rates
+        foreach (var rateDto in request.Rates)
+        {
+            var rate = new PremiumRateTable
+            {
+                ProductId = pId,
+                AgeMin = rateDto.AgeMin,
+                AgeMax = rateDto.AgeMax,
+                SumAssuredMin = rateDto.SumAssuredMin,
+                SumAssuredMax = rateDto.SumAssuredMax,
+                AnnualPremium = rateDto.AnnualPremium,
+                CreatedAt = DateTimeOffset.UtcNow
+            };
+            await _unitOfWork.PremiumRateTables.AddAsync(rate);
+        }
+
         await _unitOfWork.CompleteAsync();
-        return _mapper.Map<ProductDto>(product);
     }
 
-    public async Task DeleteProductAsync(Guid id)
+    public async Task ConfigureDocumentRequirementsAsync(string productId, UpdateDocumentRequirementsRequest request, string adminId)
     {
-        var product = await _unitOfWork.Products.GetByIdAsync(id);
-        if (product == null)
-            throw new KeyNotFoundException($"Product with ID {id} not found.");
+        foreach (var reqDto in request.Requirements)
+        {
+            var docReq = new DocumentRequirement
+            {
+                EntityType = reqDto.EntityType,
+                Domain = reqDto.Domain,
+                DocumentKey = reqDto.DocumentKey,
+                Label = reqDto.Label,
+                Description = reqDto.Description,
+                IsMandatory = reqDto.IsMandatory,
+                IsActive = reqDto.IsActive,
+                CreatedAt = DateTimeOffset.UtcNow
+            };
+            await _unitOfWork.DocumentRequirements.AddAsync(docReq);
+        }
+        
+        await _unitOfWork.CompleteAsync();
+    }
 
-        // Instead of hard delete, we set IsActive to false since there is no deleted_at column
-        product.IsActive = false;
-        _unitOfWork.Products.Update(product);
+    public async Task<ProductDto> GetByIdAsync(string productId)
+    {
+        var pId = Guid.Parse(productId);
+        var product = await _unitOfWork.InsuranceProducts.GetByIdAsync(pId);
+        if (product == null) throw new KeyNotFoundException("Product not found.");
+
+        return new ProductDto(
+            product.Id, product.ProductName, product.Domain, product.Uin, product.Description,
+            product.MinAge, product.MaxAge, product.MinSumAssured, product.MaxSumAssured,
+            product.MinTenureYears, product.MaxTenureYears, product.WaitingPeriodDays,
+            product.AllowsFamilyFloater, product.MaxFamilyMembers, product.IsActive);
+    }
+
+    public async Task ToggleProductStatusAsync(string productId, bool isActive, string adminId)
+    {
+        var pId = Guid.Parse(productId);
+        var product = await _unitOfWork.InsuranceProducts.GetByIdAsync(pId);
+        if (product == null) throw new Exception("Product not found");
+
+        product.IsActive = isActive;
+        product.UpdatedAt = DateTimeOffset.UtcNow;
+
         await _unitOfWork.CompleteAsync();
     }
 }
