@@ -18,6 +18,8 @@ public class SystemController : BaseApiController
         _systemService = systemService;
     }
 
+    #region Configuration
+
     /// <summary>Get all system configuration key-value pairs</summary>
     [HttpGet("configs")]
     [ProducesResponseType(typeof(IEnumerable<SystemConfigDto>), 200)]
@@ -37,6 +39,10 @@ public class SystemController : BaseApiController
         return Ok();
     }
 
+    #endregion
+
+    #region Logs
+
     /// <summary>Get the full audit log of admin and system actions</summary>
     [HttpGet("audit-logs")]
     [ProducesResponseType(200)]
@@ -55,6 +61,10 @@ public class SystemController : BaseApiController
         return Ok(result);
     }
 
+    #endregion
+
+    #region Templates
+
     /// <summary>Create or update an email template by key</summary>
     [HttpPut("email-templates")]
     [ProducesResponseType(200)]
@@ -64,4 +74,6 @@ public class SystemController : BaseApiController
         await _systemService.ManageEmailTemplatesAsync(request, adminId);
         return Ok();
     }
+
+    #endregion
 }

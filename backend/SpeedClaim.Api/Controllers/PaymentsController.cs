@@ -25,7 +25,7 @@ public class PaymentsController : BaseApiController
         _config = config;
     }
 
-    // --- Customer Endpoints ---
+    #region Customer Endpoints
 
     /// <summary>Create a Stripe PaymentIntent for a premium installment</summary>
     /// <remarks>Returns a client_secret to complete payment on the frontend. Stripe customer is created automatically if not present.</remarks>
@@ -92,7 +92,9 @@ public class PaymentsController : BaseApiController
         return Ok(result);
     }
 
-    // --- Finance Officer Endpoints ---
+    #endregion
+
+    #region Finance Officer Endpoints
 
     /// <summary>Get all payment records across all customers</summary>
     [Authorize(Roles = "FinanceOfficer,Admin")]
@@ -183,7 +185,9 @@ public class PaymentsController : BaseApiController
         return Ok();
     }
 
-    // --- Reports ---
+    #endregion
+
+    #region Reports
 
     /// <summary>Get all premium schedules currently in Overdue status</summary>
     [Authorize(Roles = "FinanceOfficer,Admin")]
@@ -215,7 +219,9 @@ public class PaymentsController : BaseApiController
         return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "PaymentReport.xlsx");
     }
 
-    // --- Webhooks ---
+    #endregion
+
+    #region Webhooks
 
     /// <summary>Stripe webhook receiver — handles payment_intent.succeeded events to auto-reconcile payments</summary>
     /// <remarks>This endpoint is called by Stripe. Do not call directly. Validates the Stripe-Signature header.</remarks>
@@ -250,4 +256,6 @@ public class PaymentsController : BaseApiController
 
         return Ok();
     }
+
+    #endregion
 }

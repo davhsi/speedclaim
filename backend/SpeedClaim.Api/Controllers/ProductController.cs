@@ -17,6 +17,8 @@ public class ProductController : BaseApiController
         _productService = productService;
     }
 
+    #region Public Endpoints
+
     /// <summary>Get all active insurance products available for purchase</summary>
     [AllowAnonymous]
     [HttpGet]
@@ -38,6 +40,10 @@ public class ProductController : BaseApiController
         var result = await _productService.GetByIdAsync(id);
         return Ok(result);
     }
+
+    #endregion
+
+    #region Admin Endpoints
 
     /// <summary>Admin — create a new insurance product</summary>
     [Authorize(Roles = "Admin")]
@@ -94,4 +100,6 @@ public class ProductController : BaseApiController
         await _productService.ToggleProductStatusAsync(id, isActive, adminId);
         return Ok();
     }
+
+    #endregion
 }

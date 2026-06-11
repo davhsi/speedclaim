@@ -18,6 +18,8 @@ public class ProposalsController : BaseApiController
         _proposalService = proposalService;
     }
 
+    #region Customer / Agent Endpoints
+
     /// <summary>Generate a premium quote for a given product, age, sum assured, and tenure</summary>
     /// <remarks>Does not create any record — purely a calculation based on the product's rate table.</remarks>
     [Authorize(Roles = "Customer,Agent")]
@@ -91,6 +93,10 @@ public class ProposalsController : BaseApiController
         return Ok(new { FilePath = result });
     }
 
+    #endregion
+
+    #region Underwriter Endpoints
+
     /// <summary>Underwriter — get all submitted proposals pending review</summary>
     [Authorize(Roles = "Underwriter,Admin")]
     [HttpGet("all")]
@@ -143,4 +149,6 @@ public class ProposalsController : BaseApiController
         await _proposalService.AddUnderwriterNotesAsync(id, underwriterId, request.Notes);
         return Ok();
     }
+
+    #endregion
 }

@@ -16,6 +16,8 @@ public class AuthController : BaseApiController
         _authService = authService;
     }
 
+    #region Public Endpoints
+
     /// <summary>Register a new customer account</summary>
     /// <remarks>Sends a verification email after successful registration. Account is inactive until email is verified.</remarks>
     [HttpPost("register")]
@@ -93,6 +95,10 @@ public class AuthController : BaseApiController
         return Ok();
     }
 
+    #endregion
+
+    #region Admin Endpoints
+
     /// <summary>Admin — force-reset any user's password by user ID</summary>
     /// <param name="userId">Target user ID</param>
     [Authorize(Roles = "Admin")]
@@ -118,4 +124,6 @@ public class AuthController : BaseApiController
         var result = await _authService.RegisterAgentAsync(request, adminId);
         return Ok(result);
     }
+
+    #endregion
 }
