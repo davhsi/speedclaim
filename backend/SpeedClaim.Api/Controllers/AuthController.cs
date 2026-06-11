@@ -7,9 +7,7 @@ using System.Security.Claims;
 
 namespace SpeedClaim.Api.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
-public class AuthController : ControllerBase
+public class AuthController : BaseApiController
 {
     private readonly IAuthService _authService;
 
