@@ -473,6 +473,12 @@ public partial class SpeedClaimDbContext : DbContext
             e.Property(x => x.EntityType).HasConversion<string>();
             e.Property(x => x.DocumentKey).HasMaxLength(100);
             e.Property(x => x.Label).HasMaxLength(200);
+            e.HasOne(x => x.Product)
+             .WithMany()
+             .HasForeignKey(x => x.ProductId)
+             .OnDelete(DeleteBehavior.Cascade)
+             .HasConstraintName("FK_document_requirements_insurance_products_ProductId")
+             .IsRequired(false);
             e.HasData(
                 new DocumentRequirement { Id = Guid.Parse("10000000-0000-0000-0000-000000000001"), DocumentKey = "AADHAAR", Domain = "ALL", Label = "Aadhaar Card", EntityType = SpeedClaim.Api.Models.Enums.EntityType.Kyc, CreatedAt = new DateTimeOffset(2026, 6, 7, 0, 0, 0, TimeSpan.Zero) },
                 new DocumentRequirement { Id = Guid.Parse("10000000-0000-0000-0000-000000000002"), DocumentKey = "PAN", Domain = "ALL", Label = "PAN Card", EntityType = SpeedClaim.Api.Models.Enums.EntityType.Kyc, CreatedAt = new DateTimeOffset(2026, 6, 7, 0, 0, 0, TimeSpan.Zero) }

@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using SpeedClaim.Api.Dtos.Auth;
 using SpeedClaim.Api.Interfaces;
 using System.Security.Claims;
@@ -21,6 +22,7 @@ public class AuthController : BaseApiController
     /// <summary>Register a new customer account</summary>
     /// <remarks>Sends a verification email after successful registration. Account is inactive until email is verified.</remarks>
     [HttpPost("register")]
+    [EnableRateLimiting("auth")]
     [ProducesResponseType(typeof(RegistrationResponse), 200)]
     [ProducesResponseType(409)]
     public async Task<IActionResult> Register([FromBody] RegisterUserRequest request)
@@ -31,6 +33,7 @@ public class AuthController : BaseApiController
 
     /// <summary>Authenticate a user and obtain JWT access and refresh tokens</summary>
     [HttpPost("login")]
+    [EnableRateLimiting("auth")]
     [ProducesResponseType(typeof(AuthResponse), 200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(403)]
@@ -78,6 +81,7 @@ public class AuthController : BaseApiController
     /// <summary>Request a password reset email</summary>
     /// <remarks>Always returns 200 regardless of whether the email exists, to prevent email enumeration.</remarks>
     [HttpPost("forgot-password")]
+    [EnableRateLimiting("auth")]
     [ProducesResponseType(200)]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
     {
@@ -87,6 +91,7 @@ public class AuthController : BaseApiController
 
     /// <summary>Reset a customer's password using the token from the reset email</summary>
     [HttpPost("reset-password")]
+    [EnableRateLimiting("auth")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
     public async Task<IActionResult> ResetPasswordCustomer([FromBody] ResetPasswordRequest request)

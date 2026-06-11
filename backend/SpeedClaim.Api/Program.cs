@@ -3,6 +3,7 @@ using Microsoft.OpenApi.Models;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
@@ -13,6 +14,7 @@ using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Repositories;
 using SpeedClaim.Api.Services;
 using System.Text;
+using System.Threading.RateLimiting;
 using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -161,6 +163,42 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// Rate Limiting
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    // Strict policy for auth endpoints: 10 requests per 60s per IP
+    options.AddFixedWindowLimiter("auth", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 10;
+        limiterOptions.Window = TimeSpan.FromSeconds(60);
+        limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        limiterOptions.QueueLimit = 0;
+    });
+
+    // General policy for all other endpoints: 100 requests per 60s per IP
+    options.AddFixedWindowLimiter("api", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 100;
+        limiterOptions.Window = TimeSpan.FromSeconds(60);
+        limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        limiterOptions.QueueLimit = 0;
+    });
+
+    // Partition both policies by IP address
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 100,
+                Window = TimeSpan.FromSeconds(60),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
+});
+
 var app = builder.Build();
 
 StripeConfiguration.ApiKey = builder.Configuration.GetSection("Stripe")["SecretKey"];
@@ -181,6 +219,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 

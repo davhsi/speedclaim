@@ -14,5 +14,6 @@ public interface IProductService
     Task<ProductDto> CreateProductAsync(CreateProductRequest request, string adminId);
     Task UpdatePremiumRateTableAsync(string productId, UpdatePremiumRatesRequest request, string adminId);
     Task ConfigureDocumentRequirementsAsync(string productId, UpdateDocumentRequirementsRequest request, string adminId);
+    Task<IEnumerable<DocumentRequirementResponseDto>> GetDocumentRequirementsAsync(string productId);
     Task ToggleProductStatusAsync(string productId, bool isActive, string adminId);
 }

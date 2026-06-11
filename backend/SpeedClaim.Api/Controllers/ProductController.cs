@@ -72,7 +72,19 @@ public class ProductController : BaseApiController
         return Ok();
     }
 
-    /// <summary>Admin — configure the document requirements for a product domain (Health, Life, Motor)</summary>
+    /// <summary>Get document requirements for a product</summary>
+    /// <param name="id">Product ID</param>
+    [AllowAnonymous]
+    [HttpGet("{id}/documents")]
+    [ProducesResponseType(typeof(IEnumerable<DocumentRequirementResponseDto>), 200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> GetDocuments(string id)
+    {
+        var result = await _productService.GetDocumentRequirementsAsync(id);
+        return Ok(result);
+    }
+
+    /// <summary>Admin — configure the document requirements for a product (replaces existing)</summary>
     /// <param name="id">Product ID</param>
     [Authorize(Roles = "Admin")]
     [HttpPut("{id}/documents")]

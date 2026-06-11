@@ -118,10 +118,19 @@ public class ProductService : IProductService
 
     public async Task ConfigureDocumentRequirementsAsync(string productId, UpdateDocumentRequirementsRequest request, string adminId)
     {
+        var pId = Guid.Parse(productId);
+        var product = await _unitOfWork.InsuranceProducts.GetByIdAsync(pId);
+        if (product == null) throw new NotFoundException("Product not found");
+
+        var existing = await _unitOfWork.DocumentRequirements.FindAsync(d => d.ProductId == pId);
+        foreach (var old in existing)
+            _unitOfWork.DocumentRequirements.Delete(old);
+
         foreach (var reqDto in request.Requirements)
         {
-            var docReq = new DocumentRequirement
+            await _unitOfWork.DocumentRequirements.AddAsync(new DocumentRequirement
             {
+                ProductId = pId,
                 EntityType = reqDto.EntityType,
                 Domain = reqDto.Domain,
                 DocumentKey = reqDto.DocumentKey,
@@ -130,11 +139,22 @@ public class ProductService : IProductService
                 IsMandatory = reqDto.IsMandatory,
                 IsActive = reqDto.IsActive,
                 CreatedAt = DateTimeOffset.UtcNow
-            };
-            await _unitOfWork.DocumentRequirements.AddAsync(docReq);
+            });
         }
-        
+
         await _unitOfWork.CompleteAsync();
+    }
+
+    public async Task<IEnumerable<DocumentRequirementResponseDto>> GetDocumentRequirementsAsync(string productId)
+    {
+        var pId = Guid.Parse(productId);
+        var product = await _unitOfWork.InsuranceProducts.GetByIdAsync(pId);
+        if (product == null) throw new NotFoundException("Product not found");
+
+        var requirements = await _unitOfWork.DocumentRequirements.FindAsync(d => d.ProductId == pId);
+        return requirements.Select(d => new DocumentRequirementResponseDto(
+            d.Id, d.ProductId, d.EntityType, d.Domain, d.DocumentKey,
+            d.Label, d.Description, d.IsMandatory, d.IsActive));
     }
 
     public async Task<ProductDto> GetByIdAsync(string productId)
