@@ -2,8 +2,9 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SpeedClaim.Api.Interfaces;
+using SpeedClaim.Api.Dtos.Common;
 using SpeedClaim.Api.Dtos.Policies;
+using SpeedClaim.Api.Interfaces;
 using System.Security.Claims;
 
 namespace SpeedClaim.Api.Controllers;
@@ -17,6 +18,8 @@ public class PolicyController : BaseApiController
     {
         _policyService = policyService;
     }
+
+    #region Customer Endpoints
 
     /// <summary>Get all policies belonging to the authenticated customer</summary>
     [Authorize(Roles = "Customer")]
@@ -68,36 +71,6 @@ public class PolicyController : BaseApiController
         return Ok();
     }
 
-    /// <summary>Agent — get all policies belonging to customers assigned to the authenticated agent</summary>
-    [Authorize(Roles = "Agent")]
-    [HttpGet("assigned")]
-    [ProducesResponseType(typeof(IEnumerable<PolicyDto>), 200)]
-    public async Task<IActionResult> GetAssignedCustomerPolicies()
-    {
-        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var agentId)) return Unauthorized();
-        var result = await _policyService.GetAssignedCustomerPoliciesAsync(agentId);
-        return Ok(result);
-    }
-
-    /// <summary>Get a policy by ID. Customers can only access their own policies</summary>
-    /// <param name="id">Policy ID</param>
-    [Authorize(Roles = "Customer,Underwriter,Admin")]
-    [HttpGet("{id}")]
-    [ProducesResponseType(typeof(PolicyDto), 200)]
-    [ProducesResponseType(403)]
-    [ProducesResponseType(404)]
-    public async Task<IActionResult> GetPolicy(Guid id)
-    {
-        Guid? customerId = null;
-        if (User.IsInRole("Customer"))
-        {
-            if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var cid)) return Unauthorized();
-            customerId = cid;
-        }
-        var result = await _policyService.GetByIdAsync(id, customerId);
-        return Ok(result);
-    }
-
     /// <summary>Get all nominees linked to a policy</summary>
     /// <param name="id">Policy ID</param>
     [Authorize(Roles = "Customer")]
@@ -109,6 +82,20 @@ public class PolicyController : BaseApiController
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId)) return Unauthorized();
         var result = await _policyService.GetNomineesAsync(id, customerId);
         return Ok(result);
+    }
+
+    /// <summary>Update nominee details (name, relationship, share percentage) on a policy</summary>
+    /// <param name="nomineeId">Nominee ID</param>
+    [Authorize(Roles = "Customer")]
+    [HttpPut("nominees/{nomineeId}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> UpdateNominee(Guid nomineeId, [FromBody] UpdateNomineeRequest request)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId)) return Unauthorized();
+        await _policyService.UpdateNomineeAsync(nomineeId, customerId, request);
+        return Ok();
     }
 
     /// <summary>Cancel an Active or Pending policy</summary>
@@ -126,13 +113,41 @@ public class PolicyController : BaseApiController
         return Ok();
     }
 
-    /// <summary>Get all policies across all customers</summary>
-    [Authorize(Roles = "Underwriter,Admin")]
-    [HttpGet("all")]
+    #endregion
+
+    #region Agent Endpoints
+
+    /// <summary>Agent — get all policies belonging to customers assigned to the authenticated agent</summary>
+    [Authorize(Roles = "Agent")]
+    [HttpGet("assigned")]
     [ProducesResponseType(typeof(IEnumerable<PolicyDto>), 200)]
-    public async Task<IActionResult> GetAllPolicies()
+    public async Task<IActionResult> GetAssignedCustomerPolicies()
     {
-        var result = await _policyService.GetAllPoliciesAsync();
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var agentId)) return Unauthorized();
+        var result = await _policyService.GetAssignedCustomerPoliciesAsync(agentId);
+        return Ok(result);
+    }
+
+    #endregion
+
+    #region Shared Endpoints
+
+    /// <summary>Get a policy by ID. Customers can only access their own policies</summary>
+    /// <param name="id">Policy ID</param>
+    [Authorize(Roles = "Customer,Underwriter,Admin")]
+    [HttpGet("{id}")]
+    [ProducesResponseType(typeof(PolicyDto), 200)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> GetPolicy(Guid id)
+    {
+        Guid? customerId = null;
+        if (User.IsInRole("Customer"))
+        {
+            if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var cid)) return Unauthorized();
+            customerId = cid;
+        }
+        var result = await _policyService.GetByIdAsync(id, customerId);
         return Ok(result);
     }
 
@@ -156,13 +171,27 @@ public class PolicyController : BaseApiController
         return Ok(result);
     }
 
+    #endregion
+
+    #region Underwriter Endpoints
+
+    /// <summary>Get all policies across all customers</summary>
+    [Authorize(Roles = "Underwriter,Admin")]
+    [HttpGet("all")]
+    [ProducesResponseType(typeof(PagedResponse<PolicyDto>), 200)]
+    public async Task<IActionResult> GetAllPolicies([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    {
+        var result = await _policyService.GetAllPoliciesAsync(page, pageSize);
+        return Ok(result);
+    }
+
     /// <summary>Underwriter — get all endorsement requests awaiting review</summary>
     [Authorize(Roles = "Underwriter")]
     [HttpGet("endorsements/pending")]
-    [ProducesResponseType(typeof(IEnumerable<EndorsementDto>), 200)]
-    public async Task<IActionResult> GetPendingEndorsements()
+    [ProducesResponseType(typeof(PagedResponse<EndorsementDto>), 200)]
+    public async Task<IActionResult> GetPendingEndorsements([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
-        var result = await _policyService.GetPendingEndorsementsAsync();
+        var result = await _policyService.GetPendingEndorsementsAsync(page, pageSize);
         return Ok(result);
     }
 
@@ -180,17 +209,5 @@ public class PolicyController : BaseApiController
         return Ok();
     }
 
-    /// <summary>Update nominee details (name, relationship, share percentage) on a policy</summary>
-    /// <param name="nomineeId">Nominee ID</param>
-    [Authorize(Roles = "Customer")]
-    [HttpPut("nominees/{nomineeId}")]
-    [ProducesResponseType(200)]
-    [ProducesResponseType(403)]
-    [ProducesResponseType(404)]
-    public async Task<IActionResult> UpdateNominee(Guid nomineeId, [FromBody] UpdateNomineeRequest request)
-    {
-        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId)) return Unauthorized();
-        await _policyService.UpdateNomineeAsync(nomineeId, customerId, request);
-        return Ok();
-    }
+    #endregion
 }

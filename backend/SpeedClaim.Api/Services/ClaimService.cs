@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using SpeedClaim.Api.Dtos.Claims;
+using SpeedClaim.Api.Dtos.Common;
 using SpeedClaim.Api.Exceptions;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Models;
@@ -167,10 +168,10 @@ public class ClaimService : IClaimService
                 h.ChangedAt));
     }
 
-    public async Task<IEnumerable<ClaimDto>> GetAllClaimsAsync()
+    public async Task<PagedResponse<ClaimDto>> GetAllClaimsAsync(int page, int pageSize)
     {
-        var claims = await _unitOfWork.Claims.GetAllAsync();
-        return claims.Select(MapToDto);
+        var (items, total) = await _unitOfWork.Claims.GetPagedAsync(page, pageSize);
+        return new PagedResponse<ClaimDto>(items.Select(MapToDto), page, pageSize, total);
     }
 
     public async Task AssignClaimAsync(Guid claimId, Guid officerId)

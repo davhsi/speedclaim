@@ -14,6 +14,9 @@
 | `ProductService.cs` — design-diary comment block | Multi-line reasoning comment in `ConfigureDocumentRequirementsAsync` | ✅ Removed |
 | `FinanceService.GetOverduePoliciesAsync` — return type mismatch | Method declared `PaymentRecordDto` but body built `PremiumScheduleDto` | ✅ Fixed |
 | Notification write-only | `NotificationService.CreateAsync` fired but no endpoint to read/mark notifications | ✅ Fixed — added read + mark endpoints |
+| `GrievancesController` `GET {id}` — Customer locked out of own grievance | `GET /api/grievances/{id}` was Admin/ClaimsOfficer only; customer who raised it had no read access | ✅ Fixed — Customer role added with ownership check |
+| Agent self-profile update missing | No agent-facing endpoint to update own contact details | ✅ Fixed — added `PUT /api/agents/profile` |
+| No pagination on bulk list endpoints | `GetAllClaims`, `GetAllPolicies`, `GetAllUsers`, `GetAllGrievances`, `GetPendingKyc`, `GetPendingEndorsements` returned full table | ✅ Fixed — all return `PagedResponse<T>` with `?page=&pageSize=` query params (default 20 per page) |
 
 ---
 
@@ -344,7 +347,4 @@ These are known design limitations — not critical for the capstone demo:
 
 | Item | Notes |
 |---|---|
-| Customer cannot view their own grievance status | `GET /api/grievances/{id}` is restricted to Admin/ClaimsOfficer only — the customer who raised it has no read access |
-| Agent self-profile update | No agent-facing endpoint to update their own profile fields |
-| No pagination on bulk lists | `GetAllClaims`, `GetAllPolicies`, `GetAllUsers`, etc. return the entire table — fine for demo, not production-ready |
 | `ConfigureDocumentRequirementsAsync` is not truly per-product | `DocumentRequirement` has no `ProductId` FK; the endpoint adds global document requirements |

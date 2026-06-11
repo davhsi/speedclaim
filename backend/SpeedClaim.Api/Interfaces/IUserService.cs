@@ -22,8 +22,8 @@ public interface IUserService
     Task DeleteFamilyMemberAsync(string memberId, string customerId);
 
     // Admin / Underwriter
-    Task<IEnumerable<UserDto>> GetAllUsersAsync();
-    Task<IEnumerable<KycRecordDto>> GetPendingKycAsync();
+    Task<PagedResponse<UserDto>> GetAllUsersAsync(int page, int pageSize);
+    Task<PagedResponse<KycRecordDto>> GetPendingKycAsync(int page, int pageSize);
     Task<KycRecordDto?> GetMyKycAsync(string customerId);
     Task UpdateUserRoleAsync(string targetUserId, string role);
     Task ApproveRejectKycAsync(string customerId, bool isApproved, string reason, string reviewerId);

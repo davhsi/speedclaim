@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using SpeedClaim.Api.Dtos.Claims;
+using SpeedClaim.Api.Dtos.Common;
 using SpeedClaim.Api.Models.Enums;
 
 namespace SpeedClaim.Api.Interfaces;
@@ -17,7 +18,7 @@ public interface IClaimService
     Task<IEnumerable<ClaimStatusHistoryDto>> GetClaimHistoryAsync(Guid claimId, Guid? customerId = null);
 
     // Claims Officer
-    Task<IEnumerable<ClaimDto>> GetAllClaimsAsync();
+    Task<PagedResponse<ClaimDto>> GetAllClaimsAsync(int page, int pageSize);
     Task AssignClaimAsync(Guid claimId, Guid officerId);
     Task UpdateClaimStatusAsync(Guid claimId, ClaimStatus status, Guid officerId, string notes);
     Task RequestAdditionalDocumentsAsync(Guid claimId, string details, Guid officerId);

@@ -229,11 +229,11 @@ public class UserService : IUserService
         await _unitOfWork.CompleteAsync();
     }
 
-    public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
+    public async Task<PagedResponse<UserDto>> GetAllUsersAsync(int page, int pageSize)
     {
-        var users = await _unitOfWork.Users.GetAllAsync();
+        var (pagedUsers, total) = await _unitOfWork.Users.GetPagedAsync(page, pageSize);
         var dtos = new List<UserDto>();
-        foreach(var user in users)
+        foreach (var user in pagedUsers)
         {
             var addresses = await _unitOfWork.Addresses.GetPagedAsync(1, 10, a => a.UserId == user.Id);
             var permanent = addresses.Items.FirstOrDefault(a => a.AddressType == AddressType.Permanent);
@@ -247,12 +247,10 @@ public class UserService : IUserService
             {
                 var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == user.Id);
                 if (customer != null)
-                {
                     maritalStatus = customer.MaritalStatus.ToString();
-                }
             }
 
-             dtos.Add(new UserDto(
+            dtos.Add(new UserDto(
                 user.Id,
                 user.Email,
                 user.Salutation.ToString(),
@@ -264,15 +262,17 @@ public class UserService : IUserService
                 maritalStatus,
                 permanentAddressDto,
                 currentAddressDto
-             ));
+            ));
         }
-        return dtos;
+        return new PagedResponse<UserDto>(dtos, page, pageSize, total);
     }
 
-    public async Task<IEnumerable<KycRecordDto>> GetPendingKycAsync()
+    public async Task<PagedResponse<KycRecordDto>> GetPendingKycAsync(int page, int pageSize)
     {
-        var records = await _unitOfWork.KycRecords.GetPagedAsync(1, 100, k => k.KycStatus == KycStatus.Pending);
-        return records.Items.Select(k => new KycRecordDto(k.Id, k.UserId, k.KycStatus.ToString(), k.IdType.ToString(), k.IdNumber, k.CreatedAt));
+        var (items, total) = await _unitOfWork.KycRecords.GetPagedAsync(page, pageSize, k => k.KycStatus == KycStatus.Pending);
+        return new PagedResponse<KycRecordDto>(
+            items.Select(k => new KycRecordDto(k.Id, k.UserId, k.KycStatus.ToString(), k.IdType.ToString(), k.IdNumber, k.CreatedAt)),
+            page, pageSize, total);
     }
 
     public async Task UpdateUserRoleAsync(string targetUserId, string role)

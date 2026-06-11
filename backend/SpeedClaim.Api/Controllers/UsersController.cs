@@ -22,6 +22,8 @@ public class UsersController : BaseApiController
         _notificationService = notificationService;
     }
 
+    #region Profile
+
     /// <summary>Get the full profile of the authenticated customer including addresses</summary>
     [Authorize(Roles = "Customer")]
     [HttpGet("profile")]
@@ -46,6 +48,10 @@ public class UsersController : BaseApiController
         return Ok();
     }
 
+    #endregion
+
+    #region Family Members
+
     /// <summary>Add a family member (spouse, child, parent) to the customer's profile for floater policies</summary>
     [Authorize(Roles = "Customer")]
     [HttpPost("family")]
@@ -54,6 +60,17 @@ public class UsersController : BaseApiController
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         var result = await _userService.AddFamilyMemberAsync(userId, request);
+        return Ok(result);
+    }
+
+    /// <summary>Get all family members linked to the authenticated customer</summary>
+    [Authorize(Roles = "Customer")]
+    [HttpGet("family")]
+    [ProducesResponseType(typeof(IEnumerable<FamilyMemberDto>), 200)]
+    public async Task<IActionResult> GetFamilyMembers()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        var result = await _userService.GetFamilyMembersAsync(userId);
         return Ok(result);
     }
 
@@ -70,16 +87,22 @@ public class UsersController : BaseApiController
         return Ok();
     }
 
-    /// <summary>Get all family members linked to the authenticated customer</summary>
+    /// <summary>Remove a family member from the customer's profile</summary>
+    /// <param name="memberId">Family member ID</param>
     [Authorize(Roles = "Customer")]
-    [HttpGet("family")]
-    [ProducesResponseType(typeof(IEnumerable<FamilyMemberDto>), 200)]
-    public async Task<IActionResult> GetFamilyMembers()
+    [HttpDelete("family/{memberId}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> DeleteFamilyMember(string memberId)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-        var result = await _userService.GetFamilyMembersAsync(userId);
-        return Ok(result);
+        await _userService.DeleteFamilyMemberAsync(memberId, userId);
+        return Ok();
     }
+
+    #endregion
+
+    #region KYC
 
     /// <summary>Get the KYC record for the authenticated customer</summary>
     [Authorize(Roles = "Customer")]
@@ -113,6 +136,10 @@ public class UsersController : BaseApiController
         await _userService.UploadKycDocumentsAsync(userId, request);
         return Ok();
     }
+
+    #endregion
+
+    #region Addresses
 
     /// <summary>Add a new address (Permanent or Current) to the customer's profile</summary>
     [Authorize(Roles = "Customer")]
@@ -151,18 +178,9 @@ public class UsersController : BaseApiController
         return Ok();
     }
 
-    /// <summary>Remove a family member from the customer's profile</summary>
-    /// <param name="memberId">Family member ID</param>
-    [Authorize(Roles = "Customer")]
-    [HttpDelete("family/{memberId}")]
-    [ProducesResponseType(200)]
-    [ProducesResponseType(404)]
-    public async Task<IActionResult> DeleteFamilyMember(string memberId)
-    {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-        await _userService.DeleteFamilyMemberAsync(memberId, userId);
-        return Ok();
-    }
+    #endregion
+
+    #region Notifications
 
     /// <summary>Get all in-app notifications for the authenticated user, ordered newest first</summary>
     [Authorize]
@@ -199,13 +217,17 @@ public class UsersController : BaseApiController
         return Ok();
     }
 
+    #endregion
+
+    #region Underwriter / Admin — KYC Review
+
     /// <summary>Get all customer KYC submissions currently in Pending status awaiting review</summary>
     [Authorize(Roles = "Underwriter,Admin")]
     [HttpGet("kyc/pending")]
-    [ProducesResponseType(typeof(IEnumerable<KycRecordDto>), 200)]
-    public async Task<IActionResult> GetPendingKyc()
+    [ProducesResponseType(typeof(PagedResponse<KycRecordDto>), 200)]
+    public async Task<IActionResult> GetPendingKyc([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
-        var result = await _userService.GetPendingKycAsync();
+        var result = await _userService.GetPendingKycAsync(page, pageSize);
         return Ok(result);
     }
 
@@ -222,13 +244,17 @@ public class UsersController : BaseApiController
         return Ok();
     }
 
+    #endregion
+
+    #region Admin Endpoints
+
     /// <summary>Admin — get all registered users across all roles</summary>
     [Authorize(Roles = "Admin")]
     [HttpGet("all")]
-    [ProducesResponseType(typeof(IEnumerable<UserDto>), 200)]
-    public async Task<IActionResult> GetAllUsers()
+    [ProducesResponseType(typeof(PagedResponse<UserDto>), 200)]
+    public async Task<IActionResult> GetAllUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
-        var users = await _userService.GetAllUsersAsync();
+        var users = await _userService.GetAllUsersAsync(page, pageSize);
         return Ok(users);
     }
 
@@ -267,4 +293,6 @@ public class UsersController : BaseApiController
         var result = await _userService.GetAllSessionsAsync();
         return Ok(result);
     }
+
+    #endregion
 }

@@ -20,7 +20,7 @@ public class ClaimsController : BaseApiController
         _claimService = claimService;
     }
 
-    // --- Customer Endpoints ---
+    #region Customer Endpoints
 
     /// <summary>Intimate (register) a new claim against an active policy</summary>
     /// <remarks>Policy must be in Active status. Claim is created in Intimated state.</remarks>
@@ -92,15 +92,17 @@ public class ClaimsController : BaseApiController
         return Ok(result);
     }
 
-    // --- Claims Officer Endpoints ---
+    #endregion
+
+    #region Claims Officer Endpoints
 
     /// <summary>Get all claims across all customers</summary>
     [Authorize(Roles = "ClaimsOfficer,Admin")]
     [HttpGet("all")]
-    [ProducesResponseType(typeof(IEnumerable<ClaimDto>), 200)]
-    public async Task<IActionResult> GetAllClaims()
+    [ProducesResponseType(typeof(PagedResponse<ClaimDto>), 200)]
+    public async Task<IActionResult> GetAllClaims([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
-        var result = await _claimService.GetAllClaimsAsync();
+        var result = await _claimService.GetAllClaimsAsync(page, pageSize);
         return Ok(result);
     }
 
@@ -201,7 +203,9 @@ public class ClaimsController : BaseApiController
         return Ok();
     }
 
-    // --- Surveyor Endpoints ---
+    #endregion
+
+    #region Surveyor Endpoints
 
     /// <summary>Get all motor/property claims assigned to the authenticated surveyor</summary>
     [Authorize(Roles = "Surveyor")]
@@ -227,4 +231,6 @@ public class ClaimsController : BaseApiController
         await _claimService.SubmitSurveyReportAsync(id, userId, request);
         return Ok();
     }
+
+    #endregion
 }

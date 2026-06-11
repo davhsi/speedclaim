@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using SpeedClaim.Api.Dtos.Common;
 using SpeedClaim.Api.Dtos.Policies;
 using SpeedClaim.Api.Exceptions;
 using SpeedClaim.Api.Interfaces;
@@ -135,10 +136,10 @@ public class PolicyService : IPolicyService
         return policies.Select(MapToDto);
     }
 
-    public async Task<IEnumerable<PolicyDto>> GetAllPoliciesAsync()
+    public async Task<PagedResponse<PolicyDto>> GetAllPoliciesAsync(int page, int pageSize)
     {
-        var policies = await _unitOfWork.Policies.GetAllAsync();
-        return policies.Select(MapToDto);
+        var (items, total) = await _unitOfWork.Policies.GetPagedAsync(page, pageSize);
+        return new PagedResponse<PolicyDto>(items.Select(MapToDto), page, pageSize, total);
     }
 
     public async Task<IEnumerable<PolicyStatusHistoryDto>> GetPolicyHistoryAsync(Guid policyId, Guid? customerId = null)
@@ -254,10 +255,10 @@ public class PolicyService : IPolicyService
         ));
     }
 
-    public async Task<IEnumerable<EndorsementDto>> GetPendingEndorsementsAsync()
+    public async Task<PagedResponse<EndorsementDto>> GetPendingEndorsementsAsync(int page, int pageSize)
     {
-        var endorsements = await _unitOfWork.Endorsements.FindAsync(e => e.Status == EndorsementStatus.Requested);
-        return endorsements.Select(e => new EndorsementDto(
+        var (items, total) = await _unitOfWork.Endorsements.GetPagedAsync(page, pageSize, e => e.Status == EndorsementStatus.Requested);
+        var dtos = items.Select(e => new EndorsementDto(
             e.Id,
             e.PolicyId,
             e.EndorsementType.ToString(),
@@ -270,5 +271,6 @@ public class PolicyService : IPolicyService
             e.ReviewedAt,
             e.CreatedAt
         ));
+        return new PagedResponse<EndorsementDto>(dtos, page, pageSize, total);
     }
 }
