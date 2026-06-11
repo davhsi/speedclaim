@@ -37,6 +37,7 @@ public class GlobalExceptionMiddleware
         
         var statusCode = exception switch
         {
+            AppException ex => ex.StatusCode,
             UnauthorizedAccessException => (int)HttpStatusCode.Unauthorized,
             KeyNotFoundException => (int)HttpStatusCode.NotFound,
             ArgumentException => (int)HttpStatusCode.BadRequest,
