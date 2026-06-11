@@ -62,3 +62,4 @@ graphify-out/
 .agents/.cache/
 
 wwwroot
+logs/
