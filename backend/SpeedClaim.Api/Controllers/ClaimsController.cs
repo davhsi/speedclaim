@@ -36,17 +36,18 @@ public class ClaimsController : BaseApiController
         return Ok(result);
     }
 
-    /// <summary>Upload a supporting document for a claim</summary>
+    /// <summary>Upload (or replace) a supporting document for a claim</summary>
     /// <param name="id">Claim ID</param>
+    /// <param name="documentKey">Document type key (e.g. HOSPITAL_BILL, POLICE_REPORT)</param>
     [Authorize(Roles = "Customer")]
-    [HttpPost("{id}/upload")]
+    [HttpPut("{id}/documents/{documentKey}")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(404)]
-    public async Task<IActionResult> UploadClaimDocument(Guid id, [FromForm] UploadDocumentRequest request)
+    public async Task<IActionResult> UploadClaimDocument(Guid id, string documentKey, [FromForm] UploadDocumentRequest request)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId)) return Unauthorized();
-        var result = await _claimService.UploadClaimDocumentAsync(id, customerId, request.DocumentType, request.File);
+        var result = await _claimService.UploadClaimDocumentAsync(id, customerId, documentKey, request.File);
         return Ok(new { FilePath = result });
     }
 

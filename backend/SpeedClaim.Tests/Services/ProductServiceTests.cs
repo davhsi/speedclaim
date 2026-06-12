@@ -105,12 +105,18 @@ public class ProductServiceTests
     [Test]
     public async Task ConfigureDocumentRequirementsAsync_AddsRequirements()
     {
+        var productId = Guid.NewGuid();
+        var product = new InsuranceProduct { Id = productId };
+        _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
+        _mockDocReqRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<DocumentRequirement, bool>>>()))
+                       .ReturnsAsync(new List<DocumentRequirement>());
+
         var request = new UpdateDocumentRequirementsRequest(new List<DocumentRequirementDto>
         {
             new DocumentRequirementDto(EntityType.Kyc, "health", "ID_PROOF", "ID Proof", "Provide ID", true, true)
         });
 
-        await _productService.ConfigureDocumentRequirementsAsync(Guid.NewGuid().ToString(), request, Guid.NewGuid().ToString());
+        await _productService.ConfigureDocumentRequirementsAsync(productId.ToString(), request, Guid.NewGuid().ToString());
 
         _mockDocReqRepo.Verify(r => r.AddAsync(It.IsAny<DocumentRequirement>()), Times.Once);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
@@ -162,5 +168,41 @@ public class ProductServiceTests
         _mockUnitOfWork.Setup(u => u.InsuranceProducts.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((InsuranceProduct?)null);
 
         Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _productService.GetByIdAsync(Guid.NewGuid().ToString()));
+    }
+
+    [Test]
+    public async Task GetDocumentRequirementsAsync_ValidProduct_ReturnsRequirements()
+    {
+        var productId = Guid.NewGuid();
+        var product = new InsuranceProduct { Id = productId };
+        var requirements = new List<DocumentRequirement>
+        {
+            new DocumentRequirement
+            {
+                Id = Guid.NewGuid(), ProductId = productId,
+                EntityType = EntityType.Kyc, Domain = "health",
+                DocumentKey = "ID_PROOF", Label = "ID Proof",
+                Description = "Provide a valid ID", IsMandatory = true, IsActive = true
+            }
+        };
+
+        _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
+        _mockDocReqRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<DocumentRequirement, bool>>>()))
+            .ReturnsAsync(requirements);
+
+        var result = await _productService.GetDocumentRequirementsAsync(productId.ToString());
+
+        Assert.That(result.Count(), Is.EqualTo(1));
+        Assert.That(result.First().DocumentKey, Is.EqualTo("ID_PROOF"));
+        Assert.That(result.First().ProductId, Is.EqualTo(productId));
+    }
+
+    [Test]
+    public void GetDocumentRequirementsAsync_ProductNotFound_ThrowsNotFoundException()
+    {
+        _mockProductRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((InsuranceProduct?)null);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() =>
+            _productService.GetDocumentRequirementsAsync(Guid.NewGuid().ToString()));
     }
 }

@@ -325,6 +325,8 @@ public class ProposalServiceTests
             .ReturnsAsync("/uploads/proposals/doc.pdf");
 
         var mockDocRepo = new Mock<ISubmittedDocumentRepository>();
+        mockDocRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<SubmittedDocument, bool>>>()))
+            .ReturnsAsync(new List<SubmittedDocument>());
         _mockUnitOfWork.Setup(u => u.SubmittedDocuments).Returns(mockDocRepo.Object);
 
         var proposalServiceWithStorage = new ProposalService(_mockUnitOfWork.Object, new Mock<INotificationService>().Object, mockStorageService.Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ProposalService>>());
@@ -390,7 +392,11 @@ public class ProposalServiceTests
 
         _mockProposalRepo.Setup(r => r.GetByIdAsync(proposalId)).ReturnsAsync(proposal);
         _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync(agent);
-        _mockUnitOfWork.Setup(u => u.SubmittedDocuments).Returns(new Mock<ISubmittedDocumentRepository>().Object);
+
+        var mockDocRepo = new Mock<ISubmittedDocumentRepository>();
+        mockDocRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<SubmittedDocument, bool>>>()))
+            .ReturnsAsync(new List<SubmittedDocument>());
+        _mockUnitOfWork.Setup(u => u.SubmittedDocuments).Returns(mockDocRepo.Object);
 
         var mockFile = new Mock<IFormFile>();
         mockFile.Setup(f => f.FileName).Returns("id.pdf");
@@ -428,5 +434,28 @@ public class ProposalServiceTests
         await svc.ApproveOrRejectProposalAsync(proposalId.ToString(), Guid.NewGuid().ToString(), true, "Looks good");
 
         mockNotif.Verify(n => n.CreateAsync(userId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+    }
+
+    [Test]
+    public async Task SubmitProposalAsync_WithLifeDetail_SetsLifeDetail()
+    {
+        var userId = Guid.NewGuid().ToString();
+        var customerId = Guid.NewGuid().ToString();
+        var productId = Guid.NewGuid().ToString();
+
+        var product = new InsuranceProduct { Domain = "Life" };
+        _mockProductRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(product);
+        _mockProposalRepo.Setup(r => r.AddAsync(It.IsAny<Proposal>())).Returns(Task.CompletedTask);
+
+        var lifeDetail = new LifeDetailDto("Endowment", 500000m, 1000000m, true, false);
+        var request = new SubmitProposalRequest(customerId, productId, 1000000, 20, 50000, "Annual",
+            null, lifeDetail, null,
+            new List<string>(),
+            new List<NomineeDto>());
+
+        var result = await _proposalService.SubmitProposalAsync(userId, request, false);
+
+        Assert.That(result.Status, Is.EqualTo("Submitted"));
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
 }

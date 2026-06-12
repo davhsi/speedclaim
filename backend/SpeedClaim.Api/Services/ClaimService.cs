@@ -106,6 +106,12 @@ public class ClaimService : IClaimService
 
         if (file == null || file.Length == 0)
             throw new ValidationException("Invalid file.");
+
+        var existing = await _unitOfWork.SubmittedDocuments.FindAsync(
+            d => d.EntityId == claimId && d.DocumentKey == documentType);
+        foreach (var old in existing)
+            _unitOfWork.SubmittedDocuments.Delete(old);
+
         var doc = new SubmittedDocument
         {
             Id = Guid.NewGuid(),
