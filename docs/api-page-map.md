@@ -97,7 +97,7 @@
 | Action | Endpoint | Status |
 |---|---|---|
 | Intimate claim | `POST /api/claims/intimate` | ✅ |
-| Upload claim documents | `POST /api/claims/{id}/upload` | ✅ |
+| Upload claim documents | `PUT /api/claims/{id}/documents/{documentKey}` | ✅ |
 
 ### My Claims Page
 | Action | Endpoint | Status |
@@ -164,7 +164,7 @@
 | Submit proposal (as agent) | `POST /api/proposals` | ✅ |
 | View my proposals | `GET /api/proposals/my` | ✅ |
 | Get single proposal details | `GET /api/proposals/{id}` | ✅ |
-| Upload proposal documents | `POST /api/proposals/{id}/upload` | ✅ |
+| Upload proposal documents | `PUT /api/proposals/{id}/documents/{documentKey}` | ✅ |
 
 ### Customer Policies Page
 | Action | Endpoint | Status |

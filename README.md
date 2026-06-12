@@ -148,7 +148,15 @@ cd backend
 dotnet test SpeedClaim.Tests/SpeedClaim.Tests.csproj
 ```
 
-All tests are NUnit unit tests covering the service layer with Moq-mocked repositories. 238 tests, 0 failures.
+All tests are NUnit unit tests covering the service layer with Moq-mocked repositories. 252 tests, 0 failures.
+
+To generate an HTML coverage report (requires `dotnet-reportgenerator-globaltool`):
+
+```bash
+bash coverage.sh
+```
+
+Report is written to `coverage-report/index.html`. Service-layer line coverage is above 96% on all services.
 
 ---
 
