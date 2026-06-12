@@ -471,4 +471,21 @@ public class PolicyServiceTests
         Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() =>
             _policyService.GetPolicyEndorsementsAsync(policyId, customerId));
     }
+
+    [Test]
+    public async Task ApproveRejectEndorsementAsync_Rejected_SetsRejectedStatus()
+    {
+        var endorsementId = Guid.NewGuid();
+        var underwriterId = Guid.NewGuid();
+        var endorsement = new Endorsement { Id = endorsementId, Status = EndorsementStatus.Requested };
+
+        _mockUnitOfWork.Setup(u => u.Endorsements.GetByIdAsync(endorsementId)).ReturnsAsync(endorsement);
+
+        await _policyService.ApproveRejectEndorsementAsync(endorsementId, false, "Does not meet criteria", underwriterId);
+
+        Assert.That(endorsement.Status, Is.EqualTo(EndorsementStatus.Rejected));
+        Assert.That(endorsement.ReviewedById, Is.EqualTo(underwriterId));
+        _mockUnitOfWork.Verify(u => u.Endorsements.Update(endorsement), Times.Once);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
 }

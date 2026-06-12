@@ -462,4 +462,89 @@ public class ClaimServiceTests
 
         mockNotif.Verify(n => n.CreateAsync(userId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
+
+    [Test]
+    public void AssignClaimAsync_NotFound_ThrowsNotFoundException()
+    {
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Claim?)null);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() =>
+            _claimService.AssignClaimAsync(Guid.NewGuid(), Guid.NewGuid()));
+    }
+
+    [Test]
+    public void UpdateClaimStatusAsync_NotFound_ThrowsNotFoundException()
+    {
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Claim?)null);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() =>
+            _claimService.UpdateClaimStatusAsync(Guid.NewGuid(), ClaimStatus.UnderReview, Guid.NewGuid(), "notes"));
+    }
+
+    [Test]
+    public void RequestAdditionalDocumentsAsync_NotFound_ThrowsNotFoundException()
+    {
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Claim?)null);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() =>
+            _claimService.RequestAdditionalDocumentsAsync(Guid.NewGuid(), "more docs needed", Guid.NewGuid()));
+    }
+
+    [Test]
+    public void MarkClaimAsSettledAsync_ClaimNotApproved_ThrowsUnprocessableException()
+    {
+        var claimId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, Status = ClaimStatus.UnderReview, CustomerId = Guid.NewGuid(), ClaimNumber = "CLM-X", PolicyId = Guid.NewGuid() };
+
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.UnprocessableException>(() =>
+            _claimService.MarkClaimAsSettledAsync(claimId, Guid.NewGuid()));
+    }
+
+    [Test]
+    public void ApproveOrRejectClaimAsync_ApprovedWithNullAmount_ThrowsValidationException()
+    {
+        var claimId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, Status = ClaimStatus.UnderReview, CustomerId = Guid.NewGuid(), ClaimNumber = "CLM-X", PolicyId = Guid.NewGuid() };
+
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+
+        var request = new ApproveRejectClaimRequest(true, null, "approved");
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() =>
+            _claimService.ApproveOrRejectClaimAsync(claimId, request, Guid.NewGuid()));
+    }
+
+    [Test]
+    public async Task SubmitSurveyReportAsync_WithMotorDetail_UpdatesRepairCost()
+    {
+        var claimId = Guid.NewGuid();
+        var surveyorId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, SurveyorId = surveyorId, CustomerId = Guid.NewGuid(), Status = ClaimStatus.UnderReview, ClaimNumber = "CLM-001", PolicyId = Guid.NewGuid() };
+        var motorDetail = new MotorClaimDetail { ClaimId = claimId };
+
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+
+        var mockMotorRepo = new Mock<IRepository<MotorClaimDetail>>();
+        mockMotorRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<MotorClaimDetail, bool>>>())).ReturnsAsync(motorDetail);
+        _mockUnitOfWork.Setup(u => u.MotorClaimDetails).Returns(mockMotorRepo.Object);
+
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.FileName).Returns("survey.pdf");
+        mockFile.Setup(f => f.Length).Returns(1024);
+        mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
+
+        var mockStorage = new Mock<IStorageService>();
+        mockStorage.Setup(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync("/storage/survey.pdf");
+
+        var svc = new ClaimService(_mockUnitOfWork.Object, mockStorage.Object, new Mock<INotificationService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ClaimService>>());
+
+        var request = new SubmitSurveyReportRequest(12000m, DateTime.UtcNow.AddDays(-2), "heavy damage", mockFile.Object);
+        await svc.SubmitSurveyReportAsync(claimId, surveyorId, request);
+
+        Assert.That(motorDetail.EstimatedRepairCost, Is.EqualTo(12000m));
+        Assert.That(motorDetail.SurveyorRemarks, Is.EqualTo("heavy damage"));
+    }
 }

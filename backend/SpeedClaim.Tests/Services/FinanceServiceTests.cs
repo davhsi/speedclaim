@@ -608,4 +608,90 @@ public class FinanceServiceTests
         Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() =>
             _financeService.PayPremiumAsync("not-a-guid", Guid.NewGuid().ToString(), new CreatePaymentIntentRequest()));
     }
+
+    [Test]
+    public async Task ReconcilePaymentAsync_WithScheduleAndPendingPolicy_ActivatesPolicy()
+    {
+        var paymentId = Guid.NewGuid();
+        var scheduleId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+
+        var payment = new PremiumPayment { Id = paymentId, Status = PaymentStatus.Pending, ScheduleId = scheduleId };
+        var schedule = new PremiumSchedule { Id = scheduleId, Status = PremiumScheduleStatus.Upcoming, PolicyId = policyId };
+        var policy = new Policy { Id = policyId, CustomerId = customerId, Status = PolicyStatus.Pending, PolicyNumber = "POL-001" };
+        var customer = new SpeedClaim.Api.Models.Customer { Id = customerId, UserId = userId };
+        var user = new User { Id = userId, Email = "test@test.com", FirstName = "Test" };
+
+        var mockPaymentRepo = new Mock<IPremiumPaymentRepository>();
+        mockPaymentRepo.Setup(r => r.GetByIdAsync(paymentId)).ReturnsAsync(payment);
+        _mockUnitOfWork.Setup(u => u.PremiumPayments).Returns(mockPaymentRepo.Object);
+
+        var mockScheduleRepo = new Mock<IRepository<PremiumSchedule>>();
+        mockScheduleRepo.Setup(r => r.GetByIdAsync(scheduleId)).ReturnsAsync(schedule);
+        _mockUnitOfWork.Setup(u => u.PremiumSchedules).Returns(mockScheduleRepo.Object);
+
+        var mockPolicyRepo = new Mock<IPolicyRepository>();
+        mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(policy);
+        _mockUnitOfWork.Setup(u => u.Policies).Returns(mockPolicyRepo.Object);
+
+        var mockCustomerRepo = new Mock<IRepository<SpeedClaim.Api.Models.Customer>>();
+        mockCustomerRepo.Setup(r => r.GetByIdAsync(customerId)).ReturnsAsync(customer);
+        _mockUnitOfWork.Setup(u => u.Customers).Returns(mockCustomerRepo.Object);
+
+        var mockUserRepo = new Mock<IUserRepository>();
+        mockUserRepo.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
+        _mockUnitOfWork.Setup(u => u.Users).Returns(mockUserRepo.Object);
+
+        _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
+
+        await _financeService.ReconcilePaymentAsync(paymentId.ToString(), Guid.NewGuid().ToString());
+
+        Assert.That(policy.Status, Is.EqualTo(PolicyStatus.Active));
+        Assert.That(payment.Status, Is.EqualTo(PaymentStatus.Paid));
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public void ProcessRefundAsync_NotFound_ThrowsNotFoundException()
+    {
+        var paymentId = Guid.NewGuid();
+        var mockPaymentRepo = new Mock<IPremiumPaymentRepository>();
+        mockPaymentRepo.Setup(r => r.GetByIdAsync(paymentId)).ReturnsAsync((PremiumPayment?)null);
+        _mockUnitOfWork.Setup(u => u.PremiumPayments).Returns(mockPaymentRepo.Object);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() =>
+            _financeService.ProcessRefundAsync(paymentId.ToString(), Guid.NewGuid().ToString()));
+    }
+
+    [Test]
+    public void ApproveAndPayCommissionAsync_NotFound_ThrowsNotFoundException()
+    {
+        var commissionId = Guid.NewGuid();
+        var mockCommissionRepo = new Mock<IRepository<AgentCommission>>();
+        mockCommissionRepo.Setup(r => r.GetByIdAsync(commissionId)).ReturnsAsync((AgentCommission?)null);
+        _mockUnitOfWork.Setup(u => u.AgentCommissions).Returns(mockCommissionRepo.Object);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() =>
+            _financeService.ApproveAndPayCommissionAsync(commissionId.ToString(), Guid.NewGuid().ToString()));
+    }
+
+    [Test]
+    public async Task ReconcileByStripeIntentAsync_WithFoundPayment_MarksAsPaid()
+    {
+        var paymentId = Guid.NewGuid();
+        var payment = new PremiumPayment { Id = paymentId, Status = PaymentStatus.Pending, ScheduleId = null };
+
+        var mockPaymentRepo = new Mock<IPremiumPaymentRepository>();
+        mockPaymentRepo.Setup(r => r.GetByIntentWithScheduleAsync("pi_test")).ReturnsAsync(payment);
+        mockPaymentRepo.Setup(r => r.GetByIdAsync(paymentId)).ReturnsAsync(payment);
+        _mockUnitOfWork.Setup(u => u.PremiumPayments).Returns(mockPaymentRepo.Object);
+        _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
+
+        await _financeService.ReconcileByStripeIntentAsync("pi_test");
+
+        Assert.That(payment.Status, Is.EqualTo(PaymentStatus.Paid));
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
 }
