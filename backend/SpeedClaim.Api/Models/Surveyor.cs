@@ -11,7 +11,7 @@ public class Surveyor
     
     public SurveyorType SurveyorType { get; set; }
     public string? LicenseNumber { get; set; }
-    public DateTime? LicenseExpiry { get; set; }
+    public DateOnly? LicenseExpiry { get; set; }
     public SurveyorSpecialization Specialization { get; set; }
     public bool IsActive { get; set; } = true;
     

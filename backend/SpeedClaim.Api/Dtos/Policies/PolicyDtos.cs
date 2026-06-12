@@ -34,7 +34,7 @@ public record ApproveRejectEndorsementRequest(
 public record UpdateNomineeRequest(
     string FullName,
     string Relationship,
-    System.DateTime DateOfBirth,
+    DateOnly DateOfBirth,
     decimal SharePercentage,
     bool IsMinor,
     string? AppointeeName

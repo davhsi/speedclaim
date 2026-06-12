@@ -265,7 +265,7 @@ public class UserServiceTests
         var mockMemberRepo = new Mock<IRepository<CustomerMember>>();
         _mockUnitOfWork.Setup(u => u.CustomerMembers).Returns(mockMemberRepo.Object);
 
-        var request = new AddFamilyMemberRequest(Salutation.Mr, "John", "Doe", new DateTime(1990, 1, 1), Gender.Male, Relationship.Sibling, true);
+        var request = new AddFamilyMemberRequest(Salutation.Mr, "John", "Doe", new DateOnly(1990, 1, 1), Gender.Male, Relationship.Sibling, true);
 
         var result = await _userService.AddFamilyMemberAsync(customerId.ToString(), request);
 
@@ -279,13 +279,13 @@ public class UserServiceTests
     {
         var memberId = Guid.NewGuid();
         var customerId = Guid.NewGuid();
-        var member = new CustomerMember { Id = memberId, CustomerId = customerId, FirstName = "Old", LastName = "Name", DateOfBirth = new DateTime(1990, 1, 1) };
+        var member = new CustomerMember { Id = memberId, CustomerId = customerId, FirstName = "Old", LastName = "Name", DateOfBirth = new DateOnly(1990, 1, 1) };
 
         var mockMemberRepo = new Mock<IRepository<CustomerMember>>();
         mockMemberRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<CustomerMember, bool>>>())).ReturnsAsync(member);
         _mockUnitOfWork.Setup(u => u.CustomerMembers).Returns(mockMemberRepo.Object);
 
-        var request = new UpdateFamilyMemberRequest(Salutation.Mrs, "New", "Name", new DateTime(1990, 1, 1), Gender.Female, Relationship.Spouse, true);
+        var request = new UpdateFamilyMemberRequest(Salutation.Mrs, "New", "Name", new DateOnly(1990, 1, 1), Gender.Female, Relationship.Spouse, true);
 
         await _userService.UpdateFamilyMemberAsync(memberId.ToString(), customerId.ToString(), request);
 
@@ -300,7 +300,7 @@ public class UserServiceTests
         mockMemberRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<CustomerMember, bool>>>())).ReturnsAsync((CustomerMember?)null);
         _mockUnitOfWork.Setup(u => u.CustomerMembers).Returns(mockMemberRepo.Object);
 
-        var request = new UpdateFamilyMemberRequest(Salutation.Mr, "X", "Y", new DateTime(1990, 1, 1), Gender.Male, Relationship.Sibling, false);
+        var request = new UpdateFamilyMemberRequest(Salutation.Mr, "X", "Y", new DateOnly(1990, 1, 1), Gender.Male, Relationship.Sibling, false);
         Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() =>
             _userService.UpdateFamilyMemberAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), request));
     }
@@ -311,7 +311,7 @@ public class UserServiceTests
         var customerId = Guid.NewGuid();
         var members = new List<CustomerMember>
         {
-            new CustomerMember { Id = Guid.NewGuid(), CustomerId = customerId, FirstName = "Jane", LastName = "Doe", DateOfBirth = new DateTime(1992, 6, 15) }
+            new CustomerMember { Id = Guid.NewGuid(), CustomerId = customerId, FirstName = "Jane", LastName = "Doe", DateOfBirth = new DateOnly(1992, 6, 15) }
         };
         var mockMemberRepo = new Mock<IRepository<CustomerMember>>();
         mockMemberRepo.Setup(r => r.GetPagedAsync(1, 100, It.IsAny<Expression<Func<CustomerMember, bool>>>(), null))

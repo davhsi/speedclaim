@@ -32,7 +32,7 @@ public record PolicyNomineeDto(
     Guid Id,
     string FullName,
     string Relationship,
-    DateTime DateOfBirth,
+    DateOnly DateOfBirth,
     decimal SharePercentage,
     bool IsMinor,
     string? AppointeeName

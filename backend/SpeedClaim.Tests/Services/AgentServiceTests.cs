@@ -162,7 +162,7 @@ public class AgentServiceTests
     public void UpdateAgentLicenseAsync_AgentNotFound_ThrowsException()
     {
         _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync((Agent?)null);
-        var request = new UpdateAgentLicenseRequest("LIC-123", DateTime.UtcNow.AddYears(1));
+        var request = new UpdateAgentLicenseRequest("LIC-123", DateOnly.FromDateTime(DateTime.UtcNow.AddYears(1)));
 
         var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _agentService.UpdateAgentLicenseAsync(Guid.NewGuid().ToString(), request, Guid.NewGuid().ToString()));
         Assert.That(ex.Message, Is.EqualTo("Agent not found"));
@@ -173,7 +173,7 @@ public class AgentServiceTests
     {
         var agentId = Guid.NewGuid();
         var agent = new Agent();
-        var expiry = DateTime.UtcNow.AddYears(1);
+        var expiry = DateOnly.FromDateTime(DateTime.UtcNow.AddYears(1));
         var request = new UpdateAgentLicenseRequest("LIC-123", expiry);
 
         _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync(agent);
@@ -224,7 +224,7 @@ public class AgentServiceTests
     {
         var userId = Guid.NewGuid();
         var agentId = Guid.NewGuid();
-        var expiry = DateTime.UtcNow.AddYears(2);
+        var expiry = DateOnly.FromDateTime(DateTime.UtcNow.AddYears(2));
 
         var agent = new Agent
         {

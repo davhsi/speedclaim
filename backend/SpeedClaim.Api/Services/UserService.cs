@@ -97,7 +97,7 @@ public class UserService : IUserService
             Salutation = request.Salutation,
             FirstName = request.FirstName,
             LastName = request.LastName,
-            DateOfBirth = request.DateOfBirth.ToUniversalTime(),
+            DateOfBirth = request.DateOfBirth,
             Gender = request.Gender,
             Relationship = request.Relationship,
             IsDependent = request.IsDependent
@@ -119,7 +119,7 @@ public class UserService : IUserService
         member.Salutation = request.Salutation;
         member.FirstName = request.FirstName;
         member.LastName = request.LastName;
-        member.DateOfBirth = request.DateOfBirth.ToUniversalTime();
+        member.DateOfBirth = request.DateOfBirth;
         member.Gender = request.Gender;
         member.Relationship = request.Relationship;
         member.IsDependent = request.IsDependent;

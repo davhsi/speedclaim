@@ -151,7 +151,7 @@ public class PolicyServiceTests
 
         _mockUnitOfWork.Setup(u => u.Nominees.GetByIdAsync(nomineeId)).ReturnsAsync((Nominee?)null);
 
-        var request = new UpdateNomineeRequest("Jane Doe", "Spouse", DateTime.UtcNow.AddYears(-30), 100, false, null);
+        var request = new UpdateNomineeRequest("Jane Doe", "Spouse", DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-30)), 100, false, null);
 
         Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() =>
             _policyService.UpdateNomineeAsync(nomineeId, customerId, request));
@@ -170,7 +170,7 @@ public class PolicyServiceTests
         _mockUnitOfWork.Setup(u => u.Nominees.GetByIdAsync(nomineeId)).ReturnsAsync(nominee);
         _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
 
-        var request = new UpdateNomineeRequest("Jane", "Spouse", DateTime.UtcNow.AddYears(-25), 100, false, null);
+        var request = new UpdateNomineeRequest("Jane", "Spouse", DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-25)), 100, false, null);
 
         Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() =>
             _policyService.UpdateNomineeAsync(nomineeId, customerId, request));
@@ -182,7 +182,7 @@ public class PolicyServiceTests
         var nomineeId = Guid.NewGuid();
         var customerId = Guid.NewGuid();
         var policyId = Guid.NewGuid();
-        var dob = DateTime.UtcNow.AddYears(-28);
+        var dob = DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-28));
 
         var nominee = new Nominee { Id = nomineeId, PolicyId = policyId, FullName = "Old Name" };
         var policy = new Policy { Id = policyId, CustomerId = customerId };
@@ -243,7 +243,7 @@ public class PolicyServiceTests
         var policy = new Policy { Id = policyId, CustomerId = customerId, ProposalId = proposalId, Status = PolicyStatus.Active };
         var nominees = new List<Nominee>
         {
-            new Nominee { Id = Guid.NewGuid(), ProposalId = proposalId, FullName = "Jane Doe", Relationship = "Spouse", DateOfBirth = new DateTime(1990, 1, 1), SharePercentage = 100 }
+            new Nominee { Id = Guid.NewGuid(), ProposalId = proposalId, FullName = "Jane Doe", Relationship = "Spouse", DateOfBirth = new DateOnly(1990, 1, 1), SharePercentage = 100 }
         };
         _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
         _mockUnitOfWork.Setup(u => u.Nominees.FindAsync(It.IsAny<Expression<Func<Nominee, bool>>>())).ReturnsAsync(nominees);

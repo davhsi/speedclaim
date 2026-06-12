@@ -50,7 +50,7 @@ public class AuthServiceTests
     public void RegisterCustomerAsync_EmailExists_ThrowsException()
     {
         var address = new AddressDto("123 St", null, "City", "State", "12345", "Country");
-        var request = new RegisterUserRequest("test@test.com", "pass", "Mr", "John", "Doe", "123", address, null, true, DateTime.UtcNow, "A", "P", Gender.Male, MaritalStatus.Single);
+        var request = new RegisterUserRequest("test@test.com", "pass", "Mr", "John", "Doe", "123", address, null, true, DateOnly.FromDateTime(DateTime.UtcNow), "A", "P", Gender.Male, MaritalStatus.Single);
         
         _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
             .ReturnsAsync(new User());
@@ -63,7 +63,7 @@ public class AuthServiceTests
     public async Task RegisterCustomerAsync_ValidRequest_Success()
     {
         var address = new AddressDto("123 St", null, "City", "State", "12345", "Country");
-        var request = new RegisterUserRequest("new@test.com", "pass", "Mr", "John", "Doe", "123", address, null, true, DateTime.UtcNow, "A", "P", Gender.Male, MaritalStatus.Single);
+        var request = new RegisterUserRequest("new@test.com", "pass", "Mr", "John", "Doe", "123", address, null, true, DateOnly.FromDateTime(DateTime.UtcNow), "A", "P", Gender.Male, MaritalStatus.Single);
         
         _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
             .ReturnsAsync((User?)null);

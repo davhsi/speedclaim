@@ -101,7 +101,7 @@ public class ProposalServiceTests
         var request = new SubmitProposalRequest(customerId, productId, 100000, 10, 2500, "Monthly", 
             new HealthDetailDto("", "", "", 0, false, 0), null, null, 
             new List<string> { Guid.NewGuid().ToString() }, 
-            new List<NomineeDto> { new NomineeDto("Jane Doe", "Spouse", DateTime.UtcNow, 100, false, null) });
+            new List<NomineeDto> { new NomineeDto("Jane Doe", "Spouse", DateOnly.FromDateTime(DateTime.UtcNow), 100, false, null) });
 
         var result = await _proposalService.SubmitProposalAsync(userId, request, false);
 

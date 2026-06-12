@@ -14,7 +14,7 @@ public record RegisterUserRequest(
     AddressDto PermanentAddress,
     AddressDto? CurrentAddress,
     bool IsSameAsPermanent,
-    DateTime DateOfBirth,
+    DateOnly DateOfBirth,
     string AadhaarNumber,
     string PanNumber,
     Gender Gender,

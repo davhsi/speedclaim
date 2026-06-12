@@ -24,7 +24,7 @@ public record BranchDto(
 
 public record UpdateAgentLicenseRequest(
     string LicenseNumber,
-    DateTime LicenseExpiry
+    DateOnly LicenseExpiry
 );
 
 public record AgentDashboardDto(
@@ -42,7 +42,7 @@ public record AgentProfileDto(
     string AgentCode,
     string AgentType,
     string LicenseNumber,
-    DateTime LicenseExpiry,
+    DateOnly LicenseExpiry,
     decimal CommissionRate,
     bool IsActive,
     string? BranchName,

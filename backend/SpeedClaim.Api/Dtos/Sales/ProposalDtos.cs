@@ -35,7 +35,7 @@ public record SubmitProposalRequest(
 public record NomineeDto(
     string FullName,
     string Relationship,
-    DateTime DateOfBirth,
+    DateOnly DateOfBirth,
     decimal SharePercentage,
     bool IsMinor,
     string? AppointeeName

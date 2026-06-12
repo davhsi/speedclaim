@@ -8,7 +8,7 @@ public class Customer
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
     
-    public DateTime? DateOfBirth { get; set; }
+    public DateOnly? DateOfBirth { get; set; }
     public SpeedClaim.Api.Models.Enums.Gender Gender { get; set; }
     public string Occupation { get; set; } = string.Empty;
     public decimal AnnualIncome { get; set; }

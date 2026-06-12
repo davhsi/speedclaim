@@ -10,7 +10,7 @@ public record FamilyMemberDto(
     string FirstName,
     string LastName,
     string FullName,
-    DateTime DateOfBirth,
+    DateOnly DateOfBirth,
     string Gender,
     string Relationship,
     bool IsDependent
@@ -20,7 +20,7 @@ public record AddFamilyMemberRequest(
     Salutation Salutation,
     string FirstName,
     string LastName,
-    DateTime DateOfBirth,
+    DateOnly DateOfBirth,
     Gender Gender,
     Relationship Relationship,
     bool IsDependent
@@ -30,7 +30,7 @@ public record UpdateFamilyMemberRequest(
     Salutation Salutation,
     string FirstName,
     string LastName,
-    DateTime DateOfBirth,
+    DateOnly DateOfBirth,
     Gender Gender,
     Relationship Relationship,
     bool IsDependent

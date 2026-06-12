@@ -57,7 +57,7 @@ public class RegisterUserRequestValidator : AbstractValidator<RegisterUserReques
 
         RuleFor(x => x).Must(req => 
         {
-            var isMrs = req.Salutation?.Equals("Mrs.", StringComparison.OrdinalIgnoreCase) == true;
+            var isMrs = req.Salutation?.Equals("Mrs", StringComparison.OrdinalIgnoreCase) == true;
             if (isMrs && req.MaritalStatus != SpeedClaim.Api.Models.Enums.MaritalStatus.Married)
                 return false;
             return true;
@@ -87,28 +87,27 @@ public class RegisterUserRequestValidator : AbstractValidator<RegisterUserReques
         });
     }
 
-    private bool BeAtLeast18YearsOld(DateTime dateOfBirth)
+    private bool BeAtLeast18YearsOld(DateOnly dateOfBirth)
     {
-        var today = DateTime.Today;
+        var today = DateOnly.FromDateTime(DateTime.Today);
         var age = today.Year - dateOfBirth.Year;
-        if (dateOfBirth.Date > today.AddYears(-age)) age--;
-        
+        if (dateOfBirth > today.AddYears(-age)) age--;
         return age >= 18;
     }
 
     private bool BeValidSalutation(string salutation)
     {
-        var validSalutations = new[] { "Mr.", "Mrs.", "Ms.", "Mx.", "Dr.", "Prof." };
+        var validSalutations = new[] { "Mr", "Mrs", "Ms", "Mx", "Dr", "Prof" };
         return Array.Exists(validSalutations, s => s.Equals(salutation, StringComparison.OrdinalIgnoreCase));
     }
 
     private bool MatchGender(SpeedClaim.Api.Models.Enums.Gender gender, string salutation)
     {
         var s = salutation?.ToLower();
-        if (gender == SpeedClaim.Api.Models.Enums.Gender.Male && (s == "mrs." || s == "ms."))
+        if (gender == SpeedClaim.Api.Models.Enums.Gender.Male && (s == "mrs" || s == "ms"))
             return false;
-        
-        if (gender == SpeedClaim.Api.Models.Enums.Gender.Female && s == "mr.")
+
+        if (gender == SpeedClaim.Api.Models.Enums.Gender.Female && s == "mr")
             return false;
 
         return true;

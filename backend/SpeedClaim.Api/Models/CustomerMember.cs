@@ -12,7 +12,7 @@ public class CustomerMember
     public string LastName { get; set; } = string.Empty;
     public string FullName => $"{Salutation} {FirstName} {LastName}".Trim();
     
-    public DateTime DateOfBirth { get; set; }
+    public DateOnly DateOfBirth { get; set; }
     public SpeedClaim.Api.Models.Enums.Gender Gender { get; set; }
     public SpeedClaim.Api.Models.Enums.Relationship Relationship { get; set; }
     public bool IsDependent { get; set; }

@@ -10,7 +10,7 @@ public class Nominee
     
     public string FullName { get; set; } = string.Empty;
     public string Relationship { get; set; } = string.Empty;
-    public DateTime DateOfBirth { get; set; }
+    public DateOnly DateOfBirth { get; set; }
     public decimal SharePercentage { get; set; }
     
     public bool IsMinor { get; set; }

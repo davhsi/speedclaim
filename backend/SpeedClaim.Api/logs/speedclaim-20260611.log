@@ -1,0 +1,459 @@
+2026-06-11 11:47:30 [INF] User profile is available. Using '/Users/davishe/.aspnet/DataProtection-Keys' as key repository; keys will not be encrypted at rest.
+2026-06-11 11:47:30 [INF] Now listening on: http://localhost:5062
+2026-06-11 11:47:30 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-11 11:47:30 [INF] Hosting environment: Development
+2026-06-11 11:47:30 [INF] Content root path: /Users/davishe/workspace/InsuranceApp/backend/SpeedClaim.Api
+2026-06-11 11:47:45 [INF] Request starting HTTP/1.1 GET http://localhost:5062/ - null null
+2026-06-11 11:47:45 [WRN] Failed to determine the https port for redirect.
+2026-06-11 11:47:45 [INF] HTTP GET / responded 404 in 27.9645 ms
+2026-06-11 11:47:45 [INF] Request finished HTTP/1.1 GET http://localhost:5062/ - 404 0 null 64.3871ms
+2026-06-11 11:47:45 [INF] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET http://localhost:5062/, Response status code: 404
+2026-06-11 11:47:55 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.html - null null
+2026-06-11 11:47:55 [INF] HTTP GET /swagger/index.html responded 304 in 37.0783 ms
+2026-06-11 11:47:55 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.html - 304 null null 39.2521ms
+2026-06-11 11:47:55 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui.css - null null
+2026-06-11 11:47:55 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-bundle.js - null null
+2026-06-11 11:47:55 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-standalone-preset.js - null null
+2026-06-11 11:47:55 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.css - null null
+2026-06-11 11:47:55 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.js - null null
+2026-06-11 11:47:55 [INF] HTTP GET /swagger/index.js responded 304 in 0.2511 ms
+2026-06-11 11:47:55 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.js - 304 null null 0.9987ms
+2026-06-11 11:47:55 [INF] HTTP GET /swagger/index.css responded 304 in 2.9178 ms
+2026-06-11 11:47:55 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.css - 304 null null 3.7034ms
+2026-06-11 11:47:55 [INF] HTTP GET /swagger/swagger-ui.css responded 304 in 3.9610 ms
+2026-06-11 11:47:55 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui.css - 304 null null 4.6047ms
+2026-06-11 11:47:55 [INF] HTTP GET /swagger/swagger-ui-standalone-preset.js responded 304 in 4.6173 ms
+2026-06-11 11:47:55 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-standalone-preset.js - 304 null null 5.1267ms
+2026-06-11 11:47:55 [INF] HTTP GET /swagger/swagger-ui-bundle.js responded 304 in 8.5493 ms
+2026-06-11 11:47:55 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-bundle.js - 304 null null 8.8901ms
+2026-06-11 11:47:55 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - null null
+2026-06-11 11:47:55 [INF] HTTP GET /swagger/v1/swagger.json responded 200 in 106.6269 ms
+2026-06-11 11:47:55 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 107.3226ms
+2026-06-11 11:48:17 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - null null
+2026-06-11 11:48:17 [INF] HTTP GET /swagger/v1/swagger.json responded 200 in 21.9338 ms
+2026-06-11 11:48:17 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 23.053ms
+2026-06-11 11:48:17 [INF] Request starting HTTP/1.1 GET http://localhost:5062/favicon.ico - null null
+2026-06-11 11:48:17 [INF] HTTP GET /favicon.ico responded 404 in 4.3581 ms
+2026-06-11 11:48:17 [INF] Request finished HTTP/1.1 GET http://localhost:5062/favicon.ico - 404 0 null 4.8924ms
+2026-06-11 11:48:17 [INF] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET http://localhost:5062/favicon.ico, Response status code: 404
+2026-06-11 11:54:11 [INF] Application is shutting down...
+2026-06-11 12:19:54 [INF] User profile is available. Using '/Users/davishe/.aspnet/DataProtection-Keys' as key repository; keys will not be encrypted at rest.
+2026-06-11 12:19:54 [INF] Now listening on: http://localhost:5062
+2026-06-11 12:19:54 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-11 12:19:54 [INF] Hosting environment: Development
+2026-06-11 12:19:54 [INF] Content root path: /Users/davishe/workspace/InsuranceApp/backend/SpeedClaim.Api
+2026-06-11 12:20:48 [INF] User profile is available. Using '/Users/davishe/.aspnet/DataProtection-Keys' as key repository; keys will not be encrypted at rest.
+2026-06-11 12:20:48 [INF] Now listening on: http://localhost:5062
+2026-06-11 12:20:48 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-11 12:20:48 [INF] Hosting environment: Development
+2026-06-11 12:20:48 [INF] Content root path: /Users/davishe/workspace/InsuranceApp/backend/SpeedClaim.Api
+2026-06-11 12:20:53 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - null null
+2026-06-11 12:20:53 [INF] HTTP GET /swagger/v1/swagger.json responded 200 in 111.5785 ms
+2026-06-11 12:20:53 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 153.1694ms
+2026-06-11 12:26:57 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - null null
+2026-06-11 12:26:57 [INF] HTTP GET /swagger/v1/swagger.json responded 200 in 37.5151 ms
+2026-06-11 12:26:57 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 41.2681ms
+2026-06-11 12:26:58 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - null null
+2026-06-11 12:26:58 [INF] HTTP GET /swagger/v1/swagger.json responded 200 in 16.8153 ms
+2026-06-11 12:26:58 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 18.0518ms
+2026-06-11 12:27:06 [INF] Application is shutting down...
+2026-06-11 12:27:12 [INF] User profile is available. Using '/Users/davishe/.aspnet/DataProtection-Keys' as key repository; keys will not be encrypted at rest.
+2026-06-11 12:27:12 [INF] Now listening on: http://localhost:5062
+2026-06-11 12:27:12 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-11 12:27:12 [INF] Hosting environment: Development
+2026-06-11 12:27:12 [INF] Content root path: /Users/davishe/workspace/InsuranceApp/backend/SpeedClaim.Api
+2026-06-11 12:27:17 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - null null
+2026-06-11 12:27:17 [INF] HTTP GET /swagger/v1/swagger.json responded 200 in 145.2340 ms
+2026-06-11 12:27:17 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 187.3504ms
+2026-06-11 12:27:20 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.html - null null
+2026-06-11 12:27:20 [INF] HTTP GET /swagger/index.html responded 304 in 33.9966 ms
+2026-06-11 12:27:20 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.html - 304 null null 36.2868ms
+2026-06-11 12:27:20 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui.css - null null
+2026-06-11 12:27:20 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-bundle.js - null null
+2026-06-11 12:27:20 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.css - null null
+2026-06-11 12:27:20 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.js - null null
+2026-06-11 12:27:20 [INF] HTTP GET /swagger/index.js responded 304 in 0.5573 ms
+2026-06-11 12:27:20 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.js - 304 null null 1.158ms
+2026-06-11 12:27:20 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-standalone-preset.js - null null
+2026-06-11 12:27:20 [INF] HTTP GET /swagger/swagger-ui.css responded 304 in 25.3560 ms
+2026-06-11 12:27:20 [INF] HTTP GET /swagger/swagger-ui-standalone-preset.js responded 304 in 13.3326 ms
+2026-06-11 12:27:20 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui.css - 304 null null 25.8926ms
+2026-06-11 12:27:20 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-standalone-preset.js - 304 null null 13.8047ms
+2026-06-11 12:27:20 [INF] HTTP GET /swagger/index.css responded 304 in 16.2304 ms
+2026-06-11 12:27:20 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.css - 304 null null 17.7404ms
+2026-06-11 12:27:20 [INF] HTTP GET /swagger/swagger-ui-bundle.js responded 304 in 21.6560 ms
+2026-06-11 12:27:20 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-bundle.js - 304 null null 28.0722ms
+2026-06-11 12:27:20 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - null null
+2026-06-11 12:27:20 [INF] HTTP GET /swagger/v1/swagger.json responded 200 in 58.3389 ms
+2026-06-11 12:27:20 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 58.8591ms
+2026-06-11 12:30:46 [INF] Application is shutting down...
+2026-06-11 12:30:55 [INF] User profile is available. Using '/Users/davishe/.aspnet/DataProtection-Keys' as key repository; keys will not be encrypted at rest.
+2026-06-11 12:30:55 [INF] Now listening on: http://localhost:5062
+2026-06-11 12:30:55 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-11 12:30:55 [INF] Hosting environment: Development
+2026-06-11 12:30:55 [INF] Content root path: /Users/davishe/workspace/InsuranceApp/backend/SpeedClaim.Api
+2026-06-11 12:31:03 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.html - null null
+2026-06-11 12:31:03 [INF] HTTP GET /swagger/index.html responded 304 in 37.9746 ms
+2026-06-11 12:31:03 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.html - 304 null null 81.8554ms
+2026-06-11 12:31:03 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui.css - null null
+2026-06-11 12:31:03 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-bundle.js - null null
+2026-06-11 12:31:03 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.css - null null
+2026-06-11 12:31:03 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-standalone-preset.js - null null
+2026-06-11 12:31:03 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.js - null null
+2026-06-11 12:31:03 [INF] HTTP GET /swagger/index.js responded 304 in 0.4406 ms
+2026-06-11 12:31:03 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.js - 304 null null 0.9087ms
+2026-06-11 12:31:03 [INF] HTTP GET /swagger/swagger-ui-standalone-preset.js responded 304 in 6.1308 ms
+2026-06-11 12:31:03 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-standalone-preset.js - 304 null null 6.6542ms
+2026-06-11 12:31:03 [INF] HTTP GET /swagger/swagger-ui-bundle.js responded 304 in 9.7235 ms
+2026-06-11 12:31:03 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-bundle.js - 304 null null 10.068ms
+2026-06-11 12:31:03 [INF] HTTP GET /swagger/index.css responded 304 in 16.8006 ms
+2026-06-11 12:31:03 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.css - 304 null null 17.4162ms
+2026-06-11 12:31:03 [INF] HTTP GET /swagger/swagger-ui.css responded 304 in 19.1952 ms
+2026-06-11 12:31:03 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui.css - 304 null null 19.9975ms
+2026-06-11 12:31:03 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - null null
+2026-06-11 12:31:03 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/favicon-32x32.png - null null
+2026-06-11 12:31:03 [INF] HTTP GET /swagger/favicon-32x32.png responded 304 in 0.1379 ms
+2026-06-11 12:31:03 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/favicon-32x32.png - 304 null null 0.5974ms
+2026-06-11 12:31:03 [INF] HTTP GET /swagger/v1/swagger.json responded 200 in 168.1570 ms
+2026-06-11 12:31:03 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 168.9109ms
+2026-06-11 12:37:08 [INF] Application is shutting down...
+2026-06-11 12:39:05 [INF] User profile is available. Using '/Users/davishe/.aspnet/DataProtection-Keys' as key repository; keys will not be encrypted at rest.
+2026-06-11 12:39:05 [INF] Now listening on: http://localhost:5062
+2026-06-11 12:39:05 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-11 12:39:05 [INF] Hosting environment: Development
+2026-06-11 12:39:05 [INF] Content root path: /Users/davishe/workspace/InsuranceApp/backend/SpeedClaim.Api
+2026-06-11 12:39:18 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.html - null null
+2026-06-11 12:39:18 [INF] HTTP GET /swagger/index.html responded 304 in 49.3385 ms
+2026-06-11 12:39:18 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.html - 304 null null 124.1924ms
+2026-06-11 12:39:18 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.css - null null
+2026-06-11 12:39:18 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-standalone-preset.js - null null
+2026-06-11 12:39:18 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui.css - null null
+2026-06-11 12:39:18 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-bundle.js - null null
+2026-06-11 12:39:18 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.js - null null
+2026-06-11 12:39:18 [INF] HTTP GET /swagger/index.js responded 304 in 0.5179 ms
+2026-06-11 12:39:18 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.js - 304 null null 1.7686ms
+2026-06-11 12:39:18 [INF] HTTP GET /swagger/swagger-ui-standalone-preset.js responded 304 in 5.6155 ms
+2026-06-11 12:39:18 [INF] HTTP GET /swagger/swagger-ui.css responded 304 in 5.7400 ms
+2026-06-11 12:39:18 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-standalone-preset.js - 304 null null 6.8216ms
+2026-06-11 12:39:18 [INF] HTTP GET /swagger/index.css responded 304 in 6.5263 ms
+2026-06-11 12:39:18 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.css - 304 null null 7.4163ms
+2026-06-11 12:39:18 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui.css - 304 null null 7.0216ms
+2026-06-11 12:39:18 [INF] HTTP GET /swagger/swagger-ui-bundle.js responded 304 in 20.1965 ms
+2026-06-11 12:39:18 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-bundle.js - 304 null null 21.3518ms
+2026-06-11 12:39:18 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - null null
+2026-06-11 12:39:18 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/favicon-32x32.png - null null
+2026-06-11 12:39:18 [INF] HTTP GET /swagger/favicon-32x32.png responded 304 in 0.1488 ms
+2026-06-11 12:39:18 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/favicon-32x32.png - 304 null null 0.5507ms
+2026-06-11 12:39:19 [INF] HTTP GET /swagger/v1/swagger.json responded 200 in 276.6911 ms
+2026-06-11 12:39:19 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 277.5455ms
+2026-06-11 12:39:30 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - null null
+2026-06-11 12:39:30 [INF] HTTP GET /swagger/v1/swagger.json responded 200 in 175.3876 ms
+2026-06-11 12:39:30 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 183.2462ms
+2026-06-11 12:47:33 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - null null
+2026-06-11 12:47:33 [INF] HTTP GET /swagger/v1/swagger.json responded 200 in 210.5282 ms
+2026-06-11 12:47:33 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 213.8289ms
+2026-06-11 12:50:19 [INF] Application is shutting down...
+2026-06-11 12:50:26 [INF] User profile is available. Using '/Users/davishe/.aspnet/DataProtection-Keys' as key repository; keys will not be encrypted at rest.
+2026-06-11 12:50:26 [INF] Now listening on: http://localhost:5062
+2026-06-11 12:50:26 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-11 12:50:26 [INF] Hosting environment: Development
+2026-06-11 12:50:26 [INF] Content root path: /Users/davishe/workspace/InsuranceApp/backend/SpeedClaim.Api
+2026-06-11 12:50:40 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.html - null null
+2026-06-11 12:50:40 [INF] HTTP GET /swagger/index.html responded 304 in 44.0754 ms
+2026-06-11 12:50:40 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.html - 304 null null 101.9996ms
+2026-06-11 12:50:40 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui.css - null null
+2026-06-11 12:50:40 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.css - null null
+2026-06-11 12:50:40 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.js - null null
+2026-06-11 12:50:40 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-standalone-preset.js - null null
+2026-06-11 12:50:40 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-bundle.js - null null
+2026-06-11 12:50:40 [INF] HTTP GET /swagger/index.js responded 304 in 0.6440 ms
+2026-06-11 12:50:40 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.js - 304 null null 1.674ms
+2026-06-11 12:50:40 [INF] HTTP GET /swagger/index.css responded 304 in 16.5153 ms
+2026-06-11 12:50:40 [INF] HTTP GET /swagger/swagger-ui.css responded 304 in 16.6372 ms
+2026-06-11 12:50:40 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.css - 304 null null 17.4926ms
+2026-06-11 12:50:40 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui.css - 304 null null 17.5098ms
+2026-06-11 12:50:40 [INF] HTTP GET /swagger/swagger-ui-standalone-preset.js responded 304 in 16.9653 ms
+2026-06-11 12:50:40 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-standalone-preset.js - 304 null null 17.9932ms
+2026-06-11 12:50:40 [INF] HTTP GET /swagger/swagger-ui-bundle.js responded 304 in 20.9608 ms
+2026-06-11 12:50:40 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-bundle.js - 304 null null 22.2054ms
+2026-06-11 12:50:40 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - null null
+2026-06-11 12:50:40 [INF] HTTP GET /swagger/v1/swagger.json responded 200 in 276.1723 ms
+2026-06-11 12:50:40 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 276.8049ms
+2026-06-11 12:50:42 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.html - null null
+2026-06-11 12:50:42 [INF] HTTP GET /swagger/index.html responded 304 in 0.5668 ms
+2026-06-11 12:50:42 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.html - 304 null null 1.705ms
+2026-06-11 12:50:42 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui.css - null null
+2026-06-11 12:50:42 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.js - null null
+2026-06-11 12:50:42 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-bundle.js - null null
+2026-06-11 12:50:42 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-standalone-preset.js - null null
+2026-06-11 12:50:42 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.css - null null
+2026-06-11 12:50:42 [INF] HTTP GET /swagger/swagger-ui.css responded 304 in 0.1928 ms
+2026-06-11 12:50:42 [INF] HTTP GET /swagger/index.js responded 304 in 0.1925 ms
+2026-06-11 12:50:42 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui.css - 304 null null 1.1732ms
+2026-06-11 12:50:42 [INF] HTTP GET /swagger/swagger-ui-bundle.js responded 304 in 0.0363 ms
+2026-06-11 12:50:42 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-bundle.js - 304 null null 1.6051ms
+2026-06-11 12:50:42 [INF] HTTP GET /swagger/index.css responded 304 in 0.0302 ms
+2026-06-11 12:50:42 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.js - 304 null null 0.993ms
+2026-06-11 12:50:42 [INF] HTTP GET /swagger/swagger-ui-standalone-preset.js responded 304 in 0.0890 ms
+2026-06-11 12:50:42 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.css - 304 null null 2.133ms
+2026-06-11 12:50:42 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-standalone-preset.js - 304 null null 3.1514ms
+2026-06-11 12:50:42 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - null null
+2026-06-11 12:50:42 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/favicon-32x32.png - null null
+2026-06-11 12:50:42 [INF] HTTP GET /swagger/favicon-32x32.png responded 304 in 0.2200 ms
+2026-06-11 12:50:42 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/favicon-32x32.png - 304 null null 0.6078ms
+2026-06-11 12:50:42 [INF] HTTP GET /swagger/v1/swagger.json responded 200 in 179.1401 ms
+2026-06-11 12:50:42 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 179.9755ms
+2026-06-11 12:50:55 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - null null
+2026-06-11 12:50:55 [INF] HTTP GET /swagger/v1/swagger.json responded 200 in 221.6171 ms
+2026-06-11 12:50:55 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 223.3055ms
+2026-06-11 12:54:34 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.html - null null
+2026-06-11 12:54:34 [INF] HTTP GET /swagger/index.html responded 304 in 4.2496 ms
+2026-06-11 12:54:34 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.html - 304 null null 6.8854ms
+2026-06-11 12:54:34 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-standalone-preset.js - null null
+2026-06-11 12:54:34 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui.css - null null
+2026-06-11 12:54:34 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.css - null null
+2026-06-11 12:54:34 [INF] HTTP GET /swagger/swagger-ui-standalone-preset.js responded 304 in 0.3606 ms
+2026-06-11 12:54:34 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.js - null null
+2026-06-11 12:54:34 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-bundle.js - null null
+2026-06-11 12:54:34 [INF] HTTP GET /swagger/index.css responded 304 in 0.0846 ms
+2026-06-11 12:54:34 [INF] HTTP GET /swagger/swagger-ui-bundle.js responded 304 in 0.3315 ms
+2026-06-11 12:54:34 [INF] HTTP GET /swagger/index.js responded 304 in 0.4981 ms
+2026-06-11 12:54:34 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-bundle.js - 304 null null 0.9825ms
+2026-06-11 12:54:34 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-standalone-preset.js - 304 null null 1.1701ms
+2026-06-11 12:54:34 [INF] HTTP GET /swagger/swagger-ui.css responded 304 in 0.0289 ms
+2026-06-11 12:54:34 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.css - 304 null null 1.1545ms
+2026-06-11 12:54:34 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui.css - 304 null null 2.0933ms
+2026-06-11 12:54:34 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.js - 304 null null 1.0352ms
+2026-06-11 12:54:34 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - null null
+2026-06-11 12:54:34 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/favicon-32x32.png - null null
+2026-06-11 12:54:34 [INF] HTTP GET /swagger/favicon-32x32.png responded 304 in 0.0818 ms
+2026-06-11 12:54:34 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/favicon-32x32.png - 304 null null 0.5267ms
+2026-06-11 12:54:34 [INF] HTTP GET /swagger/v1/swagger.json responded 200 in 120.0458 ms
+2026-06-11 12:54:34 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 120.4755ms
+2026-06-11 16:53:50 [INF] Application is shutting down...
+ '/Users/davishe/.aspnet/DataProtection-Keys' as key repository; keys will not be encrypted at rest.
+2026-06-11 16:53:38 [ERR] Hosting failed to start
+System.IO.IOException: Failed to bind to address http://127.0.0.1:5062: address already in use.
+ ---> Microsoft.AspNetCore.Connections.AddressInUseException: Address already in use
+ ---> System.Net.Sockets.SocketException (48): Address already in use
+   at System.Net.Sockets.Socket.UpdateStatusAfterSocketErrorAndThrowException(SocketError error, Boolean disconnectOnFailure, String callerName)
+   at System.Net.Sockets.Socket.DoBind(EndPoint endPointSnapshot, SocketAddress socketAddress)
+   at System.Net.Sockets.Socket.Bind(EndPoint localEP)
+   at Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketTransportOptions.CreateDefaultBoundListenSocket(EndPoint endpoint)
+   at Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketConnectionListener.Bind()
+   --- End of inner exception stack trace ---
+   at Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketConnectionListener.Bind()
+   at Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketTransportFactory.BindAsync(EndPoint endpoint, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Infrastructure.TransportManager.BindAsync(EndPoint endPoint, ConnectionDelegate connectionDelegate, EndpointConfig endpointConfig, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerImpl.<>c__DisplayClass28_0`1.<<StartAsync>g__OnBind|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.AddressBinder.BindEndpointAsync(ListenOptions endpoint, AddressBindContext context, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.AddressBinder.BindEndpointAsync(ListenOptions endpoint, AddressBindContext context, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.LocalhostListenOptions.BindAsync(AddressBindContext context, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.AddressBinder.AddressesStrategy.BindAsync(AddressBindContext context, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerImpl.BindAsync(CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerImpl.StartAsync[TContext](IHttpApplication`1 application, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Hosting.GenericWebHostService.StartAsync(CancellationToken cancellationToken)
+   at Microsoft.Extensions.Hosting.Internal.Host.<StartAsync>b__14_1(IHostedService service, CancellationToken token)
+   at Microsoft.Extensions.Hosting.Internal.Host.ForeachService[T](IEnumerable`1 services, CancellationToken token, Boolean concurrent, Boolean abortOnFirstException, List`1 exceptions, Func`3 operation)
+2026-06-11 16:53:55 [INF] User profile is available. Using '/Users/davishe/.aspnet/DataProtection-Keys' as key repository; keys will not be encrypted at rest.
+2026-06-11 16:53:55 [INF] Now listening on: http://localhost:5062
+2026-06-11 16:53:55 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-11 16:53:55 [INF] Hosting environment: Development
+2026-06-11 16:53:55 [INF] Content root path: /Users/davishe/workspace/InsuranceApp/backend/SpeedClaim.Api
+2026-06-11 16:54:21 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.html - null null
+2026-06-11 16:54:21 [INF] HTTP GET /swagger/index.html responded 304 in 54.4535 ms
+2026-06-11 16:54:21 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.html - 304 null null 115.3321ms
+2026-06-11 16:54:21 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui.css - null null
+2026-06-11 16:54:21 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.css - null null
+2026-06-11 16:54:21 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-bundle.js - null null
+2026-06-11 16:54:21 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.js - null null
+2026-06-11 16:54:21 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-standalone-preset.js - null null
+2026-06-11 16:54:21 [INF] HTTP GET /swagger/index.js responded 304 in 0.6205 ms
+2026-06-11 16:54:21 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.js - 304 null null 1.8935ms
+2026-06-11 16:54:21 [INF] HTTP GET /swagger/index.css responded 304 in 12.0275 ms
+2026-06-11 16:54:21 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.css - 304 null null 13.2539ms
+2026-06-11 16:54:21 [INF] HTTP GET /swagger/swagger-ui-standalone-preset.js responded 304 in 14.3155 ms
+2026-06-11 16:54:21 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-standalone-preset.js - 304 null null 15.7121ms
+2026-06-11 16:54:21 [INF] HTTP GET /swagger/swagger-ui.css responded 304 in 16.0667 ms
+2026-06-11 16:54:21 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui.css - 304 null null 16.7827ms
+2026-06-11 16:54:21 [INF] HTTP GET /swagger/swagger-ui-bundle.js responded 304 in 20.1969 ms
+2026-06-11 16:54:21 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-bundle.js - 304 null null 21.122ms
+2026-06-11 16:54:21 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - null null
+2026-06-11 16:54:21 [INF] HTTP GET /swagger/v1/swagger.json responded 200 in 250.4415 ms
+2026-06-11 16:54:21 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 251.1787ms
+2026-06-11 16:59:29 [INF] User profile is available. Using '/Users/davishe/.aspnet/DataProtection-Keys' as key repository; keys will not be encrypted at rest.
+2026-06-11 16:59:29 [INF] Now listening on: http://localhost:5062
+2026-06-11 16:59:29 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-11 16:59:29 [INF] Hosting environment: Development
+2026-06-11 16:59:29 [INF] Content root path: /Users/davishe/workspace/InsuranceApp/backend/SpeedClaim.Api
+2026-06-11 17:00:27 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.html - null null
+2026-06-11 17:00:27 [INF] HTTP GET /swagger/index.html responded 304 in 45.3282 ms
+2026-06-11 17:00:27 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.html - 304 null null 91.4545ms
+2026-06-11 17:00:27 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui.css - null null
+2026-06-11 17:00:27 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-bundle.js - null null
+2026-06-11 17:00:27 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.css - null null
+2026-06-11 17:00:27 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-standalone-preset.js - null null
+2026-06-11 17:00:27 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/index.js - null null
+2026-06-11 17:00:27 [INF] HTTP GET /swagger/index.js responded 304 in 0.6145 ms
+2026-06-11 17:00:27 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.js - 304 null null 2.0122ms
+2026-06-11 17:00:28 [INF] HTTP GET /swagger/index.css responded 304 in 7.4019 ms
+2026-06-11 17:00:28 [INF] HTTP GET /swagger/swagger-ui.css responded 304 in 8.2877 ms
+2026-06-11 17:00:28 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/index.css - 304 null null 7.9672ms
+2026-06-11 17:00:28 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui.css - 304 null null 9.5232ms
+2026-06-11 17:00:28 [INF] HTTP GET /swagger/swagger-ui-standalone-preset.js responded 304 in 7.7109 ms
+2026-06-11 17:00:28 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-standalone-preset.js - 304 null null 8.6085ms
+2026-06-11 17:00:28 [INF] HTTP GET /swagger/swagger-ui-bundle.js responded 304 in 11.7203 ms
+2026-06-11 17:00:28 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/swagger-ui-bundle.js - 304 null null 12.5488ms
+2026-06-11 17:00:28 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - null null
+2026-06-11 17:00:28 [INF] Request starting HTTP/1.1 GET http://localhost:5062/swagger/favicon-32x32.png - null null
+2026-06-11 17:00:28 [INF] HTTP GET /swagger/favicon-32x32.png responded 304 in 0.2091 ms
+2026-06-11 17:00:28 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/favicon-32x32.png - 304 null null 1.073ms
+2026-06-11 17:00:28 [INF] HTTP GET /swagger/v1/swagger.json responded 200 in 269.7305 ms
+2026-06-11 17:00:28 [INF] Request finished HTTP/1.1 GET http://localhost:5062/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 270.5409ms
+2026-06-11 20:09:02 [INF] Executed DbCommand (12ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2026-06-11 20:09:03 [INF] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
+    "MigrationId" character varying(150) NOT NULL,
+    "ProductVersion" character varying(32) NOT NULL,
+    CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId")
+);
+2026-06-11 20:09:03 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2026-06-11 20:09:03 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+LOCK TABLE "__EFMigrationsHistory" IN ACCESS EXCLUSIVE MODE
+2026-06-11 20:09:03 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2026-06-11 20:09:03 [INF] Applying migration '20260610145802_AddProposalStatusEnum'.
+2026-06-11 20:09:03 [INF] Executed DbCommand (20ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE agent_commissions DROP CONSTRAINT "FK_agent_commissions_agents_agent_id";
+2026-06-11 20:09:03 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE agent_commissions DROP CONSTRAINT "FK_agent_commissions_policies_policy_id";
+2026-06-11 20:09:03 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE agent_commissions DROP CONSTRAINT "FK_agent_commissions_premium_payments_premium_payment_id";
+2026-06-11 20:09:03 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE claim_status_histories DROP CONSTRAINT "FK_claim_status_histories_claims_claim_id";
+2026-06-11 20:09:03 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE claim_status_histories DROP CONSTRAINT "FK_claim_status_histories_users_changed_by_id";
+2026-06-11 20:09:03 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE claims DROP CONSTRAINT "FK_claims_customer_members_claimant_member_id";
+2026-06-11 20:09:03 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE claims DROP CONSTRAINT "FK_claims_customers_customer_id";
+2026-06-11 20:09:03 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE claims DROP CONSTRAINT "FK_claims_policies_policy_id";
+2026-06-11 20:09:03 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE claims DROP CONSTRAINT "FK_claims_users_assigned_officer_id";
+2026-06-11 20:09:03 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE policies DROP CONSTRAINT "FK_policies_agents_agent_id";
+2026-06-11 20:09:03 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE policies DROP CONSTRAINT "FK_policies_customers_customer_id";
+2026-06-11 20:09:03 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE policies DROP CONSTRAINT "FK_policies_insurance_products_product_id";
+2026-06-11 20:09:03 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE policies DROP CONSTRAINT "FK_policies_proposals_proposal_id";
+2026-06-11 20:09:03 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE policy_status_histories DROP CONSTRAINT "FK_policy_status_histories_policies_policy_id";
+2026-06-11 20:09:03 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE policy_status_histories DROP CONSTRAINT "FK_policy_status_histories_users_changed_by_id";
+2026-06-11 20:09:03 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE proposal_members DROP CONSTRAINT "FK_proposal_members_customer_members_customer_member_id";
+2026-06-11 20:09:03 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE proposals DROP CONSTRAINT "FK_proposals_agents_agent_id";
+2026-06-11 20:09:03 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE proposals DROP CONSTRAINT "FK_proposals_customers_customer_id";
+2026-06-11 20:09:03 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE proposals DROP CONSTRAINT "FK_proposals_insurance_products_product_id";
+2026-06-11 20:09:03 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE proposals DROP CONSTRAINT "FK_proposals_users_underwriter_id";
+2026-06-11 20:09:03 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+DROP INDEX "IX_stripe_customers_user_id";
+2026-06-11 20:09:03 [INF] Executed DbCommand (0ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+DROP INDEX "IX_policies_proposal_id";
+2026-06-11 20:09:03 [INF] Executed DbCommand (6ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+UPDATE proposals SET status = 'Draft' WHERE status = 'DRAFT'
+2026-06-11 20:09:03 [INF] Executed DbCommand (0ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+UPDATE proposals SET status = 'Submitted' WHERE status = 'SUBMITTED'
+2026-06-11 20:09:03 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+UPDATE proposals SET status = 'UnderReview' WHERE status IN ('UNDER_REVIEW', 'UNDER REVIEW')
+2026-06-11 20:09:03 [INF] Executed DbCommand (0ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+UPDATE proposals SET status = 'DocumentsPending' WHERE status IN ('DOCUMENTS_PENDING', 'DOCUMENT_PENDING')
+2026-06-11 20:09:03 [INF] Executed DbCommand (0ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+UPDATE proposals SET status = 'Approved' WHERE status = 'APPROVED'
+2026-06-11 20:09:03 [INF] Executed DbCommand (0ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+UPDATE proposals SET status = 'Rejected' WHERE status = 'REJECTED'
+2026-06-11 20:09:03 [INF] Executed DbCommand (40ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE proposals ALTER COLUMN status TYPE character varying(50);
+2026-06-11 20:09:03 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE life_claim_details ADD certifying_doctor character varying(100) NOT NULL DEFAULT '';
+2026-06-11 20:09:03 [INF] Executed DbCommand (0ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE life_claim_details ADD claimant_name character varying(100) NOT NULL DEFAULT '';
+2026-06-11 20:09:03 [INF] Executed DbCommand (0ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE life_claim_details ADD death_certificate_number character varying(100);
+2026-06-11 20:09:03 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX "IX_stripe_customers_user_id" ON stripe_customers (user_id);
+2026-06-11 20:09:03 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX "IX_policies_proposal_id" ON policies (proposal_id);
+2026-06-11 20:09:03 [INF] Executed DbCommand (14ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE agent_commissions ADD CONSTRAINT "FK_agent_commissions_agents_agent_id" FOREIGN KEY (agent_id) REFERENCES agents (id) ON DELETE RESTRICT;
+2026-06-11 20:09:03 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE agent_commissions ADD CONSTRAINT "FK_agent_commissions_policies_policy_id" FOREIGN KEY (policy_id) REFERENCES policies (id) ON DELETE RESTRICT;
+2026-06-11 20:09:03 [INF] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE agent_commissions ADD CONSTRAINT "FK_agent_commissions_premium_payments_payment_id" FOREIGN KEY (premium_payment_id) REFERENCES premium_payments (id) ON DELETE RESTRICT;
+2026-06-11 20:09:03 [INF] Executed DbCommand (11ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE claim_status_histories ADD CONSTRAINT "FK_claim_status_history_claims_claim_id" FOREIGN KEY (claim_id) REFERENCES claims (id) ON DELETE CASCADE;
+2026-06-11 20:09:03 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE claim_status_histories ADD CONSTRAINT "FK_claim_status_history_users_changed_by_id" FOREIGN KEY (changed_by_id) REFERENCES users (id) ON DELETE RESTRICT;
+2026-06-11 20:09:03 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE claims ADD CONSTRAINT "FK_claims_customer_members_claimant_member_id" FOREIGN KEY (claimant_member_id) REFERENCES customer_members (id) ON DELETE SET NULL;
+2026-06-11 20:09:03 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE claims ADD CONSTRAINT "FK_claims_customers_customer_id" FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE RESTRICT;
+2026-06-11 20:09:03 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE claims ADD CONSTRAINT "FK_claims_policies_policy_id" FOREIGN KEY (policy_id) REFERENCES policies (id) ON DELETE RESTRICT;
+2026-06-11 20:09:03 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE claims ADD CONSTRAINT "FK_claims_users_assigned_officer_id" FOREIGN KEY (assigned_officer_id) REFERENCES users (id) ON DELETE SET NULL;
+2026-06-11 20:09:03 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE policies ADD CONSTRAINT "FK_policies_agents_agent_id" FOREIGN KEY (agent_id) REFERENCES agents (id) ON DELETE SET NULL;
+2026-06-11 20:09:03 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE policies ADD CONSTRAINT "FK_policies_customers_customer_id" FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE RESTRICT;
+2026-06-11 20:09:03 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE policies ADD CONSTRAINT "FK_policies_products_product_id" FOREIGN KEY (product_id) REFERENCES insurance_products (id) ON DELETE RESTRICT;
+2026-06-11 20:09:03 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE policies ADD CONSTRAINT "FK_policies_proposals_proposal_id" FOREIGN KEY (proposal_id) REFERENCES proposals (id) ON DELETE RESTRICT;
+2026-06-11 20:09:03 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE policy_status_histories ADD CONSTRAINT "FK_policy_status_history_policies_policy_id" FOREIGN KEY (policy_id) REFERENCES policies (id) ON DELETE CASCADE;
+2026-06-11 20:09:03 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE policy_status_histories ADD CONSTRAINT "FK_policy_status_history_users_changed_by_id" FOREIGN KEY (changed_by_id) REFERENCES users (id) ON DELETE RESTRICT;
+2026-06-11 20:09:03 [INF] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE proposal_members ADD CONSTRAINT "FK_proposal_members_customer_members_customer_member_id" FOREIGN KEY (customer_member_id) REFERENCES customer_members (id) ON DELETE RESTRICT;
+2026-06-11 20:09:03 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE proposals ADD CONSTRAINT "FK_proposals_agents_agent_id" FOREIGN KEY (agent_id) REFERENCES agents (id) ON DELETE SET NULL;
+2026-06-11 20:09:03 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE proposals ADD CONSTRAINT "FK_proposals_customers_customer_id" FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE RESTRICT;
+2026-06-11 20:09:03 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE proposals ADD CONSTRAINT "FK_proposals_products_product_id" FOREIGN KEY (product_id) REFERENCES insurance_products (id) ON DELETE RESTRICT;
+2026-06-11 20:09:03 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE proposals ADD CONSTRAINT "FK_proposals_users_underwriter_id" FOREIGN KEY (underwriter_id) REFERENCES users (id) ON DELETE SET NULL;
+2026-06-11 20:09:03 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+VALUES ('20260610145802_AddProposalStatusEnum', '10.0.0-preview.1.25081.1');
+2026-06-11 20:09:03 [INF] Applying migration '20260611143851_AddProductIdToDocumentRequirements'.
+2026-06-11 20:09:03 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE document_requirements ADD product_id uuid;
+2026-06-11 20:09:03 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+UPDATE document_requirements SET product_id = NULL
+WHERE id = '10000000-0000-0000-0000-000000000001';
+2026-06-11 20:09:03 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+UPDATE document_requirements SET product_id = NULL
+WHERE id = '10000000-0000-0000-0000-000000000002';
+2026-06-11 20:09:03 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX "IX_document_requirements_product_id" ON document_requirements (product_id);
+2026-06-11 20:09:03 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE document_requirements ADD CONSTRAINT "FK_document_requirements_insurance_products_ProductId" FOREIGN KEY (product_id) REFERENCES insurance_products (id) ON DELETE CASCADE;
+2026-06-11 20:09:03 [INF] Executed DbCommand (0ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+VALUES ('20260611143851_AddProductIdToDocumentRequirements', '10.0.0-preview.1.25081.1');

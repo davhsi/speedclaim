@@ -12,7 +12,7 @@ public class Agent
     public string AgentCode { get; set; } = string.Empty;
     public SpeedClaim.Api.Models.Enums.AgentType AgentType { get; set; }
     public string LicenseNumber { get; set; } = string.Empty;
-    public DateTime LicenseExpiry { get; set; }
+    public DateOnly LicenseExpiry { get; set; }
     public decimal CommissionRate { get; set; }
     
     public bool IsActive { get; set; } = true;

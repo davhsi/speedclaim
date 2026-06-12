@@ -147,7 +147,7 @@ public partial class SpeedClaimDbContext : DbContext
                 {
                     Id = Guid.Parse("22222222-2222-2222-2222-222222222222"),
                     UserId = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-                    DateOfBirth = new DateTime(1995, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    DateOfBirth = new DateOnly(1995, 1, 1),
                     Gender = SpeedClaim.Api.Models.Enums.Gender.Male,
                     MaritalStatus = SpeedClaim.Api.Models.Enums.MaritalStatus.Single,
                     Occupation = "Software Engineer",
@@ -209,7 +209,6 @@ public partial class SpeedClaimDbContext : DbContext
             e.HasIndex(x => x.UserId).IsUnique().HasDatabaseName("uq_agents_user_id");
             e.Property(x => x.AgentCode).HasMaxLength(20);
             e.Property(x => x.LicenseNumber).IsRequired().HasMaxLength(50);
-            e.Property(x => x.LicenseExpiry).HasColumnType("date");
             e.Property(x => x.CommissionRate).HasColumnType("decimal(5,2)");
             e.Property(x => x.AgentType).HasConversion<string>();
             e.HasOne(x => x.User).WithOne(u => u.Agent).HasForeignKey<Agent>(x => x.UserId).HasConstraintName("FK_agents_users_user_id").OnDelete(DeleteBehavior.Cascade);
@@ -231,7 +230,6 @@ public partial class SpeedClaimDbContext : DbContext
             e.HasKey(x => x.Id).HasName("PK_surveyors");
             e.HasIndex(x => x.UserId).IsUnique().HasDatabaseName("uq_surveyors_user_id");
             e.Property(x => x.LicenseNumber).HasMaxLength(50);
-            e.Property(x => x.LicenseExpiry).HasColumnType("date");
             e.Property(x => x.SurveyorType).HasConversion<string>();
             e.Property(x => x.Specialization).HasConversion<string>();
             e.HasOne(x => x.User).WithOne(u => u.Surveyor).HasForeignKey<Surveyor>(x => x.UserId).HasConstraintName("FK_surveyors_users_user_id").OnDelete(DeleteBehavior.Cascade);

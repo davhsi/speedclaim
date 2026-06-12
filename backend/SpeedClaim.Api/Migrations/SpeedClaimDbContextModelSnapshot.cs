@@ -128,7 +128,7 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_active");
 
-                    b.Property<DateTime>("LicenseExpiry")
+                    b.Property<DateOnly>("LicenseExpiry")
                         .HasColumnType("date")
                         .HasColumnName("license_expiry");
 
@@ -489,8 +489,8 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<DateTime?>("DateOfBirth")
-                        .HasColumnType("timestamp with time zone")
+                    b.Property<DateOnly?>("DateOfBirth")
+                        .HasColumnType("date")
                         .HasColumnName("date_of_birth");
 
                     b.Property<string>("Gender")
@@ -531,7 +531,7 @@ namespace SpeedClaim.Api.Migrations
                             Id = new Guid("22222222-2222-2222-2222-222222222222"),
                             AnnualIncome = 150000m,
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 6, 7, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            DateOfBirth = new DateTime(1995, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DateOfBirth = new DateOnly(1995, 1, 1),
                             Gender = "Male",
                             MaritalStatus = "Single",
                             Occupation = "Software Engineer",
@@ -554,8 +554,8 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("customer_id");
 
-                    b.Property<DateTime>("DateOfBirth")
-                        .HasColumnType("timestamp with time zone")
+                    b.Property<DateOnly>("DateOfBirth")
+                        .HasColumnType("date")
                         .HasColumnName("date_of_birth");
 
                     b.Property<string>("FirstName")
@@ -1515,8 +1515,8 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<DateTime>("DateOfBirth")
-                        .HasColumnType("timestamp with time zone")
+                    b.Property<DateOnly>("DateOfBirth")
+                        .HasColumnType("date")
                         .HasColumnName("date_of_birth");
 
                     b.Property<string>("FullName")
@@ -2262,7 +2262,7 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_active");
 
-                    b.Property<DateTime?>("LicenseExpiry")
+                    b.Property<DateOnly?>("LicenseExpiry")
                         .HasColumnType("date")
                         .HasColumnName("license_expiry");
 
