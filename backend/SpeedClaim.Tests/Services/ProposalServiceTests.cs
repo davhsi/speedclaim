@@ -325,6 +325,8 @@ public class ProposalServiceTests
             .ReturnsAsync("/uploads/proposals/doc.pdf");
 
         var mockDocRepo = new Mock<ISubmittedDocumentRepository>();
+        mockDocRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<SubmittedDocument, bool>>>()))
+            .ReturnsAsync(new List<SubmittedDocument>());
         _mockUnitOfWork.Setup(u => u.SubmittedDocuments).Returns(mockDocRepo.Object);
 
         var proposalServiceWithStorage = new ProposalService(_mockUnitOfWork.Object, new Mock<INotificationService>().Object, mockStorageService.Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ProposalService>>());
@@ -390,7 +392,11 @@ public class ProposalServiceTests
 
         _mockProposalRepo.Setup(r => r.GetByIdAsync(proposalId)).ReturnsAsync(proposal);
         _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync(agent);
-        _mockUnitOfWork.Setup(u => u.SubmittedDocuments).Returns(new Mock<ISubmittedDocumentRepository>().Object);
+
+        var mockDocRepo = new Mock<ISubmittedDocumentRepository>();
+        mockDocRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<SubmittedDocument, bool>>>()))
+            .ReturnsAsync(new List<SubmittedDocument>());
+        _mockUnitOfWork.Setup(u => u.SubmittedDocuments).Returns(mockDocRepo.Object);
 
         var mockFile = new Mock<IFormFile>();
         mockFile.Setup(f => f.FileName).Returns("id.pdf");

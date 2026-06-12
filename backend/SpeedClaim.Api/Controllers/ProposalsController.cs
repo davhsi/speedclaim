@@ -78,18 +78,19 @@ public class ProposalsController : BaseApiController
         return Ok(result);
     }
 
-    /// <summary>Upload a KYC or supporting document against a proposal</summary>
+    /// <summary>Upload (or replace) a supporting document for a proposal</summary>
     /// <param name="id">Proposal ID</param>
+    /// <param name="documentKey">Document type key (e.g. ID_PROOF, INCOME_PROOF)</param>
     [Authorize(Roles = "Customer,Agent")]
-    [HttpPost("{id}/upload")]
+    [HttpPut("{id}/documents/{documentKey}")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(403)]
     [ProducesResponseType(404)]
-    public async Task<IActionResult> UploadDocument(string id, [FromForm] UploadDocumentRequest request)
+    public async Task<IActionResult> UploadDocument(string id, string documentKey, [FromForm] UploadDocumentRequest request)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-        var result = await _proposalService.UploadDocumentAsync(id, userId, request.DocumentType, request.File);
+        var result = await _proposalService.UploadDocumentAsync(id, userId, documentKey, request.File);
         return Ok(new { FilePath = result });
     }
 

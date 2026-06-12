@@ -370,6 +370,8 @@ public class ClaimServiceTests
         var claim = new Claim { Id = claimId, CustomerId = customerId, Status = ClaimStatus.UnderReview, ClaimNumber = "CLM-001", PolicyId = Guid.NewGuid() };
 
         _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+        _mockDocRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<SubmittedDocument, bool>>>()))
+            .ReturnsAsync(new List<SubmittedDocument>());
 
         var mockFile = new Mock<IFormFile>();
         mockFile.Setup(f => f.FileName).Returns("doc.pdf");
@@ -389,6 +391,8 @@ public class ClaimServiceTests
         var claim = new Claim { Id = claimId, CustomerId = customerId, Status = ClaimStatus.Intimated, ClaimNumber = "CLM-001", PolicyId = Guid.NewGuid() };
 
         _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+        _mockDocRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<SubmittedDocument, bool>>>()))
+            .ReturnsAsync(new List<SubmittedDocument>());
 
         var mockFile = new Mock<IFormFile>();
         mockFile.Setup(f => f.FileName).Returns("doc.pdf");

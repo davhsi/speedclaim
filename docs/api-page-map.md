@@ -55,7 +55,7 @@
 | Action | Endpoint | Status |
 |---|---|---|
 | Submit proposal | `POST /api/proposals` | ✅ |
-| Upload supporting documents | `POST /api/proposals/{id}/upload` | ✅ |
+| Upload supporting documents | `PUT /api/proposals/{id}/documents/{documentKey}` | ✅ |
 
 ### My Proposals Page
 | Action | Endpoint | Status |

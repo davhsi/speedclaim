@@ -261,6 +261,11 @@ public class ProposalService : IProposalService
 
         if (file == null || file.Length == 0) throw new ValidationException("Invalid file.");
 
+        var existing = await _unitOfWork.SubmittedDocuments.FindAsync(
+            d => d.EntityId == pId && d.DocumentKey == documentType);
+        foreach (var old in existing)
+            _unitOfWork.SubmittedDocuments.Delete(old);
+
         using var stream = file.OpenReadStream();
         var storedPath = await _storageService.UploadFileAsync(stream, file.FileName, $"proposals/{pId}");
 
