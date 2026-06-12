@@ -105,12 +105,18 @@ public class ProductServiceTests
     [Test]
     public async Task ConfigureDocumentRequirementsAsync_AddsRequirements()
     {
+        var productId = Guid.NewGuid();
+        var product = new InsuranceProduct { Id = productId };
+        _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
+        _mockDocReqRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<DocumentRequirement, bool>>>()))
+                       .ReturnsAsync(new List<DocumentRequirement>());
+
         var request = new UpdateDocumentRequirementsRequest(new List<DocumentRequirementDto>
         {
             new DocumentRequirementDto(EntityType.Kyc, "health", "ID_PROOF", "ID Proof", "Provide ID", true, true)
         });
 
-        await _productService.ConfigureDocumentRequirementsAsync(Guid.NewGuid().ToString(), request, Guid.NewGuid().ToString());
+        await _productService.ConfigureDocumentRequirementsAsync(productId.ToString(), request, Guid.NewGuid().ToString());
 
         _mockDocReqRepo.Verify(r => r.AddAsync(It.IsAny<DocumentRequirement>()), Times.Once);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
