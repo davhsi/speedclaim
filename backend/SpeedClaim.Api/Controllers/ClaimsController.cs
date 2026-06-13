@@ -52,13 +52,17 @@ public class ClaimsController : BaseApiController
     }
 
     /// <summary>Get all claims belonging to the authenticated customer</summary>
+    /// <param name="status">Optional filter by claim status (e.g. Intimated, UnderReview, Approved, Rejected, Settled)</param>
+    /// <param name="type">Optional filter by claim type (e.g. Health, Accident, Theft, Death, Maturity, NaturalDamage)</param>
     [Authorize(Roles = "Customer")]
     [HttpGet("my")]
     [ProducesResponseType(typeof(IEnumerable<ClaimDto>), 200)]
-    public async Task<IActionResult> GetMyClaims()
+    public async Task<IActionResult> GetMyClaims([FromQuery] string? status = null, [FromQuery] string? type = null)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId)) return Unauthorized();
-        var result = await _claimService.GetMyClaimsAsync(customerId);
+        ClaimStatus? statusFilter = Enum.TryParse<ClaimStatus>(status, true, out var s) ? s : null;
+        ClaimType? typeFilter = Enum.TryParse<ClaimType>(type, true, out var t) ? t : null;
+        var result = await _claimService.GetMyClaimsAsync(customerId, statusFilter, typeFilter);
         return Ok(result);
     }
 
@@ -98,12 +102,22 @@ public class ClaimsController : BaseApiController
     #region Claims Officer Endpoints
 
     /// <summary>Get all claims across all customers</summary>
+    /// <param name="page">Page number (default 1)</param>
+    /// <param name="pageSize">Page size (default 20)</param>
+    /// <param name="status">Optional filter by claim status (e.g. Intimated, UnderReview, Approved, Rejected, Settled)</param>
+    /// <param name="type">Optional filter by claim type (e.g. Health, Accident, Theft, Death, Maturity, NaturalDamage)</param>
     [Authorize(Roles = "ClaimsOfficer,Admin")]
     [HttpGet("all")]
     [ProducesResponseType(typeof(PagedResponse<ClaimDto>), 200)]
-    public async Task<IActionResult> GetAllClaims([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    public async Task<IActionResult> GetAllClaims(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? status = null,
+        [FromQuery] string? type = null)
     {
-        var result = await _claimService.GetAllClaimsAsync(page, pageSize);
+        ClaimStatus? statusFilter = Enum.TryParse<ClaimStatus>(status, true, out var s) ? s : null;
+        ClaimType? typeFilter = Enum.TryParse<ClaimType>(type, true, out var t) ? t : null;
+        var result = await _claimService.GetAllClaimsAsync(page, pageSize, statusFilter, typeFilter);
         return Ok(result);
     }
 

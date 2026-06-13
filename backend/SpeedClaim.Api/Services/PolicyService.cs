@@ -22,9 +22,12 @@ public class PolicyService : IPolicyService
         _storageService = storageService;
     }
 
-    public async Task<IEnumerable<PolicyDto>> GetMyPoliciesAsync(Guid customerId)
+    public async Task<IEnumerable<PolicyDto>> GetMyPoliciesAsync(Guid customerId, PolicyStatus? status = null, PolicyType? policyType = null)
     {
-        var policies = await _unitOfWork.Policies.FindAsync(p => p.CustomerId == customerId);
+        var policies = await _unitOfWork.Policies.FindAsync(p =>
+            p.CustomerId == customerId &&
+            (!status.HasValue || p.Status == status.Value) &&
+            (!policyType.HasValue || p.PolicyType == policyType.Value));
         return policies.Select(MapToDto);
     }
 
@@ -136,9 +139,11 @@ public class PolicyService : IPolicyService
         return policies.Select(MapToDto);
     }
 
-    public async Task<PagedResponse<PolicyDto>> GetAllPoliciesAsync(int page, int pageSize)
+    public async Task<PagedResponse<PolicyDto>> GetAllPoliciesAsync(int page, int pageSize, PolicyStatus? status = null, PolicyType? policyType = null)
     {
-        var (items, total) = await _unitOfWork.Policies.GetPagedAsync(page, pageSize);
+        var (items, total) = await _unitOfWork.Policies.GetPagedAsync(page, pageSize, p =>
+            (!status.HasValue || p.Status == status.Value) &&
+            (!policyType.HasValue || p.PolicyType == policyType.Value));
         return new PagedResponse<PolicyDto>(items.Select(MapToDto), page, pageSize, total);
     }
 

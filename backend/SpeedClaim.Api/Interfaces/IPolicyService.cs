@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using SpeedClaim.Api.Dtos.Common;
 using SpeedClaim.Api.Dtos.Policies;
+using SpeedClaim.Api.Models.Enums;
 
 namespace SpeedClaim.Api.Interfaces;
 
 public interface IPolicyService
 {
     // Customer
-    Task<IEnumerable<PolicyDto>> GetMyPoliciesAsync(Guid customerId);
+    Task<IEnumerable<PolicyDto>> GetMyPoliciesAsync(Guid customerId, PolicyStatus? status = null, PolicyType? policyType = null);
     Task<PolicyDto> GetByIdAsync(Guid policyId, Guid? customerId = null);
     Task<byte[]> DownloadPolicyDocumentAsync(Guid policyId, Guid customerId);
     Task RequestEndorsementAsync(Guid policyId, Guid customerId, RequestEndorsementRequest request);
@@ -21,7 +22,7 @@ public interface IPolicyService
     Task<IEnumerable<PolicyDto>> GetAssignedCustomerPoliciesAsync(Guid agentId);
 
     // Underwriter / Admin
-    Task<PagedResponse<PolicyDto>> GetAllPoliciesAsync(int page, int pageSize);
+    Task<PagedResponse<PolicyDto>> GetAllPoliciesAsync(int page, int pageSize, PolicyStatus? status = null, PolicyType? policyType = null);
     Task<IEnumerable<PolicyStatusHistoryDto>> GetPolicyHistoryAsync(Guid policyId, Guid? customerId = null);
     Task ApproveRejectEndorsementAsync(Guid endorsementId, bool isApproved, string reason, Guid underwriterId);
     Task UpdateNomineeAsync(Guid nomineeId, Guid customerId, UpdateNomineeRequest request);

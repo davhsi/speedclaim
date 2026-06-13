@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using SpeedClaim.Api.Dtos.Common;
 using SpeedClaim.Api.Dtos.Policies;
 using SpeedClaim.Api.Interfaces;
+using SpeedClaim.Api.Models.Enums;
 using System.Security.Claims;
 
 namespace SpeedClaim.Api.Controllers;
@@ -22,13 +23,17 @@ public class PolicyController : BaseApiController
     #region Customer Endpoints
 
     /// <summary>Get all policies belonging to the authenticated customer</summary>
+    /// <param name="status">Optional filter by policy status (e.g. Active, Lapsed, Cancelled, Expired)</param>
+    /// <param name="type">Optional filter by policy type (e.g. Individual, FamilyFloater)</param>
     [Authorize(Roles = "Customer")]
     [HttpGet("my")]
     [ProducesResponseType(typeof(IEnumerable<PolicyDto>), 200)]
-    public async Task<IActionResult> GetMyPolicies()
+    public async Task<IActionResult> GetMyPolicies([FromQuery] string? status = null, [FromQuery] string? type = null)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId)) return Unauthorized();
-        var result = await _policyService.GetMyPoliciesAsync(customerId);
+        PolicyStatus? statusFilter = Enum.TryParse<PolicyStatus>(status, true, out var s) ? s : null;
+        PolicyType? typeFilter = Enum.TryParse<PolicyType>(type, true, out var t) ? t : null;
+        var result = await _policyService.GetMyPoliciesAsync(customerId, statusFilter, typeFilter);
         return Ok(result);
     }
 
@@ -176,12 +181,22 @@ public class PolicyController : BaseApiController
     #region Underwriter Endpoints
 
     /// <summary>Get all policies across all customers</summary>
+    /// <param name="page">Page number (default 1)</param>
+    /// <param name="pageSize">Page size (default 20)</param>
+    /// <param name="status">Optional filter by policy status (e.g. Active, Lapsed, Cancelled, Expired)</param>
+    /// <param name="type">Optional filter by policy type (e.g. Individual, FamilyFloater)</param>
     [Authorize(Roles = "Underwriter,Admin")]
     [HttpGet("all")]
     [ProducesResponseType(typeof(PagedResponse<PolicyDto>), 200)]
-    public async Task<IActionResult> GetAllPolicies([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    public async Task<IActionResult> GetAllPolicies(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? status = null,
+        [FromQuery] string? type = null)
     {
-        var result = await _policyService.GetAllPoliciesAsync(page, pageSize);
+        PolicyStatus? statusFilter = Enum.TryParse<PolicyStatus>(status, true, out var s) ? s : null;
+        PolicyType? typeFilter = Enum.TryParse<PolicyType>(type, true, out var t) ? t : null;
+        var result = await _policyService.GetAllPoliciesAsync(page, pageSize, statusFilter, typeFilter);
         return Ok(result);
     }
 

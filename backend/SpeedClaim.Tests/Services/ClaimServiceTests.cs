@@ -248,7 +248,9 @@ public class ClaimServiceTests
             new Claim { Id = Guid.NewGuid(), ClaimNumber = "CLM-001", ClaimType = ClaimType.Health, Status = ClaimStatus.Intimated },
             new Claim { Id = Guid.NewGuid(), ClaimNumber = "CLM-002", ClaimType = ClaimType.Accident, Status = ClaimStatus.UnderReview }
         };
-        _mockClaimRepo.Setup(r => r.GetPagedAsync(1, 20, null, null))
+        _mockClaimRepo.Setup(r => r.GetPagedAsync(1, 20,
+                It.IsAny<Expression<Func<Claim, bool>>?>(),
+                It.IsAny<Func<IQueryable<Claim>, IQueryable<Claim>>?>()))
             .ReturnsAsync(((IEnumerable<Claim>)claims, claims.Count));
 
         var result = await _claimService.GetAllClaimsAsync(1, 20);

@@ -1,8 +1,10 @@
-# SpeedClaim — Technical Specification v3.0
+# SpeedClaim — Technical Specification v4.0
 
 > Capstone Project | Domains: Health, Life, Motor | Stack: .NET Web API + Angular + PostgreSQL + Stripe + Azure Blob Storage (local first)
 >
 > **Changelog v3:** Fixed 5 logical data flow gaps — first premium chicken-and-egg, pre-issuance data collection, auth token storage, document entity_type ENUM, surveyor license tracking.
+>
+> **Changelog v4:** Added Section 6 (Security Controls — account lockout, soft delete, DPDP consent, audit log, security headers, CORS), Section 7 (API Filtering & Pagination), updated schema to 41 tables with `user_consents`.
 
 ---
 
@@ -107,19 +109,130 @@ Aadhaar numbers and PAN numbers are regulated sensitive identifiers under the **
 
 ---
 
-## 6. Database Schema Overview
+## 6. Security Controls
 
-39 tables across 16 domains.
+### 6.1 Account Lockout
+
+Brute-force protection is implemented directly on the `users` table — no external cache required.
+
+| Field | Type | Behaviour |
+| --- | --- | --- |
+| `failed_login_attempts` | `int` (default 0) | Incremented on every wrong password |
+| `locked_until` | `timestamp?` (nullable) | Set to `UtcNow + 15 minutes` after 5 consecutive failures |
+
+- On a correct password: both fields are reset to `0` / `null`.
+- On a locked account: login is rejected immediately — password is never checked.
+- Lockout status is visible in the audit log (`Action = "LoginFailed"` / `"LoginSuccess"`).
+
+### 6.2 Soft Delete
+
+`User`, `Policy`, `Claim`, and `Proposal` are never hard-deleted. Instead:
+
+| Field | Type |
+| --- | --- |
+| `is_deleted` | `boolean` (default `false`) |
+| `deleted_at` | `timestamptz?` |
+
+EF Core global query filters (`HasQueryFilter`) automatically exclude soft-deleted rows from every query — no per-query `WHERE is_deleted = false` is needed. EF Core emits warnings about required navigations interacting with query filters; these are accepted as an honest architectural observation and intentionally not suppressed.
+
+### 6.3 DPDP Consent (Digital Personal Data Protection Act 2023)
+
+Two consent records are created for every new customer at registration:
+
+| `consent_type` | Purpose |
+| --- | --- |
+| `DataProcessing` | Processing personal data for policy issuance and claims |
+| `KycDataCollection` | Collecting and storing Aadhaar / PAN under the Aadhaar Act 2016 |
+
+Each record stores: `user_id`, `consent_type`, `is_granted`, `consented_at`, `consent_version` ("1.0"), `ip_address`, and revocation fields (`is_revoked`, `revoked_at`).
+
+### 6.4 Audit Log
+
+Every sensitive action writes a record to `audit_logs` with `entity_type`, `entity_id`, `action`, `old_value`, `new_value`, `user_id`, and `created_at`.
+
+| Service | Actions audited |
+| --- | --- |
+| `AuthService` | Customer registration, agent registration, successful login |
+| `UserService` | KYC approved, KYC rejected |
+| `ClaimService` | Every claim status transition (single central hub — `UpdateClaimStatusInternalAsync`) |
+| `ProposalService` | Proposal approved, proposal rejected |
+| `PolicyService` | Endorsement approved, endorsement rejected |
+
+### 6.5 Security Response Headers
+
+Applied to every HTTP response via inline middleware:
+
+| Header | Value |
+| --- | --- |
+| `X-Content-Type-Options` | `nosniff` |
+| `X-Frame-Options` | `DENY` |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` |
+| `X-XSS-Protection` | `0` (disabled — browsers implement their own XSS filtering) |
+| `Content-Security-Policy` | `default-src 'none'; frame-ancestors 'none'` |
+| `Permissions-Policy` | `geolocation=(), microphone=(), camera=()` |
+
+### 6.6 CORS
+
+Requests from browser clients are restricted to the Angular dev server origin (`http://localhost:4200` by default, configurable via `AllowedOrigins` in appsettings). CORS is a browser enforcement mechanism — it has no effect on Postman or other non-browser API clients.
+
+---
+
+## 7. API Filtering & Pagination
+
+All list endpoints that return collections support server-side filtering. Filtering and pagination are applied in the database via EF Core LINQ — no in-memory filtering.
+
+### Claims
+
+| Endpoint | Role | Query Params |
+| --- | --- | --- |
+| `GET /api/v1/claims/my` | Customer | `?status=` `?type=` |
+| `GET /api/v1/claims/all` | ClaimsOfficer, Admin | `?page=` `?pageSize=` `?status=` `?type=` |
+
+**`status` values:** `Intimated`, `DocumentsPending`, `PreAuthRequested`, `PreAuthApproved`, `UnderReview`, `Approved`, `Rejected`, `Settled`, `Withdrawn`
+
+**`type` values:** `Death`, `Maturity`, `Health`, `Accident`, `Theft`, `NaturalDamage`
+
+### Policies
+
+| Endpoint | Role | Query Params |
+| --- | --- | --- |
+| `GET /api/v1/policies/my` | Customer | `?status=` `?type=` |
+| `GET /api/v1/policies/all` | Underwriter, Admin | `?page=` `?pageSize=` `?status=` `?type=` |
+
+**`status` values:** `Pending`, `Active`, `Lapsed`, `Cancelled`, `Expired`, `Claimed`
+
+**`type` values:** `Individual`, `FamilyFloater`
+
+All filter params are optional. Invalid or unrecognised values are silently ignored (no filter applied). Pagination defaults: `page=1`, `pageSize=20`.
+
+Paginated responses follow the `PagedResponse<T>` envelope:
+
+```json
+{
+  "data": [...],
+  "pageNumber": 1,
+  "pageSize": 20,
+  "totalRecords": 84,
+  "totalPages": 5
+}
+```
+
+---
+
+## 8. Database Schema Overview
+
+41 tables across 17 domains.
 
 | Domain | Tables | Count |
 | --- | --- | --- |
 | Auth & Users | users, sessions, user_tokens, addresses | 4 |
+| Consent | user_consents | 1 |
 | Customers | customers, customer_members | 2 |
 | KYC | kyc_records | 1 |
 | Branches | branches | 1 |
 | Agents | agents, agent_commissions | 2 |
 | Surveyors | surveyors | 1 |
-| Products | insurance_products, premium_rate_tables | 2 |
+| Products | insurance_products, premium_rate_tables, document_requirements | 3 |
 | Proposals | proposals, proposal_members | 2 |
 | Domain Details | health_details, life_details, motor_details | 3 |
 | Nominees | nominees | 1 |
@@ -127,11 +240,11 @@ Aadhaar numbers and PAN numbers are regulated sensitive identifiers under the **
 | Payments | stripe_customers, premium_schedules, premium_payments | 3 |
 | Claims | claims, claim_status_history, health_claim_details, life_claim_details, motor_claim_details | 5 |
 | Grievances | grievances | 1 |
-| Documents | document_requirements, submitted_documents | 2 |
+| Documents | submitted_documents | 1 |
 | Notifications & Email | notifications, email_templates, email_logs | 3 |
 | Audit & Config | audit_logs, system_config | 2 |
-| **Total** | | **39** |
+| **Total** | | **41** |
 
 ---
 
-> Document version: 3.0 | Stack: .NET 10 Web API + Angular + PostgreSQL + Stripe
+> Document version: 4.0 | Stack: .NET 10 Web API + Angular + PostgreSQL + Stripe

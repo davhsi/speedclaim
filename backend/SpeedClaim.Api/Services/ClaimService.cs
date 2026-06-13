@@ -139,9 +139,12 @@ public class ClaimService : IClaimService
         return doc.FilePath;
     }
 
-    public async Task<IEnumerable<ClaimDto>> GetMyClaimsAsync(Guid customerId)
+    public async Task<IEnumerable<ClaimDto>> GetMyClaimsAsync(Guid customerId, ClaimStatus? status = null, ClaimType? claimType = null)
     {
-        var claims = await _unitOfWork.Claims.FindAsync(c => c.CustomerId == customerId);
+        var claims = await _unitOfWork.Claims.FindAsync(c =>
+            c.CustomerId == customerId &&
+            (!status.HasValue || c.Status == status.Value) &&
+            (!claimType.HasValue || c.ClaimType == claimType.Value));
         return claims.Select(MapToDto);
     }
 
@@ -174,9 +177,11 @@ public class ClaimService : IClaimService
                 h.ChangedAt));
     }
 
-    public async Task<PagedResponse<ClaimDto>> GetAllClaimsAsync(int page, int pageSize)
+    public async Task<PagedResponse<ClaimDto>> GetAllClaimsAsync(int page, int pageSize, ClaimStatus? status = null, ClaimType? claimType = null)
     {
-        var (items, total) = await _unitOfWork.Claims.GetPagedAsync(page, pageSize);
+        var (items, total) = await _unitOfWork.Claims.GetPagedAsync(page, pageSize, c =>
+            (!status.HasValue || c.Status == status.Value) &&
+            (!claimType.HasValue || c.ClaimType == claimType.Value));
         return new PagedResponse<ClaimDto>(items.Select(MapToDto), page, pageSize, total);
     }
 

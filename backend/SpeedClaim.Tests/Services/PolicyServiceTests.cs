@@ -442,7 +442,9 @@ public class PolicyServiceTests
             new Policy { Id = Guid.NewGuid(), PolicyNumber = "POL-1" },
             new Policy { Id = Guid.NewGuid(), PolicyNumber = "POL-2" }
         };
-        _mockUnitOfWork.Setup(u => u.Policies.GetPagedAsync(1, 20, null, null))
+        _mockUnitOfWork.Setup(u => u.Policies.GetPagedAsync(1, 20,
+                It.IsAny<Expression<Func<Policy, bool>>?>(),
+                It.IsAny<Func<IQueryable<Policy>, IQueryable<Policy>>?>()))
             .ReturnsAsync(((IEnumerable<Policy>)policies, policies.Count));
 
         var result = await _policyService.GetAllPoliciesAsync(1, 20);

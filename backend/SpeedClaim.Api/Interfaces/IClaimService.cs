@@ -13,12 +13,12 @@ public interface IClaimService
     // Customer
     Task<ClaimDto> IntimateClaimAsync(Guid customerId, IntimateClaimRequest request);
     Task<string> UploadClaimDocumentAsync(Guid claimId, Guid customerId, string documentType, IFormFile file);
-    Task<IEnumerable<ClaimDto>> GetMyClaimsAsync(Guid customerId);
+    Task<IEnumerable<ClaimDto>> GetMyClaimsAsync(Guid customerId, ClaimStatus? status = null, ClaimType? claimType = null);
     Task<ClaimDto> GetClaimByIdAsync(Guid claimId, Guid? customerId = null);
     Task<IEnumerable<ClaimStatusHistoryDto>> GetClaimHistoryAsync(Guid claimId, Guid? customerId = null);
 
     // Claims Officer
-    Task<PagedResponse<ClaimDto>> GetAllClaimsAsync(int page, int pageSize);
+    Task<PagedResponse<ClaimDto>> GetAllClaimsAsync(int page, int pageSize, ClaimStatus? status = null, ClaimType? claimType = null);
     Task AssignClaimAsync(Guid claimId, Guid officerId);
     Task UpdateClaimStatusAsync(Guid claimId, ClaimStatus status, Guid officerId, string notes);
     Task RequestAdditionalDocumentsAsync(Guid claimId, string details, Guid officerId);
