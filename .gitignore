@@ -62,4 +62,5 @@ graphify-out/
 .agents/.cache/
 
 wwwroot
-logs/coverage-report/
+coverage-report/
+**/logs/*.log
