@@ -35,8 +35,7 @@ builder.Host.UseSerilog();
 
 // 2. Add Database Context
 builder.Services.AddDbContext<SpeedClaimDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
-           .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.CoreEventId.PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning)));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // 3. Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -255,4 +254,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-await app.RunAsync();
+app.Run();
