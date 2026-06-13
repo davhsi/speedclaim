@@ -694,4 +694,22 @@ public class FinanceServiceTests
         Assert.That(payment.Status, Is.EqualTo(PaymentStatus.Paid));
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
+
+    [Test]
+    public void ProcessClaimPayoutAsync_ZeroApprovedAmount_ThrowsValidationException()
+    {
+        var claimId = Guid.NewGuid();
+        var claim = new Claim
+        {
+            Id = claimId,
+            Status = ClaimStatus.Approved,
+            ClaimAmountApproved = 0
+        };
+        var mockClaimRepo = new Mock<IClaimRepository>();
+        mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+        _mockUnitOfWork.Setup(u => u.Claims).Returns(mockClaimRepo.Object);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() =>
+            _financeService.ProcessClaimPayoutAsync(claimId.ToString(), Guid.NewGuid().ToString()));
+    }
 }

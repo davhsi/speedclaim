@@ -490,4 +490,24 @@ public class PolicyServiceTests
         _mockUnitOfWork.Verify(u => u.Endorsements.Update(endorsement), Times.Once);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
+
+    [Test]
+    public void UpdateNomineeAsync_ProposalNominee_WrongCustomer_ThrowsForbiddenException()
+    {
+        var nomineeId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var proposalId = Guid.NewGuid();
+
+        // Nominee linked to a proposal, not a policy
+        var nominee = new Nominee { Id = nomineeId, PolicyId = null, ProposalId = proposalId };
+        var proposal = new Proposal { Id = proposalId, CustomerId = Guid.NewGuid() }; // different customer
+
+        _mockUnitOfWork.Setup(u => u.Nominees.GetByIdAsync(nomineeId)).ReturnsAsync(nominee);
+        _mockUnitOfWork.Setup(u => u.Proposals.GetByIdAsync(proposalId)).ReturnsAsync(proposal);
+
+        var request = new UpdateNomineeRequest("Jane Doe", "Spouse", new DateOnly(1990, 1, 1), 100m, false, null);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() =>
+            _policyService.UpdateNomineeAsync(nomineeId, customerId, request));
+    }
 }

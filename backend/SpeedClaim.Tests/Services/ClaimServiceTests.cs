@@ -554,4 +554,31 @@ public class ClaimServiceTests
         Assert.That(motorDetail.EstimatedRepairCost, Is.EqualTo(12000m));
         Assert.That(motorDetail.SurveyorRemarks, Is.EqualTo("heavy damage"));
     }
+
+    [Test]
+    public void UploadClaimDocumentAsync_ClaimNotFound_ThrowsNotFoundException()
+    {
+        var claimId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync((Claim?)null);
+
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.FileName).Returns("doc.pdf");
+        mockFile.Setup(f => f.Length).Returns(1024);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() =>
+            _claimService.UploadClaimDocumentAsync(claimId, customerId, "medical_bill", mockFile.Object));
+    }
+
+    [Test]
+    public void UploadClaimDocumentAsync_NullFile_ThrowsValidationException()
+    {
+        var claimId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, CustomerId = customerId, Status = ClaimStatus.UnderReview };
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() =>
+            _claimService.UploadClaimDocumentAsync(claimId, customerId, "medical_bill", null!));
+    }
 }

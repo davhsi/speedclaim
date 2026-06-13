@@ -123,6 +123,31 @@ public class ProductServiceTests
     }
 
     [Test]
+    public async Task ConfigureDocumentRequirementsAsync_WithExistingRequirements_DeletesOldOnes()
+    {
+        var productId = Guid.NewGuid();
+        var product = new InsuranceProduct { Id = productId };
+        var existing = new List<DocumentRequirement>
+        {
+            new DocumentRequirement { Id = Guid.NewGuid(), ProductId = productId, DocumentKey = "OLD_DOC" }
+        };
+        _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
+        _mockDocReqRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<DocumentRequirement, bool>>>()))
+                       .ReturnsAsync(existing);
+
+        var request = new UpdateDocumentRequirementsRequest(new List<DocumentRequirementDto>
+        {
+            new DocumentRequirementDto(EntityType.Kyc, "health", "NEW_DOC", "New Doc", "Provide new doc", true, false)
+        });
+
+        await _productService.ConfigureDocumentRequirementsAsync(productId.ToString(), request, Guid.NewGuid().ToString());
+
+        _mockDocReqRepo.Verify(r => r.Delete(It.IsAny<DocumentRequirement>()), Times.Once);
+        _mockDocReqRepo.Verify(r => r.AddAsync(It.IsAny<DocumentRequirement>()), Times.Once);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
     public void ToggleProductStatusAsync_ProductNotFound_ThrowsException()
     {
         _mockProductRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((InsuranceProduct?)null);

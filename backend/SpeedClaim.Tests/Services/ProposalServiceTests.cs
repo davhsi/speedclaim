@@ -438,6 +438,37 @@ public class ProposalServiceTests
     }
 
     [Test]
+    public async Task ApproveOrRejectProposalAsync_WithAgent_SendsAgentNotificationToo()
+    {
+        var proposalId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var agentId = Guid.NewGuid();
+        var agentUserId = Guid.NewGuid();
+        var customerUserId = Guid.NewGuid();
+
+        var customer = new Customer { Id = customerId, UserId = customerUserId };
+        var agent = new Agent { Id = agentId, UserId = agentUserId };
+        var proposal = new Proposal
+        {
+            Id = proposalId, CustomerId = customerId, ProposalNumber = "PRO-002",
+            Status = ProposalStatus.UnderReview, AgentId = agentId
+        };
+
+        _mockProposalRepo.Setup(r => r.GetByIdAsync(proposalId)).ReturnsAsync(proposal);
+        _mockCustomerRepo.Setup(r => r.GetByIdAsync(customerId)).ReturnsAsync(customer);
+        _mockAgentRepo.Setup(r => r.GetByIdAsync(agentId)).ReturnsAsync(agent);
+
+        var mockNotif = new Mock<INotificationService>();
+        var svc = new ProposalService(_mockUnitOfWork.Object, mockNotif.Object, new Mock<IStorageService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ProposalService>>());
+
+        await svc.ApproveOrRejectProposalAsync(proposalId.ToString(), Guid.NewGuid().ToString(), true, "All checks passed");
+
+        // Customer notification + agent notification = 2 calls
+        mockNotif.Verify(n => n.CreateAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(2));
+        mockNotif.Verify(n => n.CreateAsync(agentUserId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+    }
+
+    [Test]
     public async Task SubmitProposalAsync_WithLifeDetail_SetsLifeDetail()
     {
         var userId = Guid.NewGuid().ToString();

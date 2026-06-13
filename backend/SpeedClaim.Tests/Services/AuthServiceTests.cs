@@ -516,4 +516,43 @@ public class AuthServiceTests
         var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() => _authService.ResetPasswordCustomerAsync(request));
         Assert.That(ex.Message, Is.EqualTo("Invalid or expired token"));
     }
+
+    [Test]
+    public void LoginAsync_LockedAccount_ThrowsForbiddenException()
+    {
+        var request = new LoginRequest("locked@test.com", "password");
+        var user = new User
+        {
+            Email = "locked@test.com",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("password"),
+            IsActive = true,
+            LockedUntil = DateTime.UtcNow.AddMinutes(10)
+        };
+        _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
+            .ReturnsAsync(user);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() => _authService.LoginAsync(request));
+    }
+
+    [Test]
+    public async Task LoginAsync_WrongPasswordAtLockoutThreshold_SetsLockedUntil()
+    {
+        var request = new LoginRequest("test@test.com", "wrongpassword");
+        var user = new User
+        {
+            Email = "test@test.com",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("correctpassword"),
+            IsActive = true,
+            FailedLoginAttempts = 4 // one more failure triggers lockout (maxAttempts = 5)
+        };
+        _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
+            .ReturnsAsync(user);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() => _authService.LoginAsync(request));
+        await _mockUnitOfWork.Object.CompleteAsync();
+
+        Assert.That(user.FailedLoginAttempts, Is.EqualTo(5));
+        Assert.That(user.LockedUntil, Is.Not.Null);
+        Assert.That(user.LockedUntil, Is.GreaterThan(DateTime.UtcNow));
+    }
 }
