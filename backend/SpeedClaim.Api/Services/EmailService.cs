@@ -33,17 +33,18 @@ public class EmailService : IEmailService
         try
         {
             var email = new MimeMessage();
-            var fromAddress = _configuration["EmailSettings:FromAddress"] ?? "noreply@speedclaim.local";
-            email.From.Add(MailboxAddress.Parse(fromAddress));
+            var senderName = _configuration["SmtpSettings:SenderName"] ?? "SpeedClaim";
+            var senderEmail = _configuration["SmtpSettings:SenderEmail"] ?? "noreply@speedclaim.local";
+            email.From.Add(new MailboxAddress(senderName, senderEmail));
             email.To.Add(MailboxAddress.Parse(to));
             email.Subject = subject;
             email.Body = new TextPart(TextFormat.Html) { Text = body };
 
             using var smtp = _smtpClientFactory.CreateClient();
-            var host = _configuration["EmailSettings:SmtpHost"] ?? "smtp.gmail.com";
-            var port = int.TryParse(_configuration["EmailSettings:SmtpPort"], out var p) ? p : 587;
-            var user = _configuration["EmailSettings:SmtpUser"] ?? "dummy";
-            var pass = _configuration["EmailSettings:SmtpPass"] ?? "dummy";
+            var host = _configuration["SmtpSettings:Host"] ?? "smtp.gmail.com";
+            var port = int.TryParse(_configuration["SmtpSettings:Port"], out var p) ? p : 587;
+            var user = _configuration["SmtpSettings:SenderEmail"] ?? "";
+            var pass = _configuration["SmtpSettings:AppPassword"] ?? "";
 
             await smtp.ConnectAsync(host, port, MailKit.Security.SecureSocketOptions.StartTls);
             if (!string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(pass))
