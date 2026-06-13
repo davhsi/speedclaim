@@ -16,11 +16,13 @@ public class UserService : IUserService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IStorageService _storageService;
+    private readonly IEncryptionService _encryptionService;
 
-    public UserService(IUnitOfWork unitOfWork, IStorageService storageService)
+    public UserService(IUnitOfWork unitOfWork, IStorageService storageService, IEncryptionService encryptionService)
     {
         _unitOfWork = unitOfWork;
         _storageService = storageService;
+        _encryptionService = encryptionService;
     }
 
     public async Task<UserDto> GetProfileAsync(string userId)
@@ -146,14 +148,14 @@ public class UserService : IUserService
                 UserId = uid,
                 KycStatus = KycStatus.Pending,
                 IdType = request.IdType,
-                IdNumber = request.IdNumber
+                IdNumber = _encryptionService.Encrypt(request.IdNumber)
             };
             await _unitOfWork.KycRecords.AddAsync(kycRecord);
         }
         else
         {
             kycRecord.IdType = request.IdType;
-            kycRecord.IdNumber = request.IdNumber;
+            kycRecord.IdNumber = _encryptionService.Encrypt(request.IdNumber);
             kycRecord.KycStatus = KycStatus.Pending;
             kycRecord.UpdatedAt = DateTimeOffset.UtcNow;
         }
@@ -271,7 +273,7 @@ public class UserService : IUserService
     {
         var (items, total) = await _unitOfWork.KycRecords.GetPagedAsync(page, pageSize, k => k.KycStatus == KycStatus.Pending);
         return new PagedResponse<KycRecordDto>(
-            items.Select(k => new KycRecordDto(k.Id, k.UserId, k.KycStatus.ToString(), k.IdType.ToString(), k.IdNumber, k.CreatedAt)),
+            items.Select(k => new KycRecordDto(k.Id, k.UserId, k.KycStatus.ToString(), k.IdType.ToString(), _encryptionService.Decrypt(k.IdNumber), k.CreatedAt)),
             page, pageSize, total);
     }
 
@@ -298,7 +300,8 @@ public class UserService : IUserService
         var kycRecord = await _unitOfWork.KycRecords.FirstOrDefaultAsync(k => k.UserId == uid);
         if (kycRecord == null) return null;
         
-        return new KycRecordDto(kycRecord.Id, kycRecord.UserId, kycRecord.KycStatus.ToString(), kycRecord.IdType.ToString(), kycRecord.IdNumber, kycRecord.CreatedAt);
+        var decrypted = _encryptionService.Decrypt(kycRecord.IdNumber);
+        return new KycRecordDto(kycRecord.Id, kycRecord.UserId, kycRecord.KycStatus.ToString(), kycRecord.IdType.ToString(), _encryptionService.Mask(decrypted), kycRecord.CreatedAt);
     }
 
     public async Task ApproveRejectKycAsync(string customerId, bool isApproved, string reason, string reviewerId)

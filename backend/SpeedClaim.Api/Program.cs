@@ -84,6 +84,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Add DI Services
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();

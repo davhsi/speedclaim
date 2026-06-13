@@ -24,6 +24,7 @@ public class UserServiceTests
     private Mock<IRepository<Customer>> _mockCustomerRepository = null!;
     private Mock<IRepository<KycRecord>> _mockKycRepository = null!;
     private Mock<IRepository<Address>> _mockAddressRepository = null!;
+    private Mock<IEncryptionService> _mockEncryptionService = null!;
     private UserService _userService = null!;
 
     [SetUp]
@@ -43,7 +44,12 @@ public class UserServiceTests
         _mockUnitOfWork.Setup(u => u.Addresses).Returns(_mockAddressRepository.Object);
         _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
 
-        _userService = new UserService(_mockUnitOfWork.Object, new Mock<IStorageService>().Object);
+        _mockEncryptionService = new Mock<IEncryptionService>();
+        _mockEncryptionService.Setup(e => e.Encrypt(It.IsAny<string>())).Returns<string>(s => s);
+        _mockEncryptionService.Setup(e => e.Decrypt(It.IsAny<string>())).Returns<string>(s => s);
+        _mockEncryptionService.Setup(e => e.Mask(It.IsAny<string>())).Returns<string>(s => s);
+
+        _userService = new UserService(_mockUnitOfWork.Object, new Mock<IStorageService>().Object, _mockEncryptionService.Object);
     }
 
     [Test]
@@ -235,7 +241,7 @@ public class UserServiceTests
         mockBack.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
 
         var mockStorage = new Mock<IStorageService>();
-        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object);
+        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object);
 
         await svc.UploadKycDocumentsAsync(customerId.ToString(), new KycUploadRequest(null, IdType.Aadhaar, "123456789012", mockFront.Object, mockBack.Object));
 
@@ -334,7 +340,7 @@ public class UserServiceTests
         mockFile.Setup(f => f.FileName).Returns("front.jpg");
         mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
         var mockStorage = new Mock<IStorageService>();
-        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object);
+        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object);
 
         await svc.UploadKycDocumentsAsync(customerId.ToString(), new KycUploadRequest(null, IdType.Aadhaar, "123456789012", mockFile.Object, null));
 
@@ -354,7 +360,7 @@ public class UserServiceTests
         mockFile.Setup(f => f.FileName).Returns("front.jpg");
         mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
         var mockStorage = new Mock<IStorageService>();
-        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object);
+        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object);
 
         await svc.UploadKycDocumentsAsync(customerId.ToString(), new KycUploadRequest(null, IdType.Aadhaar, "NEWID", mockFile.Object, null));
 

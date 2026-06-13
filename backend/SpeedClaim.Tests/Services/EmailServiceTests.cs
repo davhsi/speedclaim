@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -18,31 +19,35 @@ public class EmailServiceTests
 {
     private Mock<ISmtpClientFactory> _mockSmtpClientFactory;
     private Mock<ISmtpClient> _mockSmtpClient;
-    private Mock<IConfiguration> _mockConfiguration;
     private Mock<ILogger<EmailService>> _mockLogger;
     private Mock<IUnitOfWork> _mockUnitOfWork;
     private EmailService _emailService;
+
+    private static IConfiguration BuildTestConfig() =>
+        new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["SmtpSettings:SenderName"] = "SpeedClaim",
+                ["SmtpSettings:SenderEmail"] = "test@test.com",
+                ["SmtpSettings:Host"] = "smtp.test.com",
+                ["SmtpSettings:Port"] = "587",
+                ["SmtpSettings:AppPassword"] = "pass"
+            })
+            .Build();
 
     [SetUp]
     public void Setup()
     {
         _mockSmtpClientFactory = new Mock<ISmtpClientFactory>();
         _mockSmtpClient = new Mock<ISmtpClient>();
-        _mockConfiguration = new Mock<IConfiguration>();
         _mockLogger = new Mock<ILogger<EmailService>>();
         _mockUnitOfWork = new Mock<IUnitOfWork>() { DefaultValue = DefaultValue.Mock };
 
         _mockSmtpClientFactory.Setup(f => f.CreateClient()).Returns(_mockSmtpClient.Object);
-        
-        _mockConfiguration.Setup(c => c["EmailSettings:FromAddress"]).Returns("test@test.com");
-        _mockConfiguration.Setup(c => c["EmailSettings:SmtpHost"]).Returns("smtp.test.com");
-        _mockConfiguration.Setup(c => c["EmailSettings:SmtpPort"]).Returns("587");
-        _mockConfiguration.Setup(c => c["EmailSettings:SmtpUser"]).Returns("user");
-        _mockConfiguration.Setup(c => c["EmailSettings:SmtpPass"]).Returns("pass");
 
         _emailService = new EmailService(
             _mockSmtpClientFactory.Object,
-            _mockConfiguration.Object,
+            BuildTestConfig(),
             _mockLogger.Object,
             _mockUnitOfWork.Object);
     }
@@ -55,7 +60,7 @@ public class EmailServiceTests
 
         // Assert
         _mockSmtpClient.Verify(c => c.ConnectAsync("smtp.test.com", 587, MailKit.Security.SecureSocketOptions.StartTls, It.IsAny<CancellationToken>()), Times.Once);
-        _mockSmtpClient.Verify(c => c.AuthenticateAsync("user", "pass", It.IsAny<CancellationToken>()), Times.Once);
+        _mockSmtpClient.Verify(c => c.AuthenticateAsync("test@test.com", "pass", It.IsAny<CancellationToken>()), Times.Once);
         _mockSmtpClient.Verify(c => c.SendAsync(It.IsAny<MimeMessage>(), It.IsAny<CancellationToken>(), It.IsAny<MailKit.ITransferProgress>()), Times.Once);
         _mockSmtpClient.Verify(c => c.DisconnectAsync(true, It.IsAny<CancellationToken>()), Times.Once);
 
