@@ -1,10 +1,12 @@
-# SpeedClaim — Technical Specification v4.0
+# SpeedClaim — Technical Specification v5.0
 
 > Capstone Project | Domains: Health, Life, Motor | Stack: .NET Web API + Angular + PostgreSQL + Stripe + Azure Blob Storage (local first)
 >
 > **Changelog v3:** Fixed 5 logical data flow gaps — first premium chicken-and-egg, pre-issuance data collection, auth token storage, document entity_type ENUM, surveyor license tracking.
 >
 > **Changelog v4:** Added Section 6 (Security Controls — account lockout, soft delete, DPDP consent, audit log, security headers, CORS), Section 7 (API Filtering & Pagination), updated schema to 41 tables with `user_consents`.
+>
+> **Changelog v5:** Added Section 9 (Input Validation) covering all 30 FluentValidation validators across every domain. Access token expiry corrected to 15 minutes.
 
 ---
 
@@ -247,4 +249,76 @@ Paginated responses follow the `PagedResponse<T>` envelope:
 
 ---
 
-> Document version: 4.0 | Stack: .NET 10 Web API + Angular + PostgreSQL + Stripe
+## 9. Input Validation
+
+All request bodies are validated using **FluentValidation** with `AddFluentValidationAutoValidation()`. Validation runs automatically before any controller action is reached. Invalid requests return **HTTP 422** with a structured error body listing all violated rules.
+
+30 validators are auto-registered from the assembly. Key rules by domain:
+
+### 9.1 Authentication
+
+| Request | Rules |
+| --- | --- |
+| `LoginRequest` | Email format, password not empty |
+| `ForgotPasswordRequest` | Email format |
+| `ResetPasswordRequest` | Token not empty; new password: min 8 chars, upper, lower, digit, special character |
+| `VerifyEmailRequest` | Token not empty |
+| `RefreshTokenRequest` | Token not empty |
+| `RegisterAgentRequest` | Same password rules as customer; Aadhaar 12 digits; PAN `ABCDE1234F`; phone 10 digits; postal code 6 digits; license number and agency name required |
+
+### 9.2 Claims
+
+| Request | Rules |
+| --- | --- |
+| `IntimateClaimRequest` | Policy ID not empty; amount > 0; incident date not in future; description 10–2000 chars |
+| `ApproveRejectClaimRequest` | On approve: `approvedAmount` required and > 0. On reject: `reason` required, min 10 chars |
+| `UpdateClaimStatusRequest` | Status must be a valid `ClaimStatus` enum value; remarks required |
+| `AssignSurveyorRequest` | Surveyor ID not empty; notes required |
+
+### 9.3 Proposals & Policies
+
+| Request | Rules |
+| --- | --- |
+| `GenerateQuoteRequest` | Product ID not empty; age 1–100; sum assured > 0; tenure ≥ 1 |
+| `SubmitProposalRequest` | Customer ID and Product ID must be valid GUIDs; sum assured, premium, tenure all > 0; payment frequency must be Monthly/Quarterly/HalfYearly/Annually; **nominee shares must sum to exactly 100%** |
+| `NomineeDto` (nested) | Full name required; DOB in past; share 0.01–100; if minor, appointee name required |
+| `MotorDetailDto` (nested) | Vehicle number, make, model, engine, chassis required; manufacture year 1900–current year; IDV > 0 |
+| `RequestEndorsementRequest` | Endorsement type valid enum; description 10–1000 chars |
+| `ApproveRejectEndorsementRequest` | On reject: reason required |
+| `UpdateNomineeRequest` | Full name required; DOB in past; share 0.01–100; if minor, appointee name required |
+
+### 9.4 Users & KYC
+
+| Request | Rules |
+| --- | --- |
+| `AddFamilyMemberRequest` | Name required; DOB in past; salutation, gender, relationship valid enums |
+| `UpdateFamilyMemberRequest` | Same rules as Add |
+| `KycUploadRequest` | ID type valid enum; **Aadhaar: 12 digits; PAN: `ABCDE1234F`; Passport: 1 letter + 7 digits**; front document required; file size ≤ 5 MB; allowed types: PDF, JPG, JPEG, PNG |
+| `SingleAddressRequest` | Line 1, city, state, country required; **pincode exactly 6 digits** |
+
+### 9.5 Grievances
+
+| Request | Rules |
+| --- | --- |
+| `RaiseGrievanceRequest` | Category valid enum; description 10–2000 chars |
+| `UpdateGrievanceStatusRequest` | Status valid enum; **resolution notes required when status is Resolved or Closed** |
+
+### 9.6 Catalog (Admin)
+
+| Request | Rules |
+| --- | --- |
+| `CreateProductRequest` | Name, UIN, description required; domain must be Health/Life/Motor; `minAge < maxAge ≤ 100`; `minSumAssured < maxSumAssured`; `minTenure ≤ maxTenure`; if family floater allowed, max members > 1 |
+
+### 9.7 Agents & System (Admin)
+
+| Request | Rules |
+| --- | --- |
+| `UpdateAgentProfileRequest` | Name required; phone 10 digits; salutation valid |
+| `UpdateAgentLicenseRequest` | License number required; expiry must be a **future date** |
+| `CreateBranchRequest` | Name, city, state, address required; phone 10 digits; email format |
+| `UpdateSystemConfigRequest` | Key and value both required |
+| `ManageEmailTemplateRequest` | Template key, subject, and HTML body all required |
+
+---
+
+> Document version: 5.0 | Stack: .NET 10 Web API + Angular + PostgreSQL + Stripe
