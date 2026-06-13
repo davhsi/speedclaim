@@ -18,6 +18,10 @@ public class User
     public bool IsEmailVerified { get; set; } = false;
     public bool IsActive { get; set; } = true;
     public DateTime? LastLoginAt { get; set; }
+    public int FailedLoginAttempts { get; set; } = 0;
+    public DateTime? LockedUntil { get; set; }
+    public bool IsDeleted { get; set; } = false;
+    public DateTimeOffset? DeletedAt { get; set; }
     
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? UpdatedAt { get; set; }

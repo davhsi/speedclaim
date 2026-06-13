@@ -177,6 +177,12 @@ public class PolicyService : IPolicyService
         endorsement.UpdatedAt = DateTimeOffset.UtcNow;
 
         _unitOfWork.Endorsements.Update(endorsement);
+        await _unitOfWork.AuditLogs.AddAsync(new Models.AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = underwriterId, EntityType = "Endorsement", EntityId = endorsementId,
+            Action = isApproved ? "EndorsementApproved" : "EndorsementRejected",
+            NewValue = reason, CreatedAt = DateTime.UtcNow
+        });
         await _unitOfWork.CompleteAsync();
     }
 

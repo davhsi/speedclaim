@@ -52,11 +52,18 @@ public partial class SpeedClaimDbContext : DbContext
     public DbSet<EmailLog> EmailLogs { get; set; } = null!;
     public DbSet<AuditLog> AuditLogs { get; set; } = null!;
     public DbSet<SystemConfig> SystemConfigs { get; set; } = null!;
+    public DbSet<UserConsent> UserConsents { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
         
+        // Global soft-delete filters — automatically exclude logically deleted rows from every query
+        modelBuilder.Entity<User>().HasQueryFilter(u => !u.IsDeleted);
+        modelBuilder.Entity<Policy>().HasQueryFilter(p => !p.IsDeleted);
+        modelBuilder.Entity<Claim>().HasQueryFilter(c => !c.IsDeleted);
+        modelBuilder.Entity<Proposal>().HasQueryFilter(pr => !pr.IsDeleted);
+
         // Convert all property and table names to snake_case to match postgres conventions
         foreach (var entity in modelBuilder.Model.GetEntityTypes())
         {
@@ -535,6 +542,16 @@ public partial class SpeedClaimDbContext : DbContext
         {
             e.HasKey(x => x.Id).HasName("PK_system_configs");
             e.Property(x => x.ConfigKey).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<UserConsent>(e =>
+        {
+            e.HasKey(x => x.Id).HasName("PK_user_consents");
+            e.HasIndex(x => new { x.UserId, x.ConsentType }).HasDatabaseName("ix_user_consents_user_type");
+            e.Property(x => x.ConsentType).HasMaxLength(50);
+            e.Property(x => x.ConsentVersion).HasMaxLength(10);
+            e.Property(x => x.IpAddress).HasMaxLength(45);
+            e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
         });
     }
     

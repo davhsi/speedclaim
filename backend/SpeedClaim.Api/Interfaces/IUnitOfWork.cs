@@ -46,6 +46,7 @@ public interface IUnitOfWork : IDisposable
     IRepository<EmailLog> EmailLogs { get; }
     IRepository<AuditLog> AuditLogs { get; }
     IRepository<SystemConfig> SystemConfigs { get; }
+    IRepository<UserConsent> UserConsents { get; }
 
     Task<int> CompleteAsync();
 }

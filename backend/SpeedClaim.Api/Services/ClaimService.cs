@@ -327,6 +327,13 @@ public class ClaimService : IClaimService
 
         _unitOfWork.Claims.Update(claim);
         await _unitOfWork.ClaimStatusHistories.AddAsync(history);
+        await _unitOfWork.AuditLogs.AddAsync(new Models.AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = changedById, EntityType = "Claim", EntityId = claim.Id,
+            Action = "ClaimStatusChanged",
+            OldValue = history.OldStatus.ToString(), NewValue = newStatus.ToString(),
+            CreatedAt = DateTime.UtcNow
+        });
         await _unitOfWork.CompleteAsync();
 
         _logger.LogInformation("Claim {ClaimId} status changed to {NewStatus} by {ChangedById}", claim.Id, newStatus, changedById);

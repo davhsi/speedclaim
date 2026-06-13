@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Moq;
 using NUnit.Framework;
 using SpeedClaim.Api.Dtos.Auth;
@@ -42,8 +43,13 @@ public class AuthServiceTests
         _mockUnitOfWork.Setup(u => u.Sessions).Returns(_mockSessionRepository.Object);
         _mockUnitOfWork.Setup(u => u.UserTokens).Returns(_mockUserTokenRepository.Object);
         _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
+        _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
+        _mockUnitOfWork.Setup(u => u.UserConsents).Returns(new Mock<IRepository<UserConsent>>().Object);
 
-        _authService = new AuthService(_mockUnitOfWork.Object, _mockJwtService.Object, _mockEmailService.Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<AuthService>>());
+        var mockHttpContext = new Mock<IHttpContextAccessor>();
+        mockHttpContext.Setup(h => h.HttpContext).Returns((HttpContext?)null);
+
+        _authService = new AuthService(_mockUnitOfWork.Object, _mockJwtService.Object, _mockEmailService.Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<AuthService>>(), mockHttpContext.Object);
     }
 
     [Test]

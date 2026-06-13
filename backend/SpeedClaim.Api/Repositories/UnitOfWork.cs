@@ -50,6 +50,7 @@ public class UnitOfWork : IUnitOfWork
     public IRepository<EmailLog> EmailLogs { get; }
     public IRepository<AuditLog> AuditLogs { get; }
     public IRepository<SystemConfig> SystemConfigs { get; }
+    public IRepository<UserConsent> UserConsents { get; }
 
     public UnitOfWork(SpeedClaimDbContext context)
     {
@@ -95,6 +96,7 @@ public class UnitOfWork : IUnitOfWork
         EmailLogs = new Repository<EmailLog>(_context);
         AuditLogs = new Repository<AuditLog>(_context);
         SystemConfigs = new Repository<SystemConfig>(_context);
+        UserConsents = new Repository<UserConsent>(_context);
     }
 
     public async Task<int> CompleteAsync()

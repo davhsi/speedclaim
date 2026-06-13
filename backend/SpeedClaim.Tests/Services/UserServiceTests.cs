@@ -43,6 +43,7 @@ public class UserServiceTests
             .ReturnsAsync((new System.Collections.Generic.List<Address>(), 0));
         _mockUnitOfWork.Setup(u => u.Addresses).Returns(_mockAddressRepository.Object);
         _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
+        _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
 
         _mockEncryptionService = new Mock<IEncryptionService>();
         _mockEncryptionService.Setup(e => e.Encrypt(It.IsAny<string>())).Returns<string>(s => s);

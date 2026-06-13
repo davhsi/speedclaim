@@ -41,6 +41,7 @@ public class ProposalServiceTests
         _mockUnitOfWork.Setup(u => u.Agents).Returns(_mockAgentRepo.Object);
         _mockUnitOfWork.Setup(u => u.Customers).Returns(_mockCustomerRepo.Object);
         _mockUnitOfWork.Setup(u => u.Policies).Returns(new Mock<IPolicyRepository>().Object);
+        _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
         _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
 
         _proposalService = new ProposalService(_mockUnitOfWork.Object, new Mock<INotificationService>().Object, new Mock<IStorageService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ProposalService>>());

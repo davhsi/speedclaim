@@ -314,7 +314,12 @@ public class UserService : IUserService
         kycRecord.ReviewedAt = DateTimeOffset.UtcNow;
         kycRecord.ReviewedById = Guid.Parse(reviewerId);
         kycRecord.RejectionReason = reason;
-        
+
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = Guid.Parse(reviewerId), EntityType = "KycRecord", EntityId = kycRecord.Id,
+            Action = isApproved ? "KycApproved" : "KycRejected", NewValue = reason, CreatedAt = DateTime.UtcNow
+        });
         await _unitOfWork.CompleteAsync();
     }
 

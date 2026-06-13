@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SpeedClaim.Api.Context;
@@ -11,9 +12,11 @@ using SpeedClaim.Api.Context;
 namespace SpeedClaim.Api.Migrations
 {
     [DbContext(typeof(SpeedClaimDbContext))]
-    partial class SpeedClaimDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260613143544_AddSoftDelete")]
+    partial class AddSoftDelete
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2478,59 +2481,6 @@ namespace SpeedClaim.Api.Migrations
                         });
                 });
 
-            modelBuilder.Entity("SpeedClaim.Api.Models.UserConsent", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("ConsentType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("consent_type");
-
-                    b.Property<string>("ConsentVersion")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)")
-                        .HasColumnName("consent_version");
-
-                    b.Property<DateTimeOffset>("ConsentedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("consented_at");
-
-                    b.Property<string>("IpAddress")
-                        .HasMaxLength(45)
-                        .HasColumnType("character varying(45)")
-                        .HasColumnName("ip_address");
-
-                    b.Property<bool>("IsGranted")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_granted");
-
-                    b.Property<bool>("IsRevoked")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_revoked");
-
-                    b.Property<DateTimeOffset?>("RevokedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("revoked_at");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id")
-                        .HasName("PK_user_consents");
-
-                    b.HasIndex("UserId", "ConsentType")
-                        .HasDatabaseName("ix_user_consents_user_type");
-
-                    b.ToTable("user_consents");
-                });
-
             modelBuilder.Entity("SpeedClaim.Api.Models.UserToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3217,17 +3167,6 @@ namespace SpeedClaim.Api.Migrations
                         .HasForeignKey("UpdatedById");
 
                     b.Navigation("UpdatedBy");
-                });
-
-            modelBuilder.Entity("SpeedClaim.Api.Models.UserConsent", b =>
-                {
-                    b.HasOne("SpeedClaim.Api.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.UserToken", b =>

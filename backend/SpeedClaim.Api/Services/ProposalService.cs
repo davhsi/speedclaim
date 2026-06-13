@@ -338,6 +338,12 @@ public class ProposalService : IProposalService
             proposal.RejectionReason = notes;
         }
 
+        await _unitOfWork.AuditLogs.AddAsync(new Models.AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = uId, EntityType = "Proposal", EntityId = pId,
+            Action = isApproved ? "ProposalApproved" : "ProposalRejected",
+            NewValue = notes, CreatedAt = DateTime.UtcNow
+        });
         await _unitOfWork.CompleteAsync();
 
         _logger.LogInformation("Proposal {ProposalNumber} {Decision} by Underwriter {UnderwriterId}", proposal.ProposalNumber, isApproved ? "approved" : "rejected", underwriterId);

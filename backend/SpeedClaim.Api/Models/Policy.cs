@@ -24,6 +24,8 @@ public class Policy
     public DateTimeOffset? IssuedAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? UpdatedAt { get; set; }
+    public bool IsDeleted { get; set; } = false;
+    public DateTimeOffset? DeletedAt { get; set; }
 
     // Navigation Properties
     public virtual Customer Customer { get; set; } = null!;

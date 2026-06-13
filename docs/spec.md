@@ -9,7 +9,7 @@
 ## 1. Technology Stack
 
 | Layer | Technology |
-|---|---|
+| --- | --- |
 | Backend | .NET 10 Web API (C#) |
 | Frontend | Angular 22 |
 | Database | PostgreSQL |
@@ -24,7 +24,7 @@
 ## 2. Roles
 
 | Role | Description |
-|---|---|
+| --- | --- |
 | `Customer` | Registers, manages family members, completes KYC, buys policies, makes payments, raises claims and grievances |
 | `Agent` | Onboards customers, creates proposals, views own dashboard — commissions, policies sold, customer list |
 | `Underwriter` | Reviews proposals, assesses risk, approves or rejects policies, requests additional documents |
@@ -65,7 +65,49 @@ Returns **HTTP 429** when exceeded.
 
 ---
 
-## 5. Database Schema Overview
+## 5. PII Encryption — Aadhaar & PAN
+
+Aadhaar numbers and PAN numbers are regulated sensitive identifiers under the **Aadhaar Act 2016** and **DPDP Act 2023**. Storing them in plaintext is a compliance violation. SpeedClaim encrypts them at rest using AES-256-CBC before writing to the database.
+
+### Algorithm: AES-256-CBC with Random IV
+
+| Property | Value |
+| --- | --- |
+| Algorithm | AES (Advanced Encryption Standard) |
+| Key size | 256 bits (32 bytes) |
+| Mode | CBC — Cipher Block Chaining |
+| IV | 16 random bytes generated fresh per encryption |
+| Storage format | `Base64( IV + Ciphertext )` — IV prepended to ciphertext, encoded as a single Base64 string |
+| Key source | `SecuritySettings:EncryptionKey` in appsettings (never committed to git) |
+
+**Why AES-256-CBC?**
+
+- AES-256 is the global standard mandated by PCI-DSS, HIPAA, and the DPDP Act for PII at rest.
+- CBC mode with a random IV ensures the same plaintext never produces the same ciphertext across two encryptions — preventing frequency analysis attacks.
+- The IV is not secret; prepending it to the ciphertext is the standard practice so decryption is self-contained.
+
+### Where it applies
+
+| Field | Model | Table |
+| --- | --- | --- |
+| `IdNumber` (Aadhaar or PAN) | `KycRecord` | `kyc_records` |
+
+### Read behaviour
+
+| Caller | Returns |
+| --- | --- |
+| Admin (`GET /api/v1/users/kyc/pending`) | Full decrypted value — admin must see it to verify identity |
+| Customer (`GET /api/v1/users/kyc/me`) | Masked value — last 4 digits visible, rest replaced with `X` |
+
+### Key management
+
+- Generate with: `openssl rand -base64 32`
+- Store in `appsettings.Development.json` (git-ignored) for local development
+- In production, inject via environment variable or a secrets manager — never in source code
+
+---
+
+## 6. Database Schema Overview
 
 39 tables across 16 domains.
 
