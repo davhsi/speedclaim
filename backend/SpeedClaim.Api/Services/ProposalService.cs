@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -342,7 +343,7 @@ public class ProposalService : IProposalService
         {
             Id = Guid.NewGuid(), UserId = uId, EntityType = "Proposal", EntityId = pId,
             Action = isApproved ? "ProposalApproved" : "ProposalRejected",
-            NewValue = notes, CreatedAt = DateTime.UtcNow
+            NewValue = JsonSerializer.Serialize(notes), CreatedAt = DateTime.UtcNow
         });
         await _unitOfWork.CompleteAsync();
 

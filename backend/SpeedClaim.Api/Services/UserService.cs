@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using SpeedClaim.Api.Dtos.Auth;
 using SpeedClaim.Api.Dtos.Common;
@@ -318,7 +319,7 @@ public class UserService : IUserService
         await _unitOfWork.AuditLogs.AddAsync(new AuditLog
         {
             Id = Guid.NewGuid(), UserId = Guid.Parse(reviewerId), EntityType = "KycRecord", EntityId = kycRecord.Id,
-            Action = isApproved ? "KycApproved" : "KycRejected", NewValue = reason, CreatedAt = DateTime.UtcNow
+            Action = isApproved ? "KycApproved" : "KycRejected", NewValue = JsonSerializer.Serialize(reason), CreatedAt = DateTime.UtcNow
         });
         await _unitOfWork.CompleteAsync();
     }

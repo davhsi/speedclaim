@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -62,7 +63,7 @@ public class AuthService : IAuthService
         await _unitOfWork.AuditLogs.AddAsync(new AuditLog
         {
             Id = Guid.NewGuid(), UserId = user.Id, EntityType = "User", EntityId = user.Id,
-            Action = "CustomerRegistered", NewValue = user.Email, IpAddress = ip, CreatedAt = DateTime.UtcNow
+            Action = "CustomerRegistered", NewValue = JsonSerializer.Serialize(user.Email), IpAddress = ip, CreatedAt = DateTime.UtcNow
         });
 
         // Record DPDP Act 2023 consent — user accepted data processing and KYC collection at registration
@@ -155,7 +156,7 @@ public class AuthService : IAuthService
         await _unitOfWork.AuditLogs.AddAsync(new AuditLog
         {
             Id = Guid.NewGuid(), UserId = user.Id, EntityType = "Session", EntityId = session.Id,
-            Action = "UserLoggedIn", NewValue = user.Role.ToString(), CreatedAt = DateTime.UtcNow
+            Action = "UserLoggedIn", NewValue = JsonSerializer.Serialize(user.Role.ToString()), CreatedAt = DateTime.UtcNow
         });
         await _unitOfWork.CompleteAsync();
 
@@ -324,7 +325,7 @@ public class AuthService : IAuthService
         {
             Id = Guid.NewGuid(), UserId = Guid.TryParse(adminId, out var aid) ? aid : Guid.Empty,
             EntityType = "User", EntityId = user.Id,
-            Action = "AgentRegistered", NewValue = user.Email, CreatedAt = DateTime.UtcNow
+            Action = "AgentRegistered", NewValue = JsonSerializer.Serialize(user.Email), CreatedAt = DateTime.UtcNow
         });
         await _unitOfWork.CompleteAsync();
 
