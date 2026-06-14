@@ -40,6 +40,7 @@ public class ClaimServiceTests
         _mockUnitOfWork.Setup(u => u.ClaimStatusHistories).Returns(_mockHistoryRepo.Object);
         _mockUnitOfWork.Setup(u => u.SubmittedDocuments).Returns(_mockDocRepo.Object);
         _mockUnitOfWork.Setup(u => u.Customers).Returns(new Mock<IRepository<Customer>>().Object);
+        _mockUnitOfWork.Setup(u => u.Surveyors).Returns(new Mock<IRepository<Surveyor>>().Object);
         _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
 
         _claimService = new ClaimService(_mockUnitOfWork.Object, new Mock<IStorageService>().Object, new Mock<INotificationService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ClaimService>>());

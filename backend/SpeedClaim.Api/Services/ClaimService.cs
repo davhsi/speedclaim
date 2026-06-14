@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -26,6 +27,23 @@ public class ClaimService : IClaimService
         _storageService = storageService;
         _notifications = notifications;
         _logger = logger;
+    }
+
+    // Controllers pass the authenticated User.Id (JWT sub), but Claim.CustomerId is a FK to
+    // customers.id. Resolve the customer record from the user id; fall back to the supplied id
+    // when it is already a customer id (keeps unit tests and internal callers working).
+    private async Task<Guid> ResolveCustomerIdAsync(Guid userId)
+    {
+        var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
+        return customer is not null && customer.Id != Guid.Empty ? customer.Id : userId;
+    }
+
+    // Surveyor-scoped endpoints receive the authenticated User.Id, but Claim.SurveyorId is a FK to
+    // surveyors.id. Resolve the surveyor record from the user id; fall back to the supplied id.
+    private async Task<Guid> ResolveSurveyorIdAsync(Guid userId)
+    {
+        var surveyor = await _unitOfWork.Surveyors.FirstOrDefaultAsync(s => s.UserId == userId);
+        return surveyor is not null && surveyor.Id != Guid.Empty ? surveyor.Id : userId;
     }
 
     private ClaimDto MapToDto(Claim claim)
@@ -55,8 +73,9 @@ public class ClaimService : IClaimService
 
     public async Task<ClaimDto> IntimateClaimAsync(Guid customerId, IntimateClaimRequest request)
     {
+        var customerRecordId = await ResolveCustomerIdAsync(customerId);
         var policy = await _unitOfWork.Policies.GetByIdAsync(request.PolicyId);
-        if (policy == null || policy.CustomerId != customerId)
+        if (policy == null || policy.CustomerId != customerRecordId)
             throw new NotFoundException("Policy not found or does not belong to the customer.");
 
         if (policy.Status != PolicyStatus.Active)
@@ -67,7 +86,7 @@ public class ClaimService : IClaimService
             Id = Guid.NewGuid(),
             ClaimNumber = $"CLM-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 6).ToUpper()}",
             PolicyId = request.PolicyId,
-            CustomerId = customerId,
+            CustomerId = customerRecordId,
             ClaimantMemberId = request.ClaimantMemberId,
             ClaimType = request.ClaimType,
             ClaimAmountRequested = request.ClaimAmountRequested,
@@ -100,8 +119,9 @@ public class ClaimService : IClaimService
 
     public async Task<string> UploadClaimDocumentAsync(Guid claimId, Guid customerId, string documentType, IFormFile file)
     {
+        var customerRecordId = await ResolveCustomerIdAsync(customerId);
         var claim = await _unitOfWork.Claims.GetByIdAsync(claimId);
-        if (claim == null || claim.CustomerId != customerId)
+        if (claim == null || claim.CustomerId != customerRecordId)
             throw new NotFoundException("Claim not found or access denied.");
 
         if (file == null || file.Length == 0)
@@ -141,8 +161,9 @@ public class ClaimService : IClaimService
 
     public async Task<IEnumerable<ClaimDto>> GetMyClaimsAsync(Guid customerId, ClaimStatus? status = null, ClaimType? claimType = null)
     {
+        var customerRecordId = await ResolveCustomerIdAsync(customerId);
         var claims = await _unitOfWork.Claims.FindAsync(c =>
-            c.CustomerId == customerId &&
+            c.CustomerId == customerRecordId &&
             (!status.HasValue || c.Status == status.Value) &&
             (!claimType.HasValue || c.ClaimType == claimType.Value));
         return claims.Select(MapToDto);
@@ -153,7 +174,7 @@ public class ClaimService : IClaimService
         var claim = await _unitOfWork.Claims.GetByIdAsync(claimId);
         if (claim == null)
             throw new NotFoundException("Claim not found.");
-        if (customerId.HasValue && claim.CustomerId != customerId.Value)
+        if (customerId.HasValue && claim.CustomerId != await ResolveCustomerIdAsync(customerId.Value))
             throw new ForbiddenException("Access denied to this claim.");
         return MapToDto(claim);
     }
@@ -161,7 +182,9 @@ public class ClaimService : IClaimService
     public async Task<IEnumerable<ClaimStatusHistoryDto>> GetClaimHistoryAsync(Guid claimId, Guid? customerId = null)
     {
         var claim = await _unitOfWork.Claims.GetByIdAsync(claimId);
-        if (claim == null || (customerId.HasValue && claim.CustomerId != customerId.Value))
+        if (claim == null)
+            throw new NotFoundException("Claim not found.");
+        if (customerId.HasValue && claim.CustomerId != await ResolveCustomerIdAsync(customerId.Value))
             throw new NotFoundException("Claim not found.");
 
         var history = await _unitOfWork.ClaimStatusHistories.FindAsync(h => h.ClaimId == claimId);
@@ -269,14 +292,16 @@ public class ClaimService : IClaimService
 
     public async Task<IEnumerable<ClaimDto>> GetAssignedMotorClaimsAsync(Guid surveyorId)
     {
-        var claims = await _unitOfWork.Claims.FindAsync(c => c.SurveyorId == surveyorId);
+        var surveyorRecordId = await ResolveSurveyorIdAsync(surveyorId);
+        var claims = await _unitOfWork.Claims.FindAsync(c => c.SurveyorId == surveyorRecordId);
         return claims.Select(MapToDto);
     }
 
     public async Task<string> SubmitSurveyReportAsync(Guid claimId, Guid surveyorId, SubmitSurveyReportRequest request)
     {
+        var surveyorRecordId = await ResolveSurveyorIdAsync(surveyorId);
         var claim = await _unitOfWork.Claims.GetByIdAsync(claimId);
-        if (claim == null || claim.SurveyorId != surveyorId)
+        if (claim == null || claim.SurveyorId != surveyorRecordId)
             throw new NotFoundException("Claim not found or surveyor not assigned to this claim.");
 
         if (request.ReportDocument == null || request.ReportDocument.Length == 0)
@@ -336,7 +361,7 @@ public class ClaimService : IClaimService
         {
             Id = Guid.NewGuid(), UserId = changedById, EntityType = "Claim", EntityId = claim.Id,
             Action = "ClaimStatusChanged",
-            OldValue = history.OldStatus.ToString(), NewValue = newStatus.ToString(),
+            OldValue = JsonSerializer.Serialize(history.OldStatus.ToString()), NewValue = JsonSerializer.Serialize(newStatus.ToString()),
             CreatedAt = DateTime.UtcNow
         });
         await _unitOfWork.CompleteAsync();

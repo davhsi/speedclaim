@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using SpeedClaim.Api.Dtos.Common;
 using SpeedClaim.Api.Dtos.Policies;
@@ -22,10 +23,20 @@ public class PolicyService : IPolicyService
         _storageService = storageService;
     }
 
+    // Controllers pass the authenticated User.Id (JWT sub), but Policy.CustomerId / Proposal.CustomerId
+    // are FKs to customers.id. Resolve the customer record from the user id; fall back to the supplied
+    // id when it is already a customer id (keeps unit tests and internal callers working).
+    private async Task<Guid> ResolveCustomerIdAsync(Guid userId)
+    {
+        var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
+        return customer is not null && customer.Id != Guid.Empty ? customer.Id : userId;
+    }
+
     public async Task<IEnumerable<PolicyDto>> GetMyPoliciesAsync(Guid customerId, PolicyStatus? status = null, PolicyType? policyType = null)
     {
+        var customerRecordId = await ResolveCustomerIdAsync(customerId);
         var policies = await _unitOfWork.Policies.FindAsync(p =>
-            p.CustomerId == customerId &&
+            p.CustomerId == customerRecordId &&
             (!status.HasValue || p.Status == status.Value) &&
             (!policyType.HasValue || p.PolicyType == policyType.Value));
         return policies.Select(MapToDto);
@@ -36,15 +47,16 @@ public class PolicyService : IPolicyService
         var policy = await _unitOfWork.Policies.GetByIdAsync(policyId);
         if (policy == null)
             throw new NotFoundException("Policy not found.");
-        if (customerId.HasValue && policy.CustomerId != customerId.Value)
+        if (customerId.HasValue && policy.CustomerId != await ResolveCustomerIdAsync(customerId.Value))
             throw new ForbiddenException("Access denied to this policy.");
         return MapToDto(policy);
     }
 
     public async Task<IEnumerable<PolicyNomineeDto>> GetNomineesAsync(Guid policyId, Guid customerId)
     {
+        var customerRecordId = await ResolveCustomerIdAsync(customerId);
         var policy = await _unitOfWork.Policies.GetByIdAsync(policyId);
-        if (policy == null || policy.CustomerId != customerId)
+        if (policy == null || policy.CustomerId != customerRecordId)
             throw new ForbiddenException("Access denied or policy not found.");
 
         if (!policy.ProposalId.HasValue)
@@ -57,8 +69,9 @@ public class PolicyService : IPolicyService
 
     public async Task CancelPolicyAsync(Guid policyId, Guid customerId)
     {
+        var customerRecordId = await ResolveCustomerIdAsync(customerId);
         var policy = await _unitOfWork.Policies.GetByIdAsync(policyId);
-        if (policy == null || policy.CustomerId != customerId)
+        if (policy == null || policy.CustomerId != customerRecordId)
             throw new NotFoundException("Policy not found.");
 
         if (policy.Status == PolicyStatus.Cancelled)
@@ -87,8 +100,9 @@ public class PolicyService : IPolicyService
 
     public async Task<byte[]> DownloadPolicyDocumentAsync(Guid policyId, Guid customerId)
     {
+        var customerRecordId = await ResolveCustomerIdAsync(customerId);
         var policy = await _unitOfWork.Policies.GetByIdAsync(policyId);
-        if (policy == null || policy.CustomerId != customerId)
+        if (policy == null || policy.CustomerId != customerRecordId)
             throw new NotFoundException("Policy not found.");
 
         // Generate a text-based policy document on the fly
@@ -112,8 +126,9 @@ public class PolicyService : IPolicyService
 
     public async Task RequestEndorsementAsync(Guid policyId, Guid customerId, RequestEndorsementRequest request)
     {
+        var customerRecordId = await ResolveCustomerIdAsync(customerId);
         var policy = await _unitOfWork.Policies.GetByIdAsync(policyId);
-        if (policy == null || policy.CustomerId != customerId)
+        if (policy == null || policy.CustomerId != customerRecordId)
             throw new NotFoundException("Policy not found.");
 
         var endorsement = new Endorsement
@@ -152,7 +167,7 @@ public class PolicyService : IPolicyService
         if (customerId.HasValue)
         {
             var policy = await _unitOfWork.Policies.GetByIdAsync(policyId);
-            if (policy == null || policy.CustomerId != customerId.Value)
+            if (policy == null || policy.CustomerId != await ResolveCustomerIdAsync(customerId.Value))
                 throw new ForbiddenException("Access denied to this policy.");
         }
 
@@ -186,7 +201,7 @@ public class PolicyService : IPolicyService
         {
             Id = Guid.NewGuid(), UserId = underwriterId, EntityType = "Endorsement", EntityId = endorsementId,
             Action = isApproved ? "EndorsementApproved" : "EndorsementRejected",
-            NewValue = reason, CreatedAt = DateTime.UtcNow
+            NewValue = JsonSerializer.Serialize(reason), CreatedAt = DateTime.UtcNow
         });
         await _unitOfWork.CompleteAsync();
     }
@@ -218,17 +233,19 @@ public class PolicyService : IPolicyService
         var nominee = await _unitOfWork.Nominees.GetByIdAsync(nomineeId);
         if (nominee == null) throw new NotFoundException("Nominee not found.");
 
+        var customerRecordId = await ResolveCustomerIdAsync(customerId);
+
         // Verify this nominee belongs to a policy owned by this customer
         if (nominee.PolicyId.HasValue)
         {
             var policy = await _unitOfWork.Policies.GetByIdAsync(nominee.PolicyId.Value);
-            if (policy == null || policy.CustomerId != customerId)
+            if (policy == null || policy.CustomerId != customerRecordId)
                 throw new ForbiddenException("Access denied to this nominee.");
         }
         else if (nominee.ProposalId != Guid.Empty)
         {
             var proposal = await _unitOfWork.Proposals.GetByIdAsync(nominee.ProposalId);
-            if (proposal == null || proposal.CustomerId != customerId)
+            if (proposal == null || proposal.CustomerId != customerRecordId)
                 throw new ForbiddenException("Access denied to this nominee.");
         }
 
@@ -246,8 +263,9 @@ public class PolicyService : IPolicyService
 
     public async Task<IEnumerable<EndorsementDto>> GetPolicyEndorsementsAsync(Guid policyId, Guid customerId)
     {
+        var customerRecordId = await ResolveCustomerIdAsync(customerId);
         var policy = await _unitOfWork.Policies.GetByIdAsync(policyId);
-        if (policy == null || policy.CustomerId != customerId)
+        if (policy == null || policy.CustomerId != customerRecordId)
             throw new ForbiddenException("Access denied or policy not found");
 
         var endorsements = await _unitOfWork.Endorsements.FindAsync(e => e.PolicyId == policyId);
