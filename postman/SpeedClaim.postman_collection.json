@@ -1,0 +1,293 @@
+{
+  "info": {
+    "name": "SpeedClaim API (Lifecycle)",
+    "_postman_id": "speedclaim-lifecycle-v1",
+    "description": "Lifecycle-ordered collection for SpeedClaim. Auto token injection + ID chaining + seeded IDs. Run with the SpeedClaim Dev environment.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const token = pm.environment.get('token');",
+          "if (token) {",
+          "    pm.request.headers.upsert({ key: 'Authorization', value: 'Bearer ' + token });",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5062", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Phase 1 — Auth & Profile",
+      "item": [
+        {
+          "name": "Login — Admin",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('login 200', () => pm.response.code === 200);",
+              "if (pm.response.code === 200) {",
+              "  const j = pm.response.json();",
+              "  pm.environment.set('token', j.accessToken);",
+              "  pm.environment.set('refreshToken', j.refreshToken);",
+              "  pm.environment.set('adminUserId', j.user.id);",
+              "}"
+            ] } }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"davish2204@gmail.com\",\n  \"password\": \"Password@123\"\n}" }
+          }
+        },
+        {
+          "name": "Get Admin Profile",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/users/profile", "host": ["{{baseUrl}}"], "path": ["api","v1","users","profile"] } }
+        },
+        {
+          "name": "[Admin] Get All Users",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/users/all?page=1&pageSize=10", "host": ["{{baseUrl}}"], "path": ["api","v1","users","all"], "query": [{"key":"page","value":"1"},{"key":"pageSize","value":"10"}] } }
+        },
+        {
+          "name": "[Admin] Get All Sessions",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/users/sessions", "host": ["{{baseUrl}}"], "path": ["api","v1","users","sessions"] } }
+        },
+        {
+          "name": "[Admin] Get Pending KYC",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/users/kyc/pending?page=1&pageSize=10", "host": ["{{baseUrl}}"], "path": ["api","v1","users","kyc","pending"], "query": [{"key":"page","value":"1"},{"key":"pageSize","value":"10"}] } }
+        }
+      ]
+    },
+    {
+      "name": "Phase 2 — Products",
+      "item": [
+        {
+          "name": "Get All Products",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('products 200', () => pm.response.code === 200);",
+              "const j = pm.response.json();",
+              "const arr = Array.isArray(j) ? j : (j.data || j.items || []);",
+              "if (arr.length) pm.environment.set('productId', arr[0].id);"
+            ] } }
+          ],
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/product", "host": ["{{baseUrl}}"], "path": ["api","v1","product"] } }
+        },
+        {
+          "name": "Get Product by ID",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/product/{{productId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","product","{{productId}}"] } }
+        },
+        {
+          "name": "Get Product Documents",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/product/{{productId}}/documents", "host": ["{{baseUrl}}"], "path": ["api","v1","product","{{productId}}","documents"] } }
+        }
+      ]
+    },
+    {
+      "name": "Phase 3 — Proposals",
+      "item": [
+        {
+          "name": "[Admin] Get All Proposals",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('proposals 200', () => pm.response.code === 200);",
+              "const j = pm.response.json();",
+              "const arr = Array.isArray(j) ? j : (j.data || j.items || []);",
+              "const pending = arr.find(p => p.status === 'UnderReview' || p.status === 'Submitted');",
+              "if (pending) pm.environment.set('proposalId', pending.id);"
+            ] } }
+          ],
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/proposals/all?page=1&pageSize=10", "host": ["{{baseUrl}}"], "path": ["api","v1","proposals","all"], "query": [{"key":"page","value":"1"},{"key":"pageSize","value":"10"}] } }
+        },
+        {
+          "name": "Get Proposal by ID",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/proposals/{{proposalId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","proposals","{{proposalId}}"] } }
+        }
+      ]
+    },
+    {
+      "name": "Phase 4 — Policies",
+      "item": [
+        {
+          "name": "[Admin] Get All Policies",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('policies 200', () => pm.response.code === 200);",
+              "const j = pm.response.json();",
+              "const arr = Array.isArray(j) ? j : (j.data || j.items || []);",
+              "if (arr.length) pm.environment.set('policyId', arr[0].id);"
+            ] } }
+          ],
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/policy/all?page=1&pageSize=10", "host": ["{{baseUrl}}"], "path": ["api","v1","policy","all"], "query": [{"key":"page","value":"1"},{"key":"pageSize","value":"10"}] } }
+        },
+        {
+          "name": "Get Policy by ID",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/policy/{{policyId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","policy","{{policyId}}"] } }
+        },
+        {
+          "name": "Get Policy History",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/policy/{{policyId}}/history", "host": ["{{baseUrl}}"], "path": ["api","v1","policy","{{policyId}}","history"] } }
+        },
+        {
+          "name": "Get Policy Endorsements",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/policy/{{policyId}}/endorsements", "host": ["{{baseUrl}}"], "path": ["api","v1","policy","{{policyId}}","endorsements"] } }
+        },
+        {
+          "name": "[Admin] Get Pending Endorsements",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/policy/endorsements/pending?page=1&pageSize=10", "host": ["{{baseUrl}}"], "path": ["api","v1","policy","endorsements","pending"], "query": [{"key":"page","value":"1"},{"key":"pageSize","value":"10"}] } }
+        }
+      ]
+    },
+    {
+      "name": "Phase 5 — Claims",
+      "item": [
+        {
+          "name": "[Admin] Get All Claims",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('claims 200', () => pm.response.code === 200);",
+              "const j = pm.response.json();",
+              "const arr = Array.isArray(j) ? j : (j.data || j.items || []);",
+              "if (arr.length) pm.environment.set('claimId', arr[0].id);"
+            ] } }
+          ],
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/claims/all?page=1&pageSize=10", "host": ["{{baseUrl}}"], "path": ["api","v1","claims","all"], "query": [{"key":"page","value":"1"},{"key":"pageSize","value":"10"}] } }
+        },
+        {
+          "name": "Get Claim by ID",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/claims/{{claimId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","claims","{{claimId}}"] } }
+        },
+        {
+          "name": "Get Claim History",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/claims/{{claimId}}/history", "host": ["{{baseUrl}}"], "path": ["api","v1","claims","{{claimId}}","history"] } }
+        }
+      ]
+    },
+    {
+      "name": "Phase 6 — Finance (read-only)",
+      "item": [
+        {
+          "name": "[Admin] Get All Payment Records",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/payments/all-records?page=1&pageSize=10", "host": ["{{baseUrl}}"], "path": ["api","v1","payments","all-records"], "query": [{"key":"page","value":"1"},{"key":"pageSize","value":"10"}] } }
+        },
+        {
+          "name": "[Admin] Get Pending Commissions",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/payments/commissions/pending?page=1&pageSize=10", "host": ["{{baseUrl}}"], "path": ["api","v1","payments","commissions","pending"], "query": [{"key":"page","value":"1"},{"key":"pageSize","value":"10"}] } }
+        },
+        {
+          "name": "[Admin] Overdue Report",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/payments/reports/overdue", "host": ["{{baseUrl}}"], "path": ["api","v1","payments","reports","overdue"] } }
+        },
+        {
+          "name": "[Admin] Summary Report",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/payments/reports/summary?period=monthly", "host": ["{{baseUrl}}"], "path": ["api","v1","payments","reports","summary"], "query": [{"key":"period","value":"monthly"}] } }
+        }
+      ]
+    },
+    {
+      "name": "Phase 7 — Admin & System",
+      "item": [
+        {
+          "name": "Get System Configs",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/system/configs", "host": ["{{baseUrl}}"], "path": ["api","v1","system","configs"] } }
+        },
+        {
+          "name": "Get Audit Logs",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/system/audit-logs?page=1&pageSize=20", "host": ["{{baseUrl}}"], "path": ["api","v1","system","audit-logs"], "query": [{"key":"page","value":"1"},{"key":"pageSize","value":"20"}] } }
+        },
+        {
+          "name": "Get Notification Logs",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/system/notifications-logs?page=1&pageSize=20", "host": ["{{baseUrl}}"], "path": ["api","v1","system","notifications-logs"], "query": [{"key":"page","value":"1"},{"key":"pageSize","value":"20"}] } }
+        }
+      ]
+    },
+    {
+      "name": "Phase 8 — Customer & Surveyor flows (fixed)",
+      "item": [
+        {
+          "name": "Login — Customer (Rahul)",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('customer login 200', () => pm.response.code === 200);",
+              "if (pm.response.code === 200) pm.environment.set('token', pm.response.json().accessToken);"
+            ] } }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"davish.cs22@bitsathy.ac.in\",\n  \"password\": \"Password@123\"\n}" }
+          }
+        },
+        {
+          "name": "Customer → My Policies",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('policy/my 200', () => pm.response.code === 200);",
+              "const a = pm.response.json();",
+              "pm.test('customer sees own policies', () => Array.isArray(a) && a.length > 0);",
+              "if (a.length) pm.environment.set('policyId', a[0].id);"
+            ] } }
+          ],
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/policy/my", "host": ["{{baseUrl}}"], "path": ["api","v1","policy","my"] } }
+        },
+        {
+          "name": "Customer → My Claims",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('claims/my 200', () => pm.response.code === 200);",
+              "const a = pm.response.json();",
+              "pm.test('customer sees own claims', () => Array.isArray(a) && a.length > 0);",
+              "if (a.length) pm.environment.set('claimId', a[0].id);"
+            ] } }
+          ],
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/claims/my", "host": ["{{baseUrl}}"], "path": ["api","v1","claims","my"] } }
+        },
+        {
+          "name": "Customer → Claim History",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('claim history 200', () => pm.response.code === 200);"
+            ] } }
+          ],
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/claims/{{claimId}}/history", "host": ["{{baseUrl}}"], "path": ["api","v1","claims","{{claimId}}","history"] } }
+        },
+        {
+          "name": "Login — Surveyor",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('surveyor login 200', () => pm.response.code === 200);",
+              "if (pm.response.code === 200) pm.environment.set('token', pm.response.json().accessToken);"
+            ] } }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"surveyor@speedclaim.com\",\n  \"password\": \"Password@123\"\n}" }
+          }
+        },
+        {
+          "name": "Surveyor → Assigned Claims",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('surveyor/assigned 200', () => pm.response.code === 200);",
+              "const a = pm.response.json();",
+              "pm.test('surveyor sees assigned claims', () => Array.isArray(a) && a.length > 0);"
+            ] } }
+          ],
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/claims/surveyor/assigned", "host": ["{{baseUrl}}"], "path": ["api","v1","claims","surveyor","assigned"] } }
+        }
+      ]
+    }
+  ]
+}
