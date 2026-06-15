@@ -91,12 +91,20 @@ public class UserService : IUserService
         await _unitOfWork.CompleteAsync();
     }
 
+    private async Task<Guid> ResolveCustomerRecordIdAsync(Guid userId)
+    {
+        var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
+        if (customer == null) throw new NotFoundException("Customer not found.");
+        return customer.Id;
+    }
+
     public async Task<FamilyMemberDto> AddFamilyMemberAsync(string customerId, AddFamilyMemberRequest request)
     {
         var uid = Guid.Parse(customerId);
+        var customerRecordId = await ResolveCustomerRecordIdAsync(uid);
         var member = new CustomerMember
         {
-            CustomerId = uid,
+            CustomerId = customerRecordId,
             Salutation = request.Salutation,
             FirstName = request.FirstName,
             LastName = request.LastName,
@@ -115,7 +123,7 @@ public class UserService : IUserService
     public async Task UpdateFamilyMemberAsync(string memberId, string customerId, UpdateFamilyMemberRequest request)
     {
         var mId = Guid.Parse(memberId);
-        var cId = Guid.Parse(customerId);
+        var cId = await ResolveCustomerRecordIdAsync(Guid.Parse(customerId));
         var member = await _unitOfWork.CustomerMembers.FirstOrDefaultAsync(m => m.Id == mId && m.CustomerId == cId);
         if (member == null) throw new NotFoundException("Family member not found");
 
@@ -133,7 +141,7 @@ public class UserService : IUserService
 
     public async Task<IEnumerable<FamilyMemberDto>> GetFamilyMembersAsync(string customerId)
     {
-        var uid = Guid.Parse(customerId);
+        var uid = await ResolveCustomerRecordIdAsync(Guid.Parse(customerId));
         var members = await _unitOfWork.CustomerMembers.GetPagedAsync(1, 100, m => m.CustomerId == uid);
         return members.Items.Select(m => new FamilyMemberDto(m.Id, m.Salutation.ToString(), m.FirstName, m.LastName, m.FullName, m.DateOfBirth, m.Gender.ToString(), m.Relationship.ToString(), m.IsDependent));
     }
@@ -225,7 +233,7 @@ public class UserService : IUserService
     public async Task DeleteFamilyMemberAsync(string memberId, string customerId)
     {
         var mId = Guid.Parse(memberId);
-        var cId = Guid.Parse(customerId);
+        var cId = await ResolveCustomerRecordIdAsync(Guid.Parse(customerId));
         var member = await _unitOfWork.CustomerMembers.FirstOrDefaultAsync(m => m.Id == mId && m.CustomerId == cId);
         if (member == null) throw new NotFoundException("Family member not found.");
         _unitOfWork.CustomerMembers.Delete(member);
