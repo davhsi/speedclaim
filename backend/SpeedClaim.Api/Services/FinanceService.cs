@@ -36,6 +36,13 @@ public class FinanceService : IFinanceService
         _logger = logger;
     }
 
+    private async Task<Models.Customer> ResolveCustomerAsync(Guid userId)
+    {
+        var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
+        if (customer == null) throw new NotFoundException("Customer not found.");
+        return customer;
+    }
+
     public async Task<CreatePaymentIntentResponse> PayPremiumAsync(string customerId, string scheduleId, CreatePaymentIntentRequest request)
     {
         if (!Guid.TryParse(customerId, out var cid) || !Guid.TryParse(scheduleId, out var sid))
@@ -47,9 +54,7 @@ public class FinanceService : IFinanceService
         if (schedule.Status == PremiumScheduleStatus.Paid)
             throw new ConflictException("Schedule is already paid.");
 
-        // Get or create a Stripe customer record so cards can be saved
-        var customerRecord = await _unitOfWork.Customers.GetByIdAsync(cid);
-        if (customerRecord == null) throw new NotFoundException("Customer not found.");
+        var customerRecord = await ResolveCustomerAsync(cid);
 
         var stripeCustomerRecord = await _unitOfWork.StripeCustomers.FirstOrDefaultAsync(sc => sc.UserId == customerRecord.UserId);
         if (stripeCustomerRecord == null)
@@ -96,7 +101,7 @@ public class FinanceService : IFinanceService
             ScheduleId = schedule.Id,
             PolicyId = schedule.PolicyId,
             ProposalId = schedule.ProposalId,
-            CustomerId = cid,
+            CustomerId = customerRecord.Id,
             Amount = schedule.Amount,
             Currency = "USD",
             PaymentType = schedule.InstallmentNumber == 1 ? PaymentType.FirstPremium : PaymentType.Renewal,
@@ -137,7 +142,8 @@ public class FinanceService : IFinanceService
     {
         if (!Guid.TryParse(customerId, out var cid)) throw new ValidationException("Invalid Customer ID");
 
-        var payments = await _unitOfWork.PremiumPayments.FindAsync(p => p.CustomerId == cid);
+        var customerRecord = await ResolveCustomerAsync(cid);
+        var payments = await _unitOfWork.PremiumPayments.FindAsync(p => p.CustomerId == customerRecord.Id);
         return payments.Select(p => new PaymentRecordDto
         {
             Id = p.Id,
@@ -158,8 +164,9 @@ public class FinanceService : IFinanceService
         if (!Guid.TryParse(paymentId, out var pid)) throw new ValidationException("Invalid Payment ID");
         if (!Guid.TryParse(customerId, out var cid)) throw new ValidationException("Invalid Customer ID");
 
+        var customerRecord = await ResolveCustomerAsync(cid);
         var payment = await _unitOfWork.PremiumPayments.GetByIdAsync(pid);
-        if (payment == null || payment.CustomerId != cid)
+        if (payment == null || payment.CustomerId != customerRecord.Id)
             throw new NotFoundException("Payment not found or access denied.");
 
         if (payment.Status != PaymentStatus.Paid)
@@ -184,8 +191,7 @@ public class FinanceService : IFinanceService
     {
         if (!Guid.TryParse(customerId, out var cid)) throw new ValidationException("Invalid Customer ID");
 
-        var customerRecord = await _unitOfWork.Customers.GetByIdAsync(cid);
-        if (customerRecord == null) throw new NotFoundException("Customer not found.");
+        var customerRecord = await ResolveCustomerAsync(cid);
 
         var stripeCustomerRecord = await _unitOfWork.StripeCustomers.FirstOrDefaultAsync(sc => sc.UserId == customerRecord.UserId);
         if (stripeCustomerRecord == null) return Enumerable.Empty<SavedCardDto>();
