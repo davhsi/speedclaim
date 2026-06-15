@@ -17,5 +17,4 @@ public class SubmittedDocument
     public Guid UploadedBy { get; set; }
     public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
     
-    public virtual Claim? Claim { get; set; }
 }

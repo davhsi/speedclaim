@@ -42,8 +42,6 @@ public class Claim
     public virtual Surveyor? Surveyor { get; set; }
     
     public virtual ICollection<ClaimStatusHistory> StatusHistory { get; set; } = new List<ClaimStatusHistory>();
-    public virtual ICollection<SubmittedDocument> Documents { get; set; } = new List<SubmittedDocument>();
-    
     public virtual HealthClaimDetail? HealthDetail { get; set; }
     public virtual MotorClaimDetail? MotorDetail { get; set; }
     public virtual LifeClaimDetail? LifeDetail { get; set; }

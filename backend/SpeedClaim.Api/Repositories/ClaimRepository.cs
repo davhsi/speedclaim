@@ -19,7 +19,7 @@ public class ClaimRepository : Repository<Claim>, IClaimRepository
     {
         return await Context.Claims
             .Include(c => c.StatusHistory.OrderByDescending(w => w.ChangedAt))
-            .Include(c => c.Documents)
+
             .SingleOrDefaultAsync(c => c.Id == claimId);
     }
 }

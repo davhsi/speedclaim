@@ -505,7 +505,7 @@ public partial class SpeedClaimDbContext : DbContext
             e.Property(x => x.OriginalFilename).HasMaxLength(255);
             e.Property(x => x.StoredFilename).HasMaxLength(255);
             e.Property(x => x.MimeType).HasMaxLength(100);
-            e.HasOne(x => x.Claim).WithMany(x => x.Documents).HasForeignKey(x => x.EntityId).IsRequired(false).HasConstraintName("FK_submitted_documents_claims_claim_id");
+            // EntityId is a polymorphic FK (Proposal or Claim) — no DB-level FK constraint
         });
 
 
