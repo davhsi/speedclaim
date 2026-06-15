@@ -8,11 +8,11 @@ using System.Security.Claims;
 namespace SpeedClaim.Api.Controllers;
 
 [Authorize]
-public class ProductController : BaseApiController
+public class ProductsController : BaseApiController
 {
     private readonly IProductService _productService;
 
-    public ProductController(IProductService productService)
+    public ProductsController(IProductService productService)
     {
         _productService = productService;
     }

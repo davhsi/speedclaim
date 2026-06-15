@@ -192,7 +192,7 @@ public class UserService : IUserService
             AddressLine2 = request.AddressLine2,
             City = request.City,
             State = request.State,
-            Pincode = request.Pincode,
+            Pincode = request.PostalCode,
             Country = request.Country,
             IsSameAsPermanent = request.IsSameAsPermanent
         };
@@ -212,7 +212,7 @@ public class UserService : IUserService
         address.AddressLine2 = request.AddressLine2;
         address.City = request.City;
         address.State = request.State;
-        address.Pincode = request.Pincode;
+        address.Pincode = request.PostalCode;
         address.Country = request.Country;
         address.IsSameAsPermanent = request.IsSameAsPermanent;
         address.UpdatedAt = DateTimeOffset.UtcNow;

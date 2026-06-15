@@ -59,7 +59,7 @@ public record SingleAddressRequest(
     string? AddressLine2,
     string City,
     string State,
-    string Pincode,
+    string PostalCode,
     string Country,
     bool IsSameAsPermanent
 );

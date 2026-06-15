@@ -133,9 +133,9 @@ public class SingleAddressRequestValidator : AbstractValidator<SingleAddressRequ
             .NotEmpty().WithMessage("State is required.")
             .MaximumLength(100).WithMessage("State cannot exceed 100 characters.");
 
-        RuleFor(x => x.Pincode)
-            .NotEmpty().WithMessage("Pincode is required.")
-            .Matches(@"^\d{6}$").WithMessage("Pincode must be exactly 6 digits.");
+        RuleFor(x => x.PostalCode)
+            .NotEmpty().WithMessage("Postal code is required.")
+            .Matches(@"^\d{6}$").WithMessage("Postal code must be exactly 6 digits.");
 
         RuleFor(x => x.Country)
             .NotEmpty().WithMessage("Country is required.")

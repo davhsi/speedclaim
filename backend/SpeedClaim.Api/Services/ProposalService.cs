@@ -234,7 +234,8 @@ public class ProposalService : IProposalService
         {
             var uId = Guid.Parse(userId);
             var agent = await _unitOfWork.Agents.FirstOrDefaultAsync(a => a.UserId == uId);
-            bool isOwner = proposal.CustomerId == uId
+            var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == uId);
+            bool isOwner = (customer != null && proposal.CustomerId == customer.Id)
                 || (agent != null && proposal.AgentId == agent.Id);
             if (!isOwner) throw new ForbiddenException("Access denied to this proposal.");
         }

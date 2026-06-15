@@ -253,7 +253,8 @@ public partial class SpeedClaimDbContext : DbContext
             e.Property(x => x.MaxSumAssured).HasColumnType("decimal(15,2)");
 
             e.HasData(
-                new InsuranceProduct { Id = Guid.Parse("10000000-1111-1111-1111-111111111111"), ProductName = "Term Life Basic", Domain = "LIFE", Uin = "UIN123", Description = "Basic term life insurance", MinAge = 18, MaxAge = 60, MinSumAssured = 100000m, MaxSumAssured = 5000000m, MinTenureYears = 5, MaxTenureYears = 30, WaitingPeriodDays = 0, AllowsFamilyFloater = false, MaxFamilyMembers = 1, IsActive = true, CreatedAt = new DateTimeOffset(2026, 6, 7, 0, 0, 0, TimeSpan.Zero) }
+                new InsuranceProduct { Id = Guid.Parse("10000000-1111-1111-1111-111111111111"), ProductName = "Term Life Basic", Domain = "LIFE", Uin = "UIN123", Description = "Basic term life insurance", MinAge = 18, MaxAge = 60, MinSumAssured = 100000m, MaxSumAssured = 5000000m, MinTenureYears = 5, MaxTenureYears = 30, WaitingPeriodDays = 0, AllowsFamilyFloater = false, MaxFamilyMembers = 1, IsActive = true, CreatedAt = new DateTimeOffset(2026, 6, 7, 0, 0, 0, TimeSpan.Zero) },
+                new InsuranceProduct { Id = Guid.Parse("70000000-0000-0000-0000-000000000001"), ProductName = "SpeedCare Platinum Health", Domain = "HEALTH", Uin = "UIN-HC-DEMO-2026", Description = "Comprehensive health insurance with cashless hospitalisation across 5000+ network hospitals", MinAge = 18, MaxAge = 65, MinSumAssured = 100000m, MaxSumAssured = 5000000m, MinTenureYears = 1, MaxTenureYears = 10, WaitingPeriodDays = 30, AllowsFamilyFloater = true, MaxFamilyMembers = 6, IsActive = true, CreatedAt = new DateTimeOffset(2026, 6, 7, 0, 0, 0, TimeSpan.Zero) }
             );
         });
 
@@ -264,6 +265,12 @@ public partial class SpeedClaimDbContext : DbContext
             e.Property(x => x.SumAssuredMax).HasColumnType("decimal(15,2)");
             e.Property(x => x.AnnualPremium).HasColumnType("decimal(10,2)");
             e.HasOne(x => x.Product).WithMany().HasForeignKey(x => x.ProductId).HasConstraintName("FK_premium_rate_tables_products");
+
+            e.HasData(
+                new PremiumRateTable { Id = Guid.Parse("70000000-0000-0000-0000-000000000011"), ProductId = Guid.Parse("70000000-0000-0000-0000-000000000001"), AgeMin = 18, AgeMax = 30, SumAssuredMin = 100000m, SumAssuredMax = 500000m, AnnualPremium = 8000m, CreatedAt = new DateTimeOffset(2026, 6, 7, 0, 0, 0, TimeSpan.Zero) },
+                new PremiumRateTable { Id = Guid.Parse("70000000-0000-0000-0000-000000000012"), ProductId = Guid.Parse("70000000-0000-0000-0000-000000000001"), AgeMin = 31, AgeMax = 45, SumAssuredMin = 100000m, SumAssuredMax = 500000m, AnnualPremium = 12000m, CreatedAt = new DateTimeOffset(2026, 6, 7, 0, 0, 0, TimeSpan.Zero) },
+                new PremiumRateTable { Id = Guid.Parse("70000000-0000-0000-0000-000000000013"), ProductId = Guid.Parse("70000000-0000-0000-0000-000000000001"), AgeMin = 46, AgeMax = 65, SumAssuredMin = 100000m, SumAssuredMax = 500000m, AnnualPremium = 18000m, CreatedAt = new DateTimeOffset(2026, 6, 7, 0, 0, 0, TimeSpan.Zero) }
+            );
         });
 
         modelBuilder.Entity<Proposal>(e =>
