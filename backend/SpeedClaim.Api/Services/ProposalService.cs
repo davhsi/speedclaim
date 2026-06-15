@@ -254,12 +254,12 @@ public class ProposalService : IProposalService
         var proposal = await _unitOfWork.Proposals.GetByIdAsync(pId);
         if (proposal == null) throw new NotFoundException("Proposal not found.");
 
-        if (proposal.CustomerId != uId)
-        {
-            var agent = await _unitOfWork.Agents.FirstOrDefaultAsync(a => a.UserId == uId);
-            if (agent == null || proposal.AgentId != agent.Id)
-                throw new ForbiddenException("Access denied to this proposal.");
-        }
+        var agent = await _unitOfWork.Agents.FirstOrDefaultAsync(a => a.UserId == uId);
+        var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == uId);
+        bool canUpload = (customer != null && proposal.CustomerId == customer.Id)
+            || (agent != null && proposal.AgentId == agent.Id);
+        if (!canUpload)
+            throw new ForbiddenException("Access denied to this proposal.");
 
         if (file == null || file.Length == 0) throw new ValidationException("Invalid file.");
 

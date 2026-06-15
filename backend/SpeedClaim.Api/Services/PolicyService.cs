@@ -148,9 +148,11 @@ public class PolicyService : IPolicyService
         await _unitOfWork.CompleteAsync();
     }
 
-    public async Task<IEnumerable<PolicyDto>> GetAssignedCustomerPoliciesAsync(Guid agentId)
+    public async Task<IEnumerable<PolicyDto>> GetAssignedCustomerPoliciesAsync(Guid agentUserId)
     {
-        var policies = await _unitOfWork.Policies.FindAsync(p => p.AgentId == agentId);
+        var agent = await _unitOfWork.Agents.FirstOrDefaultAsync(a => a.UserId == agentUserId);
+        if (agent == null) return Enumerable.Empty<PolicyDto>();
+        var policies = await _unitOfWork.Policies.FindAsync(p => p.AgentId == agent.Id);
         return policies.Select(MapToDto);
     }
 
