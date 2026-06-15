@@ -1,8 +1,8 @@
 {
   "info": {
-    "name": "SpeedClaim API (Lifecycle)",
-    "_postman_id": "speedclaim-lifecycle-v1",
-    "description": "Lifecycle-ordered collection for SpeedClaim. Auto token injection + ID chaining + seeded IDs. Run with the SpeedClaim Dev environment.",
+    "name": "SpeedClaim \u2014 Full Demo (110 Endpoints)",
+    "_postman_id": "speedclaim-full-demo-v2",
+    "description": "All 110 endpoints in 11 story-based folders.\nToken auto-injected via collection pre-request script.\n\ud83d\udd11 = role switch (Login reuse, not a new endpoint)\n\u26a0\ufe0f = file upload or Stripe \u2014 run manually during demo\n\nAll passwords: Password@123\nSeeded accounts:\n  Admin           davish2204@gmail.com\n  Agent           davishthedelicious@gmail.com\n  Underwriter     underwriter@speedclaim.com\n  ClaimsOfficer   claimsofficer@speedclaim.com\n  FinanceOfficer  financeofficer@speedclaim.com\n  Surveyor        surveyor@speedclaim.com\n  Customer 1      davish.cs22@bitsathy.ac.in   (Rahul, Health+Motor policies)\n  Customer 2      davishoffl@gmail.com          (Priya, Life policy)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "event": [
@@ -13,281 +13,4213 @@
         "exec": [
           "const token = pm.environment.get('token');",
           "if (token) {",
-          "    pm.request.headers.upsert({ key: 'Authorization', value: 'Bearer ' + token });",
+          "  pm.request.headers.upsert({ key: 'Authorization', value: 'Bearer ' + token });",
           "}"
         ]
       }
     }
   ],
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:5062", "type": "string" }
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5062",
+      "type": "string"
+    }
   ],
   "item": [
     {
-      "name": "Phase 1 — Auth & Profile",
+      "name": "1 \u00b7 Auth & Account Setup",
       "item": [
         {
-          "name": "Login — Admin",
+          "name": "Login \u2014 Admin",
           "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": [
-              "pm.test('login 200', () => pm.response.code === 200);",
-              "if (pm.response.code === 200) {",
-              "  const j = pm.response.json();",
-              "  pm.environment.set('token', j.accessToken);",
-              "  pm.environment.set('refreshToken', j.refreshToken);",
-              "  pm.environment.set('adminUserId', j.user.id);",
-              "}"
-            ] } }
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  pm.environment.set('token', j.accessToken);",
+                  "  pm.environment.set('refreshToken', j.refreshToken);",
+                  "}"
+                ]
+              }
+            }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] },
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"davish2204@gmail.com\",\n  \"password\": \"Password@123\"\n}" }
-          }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"davish2204@gmail.com\",\n  \"password\": \"Password@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "id": "66145a47-b279-4e00-87c7-9ae96e73860b"
         },
         {
-          "name": "Get Admin Profile",
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/users/profile", "host": ["{{baseUrl}}"], "path": ["api","v1","users","profile"] } }
+          "name": "Register New Customer",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newcustomer@demo.com\",\n  \"password\": \"Password@123\",\n  \"salutation\": \"Mr\",\n  \"firstName\": \"Demo\",\n  \"lastName\": \"Customer\",\n  \"phone\": \"9876543210\",\n  \"permanentAddress\": {\n    \"line1\": \"456 Demo Street\",\n    \"line2\": null,\n    \"city\": \"Mumbai\",\n    \"state\": \"Maharashtra\",\n    \"postalCode\": \"400001\",\n    \"country\": \"India\"\n  },\n  \"currentAddress\": null,\n  \"isSameAsPermanent\": true,\n  \"dateOfBirth\": \"1995-08-20\",\n  \"aadhaarNumber\": \"123456789012\",\n  \"panNumber\": \"ABCDE1234F\",\n  \"gender\": \"Male\",\n  \"maritalStatus\": \"Single\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Registers a new customer. Sends verification email to newcustomer@demo.com. Use the token from that email in the next request."
+          },
+          "id": "630c660a-fab3-4af4-b698-310108eaf996"
         },
         {
-          "name": "[Admin] Get All Users",
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/users/all?page=1&pageSize=10", "host": ["{{baseUrl}}"], "path": ["api","v1","users","all"], "query": [{"key":"page","value":"1"},{"key":"pageSize","value":"10"}] } }
+          "name": "Verify Email",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"PASTE_EMAIL_VERIFICATION_TOKEN_HERE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify-email",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify-email"
+              ]
+            },
+            "description": "Paste the token from the verification email sent to newcustomer@demo.com"
+          },
+          "id": "c5041351-f92e-4220-8b21-8255a2d535ca"
         },
         {
-          "name": "[Admin] Get All Sessions",
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/users/sessions", "host": ["{{baseUrl}}"], "path": ["api","v1","users","sessions"] } }
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  pm.environment.set('token', j.accessToken);",
+                  "  pm.environment.set('refreshToken', j.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
+            }
+          },
+          "id": "2ddbc1ca-0a9b-4bce-a62b-f1d39c9c2245"
         },
         {
-          "name": "[Admin] Get Pending KYC",
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/users/kyc/pending?page=1&pageSize=10", "host": ["{{baseUrl}}"], "path": ["api","v1","users","kyc","pending"], "query": [{"key":"page","value":"1"},{"key":"pageSize","value":"10"}] } }
+          "name": "Forgot Password",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"davish.cs22@bitsathy.ac.in\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/forgot-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "forgot-password"
+              ]
+            },
+            "description": "Sends a password reset email. Use the token from that email in Reset Password."
+          },
+          "id": "46963931-1d0d-41ed-9dd8-4b165e265020"
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"PASTE_RESET_TOKEN_HERE\",\n  \"newPassword\": \"NewPass@456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/reset-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "reset-password"
+              ]
+            }
+          },
+          "id": "e8764eb9-f23a-41c7-8289-1286b437e669"
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "id": "633319cf-0839-4820-b7e2-1eeef711e4ad"
+        },
+        {
+          "name": "[Admin] Register Agent",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newagent@demo.com\",\n  \"password\": \"Password@123\",\n  \"salutation\": \"Mr\",\n  \"firstName\": \"Demo\",\n  \"lastName\": \"Agent\",\n  \"phone\": \"9876543211\",\n  \"permanentAddress\": {\n    \"line1\": \"789 Agent Street\",\n    \"line2\": null,\n    \"city\": \"Bangalore\",\n    \"state\": \"Karnataka\",\n    \"postalCode\": \"560001\",\n    \"country\": \"India\"\n  },\n  \"currentAddress\": null,\n  \"isSameAsPermanent\": true,\n  \"licenseNumber\": \"LIC-2026-DEMO-001\",\n  \"agencyName\": \"Demo Insurance Agency\",\n  \"aadhaarNumber\": \"234567890123\",\n  \"panNumber\": \"FGHIJ5678K\",\n  \"maritalStatus\": \"Single\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/admin/register-agent",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "admin",
+                "register-agent"
+              ]
+            },
+            "description": "Admin creates an agent account directly (no email verification required). Admin token required."
+          },
+          "id": "501f59ea-42b4-4eea-9d83-75fe7494e20a"
+        },
+        {
+          "name": "[Admin] Reset User Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newPassword\": \"ResetPass@789\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/admin/reset-password/{{targetUserId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "admin",
+                "reset-password",
+                "{{targetUserId}}"
+              ]
+            },
+            "description": "Admin force-resets any user's password. targetUserId = Customer 2 (Priya)."
+          },
+          "id": "656cafcc-33e7-41f8-bf27-1429eb0a733d"
         }
-      ]
+      ],
+      "id": "e6eb3e88-9fa4-4ff2-9394-836a41aa5a37"
     },
     {
-      "name": "Phase 2 — Products",
+      "name": "2 \u00b7 Customer Profile & Family",
+      "item": [
+        {
+          "name": "\ud83d\udd11 Login \u2014 Customer 1 (Rahul)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) pm.environment.set('token', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"davish.cs22@bitsathy.ac.in\",\n  \"password\": \"Password@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "id": "325b6b22-e27f-4b48-81d0-1b6b1c85d827"
+        },
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "profile"
+              ]
+            }
+          },
+          "id": "8a65dd48-bb14-4a91-824b-4b2598fdd913"
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"20000000-0000-0000-0000-000000000001\",\n  \"email\": \"davish.cs22@bitsathy.ac.in\",\n  \"salutation\": \"Mr\",\n  \"firstName\": \"Rahul\",\n  \"lastName\": \"Sharma\",\n  \"fullName\": \"Rahul Sharma\",\n  \"phone\": \"9876500001\",\n  \"role\": \"Customer\",\n  \"maritalStatus\": \"Married\",\n  \"permanentAddress\": null,\n  \"currentAddress\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "profile"
+              ]
+            }
+          },
+          "id": "708655ee-9d72-49b0-9537-854a665688b0"
+        },
+        {
+          "name": "Add Family Member",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  if (j.id) pm.environment.set('memberId', j.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"salutation\": \"Mrs\",\n  \"firstName\": \"Ananya\",\n  \"lastName\": \"Sharma\",\n  \"dateOfBirth\": \"1992-03-20\",\n  \"gender\": \"Female\",\n  \"relationship\": \"Spouse\",\n  \"isDependent\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/family",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "family"
+              ]
+            }
+          },
+          "id": "644b4cd3-c302-4a21-8dea-35134c5ec685"
+        },
+        {
+          "name": "Get Family Members",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/family",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "family"
+              ]
+            }
+          },
+          "id": "05a03da3-532f-4b2f-a774-3304bbbfbed7"
+        },
+        {
+          "name": "Update Family Member",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"salutation\": \"Mrs\",\n  \"firstName\": \"Ananya\",\n  \"lastName\": \"Sharma-Gupta\",\n  \"dateOfBirth\": \"1992-03-20\",\n  \"gender\": \"Female\",\n  \"relationship\": \"Spouse\",\n  \"isDependent\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/family/{{memberId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "family",
+                "{{memberId}}"
+              ]
+            }
+          },
+          "id": "05105041-4081-4649-9b35-09778ddabc48"
+        },
+        {
+          "name": "Delete Family Member",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/family/{{memberId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "family",
+                "{{memberId}}"
+              ]
+            }
+          },
+          "id": "69670082-f354-46ba-9821-4ee3167bb395"
+        },
+        {
+          "name": "Add Address",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  if (j.id) pm.environment.set('addressId', j.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"addressType\": \"Current\",\n  \"addressLine1\": \"12 New Colony Road\",\n  \"addressLine2\": \"Flat 3B\",\n  \"city\": \"Chennai\",\n  \"state\": \"Tamil Nadu\",\n  \"postalCode\": \"600018\",\n  \"country\": \"India\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/addresses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "addresses"
+              ]
+            }
+          },
+          "id": "c99ff764-325a-402e-95c1-71bec3c9e2bd"
+        },
+        {
+          "name": "Update Address",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"addressType\": \"Current\",\n  \"addressLine1\": \"12 New Colony Road\",\n  \"addressLine2\": \"Flat 4A\",\n  \"city\": \"Chennai\",\n  \"state\": \"Tamil Nadu\",\n  \"postalCode\": \"600018\",\n  \"country\": \"India\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/addresses/{{addressId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "addresses",
+                "{{addressId}}"
+              ]
+            }
+          },
+          "id": "e498a3ab-3cb6-41f2-8af3-95008a43f67f"
+        },
+        {
+          "name": "Delete Address",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/addresses/{{addressId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "addresses",
+                "{{addressId}}"
+              ]
+            }
+          },
+          "id": "6825e12e-1e92-4f1d-ad23-72775627fe5e"
+        }
+      ],
+      "id": "4cc97433-ebeb-4750-8edd-6f9942bf6101"
+    },
+    {
+      "name": "3 \u00b7 KYC & Notifications",
+      "item": [
+        {
+          "name": "Upload KYC Document \u26a0\ufe0f (multipart)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "idType",
+                  "value": "Aadhaar",
+                  "type": "text"
+                },
+                {
+                  "key": "idNumber",
+                  "value": "123456789012",
+                  "type": "text"
+                },
+                {
+                  "key": "frontDocument",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "backDocument",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/kyc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "kyc"
+              ]
+            },
+            "description": "\u26a0\ufe0f Select a PDF/JPG file for frontDocument. File must be \u2264 5 MB. idNumber must be 12 digits for Aadhaar."
+          },
+          "id": "838326da-bd38-4304-b380-bcf94180be55"
+        },
+        {
+          "name": "Get My KYC",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/kyc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "kyc"
+              ]
+            },
+            "description": "Customer sees masked Aadhaar (last 4 digits visible). Admin sees full decrypted value."
+          },
+          "id": "a3fa6e32-39ff-4006-a9f8-3d6286fbfd55"
+        },
+        {
+          "name": "Get My Notifications",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  const arr = Array.isArray(j) ? j : (j.data || j.items || []);",
+                  "  if (arr.length > 0) pm.environment.set('notificationId', arr[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "notifications"
+              ]
+            }
+          },
+          "id": "29ff2e48-2c19-40b3-9c26-2308ad1b2a78"
+        },
+        {
+          "name": "Mark Notification Read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/notifications/{{notificationId}}/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "notifications",
+                "{{notificationId}}",
+                "read"
+              ]
+            }
+          },
+          "id": "fb875e42-1939-47bb-bc31-fb1d867213e1"
+        },
+        {
+          "name": "Mark All Notifications Read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/notifications/read-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "notifications",
+                "read-all"
+              ]
+            }
+          },
+          "id": "ea8a1080-2f87-47e1-831c-4b71959656dd"
+        },
+        {
+          "name": "\ud83d\udd11 Login \u2014 Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) pm.environment.set('token', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"davish2204@gmail.com\",\n  \"password\": \"Password@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "id": "e40569f7-f0b8-4cf7-aef2-a36d4de7c933"
+        },
+        {
+          "name": "[Admin] Get Pending KYC List",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/kyc/pending?page=1&pageSize=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "kyc",
+                "pending"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "id": "c5ca0931-75e1-419f-8a7c-621a5550ee52"
+        },
+        {
+          "name": "[Admin] Review KYC \u2014 Approve",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{customerUserId}}/kyc/review?isApproved=true&reason=Documents+verified+successfully",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{customerUserId}}",
+                "kyc",
+                "review"
+              ],
+              "query": [
+                {
+                  "key": "isApproved",
+                  "value": "true"
+                },
+                {
+                  "key": "reason",
+                  "value": "Documents verified successfully"
+                }
+              ]
+            },
+            "description": "customerUserId = Customer 1 (Rahul). isApproved=false + reason for rejection."
+          },
+          "id": "1177d47f-c15e-4e6c-87ad-d627750d972a"
+        }
+      ],
+      "id": "b41a7291-c0f8-4e12-af9e-92c7199a0e0e"
+    },
+    {
+      "name": "4 \u00b7 Product Catalog",
       "item": [
         {
           "name": "Get All Products",
           "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": [
-              "pm.test('products 200', () => pm.response.code === 200);",
-              "const j = pm.response.json();",
-              "const arr = Array.isArray(j) ? j : (j.data || j.items || []);",
-              "if (arr.length) pm.environment.set('productId', arr[0].id);"
-            ] } }
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
           ],
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/product", "host": ["{{baseUrl}}"], "path": ["api","v1","product"] } }
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products"
+              ]
+            }
+          },
+          "id": "281094ed-ff86-44f1-86af-29b12fc1c214"
         },
         {
           "name": "Get Product by ID",
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/product/{{productId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","product","{{productId}}"] } }
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "{{productId}}"
+              ]
+            }
+          },
+          "id": "986a6998-bb6c-4315-a947-e73499d3d10e"
         },
         {
-          "name": "Get Product Documents",
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/product/{{productId}}/documents", "host": ["{{baseUrl}}"], "path": ["api","v1","product","{{productId}}","documents"] } }
-        }
-      ]
-    },
-    {
-      "name": "Phase 3 — Proposals",
-      "item": [
-        {
-          "name": "[Admin] Get All Proposals",
-          "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": [
-              "pm.test('proposals 200', () => pm.response.code === 200);",
-              "const j = pm.response.json();",
-              "const arr = Array.isArray(j) ? j : (j.data || j.items || []);",
-              "const pending = arr.find(p => p.status === 'UnderReview' || p.status === 'Submitted');",
-              "if (pending) pm.environment.set('proposalId', pending.id);"
-            ] } }
-          ],
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/proposals/all?page=1&pageSize=10", "host": ["{{baseUrl}}"], "path": ["api","v1","proposals","all"], "query": [{"key":"page","value":"1"},{"key":"pageSize","value":"10"}] } }
+          "name": "[Admin] Create Product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productName\": \"SpeedCare Platinum Health\",\n  \"domain\": \"Health\",\n  \"uin\": \"UIN-HC-DEMO-2026\",\n  \"description\": \"Comprehensive health insurance with cashless hospitalisation across 5000+ network hospitals\",\n  \"minAge\": 18,\n  \"maxAge\": 65,\n  \"minSumAssured\": 100000,\n  \"maxSumAssured\": 5000000,\n  \"minTenureYears\": 1,\n  \"maxTenureYears\": 30,\n  \"waitingPeriodDays\": 30,\n  \"allowsFamilyFloater\": true,\n  \"maxFamilyMembers\": 6\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products"
+              ]
+            }
+          },
+          "id": "ece3d49a-5143-48d1-a66c-ad8568f95c2b"
         },
         {
-          "name": "Get Proposal by ID",
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/proposals/{{proposalId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","proposals","{{proposalId}}"] } }
+          "name": "[Admin] Update Premium Rates",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rates\": [\n    { \"ageMin\": 18, \"ageMax\": 30, \"sumAssuredMin\": 100000, \"sumAssuredMax\": 500000, \"annualPremium\": 8000 },\n    { \"ageMin\": 31, \"ageMax\": 45, \"sumAssuredMin\": 100000, \"sumAssuredMax\": 500000, \"annualPremium\": 12000 },\n    { \"ageMin\": 46, \"ageMax\": 65, \"sumAssuredMin\": 100000, \"sumAssuredMax\": 500000, \"annualPremium\": 18000 }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/{{productId}}/rates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "{{productId}}",
+                "rates"
+              ]
+            }
+          },
+          "id": "a01e5f08-019c-485d-a416-36388e0130f6"
+        },
+        {
+          "name": "Get Document Requirements",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/{{productId}}/documents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "{{productId}}",
+                "documents"
+              ]
+            }
+          },
+          "id": "4ac28e81-498c-4ab3-a8df-56dfea731bf3"
+        },
+        {
+          "name": "[Admin] Update Document Requirements",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requirements\": [\n    {\n      \"entityType\": \"Proposal\",\n      \"domain\": \"Health\",\n      \"documentKey\": \"AADHAAR\",\n      \"label\": \"Aadhaar Card\",\n      \"description\": \"Valid Aadhaar card \u2014 both sides\",\n      \"isMandatory\": true,\n      \"isActive\": true\n    },\n    {\n      \"entityType\": \"Proposal\",\n      \"domain\": \"Health\",\n      \"documentKey\": \"MEDICAL_REPORT\",\n      \"label\": \"Medical Examination Report\",\n      \"description\": \"Recent medical report (within 3 months)\",\n      \"isMandatory\": true,\n      \"isActive\": true\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/{{productId}}/documents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "{{productId}}",
+                "documents"
+              ]
+            }
+          },
+          "id": "2c3eeff6-5dcf-4033-a03d-6145631de5fe"
+        },
+        {
+          "name": "[Admin] Toggle Product Status (Deactivate)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "false",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/{{productId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "{{productId}}",
+                "status"
+              ]
+            },
+            "description": "Send 'true' to reactivate. Inactive products are hidden from new proposals."
+          },
+          "id": "48a8cdfb-f493-4ca5-a02f-1d9b547bf089"
         }
-      ]
+      ],
+      "id": "1b18f13a-eb7b-4ae2-a07a-80286abc7b40"
     },
     {
-      "name": "Phase 4 — Policies",
+      "name": "5 \u00b7 Agent Dashboard",
       "item": [
         {
-          "name": "[Admin] Get All Policies",
+          "name": "\ud83d\udd11 Login \u2014 Agent (Rajesh)",
           "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": [
-              "pm.test('policies 200', () => pm.response.code === 200);",
-              "const j = pm.response.json();",
-              "const arr = Array.isArray(j) ? j : (j.data || j.items || []);",
-              "if (arr.length) pm.environment.set('policyId', arr[0].id);"
-            ] } }
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) pm.environment.set('token', pm.response.json().accessToken);"
+                ]
+              }
+            }
           ],
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/policy/all?page=1&pageSize=10", "host": ["{{baseUrl}}"], "path": ["api","v1","policy","all"], "query": [{"key":"page","value":"1"},{"key":"pageSize","value":"10"}] } }
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"davishthedelicious@gmail.com\",\n  \"password\": \"Password@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "id": "618c9288-bd95-449b-80ea-7e3d2d24b254"
+        },
+        {
+          "name": "Agent Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agents/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agents",
+                "dashboard"
+              ]
+            }
+          },
+          "id": "3be7a585-9379-44d7-b5f2-597765227dac"
+        },
+        {
+          "name": "Get Agent Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agents/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agents",
+                "profile"
+              ]
+            }
+          },
+          "id": "d4b42f78-78bf-47dc-8c53-7c6b01634cf4"
+        },
+        {
+          "name": "Update Agent Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"salutation\": \"Mr\",\n  \"firstName\": \"Rajesh\",\n  \"lastName\": \"Verma\",\n  \"phone\": \"9000000005\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agents/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agents",
+                "profile"
+              ]
+            }
+          },
+          "id": "9efc8099-a1f8-4616-bca3-5f162beda132"
+        },
+        {
+          "name": "Agent Renewals (Upcoming Premiums)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agents/renewals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agents",
+                "renewals"
+              ]
+            }
+          },
+          "id": "adcfe1c6-07a7-49a1-b80d-975136b86ae5"
+        },
+        {
+          "name": "Agent Customer List",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agents/customers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agents",
+                "customers"
+              ]
+            }
+          },
+          "id": "42df49f6-3a88-47f1-8049-ad66505db691"
+        },
+        {
+          "name": "Get All Branches",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agents/branches",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agents",
+                "branches"
+              ]
+            }
+          },
+          "id": "0695bc24-8fc9-47bc-87b3-c447b034c0a4"
+        },
+        {
+          "name": "\ud83d\udd11 Login \u2014 Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) pm.environment.set('token', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"davish2204@gmail.com\",\n  \"password\": \"Password@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "id": "b1389695-51fc-4b35-985e-9d76b030d511"
+        },
+        {
+          "name": "[Admin] Create Branch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"SpeedClaim Hyderabad Branch\",\n  \"city\": \"Hyderabad\",\n  \"state\": \"Telangana\",\n  \"address\": \"42 Tech Park, HITEC City, Madhapur\",\n  \"phone\": \"9000099999\",\n  \"email\": \"hyderabad@speedclaim.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agents/branches",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agents",
+                "branches"
+              ]
+            }
+          },
+          "id": "0976709e-16e8-4bd0-877c-e9f9f9f2057f"
+        },
+        {
+          "name": "[Admin] Assign Agent to Branch",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agents/{{agentUserId}}/branch/{{branchId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agents",
+                "{{agentUserId}}",
+                "branch",
+                "{{branchId}}"
+              ]
+            },
+            "description": "agentUserId = Agent's User ID (10000000-...005). branchId = seeded branch (30000000-...001)."
+          },
+          "id": "0c747c63-3532-4005-8ca8-b4b9ecb08163"
+        },
+        {
+          "name": "[Admin] Update Agent License",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"licenseNumber\": \"IRDAI-LIC-2026-RV-001\",\n  \"licenseExpiry\": \"2028-12-31\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agents/{{agentUserId}}/license",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agents",
+                "{{agentUserId}}",
+                "license"
+              ]
+            }
+          },
+          "id": "93a03dec-99d7-4353-850a-501939be470f"
+        },
+        {
+          "name": "[Admin] Toggle Agent Status",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agents/{{agentUserId}}/status?isActive=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agents",
+                "{{agentUserId}}",
+                "status"
+              ],
+              "query": [
+                {
+                  "key": "isActive",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "id": "12794aeb-3ca0-4d77-9377-5d335e338a12"
+        }
+      ],
+      "id": "2c1ab365-041b-4dc5-85a9-b180d3a49f44"
+    },
+    {
+      "name": "6 \u00b7 Proposals & Underwriting",
+      "item": [
+        {
+          "name": "\ud83d\udd11 Login \u2014 Customer 1 (Rahul)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) pm.environment.set('token', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"davish.cs22@bitsathy.ac.in\",\n  \"password\": \"Password@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "id": "480f5433-050e-4ab3-bf91-ac253851454d"
+        },
+        {
+          "name": "Generate Quote",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"70000000-0000-0000-0000-000000000001\",\n  \"age\": 30,\n  \"gender\": \"Male\",\n  \"sumAssured\": 300000,\n  \"tenureYears\": 3\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/proposals/quote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "proposals",
+                "quote"
+              ]
+            }
+          },
+          "id": "6b52ad8d-8961-42e6-ba46-8ae866d72a31"
+        },
+        {
+          "name": "Submit Proposal",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  if (j.id) pm.environment.set('newProposalId', j.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"60000000-0000-0000-0000-000000000001\",\n  \"productId\": \"70000000-0000-0000-0000-000000000001\",\n  \"sumAssured\": 300000,\n  \"tenureYears\": 3,\n  \"premiumAmount\": 12000,\n  \"paymentFrequency\": \"Annual\",\n  \"healthDetail\": {\n    \"preExistingConditions\": \"None\",\n    \"networkHospitalCoverage\": \"Pan India\",\n    \"tpaName\": \"Star Health TPA\",\n    \"roomRentLimit\": 5000,\n    \"maternityCovered\": false,\n    \"copayPercentage\": 0\n  },\n  \"lifeDetail\": null,\n  \"motorDetail\": null,\n  \"customerMemberIds\": [],\n  \"nominees\": [{\n    \"fullName\": \"Ananya Sharma\",\n    \"relationship\": \"Spouse\",\n    \"dateOfBirth\": \"1992-03-20\",\n    \"sharePercentage\": 100,\n    \"isMinor\": false,\n    \"appointeeName\": null\n  }]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/proposals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "proposals"
+              ]
+            },
+            "description": "Captures newProposalId for use in subsequent requests."
+          },
+          "id": "6442e969-6f0b-4ddd-9522-858bdd255665"
+        },
+        {
+          "name": "Get My Proposals",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/proposals/my",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "proposals",
+                "my"
+              ]
+            }
+          },
+          "id": "0da6375b-2645-4410-9737-162091076b7d"
+        },
+        {
+          "name": "Get Proposal by ID (Seeded \u2014 Approved)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/proposals/{{proposalId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "proposals",
+                "{{proposalId}}"
+              ]
+            }
+          },
+          "id": "92540599-f795-4686-9981-60e581d1f6c9"
+        },
+        {
+          "name": "Upload Proposal Document \u26a0\ufe0f (multipart)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/proposals/{{proposalId}}/documents/INCOME_PROOF",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "proposals",
+                "{{proposalId}}",
+                "documents",
+                "INCOME_PROOF"
+              ]
+            },
+            "description": "\u26a0\ufe0f Select a PDF file. Document key examples: INCOME_PROOF, AADHAAR, MEDICAL_REPORT, PAN"
+          },
+          "id": "b6807454-0185-4c2e-a94c-ce88f265acef"
+        },
+        {
+          "name": "\ud83d\udd11 Login \u2014 Underwriter (Anand)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) pm.environment.set('token', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"underwriter@speedclaim.com\",\n  \"password\": \"Password@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "id": "d38650db-8ff3-4ea1-baa5-00b29f397a58"
+        },
+        {
+          "name": "[Underwriter] Get All Proposals",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/proposals/all?page=1&pageSize=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "proposals",
+                "all"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "id": "774f2568-5db1-4fa4-bdb7-af7752a5035c"
+        },
+        {
+          "name": "[Underwriter] Update Proposal Notes",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Additional medical examination required. Awaiting reports from Apollo Diagnostics.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/proposals/80000000-0000-0000-0000-000000000004/notes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "proposals",
+                "80000000-0000-0000-0000-000000000004",
+                "notes"
+              ]
+            },
+            "description": "Proposal 4 (Arjun's) is in UnderReview status \u2014 ideal for underwriter workflow demo."
+          },
+          "id": "21953fb5-cdbe-4781-a523-1ef588f26f0a"
+        },
+        {
+          "name": "[Underwriter] Request Additional Documents",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"details\": \"Please submit recent medical examination report and income certificate within 7 working days.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/proposals/80000000-0000-0000-0000-000000000004/request-docs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "proposals",
+                "80000000-0000-0000-0000-000000000004",
+                "request-docs"
+              ]
+            }
+          },
+          "id": "17aec279-e2b8-4a5b-8fb8-44b7a747a61d"
+        },
+        {
+          "name": "[Underwriter] Review Proposal \u2014 Approve",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isApproved\": true,\n  \"notes\": \"All documents verified. Customer meets underwriting criteria. Premium approved at standard rate.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/proposals/80000000-0000-0000-0000-000000000004/review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "proposals",
+                "80000000-0000-0000-0000-000000000004",
+                "review"
+              ]
+            },
+            "description": "Approving this creates a policy automatically. Use isApproved: false + notes for rejection."
+          },
+          "id": "b6cccb6f-c34f-420c-9556-720ba91df179"
+        }
+      ],
+      "id": "660178bb-0090-442e-9ea8-1fd3d4a44844"
+    },
+    {
+      "name": "7 \u00b7 Policy Lifecycle",
+      "item": [
+        {
+          "name": "\ud83d\udd11 Login \u2014 Customer 1 (Rahul)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) pm.environment.set('token', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"davish.cs22@bitsathy.ac.in\",\n  \"password\": \"Password@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "id": "53eba565-3d4e-4390-bcb5-1826fb24db5c"
+        },
+        {
+          "name": "Get My Policies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/policies/my",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "policies",
+                "my"
+              ]
+            }
+          },
+          "id": "7b7da1a3-49a0-4713-a116-337b87f07d52"
         },
         {
           "name": "Get Policy by ID",
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/policy/{{policyId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","policy","{{policyId}}"] } }
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/policies/{{policyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "policies",
+                "{{policyId}}"
+              ]
+            }
+          },
+          "id": "4e2f17dd-76b6-4dda-af28-517547654b59"
         },
         {
-          "name": "Get Policy History",
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/policy/{{policyId}}/history", "host": ["{{baseUrl}}"], "path": ["api","v1","policy","{{policyId}}","history"] } }
+          "name": "Get Policy Status History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/policies/{{policyId}}/history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "policies",
+                "{{policyId}}",
+                "history"
+              ]
+            }
+          },
+          "id": "0dd20cb3-827e-46da-9843-cab47675e0b7"
+        },
+        {
+          "name": "Get Policy Nominees",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  const arr = Array.isArray(j) ? j : [];",
+                  "  if (arr.length > 0) pm.environment.set('nomineeId', arr[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/policies/{{policyId}}/nominees",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "policies",
+                "{{policyId}}",
+                "nominees"
+              ]
+            }
+          },
+          "id": "9f898168-55b2-4275-86d0-cabc4caed8e4"
+        },
+        {
+          "name": "Update Nominee",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Ananya Sharma\",\n  \"relationship\": \"Spouse\",\n  \"dateOfBirth\": \"1992-03-20\",\n  \"sharePercentage\": 100,\n  \"isMinor\": false,\n  \"appointeeName\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/policies/nominees/{{nomineeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "policies",
+                "nominees",
+                "{{nomineeId}}"
+              ]
+            }
+          },
+          "id": "eb7c8f26-7b65-4361-af24-1cbfcfdf9e93"
+        },
+        {
+          "name": "Download Policy Document",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/policies/{{policyId}}/download",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "policies",
+                "{{policyId}}",
+                "download"
+              ]
+            },
+            "description": "Returns a generated text-based policy document. Save response as a file."
+          },
+          "id": "f6b32f89-32c5-492d-9fc1-9ecd4cb6ee6b"
+        },
+        {
+          "name": "Request Endorsement",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  if (j.id) pm.environment.set('endorsementId', j.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"endorsementType\": \"ContactUpdate\",\n  \"description\": \"Phone number changed. Requesting update from 9876500001 to 9876500099.\",\n  \"oldValue\": \"9876500001\",\n  \"newValue\": \"9876500099\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/policies/{{policyId}}/endorsements",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "policies",
+                "{{policyId}}",
+                "endorsements"
+              ]
+            }
+          },
+          "id": "8e9bfaab-6aa0-48c4-a6e0-d4e926b7a8ce"
         },
         {
           "name": "Get Policy Endorsements",
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/policy/{{policyId}}/endorsements", "host": ["{{baseUrl}}"], "path": ["api","v1","policy","{{policyId}}","endorsements"] } }
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/policies/{{policyId}}/endorsements",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "policies",
+                "{{policyId}}",
+                "endorsements"
+              ]
+            }
+          },
+          "id": "ad2beac8-4b1b-4e9a-94d6-420a9b50269e"
         },
         {
-          "name": "[Admin] Get Pending Endorsements",
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/policy/endorsements/pending?page=1&pageSize=10", "host": ["{{baseUrl}}"], "path": ["api","v1","policy","endorsements","pending"], "query": [{"key":"page","value":"1"},{"key":"pageSize","value":"10"}] } }
-        }
-      ]
-    },
-    {
-      "name": "Phase 5 — Claims",
-      "item": [
+          "name": "Cancel Policy (Priya's Life Policy)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/policies/90000000-0000-0000-0000-000000000003/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "policies",
+                "90000000-0000-0000-0000-000000000003",
+                "cancel"
+              ]
+            },
+            "description": "\u26a0\ufe0f Destructive \u2014 cancels Priya's Life policy. Uses hardcoded policy 3 to preserve main policyId for other demos."
+          },
+          "id": "5e3fd7fe-a945-48ef-a875-88823959d0b6"
+        },
         {
-          "name": "[Admin] Get All Claims",
+          "name": "\ud83d\udd11 Login \u2014 Agent (Rajesh)",
           "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": [
-              "pm.test('claims 200', () => pm.response.code === 200);",
-              "const j = pm.response.json();",
-              "const arr = Array.isArray(j) ? j : (j.data || j.items || []);",
-              "if (arr.length) pm.environment.set('claimId', arr[0].id);"
-            ] } }
-          ],
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/claims/all?page=1&pageSize=10", "host": ["{{baseUrl}}"], "path": ["api","v1","claims","all"], "query": [{"key":"page","value":"1"},{"key":"pageSize","value":"10"}] } }
-        },
-        {
-          "name": "Get Claim by ID",
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/claims/{{claimId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","claims","{{claimId}}"] } }
-        },
-        {
-          "name": "Get Claim History",
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/claims/{{claimId}}/history", "host": ["{{baseUrl}}"], "path": ["api","v1","claims","{{claimId}}","history"] } }
-        }
-      ]
-    },
-    {
-      "name": "Phase 6 — Finance (read-only)",
-      "item": [
-        {
-          "name": "[Admin] Get All Payment Records",
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/payments/all-records?page=1&pageSize=10", "host": ["{{baseUrl}}"], "path": ["api","v1","payments","all-records"], "query": [{"key":"page","value":"1"},{"key":"pageSize","value":"10"}] } }
-        },
-        {
-          "name": "[Admin] Get Pending Commissions",
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/payments/commissions/pending?page=1&pageSize=10", "host": ["{{baseUrl}}"], "path": ["api","v1","payments","commissions","pending"], "query": [{"key":"page","value":"1"},{"key":"pageSize","value":"10"}] } }
-        },
-        {
-          "name": "[Admin] Overdue Report",
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/payments/reports/overdue", "host": ["{{baseUrl}}"], "path": ["api","v1","payments","reports","overdue"] } }
-        },
-        {
-          "name": "[Admin] Summary Report",
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/payments/reports/summary?period=monthly", "host": ["{{baseUrl}}"], "path": ["api","v1","payments","reports","summary"], "query": [{"key":"period","value":"monthly"}] } }
-        }
-      ]
-    },
-    {
-      "name": "Phase 7 — Admin & System",
-      "item": [
-        {
-          "name": "Get System Configs",
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/system/configs", "host": ["{{baseUrl}}"], "path": ["api","v1","system","configs"] } }
-        },
-        {
-          "name": "Get Audit Logs",
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/system/audit-logs?page=1&pageSize=20", "host": ["{{baseUrl}}"], "path": ["api","v1","system","audit-logs"], "query": [{"key":"page","value":"1"},{"key":"pageSize","value":"20"}] } }
-        },
-        {
-          "name": "Get Notification Logs",
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/system/notifications-logs?page=1&pageSize=20", "host": ["{{baseUrl}}"], "path": ["api","v1","system","notifications-logs"], "query": [{"key":"page","value":"1"},{"key":"pageSize","value":"20"}] } }
-        }
-      ]
-    },
-    {
-      "name": "Phase 8 — Customer & Surveyor flows (fixed)",
-      "item": [
-        {
-          "name": "Login — Customer (Rahul)",
-          "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": [
-              "pm.test('customer login 200', () => pm.response.code === 200);",
-              "if (pm.response.code === 200) pm.environment.set('token', pm.response.json().accessToken);"
-            ] } }
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) pm.environment.set('token', pm.response.json().accessToken);"
+                ]
+              }
+            }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] },
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"davish.cs22@bitsathy.ac.in\",\n  \"password\": \"Password@123\"\n}" }
-          }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"davishthedelicious@gmail.com\",\n  \"password\": \"Password@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "id": "ee427225-76d1-4658-bd27-962c7205e080"
         },
         {
-          "name": "Customer → My Policies",
-          "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": [
-              "pm.test('policy/my 200', () => pm.response.code === 200);",
-              "const a = pm.response.json();",
-              "pm.test('customer sees own policies', () => Array.isArray(a) && a.length > 0);",
-              "if (a.length) pm.environment.set('policyId', a[0].id);"
-            ] } }
-          ],
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/policy/my", "host": ["{{baseUrl}}"], "path": ["api","v1","policy","my"] } }
+          "name": "[Agent] Get Assigned Policies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/policies/assigned",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "policies",
+                "assigned"
+              ]
+            }
+          },
+          "id": "92254010-d988-4328-a08c-99a54a98315a"
         },
         {
-          "name": "Customer → My Claims",
+          "name": "\ud83d\udd11 Login \u2014 Underwriter (Anand)",
           "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": [
-              "pm.test('claims/my 200', () => pm.response.code === 200);",
-              "const a = pm.response.json();",
-              "pm.test('customer sees own claims', () => Array.isArray(a) && a.length > 0);",
-              "if (a.length) pm.environment.set('claimId', a[0].id);"
-            ] } }
-          ],
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/claims/my", "host": ["{{baseUrl}}"], "path": ["api","v1","claims","my"] } }
-        },
-        {
-          "name": "Customer → Claim History",
-          "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": [
-              "pm.test('claim history 200', () => pm.response.code === 200);"
-            ] } }
-          ],
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/claims/{{claimId}}/history", "host": ["{{baseUrl}}"], "path": ["api","v1","claims","{{claimId}}","history"] } }
-        },
-        {
-          "name": "Login — Surveyor",
-          "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": [
-              "pm.test('surveyor login 200', () => pm.response.code === 200);",
-              "if (pm.response.code === 200) pm.environment.set('token', pm.response.json().accessToken);"
-            ] } }
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) pm.environment.set('token', pm.response.json().accessToken);"
+                ]
+              }
+            }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] },
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"surveyor@speedclaim.com\",\n  \"password\": \"Password@123\"\n}" }
-          }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"underwriter@speedclaim.com\",\n  \"password\": \"Password@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "id": "41e49d52-0eb8-4802-9396-aab1ce6f37ef"
         },
         {
-          "name": "Surveyor → Assigned Claims",
-          "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": [
-              "pm.test('surveyor/assigned 200', () => pm.response.code === 200);",
-              "const a = pm.response.json();",
-              "pm.test('surveyor sees assigned claims', () => Array.isArray(a) && a.length > 0);"
-            ] } }
-          ],
-          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/api/v1/claims/surveyor/assigned", "host": ["{{baseUrl}}"], "path": ["api","v1","claims","surveyor","assigned"] } }
+          "name": "[Underwriter] Get All Policies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/policies/all?page=1&pageSize=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "policies",
+                "all"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "id": "239f4989-afcf-4ac4-ad22-ce116cbde60c"
+        },
+        {
+          "name": "[Underwriter] Get Pending Endorsements",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/policies/endorsements/pending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "policies",
+                "endorsements",
+                "pending"
+              ]
+            }
+          },
+          "id": "18432a42-4366-412b-859b-50dcdef11d9f"
+        },
+        {
+          "name": "[Underwriter] Review Endorsement \u2014 Approve",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isApproved\": true,\n  \"reason\": \"Contact update verified against submitted ID proof.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/policies/endorsements/{{endorsementId}}/review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "policies",
+                "endorsements",
+                "{{endorsementId}}",
+                "review"
+              ]
+            }
+          },
+          "id": "55e231d4-f9e4-49ea-8a8f-af39ff62f24e"
         }
-      ]
+      ],
+      "id": "d1c18d79-97c0-4c14-b235-6c349417bc0b"
+    },
+    {
+      "name": "8 \u00b7 Premium Payments",
+      "item": [
+        {
+          "name": "\ud83d\udd11 Login \u2014 Customer 1 (Rahul)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) pm.environment.set('token', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"davish.cs22@bitsathy.ac.in\",\n  \"password\": \"Password@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "id": "634ae10a-5de0-4ce0-9ed1-867a99a9e96f"
+        },
+        {
+          "name": "Get Payment Schedule",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "  const arr = pm.response.json();",
+                  "  if (Array.isArray(arr)) {",
+                  "    const upcoming = arr.find(s => s.status === 'Upcoming' || s.scheduleStatus === 'Upcoming');",
+                  "    if (upcoming) pm.environment.set('scheduleId', upcoming.id);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/payments/schedule/{{policyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "payments",
+                "schedule",
+                "{{policyId}}"
+              ]
+            }
+          },
+          "id": "d7ce5213-9fd7-4654-bf1a-3b1eab091b79"
+        },
+        {
+          "name": "Get Saved Payment Methods",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/payments/methods",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "payments",
+                "methods"
+              ]
+            },
+            "description": "Returns Stripe-saved payment methods for this customer."
+          },
+          "id": "f55e25ff-222a-4e75-b3cf-351d78032599"
+        },
+        {
+          "name": "Pay Premium \u26a0\ufe0f (Stripe \u2014 demo live)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentMethodId\": \"pm_card_visa\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/payments/pay/{{scheduleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "payments",
+                "pay",
+                "{{scheduleId}}"
+              ]
+            },
+            "description": "\u26a0\ufe0f Requires a real Stripe PaymentMethod. Use Stripe test card pm_card_visa during live demo."
+          },
+          "id": "a465053b-f87a-41b6-a3b3-8ae5d29e303b"
+        },
+        {
+          "name": "Get Payment History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/payments/history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "payments",
+                "history"
+              ]
+            }
+          },
+          "id": "0f9179e7-b7df-4dbd-9164-120866e9138f"
+        },
+        {
+          "name": "Get Payment Receipt",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/payments/{{paymentId}}/receipt",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "payments",
+                "{{paymentId}}",
+                "receipt"
+              ]
+            }
+          },
+          "id": "86e2e52e-900e-4268-9653-64fdf2528a61"
+        },
+        {
+          "name": "\ud83d\udd11 Login \u2014 Finance Officer (Suresh)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) pm.environment.set('token', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"financeofficer@speedclaim.com\",\n  \"password\": \"Password@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "id": "d569e50a-c1e1-46c8-8b44-ebe79086c8bc"
+        },
+        {
+          "name": "[Finance] Get All Payment Records",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/payments/all-records?page=1&pageSize=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "payments",
+                "all-records"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "id": "cfea8dbe-bc94-4323-9085-cfc19570d22f"
+        },
+        {
+          "name": "[Finance] Reconcile Payment",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/payments/{{paymentId}}/reconcile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "payments",
+                "{{paymentId}}",
+                "reconcile"
+              ]
+            },
+            "description": "Marks a payment as manually reconciled (for offline payments, corrections)."
+          },
+          "id": "dff8c0b9-d8cd-4f90-9503-26756545d453"
+        },
+        {
+          "name": "[Finance] Refund Payment \u26a0\ufe0f (Stripe)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/payments/{{paymentId}}/refund",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "payments",
+                "{{paymentId}}",
+                "refund"
+              ]
+            },
+            "description": "\u26a0\ufe0f Requires paymentId to have a valid Stripe PaymentIntent. Will fail on seeded payments (no Stripe intent)."
+          },
+          "id": "33af2cb7-3a95-4d47-b240-ab44f55e097d"
+        },
+        {
+          "name": "[Finance] Get Pending Agent Commissions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "  const arr = pm.response.json();",
+                  "  if (Array.isArray(arr) && arr.length > 0) pm.environment.set('commissionId', arr[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/payments/commissions/pending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "payments",
+                "commissions",
+                "pending"
+              ]
+            }
+          },
+          "id": "f3e72c6b-bafc-4ca3-a6f0-7ca8b56bb66f"
+        },
+        {
+          "name": "[Finance] Approve Agent Commission",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/payments/commissions/{{commissionId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "payments",
+                "commissions",
+                "{{commissionId}}",
+                "approve"
+              ]
+            }
+          },
+          "id": "0d8d81d3-fd62-445f-ae68-e4f174c56c63"
+        },
+        {
+          "name": "[Finance] Process Claim Payout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/payments/payout/claim/{{claimId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "payments",
+                "payout",
+                "claim",
+                "{{claimId}}"
+              ]
+            },
+            "description": "Issues a Stripe payout to the customer's saved payment method for the approved claim amount."
+          },
+          "id": "0593f34e-f377-456f-8bac-9988064045c3"
+        },
+        {
+          "name": "[Finance] Mark Claim Financially Settled",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/payments/claims/{{claimId}}/settle",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "payments",
+                "claims",
+                "{{claimId}}",
+                "settle"
+              ]
+            },
+            "description": "Marks claim as financially settled (no Stripe payout \u2014 for cash/bank transfer settlements)."
+          },
+          "id": "a23b505d-d68e-4931-b7dd-fb77d1579937"
+        },
+        {
+          "name": "[Finance] Overdue Premiums Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/payments/reports/overdue",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "payments",
+                "reports",
+                "overdue"
+              ]
+            }
+          },
+          "id": "60b26632-873f-448c-8555-b67ca119007e"
+        },
+        {
+          "name": "[Finance] Payment Summary Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/payments/reports/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "payments",
+                "reports",
+                "summary"
+              ]
+            }
+          },
+          "id": "98e807d5-2045-4f48-bbf8-fe3d4a7bc660"
+        },
+        {
+          "name": "[Finance] Export Payments (CSV)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/payments/reports/export",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "payments",
+                "reports",
+                "export"
+              ]
+            }
+          },
+          "id": "e9e30d62-56c2-4d3b-9c84-0306f324934c"
+        },
+        {
+          "name": "Stripe Webhook \u26a0\ufe0f (Stripe signature required)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Stripe-Signature",
+                "value": "t=...,v1=...",
+                "description": "Must be a valid Stripe webhook signature"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"payment_intent.succeeded\",\n  \"data\": { \"object\": {} }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/payments/webhook",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "payments",
+                "webhook"
+              ]
+            },
+            "description": "\u26a0\ufe0f Cannot be called directly \u2014 requires a valid Stripe-Signature header. Use Stripe CLI ('stripe listen') for local testing."
+          },
+          "id": "1b5ff1eb-a9b3-46fb-9e6f-83b7c1d51a2c"
+        }
+      ],
+      "id": "7682f069-0675-4722-93d9-e111fe643824"
+    },
+    {
+      "name": "9 \u00b7 Claims Lifecycle",
+      "item": [
+        {
+          "name": "\ud83d\udd11 Login \u2014 Customer 1 (Rahul)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) pm.environment.set('token', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"davish.cs22@bitsathy.ac.in\",\n  \"password\": \"Password@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "id": "4d8e0b36-6004-4d08-bde6-140970c837db"
+        },
+        {
+          "name": "Intimate New Claim (Health, Cashless)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  if (j.id) pm.environment.set('activeClaimId', j.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"policyId\": \"90000000-0000-0000-0000-000000000001\",\n  \"claimantMemberId\": null,\n  \"claimType\": \"Health\",\n  \"claimAmountRequested\": 45000,\n  \"isCashless\": true,\n  \"incidentDate\": \"2026-06-12T00:00:00Z\",\n  \"incidentDescription\": \"Hospitalised for emergency appendectomy at Apollo Hospitals Chennai. Requesting cashless pre-authorisation for surgery and post-operative care.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/claims/intimate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "claims",
+                "intimate"
+              ]
+            },
+            "description": "Creates a new Health cashless claim. ID is captured as activeClaimId for the workflow below."
+          },
+          "id": "a6eb78a4-28e3-49f7-9ee1-a6dcb958ee17"
+        },
+        {
+          "name": "Upload Claim Document \u26a0\ufe0f (multipart)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/claims/{{activeClaimId}}/documents/HOSPITAL_BILL",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "claims",
+                "{{activeClaimId}}",
+                "documents",
+                "HOSPITAL_BILL"
+              ]
+            },
+            "description": "\u26a0\ufe0f Select a PDF/image file. Document key examples: HOSPITAL_BILL, DISCHARGE_SUMMARY, PRESCRIPTION, POLICE_REPORT, REPAIR_ESTIMATE"
+          },
+          "id": "5a4bd47a-f737-40eb-99f3-d05bc37dc986"
+        },
+        {
+          "name": "Get My Claims",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/claims/my",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "claims",
+                "my"
+              ]
+            }
+          },
+          "id": "411928aa-9b20-4721-9520-8462d6c44f40"
+        },
+        {
+          "name": "Get Claim by ID (Seeded \u2014 Settled)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/claims/{{claimId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "claims",
+                "{{claimId}}"
+              ]
+            }
+          },
+          "id": "156b5b38-1c86-4d53-a3a9-54728bf607c6"
+        },
+        {
+          "name": "Get Claim Status History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/claims/{{claimId}}/history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "claims",
+                "{{claimId}}",
+                "history"
+              ]
+            }
+          },
+          "id": "24257771-12d5-4213-b485-766a56a27c58"
+        },
+        {
+          "name": "\ud83d\udd11 Login \u2014 Claims Officer (Meera)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) pm.environment.set('token', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"claimsofficer@speedclaim.com\",\n  \"password\": \"Password@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "id": "1b99d629-9b64-4ba7-9cfb-bf76fba2d923"
+        },
+        {
+          "name": "[ClaimsOfficer] Get All Claims",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/claims/all?page=1&pageSize=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "claims",
+                "all"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "id": "380d4712-b706-4c92-aeea-73384086e3f3"
+        },
+        {
+          "name": "[ClaimsOfficer] Assign Claim to Self",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/claims/{{activeClaimId}}/assign",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "claims",
+                "{{activeClaimId}}",
+                "assign"
+              ]
+            },
+            "description": "Claims Officer takes ownership of the claim. Officer ID taken from JWT token."
+          },
+          "id": "2ac3bbe0-47bf-415f-b26a-de718afd9f6f"
+        },
+        {
+          "name": "[ClaimsOfficer] Update Claim Status \u2014 UnderReview",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"UnderReview\",\n  \"remarks\": \"Claim assigned and documents received. Starting comprehensive review.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/claims/{{activeClaimId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "claims",
+                "{{activeClaimId}}",
+                "status"
+              ]
+            }
+          },
+          "id": "8b9f226f-b0ef-472a-b1e5-0fd3e43248a8"
+        },
+        {
+          "name": "[ClaimsOfficer] Request Additional Documents",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "\"Please submit discharge summary, treating doctor's certificate, and original hospital bills within 5 working days.\"",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/claims/{{activeClaimId}}/request-docs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "claims",
+                "{{activeClaimId}}",
+                "request-docs"
+              ]
+            }
+          },
+          "id": "512b73f4-dae6-4c5b-a61c-7a0781e7b264"
+        },
+        {
+          "name": "[ClaimsOfficer] Assign Surveyor (Motor Claims)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"surveyorId\": \"50000000-0000-0000-0000-000000000001\",\n  \"notes\": \"Vehicle inspection required. Please inspect damage and submit report within 5 working days.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/claims/a0000000-0000-0000-0000-000000000002/assign-surveyor",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "claims",
+                "a0000000-0000-0000-0000-000000000002",
+                "assign-surveyor"
+              ]
+            },
+            "description": "Uses seeded Motor claim (CLM-2024-0002) \u2014 surveyorId points to seeded Deepak Rao."
+          },
+          "id": "39511d84-8238-440a-bdb8-9da15a5bc4d0"
+        },
+        {
+          "name": "\ud83d\udd11 Login \u2014 Surveyor (Deepak)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) pm.environment.set('token', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"surveyor@speedclaim.com\",\n  \"password\": \"Password@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "id": "1c3c51bf-a1d2-4e6b-8af7-575a8e3f92e5"
+        },
+        {
+          "name": "[Surveyor] Get Assigned Motor Claims",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/claims/surveyor/assigned",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "claims",
+                "surveyor",
+                "assigned"
+              ]
+            }
+          },
+          "id": "9972eb5b-16f3-46ea-a237-825750a1e2ad"
+        },
+        {
+          "name": "[Surveyor] Submit Survey Report \u26a0\ufe0f (multipart)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "estimatedRepairCost",
+                  "value": "85000",
+                  "type": "text"
+                },
+                {
+                  "key": "surveyDate",
+                  "value": "2026-06-14T10:00:00",
+                  "type": "text"
+                },
+                {
+                  "key": "remarks",
+                  "value": "Rear bumper and boot completely damaged. Estimated repair cost \u20b985,000. Vehicle driveable. Recommend approved repair at authorised workshop.",
+                  "type": "text"
+                },
+                {
+                  "key": "reportDocument",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/claims/a0000000-0000-0000-0000-000000000002/survey-report",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "claims",
+                "a0000000-0000-0000-0000-000000000002",
+                "survey-report"
+              ]
+            },
+            "description": "\u26a0\ufe0f Select a PDF file for reportDocument. Uses seeded Motor claim (CLM-2024-0002)."
+          },
+          "id": "a20d3eab-17cd-4d27-987a-274517bf95a7"
+        },
+        {
+          "name": "\ud83d\udd11 Login \u2014 Claims Officer (Meera)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) pm.environment.set('token', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"claimsofficer@speedclaim.com\",\n  \"password\": \"Password@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "id": "42eb4c02-88c9-46e8-87ba-fc0436b53a9f"
+        },
+        {
+          "name": "[ClaimsOfficer] Approve Cashless Pre-Auth",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/claims/{{activeClaimId}}/approve-preauth",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "claims",
+                "{{activeClaimId}}",
+                "approve-preauth"
+              ]
+            },
+            "description": "Approves cashless pre-authorisation for the Health claim. Claim must be cashless and in PreAuthRequested status."
+          },
+          "id": "dc069b64-7883-46e4-9f02-cbcf11cca7c3"
+        },
+        {
+          "name": "[ClaimsOfficer] Approve Claim",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isApproved\": true,\n  \"approvedAmount\": 42000,\n  \"reason\": \"All documents verified. Hospital bills confirmed. Claim approved for \u20b942,000 (95% of requested amount after deductions).\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/claims/{{activeClaimId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "claims",
+                "{{activeClaimId}}",
+                "approve"
+              ]
+            }
+          },
+          "id": "ce2d6e98-d1cc-4a70-995d-70abf26d421a"
+        },
+        {
+          "name": "[ClaimsOfficer] Mark Claim Settled",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/claims/{{activeClaimId}}/settle",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "claims",
+                "{{activeClaimId}}",
+                "settle"
+              ]
+            },
+            "description": "Final step \u2014 marks claim as settled. Finance Officer then processes payout."
+          },
+          "id": "0bc25f0e-9d3e-4e75-9b7c-9b86f78e010d"
+        }
+      ],
+      "id": "e72e8969-18a8-4b62-8d75-d1a07a23c6de"
+    },
+    {
+      "name": "10 \u00b7 Grievances",
+      "item": [
+        {
+          "name": "\ud83d\udd11 Login \u2014 Customer 1 (Rahul)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) pm.environment.set('token', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"davish.cs22@bitsathy.ac.in\",\n  \"password\": \"Password@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "id": "6c47bfd7-2094-4797-bd6b-b42ba3459fd0"
+        },
+        {
+          "name": "Raise Grievance",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  if (j.id) pm.environment.set('grievanceId', j.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"policyId\": \"90000000-0000-0000-0000-000000000001\",\n  \"claimId\": null,\n  \"category\": \"ClaimDelay\",\n  \"description\": \"My health insurance claim has been pending for over 15 days with no update. I require immediate resolution as hospital bills are outstanding. This is causing significant financial hardship.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/grievances",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "grievances"
+              ]
+            }
+          },
+          "id": "666023aa-5b54-4760-ae4f-0d2eb1b13d29"
+        },
+        {
+          "name": "Get My Grievances",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/grievances/my",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "grievances",
+                "my"
+              ]
+            }
+          },
+          "id": "16196702-b39f-4dae-9067-987b80c599ed"
+        },
+        {
+          "name": "\ud83d\udd11 Login \u2014 Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) pm.environment.set('token', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"davish2204@gmail.com\",\n  \"password\": \"Password@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "id": "87b8f01d-2677-4db3-98d2-f38e4304e6c4"
+        },
+        {
+          "name": "[Admin] Get All Grievances",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/grievances/all?page=1&pageSize=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "grievances",
+                "all"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "id": "14536981-88a5-4aa2-a001-c92d7bee81b2"
+        },
+        {
+          "name": "[Admin] Get Grievance by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/grievances/{{grievanceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "grievances",
+                "{{grievanceId}}"
+              ]
+            }
+          },
+          "id": "2e9e75a6-8479-4171-bc85-beeb88da409b"
+        },
+        {
+          "name": "[Admin] Assign Grievance",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assignedToId\": \"10000000-0000-0000-0000-000000000003\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/grievances/{{grievanceId}}/assign",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "grievances",
+                "{{grievanceId}}",
+                "assign"
+              ]
+            },
+            "description": "Assigned to Claims Officer (Meera Iyer)."
+          },
+          "id": "b01eddf6-5a5a-4467-ab3c-8024a6290731"
+        },
+        {
+          "name": "[Admin] Resolve Grievance",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Resolved\",\n  \"resolutionNotes\": \"Claim processing expedited after grievance review. Customer notified. Claim approved and payment initiated within 24 hours. Apologies for the delay.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/grievances/{{grievanceId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "grievances",
+                "{{grievanceId}}",
+                "status"
+              ]
+            }
+          },
+          "id": "923a5bed-eadf-4689-b09f-7e907dba629a"
+        }
+      ],
+      "id": "a2842adb-c459-4b40-b901-37b57df326ab"
+    },
+    {
+      "name": "11 \u00b7 Admin & System",
+      "item": [
+        {
+          "name": "\ud83d\udd11 Login \u2014 Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) pm.environment.set('token', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"davish2204@gmail.com\",\n  \"password\": \"Password@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "id": "c2864aff-f857-4671-8666-624279e1c5b6"
+        },
+        {
+          "name": "[Admin] Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/all?page=1&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "all"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "id": "7aa17f04-8758-4e62-8367-35689ce6db11"
+        },
+        {
+          "name": "[Admin] Change User Role",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "\"Customer\"",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{targetUserId}}/role",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{targetUserId}}",
+                "role"
+              ]
+            },
+            "description": "targetUserId = Customer 2 (Priya). Body is a raw JSON string: 'Customer', 'Agent', 'Underwriter', etc."
+          },
+          "id": "2fdf3feb-7fab-4533-86eb-5b0d55d11ecd"
+        },
+        {
+          "name": "[Admin] Toggle User Status (Deactivate)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{targetUserId}}/status?isActive=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{targetUserId}}",
+                "status"
+              ],
+              "query": [
+                {
+                  "key": "isActive",
+                  "value": "false"
+                }
+              ]
+            },
+            "description": "Use isActive=true to reactivate. Deactivated users cannot log in."
+          },
+          "id": "71ca4bbd-a09d-4504-8c53-d5b9cf45ced8"
+        },
+        {
+          "name": "[Admin] Get All Active Sessions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "sessions"
+              ]
+            }
+          },
+          "id": "89badc9f-7c21-4bfd-b8cb-628869c903fe"
+        },
+        {
+          "name": "[Admin] Get System Configs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/system/configs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "system",
+                "configs"
+              ]
+            }
+          },
+          "id": "1a3eda83-019f-4576-88c8-206517a27329"
+        },
+        {
+          "name": "[Admin] Update System Config",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"configKey\": \"MAX_CLAIM_PROCESSING_DAYS\",\n  \"configValue\": \"15\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/system/configs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "system",
+                "configs"
+              ]
+            }
+          },
+          "id": "300bd264-e38b-4860-a5cc-3f82d1867b26"
+        },
+        {
+          "name": "[Admin] Get Audit Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/system/audit-logs?page=1&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "system",
+                "audit-logs"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "id": "0214d28e-87e1-4ee2-a7a4-500e4a859a18"
+        },
+        {
+          "name": "[Admin] Get Notification Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/system/notifications-logs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "system",
+                "notifications-logs"
+              ]
+            }
+          },
+          "id": "29a7116b-9223-4b8e-bb4d-36cf016f8e05"
+        },
+        {
+          "name": "[Admin] Manage Email Template",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"templateKey\": \"CLAIM_APPROVED\",\n  \"subject\": \"Your Claim {{claimNumber}} Has Been Approved \u2014 SpeedClaim\",\n  \"bodyHtml\": \"<h2>Claim Approved</h2><p>Dear {{customerName}},</p><p>Your claim <strong>{{claimNumber}}</strong> has been approved for <strong>\u20b9{{approvedAmount}}</strong>.</p><p>The amount will be credited to your registered bank account within 3-5 working days.</p><p>Thank you for choosing SpeedClaim.</p>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/system/email-templates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "system",
+                "email-templates"
+              ]
+            }
+          },
+          "id": "357a255f-eca6-400c-835c-6d0526043b7c"
+        }
+      ],
+      "id": "9bfadbbf-1054-4ad9-a83a-569a7b973089"
     }
   ]
 }
