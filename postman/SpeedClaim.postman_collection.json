@@ -1,8 +1,8 @@
 {
   "info": {
-    "name": "SpeedClaim \u2014 Full Demo (110 Endpoints)",
+    "name": "SpeedClaim — Full Demo (110 Endpoints)",
     "_postman_id": "speedclaim-full-demo-v2",
-    "description": "All 110 endpoints in 11 story-based folders.\nToken auto-injected via collection pre-request script.\n\ud83d\udd11 = role switch (Login reuse, not a new endpoint)\n\u26a0\ufe0f = file upload or Stripe \u2014 run manually during demo\n\nAll passwords: Password@123\nSeeded accounts:\n  Admin           davish2204@gmail.com\n  Agent           davishthedelicious@gmail.com\n  Underwriter     underwriter@speedclaim.com\n  ClaimsOfficer   claimsofficer@speedclaim.com\n  FinanceOfficer  financeofficer@speedclaim.com\n  Surveyor        surveyor@speedclaim.com\n  Customer 1      davish.cs22@bitsathy.ac.in   (Rahul, Health+Motor policies)\n  Customer 2      davishoffl@gmail.com          (Priya, Life policy)",
+    "description": "All 110 endpoints in 11 story-based folders.\nToken auto-injected via collection pre-request script.\n🔑 = role switch (Login reuse, not a new endpoint)\n⚠️ = file upload or Stripe — run manually during demo\n\nAll passwords: Password@123\nSeeded accounts:\n  Admin           davish2204@gmail.com\n  Agent           davishthedelicious@gmail.com\n  Underwriter     underwriter@speedclaim.com\n  ClaimsOfficer   claimsofficer@speedclaim.com\n  FinanceOfficer  financeofficer@speedclaim.com\n  Surveyor        surveyor@speedclaim.com\n  Customer 1      davish.cs22@bitsathy.ac.in   (Rahul, Health+Motor policies)\n  Customer 2      davishoffl@gmail.com          (Priya, Life policy)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "event": [
@@ -28,10 +28,10 @@
   ],
   "item": [
     {
-      "name": "1 \u00b7 Auth & Account Setup",
+      "name": "1 · Auth & Account Setup",
       "item": [
         {
-          "name": "Login \u2014 Admin",
+          "name": "Login — Admin",
           "event": [
             {
               "listen": "test",
@@ -98,7 +98,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"newcustomer@demo.com\",\n  \"password\": \"Password@123\",\n  \"salutation\": \"Mr\",\n  \"firstName\": \"Demo\",\n  \"lastName\": \"Customer\",\n  \"phone\": \"9876543210\",\n  \"permanentAddress\": {\n    \"line1\": \"456 Demo Street\",\n    \"line2\": null,\n    \"city\": \"Mumbai\",\n    \"state\": \"Maharashtra\",\n    \"postalCode\": \"400001\",\n    \"country\": \"India\"\n  },\n  \"currentAddress\": null,\n  \"isSameAsPermanent\": true,\n  \"dateOfBirth\": \"1995-08-20\",\n  \"aadhaarNumber\": \"123456789012\",\n  \"panNumber\": \"ABCDE1234F\",\n  \"gender\": \"Male\",\n  \"maritalStatus\": \"Single\"\n}",
+              "raw": "{\n  \"email\": \"davish2204+democust@gmail.com\",\n  \"password\": \"Password@123\",\n  \"salutation\": \"Mr\",\n  \"firstName\": \"Demo\",\n  \"lastName\": \"Customer\",\n  \"phone\": \"9876543210\",\n  \"permanentAddress\": {\n    \"line1\": \"456 Demo Street\",\n    \"line2\": null,\n    \"city\": \"Mumbai\",\n    \"state\": \"Maharashtra\",\n    \"postalCode\": \"400001\",\n    \"country\": \"India\"\n  },\n  \"currentAddress\": null,\n  \"isSameAsPermanent\": true,\n  \"dateOfBirth\": \"1995-08-20\",\n  \"aadhaarNumber\": \"123456789012\",\n  \"panNumber\": \"ABCDE1234F\",\n  \"gender\": \"Male\",\n  \"maritalStatus\": \"Single\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -265,7 +265,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"token\": \"PASTE_RESET_TOKEN_HERE\",\n  \"newPassword\": \"NewPass@456\"\n}",
+              "raw": "{\n  \"token\": \"PASTE_RESET_TOKEN_HERE\",\n  \"newPassword\": \"Password@123\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -319,7 +319,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"newagent@demo.com\",\n  \"password\": \"Password@123\",\n  \"salutation\": \"Mr\",\n  \"firstName\": \"Demo\",\n  \"lastName\": \"Agent\",\n  \"phone\": \"9876543211\",\n  \"permanentAddress\": {\n    \"line1\": \"789 Agent Street\",\n    \"line2\": null,\n    \"city\": \"Bangalore\",\n    \"state\": \"Karnataka\",\n    \"postalCode\": \"560001\",\n    \"country\": \"India\"\n  },\n  \"currentAddress\": null,\n  \"isSameAsPermanent\": true,\n  \"licenseNumber\": \"LIC-2026-DEMO-001\",\n  \"agencyName\": \"Demo Insurance Agency\",\n  \"aadhaarNumber\": \"234567890123\",\n  \"panNumber\": \"FGHIJ5678K\",\n  \"maritalStatus\": \"Single\"\n}",
+              "raw": "{\n  \"email\": \"davish2204+demoagent@gmail.com\",\n  \"password\": \"Password@123\",\n  \"salutation\": \"Mr\",\n  \"firstName\": \"Demo\",\n  \"lastName\": \"Agent\",\n  \"phone\": \"9876543211\",\n  \"permanentAddress\": {\n    \"line1\": \"789 Agent Street\",\n    \"line2\": null,\n    \"city\": \"Bangalore\",\n    \"state\": \"Karnataka\",\n    \"postalCode\": \"560001\",\n    \"country\": \"India\"\n  },\n  \"currentAddress\": null,\n  \"isSameAsPermanent\": true,\n  \"licenseNumber\": \"LIC-2026-DEMO-001\",\n  \"agencyName\": \"Demo Insurance Agency\",\n  \"aadhaarNumber\": \"234567890123\",\n  \"panNumber\": \"FGHIJ5678K\",\n  \"maritalStatus\": \"Single\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -384,10 +384,10 @@
       "id": "e6eb3e88-9fa4-4ff2-9394-836a41aa5a37"
     },
     {
-      "name": "2 \u00b7 Customer Profile & Family",
+      "name": "2 · Customer Profile & Family",
       "item": [
         {
-          "name": "\ud83d\udd11 Login \u2014 Customer 1 (Rahul)",
+          "name": "🔑 Login — Customer 1 (Rahul)",
           "event": [
             {
               "listen": "test",
@@ -723,10 +723,10 @@
       "id": "4cc97433-ebeb-4750-8edd-6f9942bf6101"
     },
     {
-      "name": "3 \u00b7 KYC & Notifications",
+      "name": "3 · KYC & Notifications",
       "item": [
         {
-          "name": "Upload KYC Document \u26a0\ufe0f (multipart)",
+          "name": "Upload KYC Document ⚠️ (multipart)",
           "request": {
             "method": "POST",
             "header": [],
@@ -746,12 +746,12 @@
                 {
                   "key": "frontDocument",
                   "type": "file",
-                  "src": ""
+                  "src": "/Users/davishe/Documents/dummy-docs/aadhar-dummy.pdf"
                 },
                 {
                   "key": "backDocument",
                   "type": "file",
-                  "src": ""
+                  "src": "/Users/davishe/Documents/dummy-docs/aadhar-dummy.pdf"
                 }
               ]
             },
@@ -767,7 +767,7 @@
                 "kyc"
               ]
             },
-            "description": "\u26a0\ufe0f Select a PDF/JPG file for frontDocument. File must be \u2264 5 MB. idNumber must be 12 digits for Aadhaar."
+            "description": "⚠️ Select a PDF/JPG file for frontDocument. File must be ≤ 5 MB. idNumber must be 12 digits for Aadhaar."
           },
           "id": "838326da-bd38-4304-b380-bcf94180be55"
         },
@@ -872,7 +872,7 @@
           "id": "ea8a1080-2f87-47e1-831c-4b71959656dd"
         },
         {
-          "name": "\ud83d\udd11 Login \u2014 Admin",
+          "name": "🔑 Login — Admin",
           "event": [
             {
               "listen": "test",
@@ -951,7 +951,7 @@
           "id": "c5ca0931-75e1-419f-8a7c-621a5550ee52"
         },
         {
-          "name": "[Admin] Review KYC \u2014 Approve",
+          "name": "[Admin] Review KYC — Approve",
           "request": {
             "method": "PUT",
             "header": [],
@@ -987,7 +987,7 @@
       "id": "b41a7291-c0f8-4e12-af9e-92c7199a0e0e"
     },
     {
-      "name": "4 \u00b7 Product Catalog",
+      "name": "4 · Product Catalog",
       "item": [
         {
           "name": "Get All Products",
@@ -1070,7 +1070,23 @@
               ]
             }
           },
-          "id": "ece3d49a-5143-48d1-a66c-ad8568f95c2b"
+          "id": "ece3d49a-5143-48d1-a66c-ad8568f95c2b",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  const id = j.id || (j.data && j.data.id);",
+                  "  if (id) pm.environment.set('createdProductId', id);",
+                  "}"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "[Admin] Update Premium Rates",
@@ -1140,7 +1156,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"requirements\": [\n    {\n      \"entityType\": \"Proposal\",\n      \"domain\": \"Health\",\n      \"documentKey\": \"AADHAAR\",\n      \"label\": \"Aadhaar Card\",\n      \"description\": \"Valid Aadhaar card \u2014 both sides\",\n      \"isMandatory\": true,\n      \"isActive\": true\n    },\n    {\n      \"entityType\": \"Proposal\",\n      \"domain\": \"Health\",\n      \"documentKey\": \"MEDICAL_REPORT\",\n      \"label\": \"Medical Examination Report\",\n      \"description\": \"Recent medical report (within 3 months)\",\n      \"isMandatory\": true,\n      \"isActive\": true\n    }\n  ]\n}",
+              "raw": "{\n  \"requirements\": [\n    {\n      \"entityType\": \"Proposal\",\n      \"domain\": \"Health\",\n      \"documentKey\": \"AADHAAR\",\n      \"label\": \"Aadhaar Card\",\n      \"description\": \"Valid Aadhaar card — both sides\",\n      \"isMandatory\": true,\n      \"isActive\": true\n    },\n    {\n      \"entityType\": \"Proposal\",\n      \"domain\": \"Health\",\n      \"documentKey\": \"MEDICAL_REPORT\",\n      \"label\": \"Medical Examination Report\",\n      \"description\": \"Recent medical report (within 3 months)\",\n      \"isMandatory\": true,\n      \"isActive\": true\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1183,7 +1199,7 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/products/{{productId}}/status",
+              "raw": "{{baseUrl}}/api/v1/products/{{createdProductId}}/status",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1191,7 +1207,7 @@
                 "api",
                 "v1",
                 "products",
-                "{{productId}}",
+                "{{createdProductId}}",
                 "status"
               ]
             },
@@ -1203,10 +1219,10 @@
       "id": "1b18f13a-eb7b-4ae2-a07a-80286abc7b40"
     },
     {
-      "name": "5 \u00b7 Agent Dashboard",
+      "name": "5 · Agent Dashboard",
       "item": [
         {
-          "name": "\ud83d\udd11 Login \u2014 Agent (Rajesh)",
+          "name": "🔑 Login — Agent (Rajesh)",
           "event": [
             {
               "listen": "test",
@@ -1368,27 +1384,7 @@
           "id": "42df49f6-3a88-47f1-8049-ad66505db691"
         },
         {
-          "name": "Get All Branches",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/agents/branches",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "agents",
-                "branches"
-              ]
-            }
-          },
-          "id": "0695bc24-8fc9-47bc-87b3-c447b034c0a4"
-        },
-        {
-          "name": "\ud83d\udd11 Login \u2014 Admin",
+          "name": "🔑 Login — Admin",
           "event": [
             {
               "listen": "test",
@@ -1434,6 +1430,26 @@
             }
           },
           "id": "b1389695-51fc-4b35-985e-9d76b030d511"
+        },
+        {
+          "name": "Get All Branches",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/agents/branches",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agents",
+                "branches"
+              ]
+            }
+          },
+          "id": "0695bc24-8fc9-47bc-87b3-c447b034c0a4"
         },
         {
           "name": "[Admin] Create Branch",
@@ -1558,10 +1574,10 @@
       "id": "2c1ab365-041b-4dc5-85a9-b180d3a49f44"
     },
     {
-      "name": "6 \u00b7 Proposals & Underwriting",
+      "name": "6 · Proposals & Underwriting",
       "item": [
         {
-          "name": "\ud83d\udd11 Login \u2014 Customer 1 (Rahul)",
+          "name": "🔑 Login — Customer 1 (Rahul)",
           "event": [
             {
               "listen": "test",
@@ -1712,7 +1728,7 @@
           "id": "0da6375b-2645-4410-9737-162091076b7d"
         },
         {
-          "name": "Get Proposal by ID (Seeded \u2014 Approved)",
+          "name": "Get Proposal by ID (Seeded — Approved)",
           "request": {
             "method": "GET",
             "header": [],
@@ -1732,7 +1748,7 @@
           "id": "92540599-f795-4686-9981-60e581d1f6c9"
         },
         {
-          "name": "Upload Proposal Document \u26a0\ufe0f (multipart)",
+          "name": "Upload Proposal Document ⚠️ (multipart)",
           "request": {
             "method": "PUT",
             "header": [],
@@ -1742,7 +1758,7 @@
                 {
                   "key": "file",
                   "type": "file",
-                  "src": ""
+                  "src": "/Users/davishe/Documents/dummy-docs/income proof.pdf"
                 }
               ]
             },
@@ -1760,12 +1776,12 @@
                 "INCOME_PROOF"
               ]
             },
-            "description": "\u26a0\ufe0f Select a PDF file. Document key examples: INCOME_PROOF, AADHAAR, MEDICAL_REPORT, PAN"
+            "description": "⚠️ Select a PDF file. Document key examples: INCOME_PROOF, AADHAAR, MEDICAL_REPORT, PAN"
           },
           "id": "b6807454-0185-4c2e-a94c-ce88f265acef"
         },
         {
-          "name": "\ud83d\udd11 Login \u2014 Underwriter (Anand)",
+          "name": "🔑 Login — Underwriter (Anand)",
           "event": [
             {
               "listen": "test",
@@ -1874,7 +1890,7 @@
                 "notes"
               ]
             },
-            "description": "Proposal 4 (Arjun's) is in UnderReview status \u2014 ideal for underwriter workflow demo."
+            "description": "Proposal 4 (Arjun's) is in UnderReview status — ideal for underwriter workflow demo."
           },
           "id": "21953fb5-cdbe-4781-a523-1ef588f26f0a"
         },
@@ -1914,7 +1930,7 @@
           "id": "17aec279-e2b8-4a5b-8fb8-44b7a747a61d"
         },
         {
-          "name": "[Underwriter] Review Proposal \u2014 Approve",
+          "name": "[Underwriter] Review Proposal — Approve",
           "request": {
             "method": "POST",
             "header": [
@@ -1953,10 +1969,10 @@
       "id": "660178bb-0090-442e-9ea8-1fd3d4a44844"
     },
     {
-      "name": "7 \u00b7 Policy Lifecycle",
+      "name": "7 · Policy Lifecycle",
       "item": [
         {
-          "name": "\ud83d\udd11 Login \u2014 Customer 1 (Rahul)",
+          "name": "🔑 Login — Customer 1 (Rahul)",
           "event": [
             {
               "listen": "test",
@@ -2230,12 +2246,12 @@
           "id": "ad2beac8-4b1b-4e9a-94d6-420a9b50269e"
         },
         {
-          "name": "Cancel Policy (Priya's Life Policy)",
+          "name": "Cancel Policy (Rahul’s Motor Policy)",
           "request": {
             "method": "PUT",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/policies/90000000-0000-0000-0000-000000000003/cancel",
+              "raw": "{{baseUrl}}/api/v1/policies/90000000-0000-0000-0000-000000000002/cancel",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -2243,16 +2259,16 @@
                 "api",
                 "v1",
                 "policies",
-                "90000000-0000-0000-0000-000000000003",
+                "90000000-0000-0000-0000-000000000002",
                 "cancel"
               ]
             },
-            "description": "\u26a0\ufe0f Destructive \u2014 cancels Priya's Life policy. Uses hardcoded policy 3 to preserve main policyId for other demos."
+            "description": "⚠️ Destructive — cancels Priya's Life policy. Uses hardcoded policy 3 to preserve main policyId for other demos."
           },
           "id": "5e3fd7fe-a945-48ef-a875-88823959d0b6"
         },
         {
-          "name": "\ud83d\udd11 Login \u2014 Agent (Rajesh)",
+          "name": "🔑 Login — Agent (Rajesh)",
           "event": [
             {
               "listen": "test",
@@ -2320,7 +2336,7 @@
           "id": "92254010-d988-4328-a08c-99a54a98315a"
         },
         {
-          "name": "\ud83d\udd11 Login \u2014 Underwriter (Anand)",
+          "name": "🔑 Login — Underwriter (Anand)",
           "event": [
             {
               "listen": "test",
@@ -2416,10 +2432,26 @@
               ]
             }
           },
-          "id": "18432a42-4366-412b-859b-50dcdef11d9f"
+          "id": "18432a42-4366-412b-859b-50dcdef11d9f",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  const arr = Array.isArray(j) ? j : (j.data || j.items || []);",
+                  "  if (arr.length > 0) pm.environment.set('endorsementId', arr[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
         },
         {
-          "name": "[Underwriter] Review Endorsement \u2014 Approve",
+          "name": "[Underwriter] Review Endorsement — Approve",
           "request": {
             "method": "PUT",
             "header": [
@@ -2458,10 +2490,10 @@
       "id": "d1c18d79-97c0-4c14-b235-6c349417bc0b"
     },
     {
-      "name": "8 \u00b7 Premium Payments",
+      "name": "8 · Premium Payments",
       "item": [
         {
-          "name": "\ud83d\udd11 Login \u2014 Customer 1 (Rahul)",
+          "name": "🔑 Login — Customer 1 (Rahul)",
           "event": [
             {
               "listen": "test",
@@ -2569,7 +2601,7 @@
           "id": "f55e25ff-222a-4e75-b3cf-351d78032599"
         },
         {
-          "name": "Pay Premium \u26a0\ufe0f (Stripe \u2014 demo live)",
+          "name": "Pay Premium ⚠️ (Stripe — demo live)",
           "request": {
             "method": "POST",
             "header": [
@@ -2600,7 +2632,7 @@
                 "{{scheduleId}}"
               ]
             },
-            "description": "\u26a0\ufe0f Requires a real Stripe PaymentMethod. Use Stripe test card pm_card_visa during live demo."
+            "description": "⚠️ Requires a real Stripe PaymentMethod. Use Stripe test card pm_card_visa during live demo."
           },
           "id": "a465053b-f87a-41b6-a3b3-8ae5d29e303b"
         },
@@ -2646,7 +2678,7 @@
           "id": "86e2e52e-900e-4268-9653-64fdf2528a61"
         },
         {
-          "name": "\ud83d\udd11 Login \u2014 Finance Officer (Suresh)",
+          "name": "🔑 Login — Finance Officer (Suresh)",
           "event": [
             {
               "listen": "test",
@@ -2746,7 +2778,7 @@
           "id": "dff8c0b9-d8cd-4f90-9503-26756545d453"
         },
         {
-          "name": "[Finance] Refund Payment \u26a0\ufe0f (Stripe)",
+          "name": "[Finance] Refund Payment ⚠️ (Stripe)",
           "request": {
             "method": "POST",
             "header": [],
@@ -2763,7 +2795,7 @@
                 "refund"
               ]
             },
-            "description": "\u26a0\ufe0f Requires paymentId to have a valid Stripe PaymentIntent. Will fail on seeded payments (no Stripe intent)."
+            "description": "⚠️ Requires paymentId to have a valid Stripe PaymentIntent. Will fail on seeded payments (no Stripe intent)."
           },
           "id": "33af2cb7-3a95-4d47-b240-ab44f55e097d"
         },
@@ -2831,7 +2863,7 @@
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/payments/payout/claim/{{claimId}}",
+              "raw": "{{baseUrl}}/api/v1/payments/payout/claim/a0000000-0000-0000-0000-000000000004",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -2841,7 +2873,7 @@
                 "payments",
                 "payout",
                 "claim",
-                "{{claimId}}"
+                "a0000000-0000-0000-0000-000000000004"
               ]
             },
             "description": "Issues a Stripe payout to the customer's saved payment method for the approved claim amount."
@@ -2854,7 +2886,7 @@
             "method": "PUT",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/payments/claims/{{claimId}}/settle",
+              "raw": "{{baseUrl}}/api/v1/payments/claims/a0000000-0000-0000-0000-000000000005/settle",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -2863,11 +2895,11 @@
                 "v1",
                 "payments",
                 "claims",
-                "{{claimId}}",
+                "a0000000-0000-0000-0000-000000000005",
                 "settle"
               ]
             },
-            "description": "Marks claim as financially settled (no Stripe payout \u2014 for cash/bank transfer settlements)."
+            "description": "Marks claim as financially settled (no Stripe payout — for cash/bank transfer settlements)."
           },
           "id": "a23b505d-d68e-4931-b7dd-fb77d1579937"
         },
@@ -2898,7 +2930,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/payments/reports/summary",
+              "raw": "{{baseUrl}}/api/v1/payments/reports/summary?period=monthly",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -2908,6 +2940,12 @@
                 "payments",
                 "reports",
                 "summary"
+              ],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "monthly"
+                }
               ]
             }
           },
@@ -2935,7 +2973,7 @@
           "id": "e9e30d62-56c2-4d3b-9c84-0306f324934c"
         },
         {
-          "name": "Stripe Webhook \u26a0\ufe0f (Stripe signature required)",
+          "name": "Stripe Webhook ⚠️ (Stripe signature required)",
           "request": {
             "method": "POST",
             "header": [
@@ -2970,18 +3008,33 @@
                 "webhook"
               ]
             },
-            "description": "\u26a0\ufe0f Cannot be called directly \u2014 requires a valid Stripe-Signature header. Use Stripe CLI ('stripe listen') for local testing."
+            "description": "This endpoint is invoked by Stripe (via `stripe listen --forward-to localhost:5062/api/v1/payments/webhook`), NOT by manual Postman clicks. It verifies the Stripe-Signature header, so an unsigned Postman request is correctly rejected with 400. The test below asserts that rejection (signature verification working as intended)."
           },
-          "id": "1b5ff1eb-a9b3-46fb-9e6f-83b7c1d51a2c"
+          "id": "1b5ff1eb-a9b3-46fb-9e6f-83b7c1d51a2c",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Webhook requires a valid Stripe-Signature header. An unsigned Postman request",
+                  "// is expected to be rejected with 400 — this proves signature verification works.",
+                  "pm.test('Webhook rejects unsigned payload (signature verification)', function () {",
+                  "  pm.expect(pm.response.code, 'expected 400 for unsigned webhook').to.eql(400);",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ],
       "id": "7682f069-0675-4722-93d9-e111fe643824"
     },
     {
-      "name": "9 \u00b7 Claims Lifecycle",
+      "name": "9 · Claims Lifecycle",
       "item": [
         {
-          "name": "\ud83d\udd11 Login \u2014 Customer 1 (Rahul)",
+          "name": "🔑 Login — Customer 1 (Rahul)",
           "event": [
             {
               "listen": "test",
@@ -3079,7 +3132,7 @@
           "id": "a6eb78a4-28e3-49f7-9ee1-a6dcb958ee17"
         },
         {
-          "name": "Upload Claim Document \u26a0\ufe0f (multipart)",
+          "name": "Upload Claim Document ⚠️ (multipart)",
           "request": {
             "method": "PUT",
             "header": [],
@@ -3089,7 +3142,7 @@
                 {
                   "key": "file",
                   "type": "file",
-                  "src": ""
+                  "src": "/Users/davishe/Documents/dummy-docs/dummy-document.pdf"
                 }
               ]
             },
@@ -3107,7 +3160,7 @@
                 "HOSPITAL_BILL"
               ]
             },
-            "description": "\u26a0\ufe0f Select a PDF/image file. Document key examples: HOSPITAL_BILL, DISCHARGE_SUMMARY, PRESCRIPTION, POLICE_REPORT, REPAIR_ESTIMATE"
+            "description": "⚠️ Select a PDF/image file. Document key examples: HOSPITAL_BILL, DISCHARGE_SUMMARY, PRESCRIPTION, POLICE_REPORT, REPAIR_ESTIMATE"
           },
           "id": "5a4bd47a-f737-40eb-99f3-d05bc37dc986"
         },
@@ -3132,7 +3185,7 @@
           "id": "411928aa-9b20-4721-9520-8462d6c44f40"
         },
         {
-          "name": "Get Claim by ID (Seeded \u2014 Settled)",
+          "name": "Get Claim by ID (Seeded — Settled)",
           "request": {
             "method": "GET",
             "header": [],
@@ -3173,7 +3226,7 @@
           "id": "24257771-12d5-4213-b485-766a56a27c58"
         },
         {
-          "name": "\ud83d\udd11 Login \u2014 Claims Officer (Meera)",
+          "name": "🔑 Login — Claims Officer (Meera)",
           "event": [
             {
               "listen": "test",
@@ -3273,7 +3326,7 @@
           "id": "2ac3bbe0-47bf-415f-b26a-de718afd9f6f"
         },
         {
-          "name": "[ClaimsOfficer] Update Claim Status \u2014 UnderReview",
+          "name": "[ClaimsOfficer] Update Claim Status — UnderReview",
           "request": {
             "method": "PUT",
             "header": [
@@ -3374,12 +3427,12 @@
                 "assign-surveyor"
               ]
             },
-            "description": "Uses seeded Motor claim (CLM-2024-0002) \u2014 surveyorId points to seeded Deepak Rao."
+            "description": "Uses seeded Motor claim (CLM-2024-0002) — surveyorId points to seeded Deepak Rao."
           },
           "id": "39511d84-8238-440a-bdb8-9da15a5bc4d0"
         },
         {
-          "name": "\ud83d\udd11 Login \u2014 Surveyor (Deepak)",
+          "name": "🔑 Login — Surveyor (Deepak)",
           "event": [
             {
               "listen": "test",
@@ -3448,7 +3501,7 @@
           "id": "9972eb5b-16f3-46ea-a237-825750a1e2ad"
         },
         {
-          "name": "[Surveyor] Submit Survey Report \u26a0\ufe0f (multipart)",
+          "name": "[Surveyor] Submit Survey Report ⚠️ (multipart)",
           "request": {
             "method": "POST",
             "header": [],
@@ -3467,13 +3520,13 @@
                 },
                 {
                   "key": "remarks",
-                  "value": "Rear bumper and boot completely damaged. Estimated repair cost \u20b985,000. Vehicle driveable. Recommend approved repair at authorised workshop.",
+                  "value": "Rear bumper and boot completely damaged. Estimated repair cost ₹85,000. Vehicle driveable. Recommend approved repair at authorised workshop.",
                   "type": "text"
                 },
                 {
                   "key": "reportDocument",
                   "type": "file",
-                  "src": ""
+                  "src": "/Users/davishe/Documents/dummy-docs/dummy-document.pdf"
                 }
               ]
             },
@@ -3490,12 +3543,12 @@
                 "survey-report"
               ]
             },
-            "description": "\u26a0\ufe0f Select a PDF file for reportDocument. Uses seeded Motor claim (CLM-2024-0002)."
+            "description": "⚠️ Select a PDF file for reportDocument. Uses seeded Motor claim (CLM-2024-0002)."
           },
           "id": "a20d3eab-17cd-4d27-987a-274517bf95a7"
         },
         {
-          "name": "\ud83d\udd11 Login \u2014 Claims Officer (Meera)",
+          "name": "🔑 Login — Claims Officer (Meera)",
           "event": [
             {
               "listen": "test",
@@ -3576,7 +3629,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"isApproved\": true,\n  \"approvedAmount\": 42000,\n  \"reason\": \"All documents verified. Hospital bills confirmed. Claim approved for \u20b942,000 (95% of requested amount after deductions).\"\n}",
+              "raw": "{\n  \"isApproved\": true,\n  \"approvedAmount\": 42000,\n  \"reason\": \"All documents verified. Hospital bills confirmed. Claim approved for ₹42,000 (95% of requested amount after deductions).\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3617,7 +3670,7 @@
                 "settle"
               ]
             },
-            "description": "Final step \u2014 marks claim as settled. Finance Officer then processes payout."
+            "description": "Final step — marks claim as settled. Finance Officer then processes payout."
           },
           "id": "0bc25f0e-9d3e-4e75-9b7c-9b86f78e010d"
         }
@@ -3625,10 +3678,10 @@
       "id": "e72e8969-18a8-4b62-8d75-d1a07a23c6de"
     },
     {
-      "name": "10 \u00b7 Grievances",
+      "name": "10 · Grievances",
       "item": [
         {
-          "name": "\ud83d\udd11 Login \u2014 Customer 1 (Rahul)",
+          "name": "🔑 Login — Customer 1 (Rahul)",
           "event": [
             {
               "listen": "test",
@@ -3744,7 +3797,7 @@
           "id": "16196702-b39f-4dae-9067-987b80c599ed"
         },
         {
-          "name": "\ud83d\udd11 Login \u2014 Admin",
+          "name": "🔑 Login — Admin",
           "event": [
             {
               "listen": "test",
@@ -3916,10 +3969,10 @@
       "id": "a2842adb-c459-4b40-b901-37b57df326ab"
     },
     {
-      "name": "11 \u00b7 Admin & System",
+      "name": "11 · Admin & System",
       "item": [
         {
-          "name": "\ud83d\udd11 Login \u2014 Admin",
+          "name": "🔑 Login — Admin",
           "event": [
             {
               "listen": "test",
@@ -4196,7 +4249,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"templateKey\": \"CLAIM_APPROVED\",\n  \"subject\": \"Your Claim {{claimNumber}} Has Been Approved \u2014 SpeedClaim\",\n  \"bodyHtml\": \"<h2>Claim Approved</h2><p>Dear {{customerName}},</p><p>Your claim <strong>{{claimNumber}}</strong> has been approved for <strong>\u20b9{{approvedAmount}}</strong>.</p><p>The amount will be credited to your registered bank account within 3-5 working days.</p><p>Thank you for choosing SpeedClaim.</p>\"\n}",
+              "raw": "{\n  \"templateKey\": \"CLAIM_APPROVED\",\n  \"subject\": \"Your Claim {{claimNumber}} Has Been Approved — SpeedClaim\",\n  \"bodyHtml\": \"<h2>Claim Approved</h2><p>Dear {{customerName}},</p><p>Your claim <strong>{{claimNumber}}</strong> has been approved for <strong>₹{{approvedAmount}}</strong>.</p><p>The amount will be credited to your registered bank account within 3-5 working days.</p><p>Thank you for choosing SpeedClaim.</p>\"\n}",
               "options": {
                 "raw": {
                   "language": "json"

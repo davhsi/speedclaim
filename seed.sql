@@ -201,7 +201,11 @@ VALUES
    'SpeedLife Term Plan', 'Life', 'IRDA/LIF/SC/2024/003',
    'Pure term life insurance with high sum assured at affordable premiums.',
    18, 60, 1000000, 50000000, 10, 40, 0,
-   false, 1, true, '10000000-0000-0000-0000-000000000001', NOW());
+   false, 1, true, '10000000-0000-0000-0000-000000000001', NOW())
+-- Product 70000000-...001 (Health) is already seeded by EF migration SeedHealthProduct
+-- ("SpeedCare Platinum Health" + premium_rate_tables + document_requirements).
+-- Keep the migration's row (it has the rate tables the quote flow needs); only add Motor & Life here.
+ON CONFLICT (id) DO NOTHING;
 
 
 -- ─────────────────────────────────────────────────────────────
@@ -468,7 +472,31 @@ VALUES
    NOW() - INTERVAL '2 days', NOW() - INTERVAL '3 days',
    'Policyholder diagnosed with critical illness. Death benefit claim filed by nominee.',
    NULL, NULL,
-   NULL, false, NOW() - INTERVAL '2 days');
+   NULL, false, NOW() - INTERVAL '2 days'),
+
+  -- Claim 4 — Health, APPROVED & awaiting payout (demo target for [Finance] Process Claim Payout → Stripe)
+  ('a0000000-0000-0000-0000-000000000004',
+   'CLM-2024-0004',
+   '90000000-0000-0000-0000-000000000001',
+   '60000000-0000-0000-0000-000000000001',
+   2, 60000, 55000, false,
+   5,
+   NOW() - INTERVAL '6 days', NOW() - INTERVAL '8 days',
+   'Hospitalised for 4 days for dengue treatment. Claim approved, payout pending.',
+   '10000000-0000-0000-0000-000000000003', NULL,
+   NULL, false, NOW() - INTERVAL '6 days'),
+
+  -- Claim 5 — Health, APPROVED & awaiting settlement (demo target for [Finance] Mark Claim Financially Settled)
+  ('a0000000-0000-0000-0000-000000000005',
+   'CLM-2024-0005',
+   '90000000-0000-0000-0000-000000000001',
+   '60000000-0000-0000-0000-000000000001',
+   2, 35000, 30000, false,
+   5,
+   NOW() - INTERVAL '4 days', NOW() - INTERVAL '6 days',
+   'Day-care procedure claim. Approved, awaiting financial settlement.',
+   '10000000-0000-0000-0000-000000000003', NULL,
+   NULL, false, NOW() - INTERVAL '4 days');
 
 
 -- ─────────────────────────────────────────────────────────────
@@ -577,6 +605,29 @@ VALUES
    'Your Proposal Has Been Approved — SpeedClaim',
    '<p>Dear {{Name}},</p><p>Your proposal <strong>{{ProposalNumber}}</strong> has been approved. Please make your first premium payment to activate your policy.</p>',
    true, NOW());
+
+
+-- ─────────────────────────────────────────────────────────────
+-- 20. NOTIFICATIONS  (type: policy | payment | claim | kyc | grievance | general)
+--     Unread items so the customer can list and mark-as-read in the demo.
+-- ─────────────────────────────────────────────────────────────
+INSERT INTO notifications (id, user_id, title, message, type, is_read, redirect_url, created_at)
+VALUES
+  -- Customer 1 — Rahul
+  (gen_random_uuid(), '20000000-0000-0000-0000-000000000001',
+   'Claim Settled', 'Your claim CLM-2024-0001 has been settled for ₹42,000.',
+   'claim', false, '/claims/a0000000-0000-0000-0000-000000000001', NOW() - INTERVAL '30 days'),
+  (gen_random_uuid(), '20000000-0000-0000-0000-000000000001',
+   'Policy Active', 'Your policy POL-2024-0001 is now active.',
+   'policy', false, '/policies/90000000-0000-0000-0000-000000000001', NOW() - INTERVAL '55 days'),
+  (gen_random_uuid(), '20000000-0000-0000-0000-000000000001',
+   'Premium Due Soon', 'Your next premium for POL-2024-0001 is due soon.',
+   'payment', false, '/policies/90000000-0000-0000-0000-000000000001', NOW() - INTERVAL '2 days'),
+
+  -- Customer 2 — Priya
+  (gen_random_uuid(), '20000000-0000-0000-0000-000000000002',
+   'Policy Active', 'Your policy POL-2024-0003 is now active.',
+   'policy', false, '/policies/90000000-0000-0000-0000-000000000003', NOW() - INTERVAL '40 days');
 
 
 COMMIT;
