@@ -20,22 +20,29 @@ public class GrievanceService : IGrievanceService
         _unitOfWork = unitOfWork;
     }
 
+    private async Task<Models.Customer> ResolveCustomerAsync(Guid userId)
+    {
+        var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
+        if (customer == null) throw new NotFoundException("Customer not found.");
+        return customer;
+    }
+
     public async Task<GrievanceDto> RaiseGrievanceAsync(Guid customerId, RaiseGrievanceRequest request)
     {
-        var customer = await _unitOfWork.Customers.GetByIdAsync(customerId);
-        if (customer == null) throw new NotFoundException("Customer not found.");
+        var customer = await ResolveCustomerAsync(customerId);
+        var customerRecordId = customer.Id;
 
         if (request.PolicyId.HasValue)
         {
             var policy = await _unitOfWork.Policies.GetByIdAsync(request.PolicyId.Value);
-            if (policy == null || policy.CustomerId != customerId)
+            if (policy == null || policy.CustomerId != customerRecordId)
                 throw new ValidationException("Invalid policy.");
         }
 
         if (request.ClaimId.HasValue)
         {
             var claim = await _unitOfWork.Claims.GetByIdAsync(request.ClaimId.Value);
-            if (claim == null || claim.CustomerId != customerId)
+            if (claim == null || claim.CustomerId != customerRecordId)
                 throw new ValidationException("Invalid claim.");
         }
 
@@ -43,7 +50,7 @@ public class GrievanceService : IGrievanceService
         {
             Id = Guid.NewGuid(),
             GrievanceNumber = $"GRV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 6).ToUpper()}",
-            CustomerId = customerId,
+            CustomerId = customerRecordId,
             PolicyId = request.PolicyId,
             ClaimId = request.ClaimId,
             Category = request.Category,
@@ -60,7 +67,8 @@ public class GrievanceService : IGrievanceService
 
     public async Task<IEnumerable<GrievanceDto>> GetMyGrievancesAsync(Guid customerId)
     {
-        var grievances = await _unitOfWork.Grievances.FindAsync(g => g.CustomerId == customerId);
+        var customer = await ResolveCustomerAsync(customerId);
+        var grievances = await _unitOfWork.Grievances.FindAsync(g => g.CustomerId == customer.Id);
         return grievances.Select(MapToDto);
     }
 
@@ -74,8 +82,12 @@ public class GrievanceService : IGrievanceService
     {
         var grievance = await _unitOfWork.Grievances.GetByIdAsync(id);
         if (grievance == null) throw new NotFoundException("Grievance not found.");
-        if (requestingCustomerId.HasValue && grievance.CustomerId != requestingCustomerId.Value)
-            throw new ForbiddenException("You do not have access to this grievance.");
+        if (requestingCustomerId.HasValue)
+        {
+            var customer = await ResolveCustomerAsync(requestingCustomerId.Value);
+            if (grievance.CustomerId != customer.Id)
+                throw new ForbiddenException("You do not have access to this grievance.");
+        }
         return MapToDto(grievance);
     }
 

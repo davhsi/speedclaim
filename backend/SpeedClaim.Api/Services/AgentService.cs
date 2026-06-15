@@ -21,13 +21,18 @@ public class AgentService : IAgentService
         _unitOfWork = unitOfWork;
     }
 
+    private async Task<Models.Agent> ResolveAgentAsync(Guid userId)
+    {
+        var agent = await _unitOfWork.Agents.FirstOrDefaultAsync(a => a.UserId == userId);
+        if (agent == null) throw new NotFoundException("Agent not found.");
+        return agent;
+    }
+
     public async Task<IEnumerable<UserDto>> GetAssignedCustomersAsync(string agentId)
     {
         var aId = Guid.Parse(agentId);
-        // Assuming policies have an AgentId, we'd find customers through policies.
-        // Or if Proposal has AgentId, we find customers through proposals.
-        // Let's get proposals assigned to this agent and map back to users.
-        var proposals = await _unitOfWork.Proposals.FindAsync(p => p.AgentId == aId);
+        var agent = await ResolveAgentAsync(aId);
+        var proposals = await _unitOfWork.Proposals.FindAsync(p => p.AgentId == agent.Id);
         var customerIds = proposals.Select(p => p.CustomerId).Distinct().ToList();
 
         var customers = new List<UserDto>();
@@ -61,13 +66,14 @@ public class AgentService : IAgentService
     public async Task<AgentDashboardDto> GetAgentDashboardAsync(string agentId)
     {
         var aId = Guid.Parse(agentId);
-        var proposals = await _unitOfWork.Proposals.FindAsync(p => p.AgentId == aId);
+        var agent = await ResolveAgentAsync(aId);
+        var proposals = await _unitOfWork.Proposals.FindAsync(p => p.AgentId == agent.Id);
         var totalCustomers = proposals.Select(p => p.CustomerId).Distinct().Count();
-        
-        var policies = await _unitOfWork.Policies.FindAsync(p => p.Proposal != null && p.Proposal.AgentId == aId);
+
+        var policies = await _unitOfWork.Policies.FindAsync(p => p.Proposal != null && p.Proposal.AgentId == agent.Id);
         var totalPolicies = policies.Count();
-        
-        var commissions = await _unitOfWork.AgentCommissions.FindAsync(c => c.AgentId == aId);
+
+        var commissions = await _unitOfWork.AgentCommissions.FindAsync(c => c.AgentId == agent.Id);
         var totalCommission = commissions.Sum(c => c.CommissionAmount);
 
         var customerIds = proposals.Select(p => p.CustomerId).Distinct().ToList();
@@ -109,8 +115,8 @@ public class AgentService : IAgentService
     public async Task<IEnumerable<RenewalReminderDto>> GetRenewalRemindersAsync(string agentId)
     {
         var aId = Guid.Parse(agentId);
-        // Find all policies linked to this agent
-        var policies = await _unitOfWork.Policies.FindAsync(p => p.AgentId == aId);
+        var agent = await ResolveAgentAsync(aId);
+        var policies = await _unitOfWork.Policies.FindAsync(p => p.AgentId == agent.Id);
         var policyIds = policies.Select(p => p.Id).ToHashSet();
 
         if (!policyIds.Any()) return Enumerable.Empty<RenewalReminderDto>();
