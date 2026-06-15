@@ -323,4 +323,4 @@ All request bodies are validated using **FluentValidation** with `AddFluentValid
 
 ---
 
-> Document version: 5.0 | Stack: .NET 10 Web API + Angular + PostgreSQL + Stripe
+> Document version: 6.0 | Stack: .NET 10 Web API + Angular + PostgreSQL + Stripe
