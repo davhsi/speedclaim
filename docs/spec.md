@@ -1,4 +1,4 @@
-# SpeedClaim — Technical Specification v5.0
+# SpeedClaim — Technical Specification v6.0
 
 > Capstone Project | Domains: Health, Life, Motor | Stack: .NET Web API + Angular + PostgreSQL + Stripe + Azure Blob Storage (local first)
 >
@@ -7,6 +7,8 @@
 > **Changelog v4:** Added Section 6 (Security Controls — account lockout, soft delete, DPDP consent, audit log, security headers, CORS), Section 7 (API Filtering & Pagination), updated schema to 41 tables with `user_consents`.
 >
 > **Changelog v5:** Added Section 9 (Input Validation) covering all 30 FluentValidation validators across every domain. Access token expiry corrected to 15 minutes.
+>
+> **Changelog v6:** Fixed customer/surveyor identity resolution — the JWT subject is the `User.Id`, but `Claim`/`Policy`/`Proposal.customer_id` and `Claim.surveyor_id` are FKs to `customers.id` / `surveyors.id`. `PolicyService` and `ClaimService` now resolve `User.Id → Customer.Id` / `Surveyor.Id` before filtering (mirroring `UserService`), so customer-scoped (`/policy/my`, `/claims/my`, claim intimation) and surveyor-scoped (`/claims/surveyor/assigned`, survey report) endpoints return the correct records. Also: `audit_logs.old_value`/`new_value` are `jsonb` and are now JSON-serialized before persistence (previously caused `invalid input syntax for type json` 500s). Test suite expanded to 365.
 
 ---
 

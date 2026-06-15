@@ -13,7 +13,7 @@ Persistent context for AI sessions. Read this before touching any code.
 - **Payments**: Stripe
 - **Email**: MailKit over SMTP (Gmail App Password)
 - **Auth**: JWT Bearer tokens
-- **Tests**: xUnit + Moq, 252 tests, all passing
+- **Tests**: xUnit + Moq, 365 tests, all passing
 
 ---
 
@@ -263,6 +263,6 @@ These appear during `dotnet ef database update` and at runtime. They are real ar
 
 - [ ] Postman workspace with all endpoints preloaded + auth pre-request script
 - [ ] DB seeded with realistic data covering all scenarios
-- [ ] 100% service layer test coverage (currently 252 tests, all passing)
+- [ ] 100% service layer test coverage (currently 365 tests, all passing)
 - [ ] No unhandled exceptions (GlobalExceptionMiddleware covers all routes)
 - [ ] Clean git commits with descriptive messages
