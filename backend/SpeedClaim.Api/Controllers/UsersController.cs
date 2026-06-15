@@ -148,8 +148,8 @@ public class UsersController : BaseApiController
     public async Task<IActionResult> AddAddress([FromBody] SingleAddressRequest request)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-        await _userService.AddAddressAsync(userId, request);
-        return Ok();
+        var id = await _userService.AddAddressAsync(userId, request);
+        return Ok(new { id, message = "Address added successfully" });
     }
 
     /// <summary>Update an existing address</summary>

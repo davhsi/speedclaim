@@ -181,7 +181,7 @@ public class UserService : IUserService
         await _unitOfWork.CompleteAsync();
     }
 
-    public async Task AddAddressAsync(string userId, SingleAddressRequest request)
+    public async Task<Guid> AddAddressAsync(string userId, SingleAddressRequest request)
     {
         var uid = Guid.Parse(userId);
         var address = new Address
@@ -198,6 +198,7 @@ public class UserService : IUserService
         };
         await _unitOfWork.Addresses.AddAsync(address);
         await _unitOfWork.CompleteAsync();
+        return address.Id;
     }
 
     public async Task UpdateAddressAsync(string addressId, string userId, SingleAddressRequest request)

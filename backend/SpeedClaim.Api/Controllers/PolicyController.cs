@@ -11,11 +11,11 @@ using System.Security.Claims;
 namespace SpeedClaim.Api.Controllers;
 
 [Authorize]
-public class PolicyController : BaseApiController
+public class PoliciesController : BaseApiController
 {
     private readonly IPolicyService _policyService;
 
-    public PolicyController(IPolicyService policyService)
+    public PoliciesController(IPolicyService policyService)
     {
         _policyService = policyService;
     }

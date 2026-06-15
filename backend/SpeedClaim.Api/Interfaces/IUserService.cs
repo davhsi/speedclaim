@@ -16,7 +16,7 @@ public interface IUserService
     Task UpdateFamilyMemberAsync(string memberId, string customerId, UpdateFamilyMemberRequest request);
     Task<IEnumerable<FamilyMemberDto>> GetFamilyMembersAsync(string customerId);
     Task UploadKycDocumentsAsync(string customerId, KycUploadRequest request);
-    Task AddAddressAsync(string userId, SingleAddressRequest request);
+    Task<Guid> AddAddressAsync(string userId, SingleAddressRequest request);
     Task UpdateAddressAsync(string addressId, string userId, SingleAddressRequest request);
     Task DeleteAddressAsync(string addressId, string userId);
     Task DeleteFamilyMemberAsync(string memberId, string customerId);

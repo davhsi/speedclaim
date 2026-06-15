@@ -110,7 +110,7 @@ public class AuthController : BaseApiController
     [HttpPost("admin/reset-password/{userId}")]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
-    public async Task<IActionResult> ResetPassword(string userId, [FromBody] ResetPasswordRequest request)
+    public async Task<IActionResult> ResetPassword(string userId, [FromBody] AdminResetPasswordRequest request)
     {
         var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         await _authService.ResetPasswordAsync(userId, request.NewPassword, adminId ?? string.Empty);

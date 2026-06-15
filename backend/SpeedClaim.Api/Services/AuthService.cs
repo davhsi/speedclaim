@@ -34,6 +34,10 @@ public class AuthService : IAuthService
         if (existingUser != null)
             throw new ConflictException("Email already registered");
 
+        var existingPhone = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Phone == request.Phone);
+        if (existingPhone != null)
+            throw new ConflictException("Phone number already registered");
+
         var salutation = Enum.TryParse<Salutation>(request.Salutation, ignoreCase: true, out var sal) ? sal : Salutation.Mr;
 
         var user = new User
@@ -294,6 +298,10 @@ public class AuthService : IAuthService
         var existingUser = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
         if (existingUser != null)
             throw new ConflictException("Email already registered");
+
+        var existingPhone = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Phone == request.Phone);
+        if (existingPhone != null)
+            throw new ConflictException("Phone number already registered");
 
         var salutation = Enum.TryParse<Salutation>(request.Salutation, ignoreCase: true, out var sal) ? sal : Salutation.Mr;
 
