@@ -269,6 +269,8 @@ public class UserServiceTests
     public async Task AddFamilyMemberAsync_ValidRequest_CreatesMember()
     {
         var customerId = Guid.NewGuid();
+        _mockCustomerRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>()))
+            .ReturnsAsync(new Customer { Id = customerId, UserId = customerId });
         var mockMemberRepo = new Mock<IRepository<CustomerMember>>();
         _mockUnitOfWork.Setup(u => u.CustomerMembers).Returns(mockMemberRepo.Object);
 
@@ -288,6 +290,8 @@ public class UserServiceTests
         var customerId = Guid.NewGuid();
         var member = new CustomerMember { Id = memberId, CustomerId = customerId, FirstName = "Old", LastName = "Name", DateOfBirth = new DateOnly(1990, 1, 1) };
 
+        _mockCustomerRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>()))
+            .ReturnsAsync(new Customer { Id = customerId, UserId = customerId });
         var mockMemberRepo = new Mock<IRepository<CustomerMember>>();
         mockMemberRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<CustomerMember, bool>>>())).ReturnsAsync(member);
         _mockUnitOfWork.Setup(u => u.CustomerMembers).Returns(mockMemberRepo.Object);
@@ -320,6 +324,8 @@ public class UserServiceTests
         {
             new CustomerMember { Id = Guid.NewGuid(), CustomerId = customerId, FirstName = "Jane", LastName = "Doe", DateOfBirth = new DateOnly(1992, 6, 15) }
         };
+        _mockCustomerRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>()))
+            .ReturnsAsync(new Customer { Id = customerId, UserId = customerId });
         var mockMemberRepo = new Mock<IRepository<CustomerMember>>();
         mockMemberRepo.Setup(r => r.GetPagedAsync(1, 100, It.IsAny<Expression<Func<CustomerMember, bool>>>(), null))
             .ReturnsAsync(((IEnumerable<CustomerMember>)members, 1));
@@ -439,6 +445,8 @@ public class UserServiceTests
         var customerId = Guid.NewGuid();
         var member = new CustomerMember { Id = memberId, CustomerId = customerId };
 
+        _mockCustomerRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>()))
+            .ReturnsAsync(new Customer { Id = customerId, UserId = customerId });
         var mockMemberRepo = new Mock<IRepository<CustomerMember>>();
         mockMemberRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<CustomerMember, bool>>>())).ReturnsAsync(member);
         _mockUnitOfWork.Setup(u => u.CustomerMembers).Returns(mockMemberRepo.Object);

@@ -47,8 +47,8 @@ public class GrievanceServiceTests
     {
         // Arrange
         var customerId = Guid.NewGuid();
-        var customer = new Customer { Id = customerId };
-        _mockCustomerRepo.Setup(r => r.GetByIdAsync(customerId)).ReturnsAsync(customer);
+        var customer = new Customer { Id = customerId, UserId = customerId };
+        _mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>())).ReturnsAsync(customer);
 
         var request = new RaiseGrievanceRequest(null, null, GrievanceCategory.PremiumIssue, "I was charged twice");
 
@@ -132,6 +132,7 @@ public class GrievanceServiceTests
         {
             new Grievance { Id = Guid.NewGuid(), CustomerId = customerId, GrievanceNumber = "GRV-001", Category = GrievanceCategory.PremiumIssue, Description = "Test", Status = GrievanceStatus.Open }
         };
+        _mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>())).ReturnsAsync(new Customer { Id = customerId, UserId = customerId });
         _mockGrievanceRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Grievance, bool>>>())).ReturnsAsync(grievances);
 
         var result = await _grievanceService.GetMyGrievancesAsync(customerId);
@@ -177,6 +178,7 @@ public class GrievanceServiceTests
         var customerId = Guid.NewGuid();
         var grievance = new Grievance { Id = id, CustomerId = customerId, GrievanceNumber = "GRV-001", Category = GrievanceCategory.PremiumIssue, Description = "D", Status = GrievanceStatus.Open };
         _mockGrievanceRepo.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(grievance);
+        _mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>())).ReturnsAsync(new Customer { Id = customerId, UserId = customerId });
 
         var result = await _grievanceService.GetGrievanceByIdAsync(id, customerId);
 
@@ -190,8 +192,12 @@ public class GrievanceServiceTests
         var grievance = new Grievance { Id = id, CustomerId = Guid.NewGuid(), GrievanceNumber = "GRV-001", Category = GrievanceCategory.PremiumIssue, Description = "D", Status = GrievanceStatus.Open };
         _mockGrievanceRepo.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(grievance);
 
+        var requestingUserId = Guid.NewGuid();
+        _mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>()))
+            .ReturnsAsync(new Customer { Id = Guid.NewGuid(), UserId = requestingUserId }); // Id differs from grievance.CustomerId
+
         Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() =>
-            _grievanceService.GetGrievanceByIdAsync(id, Guid.NewGuid()));
+            _grievanceService.GetGrievanceByIdAsync(id, requestingUserId));
     }
 
     [Test]
@@ -237,10 +243,10 @@ public class GrievanceServiceTests
     {
         var customerId = Guid.NewGuid();
         var policyId = Guid.NewGuid();
-        var customer = new Customer { Id = customerId };
+        var customer = new Customer { Id = customerId, UserId = customerId };
         var policy = new Policy { Id = policyId, CustomerId = customerId };
 
-        _mockCustomerRepo.Setup(r => r.GetByIdAsync(customerId)).ReturnsAsync(customer);
+        _mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>())).ReturnsAsync(customer);
         _mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(policy);
 
         var request = new RaiseGrievanceRequest(policyId, null, GrievanceCategory.PolicyServicing, "Wrong coverage");
@@ -256,10 +262,10 @@ public class GrievanceServiceTests
     {
         var customerId = Guid.NewGuid();
         var policyId = Guid.NewGuid();
-        var customer = new Customer { Id = customerId };
+        var customer = new Customer { Id = customerId, UserId = customerId };
         var policy = new Policy { Id = policyId, CustomerId = Guid.NewGuid() }; // different customer
 
-        _mockCustomerRepo.Setup(r => r.GetByIdAsync(customerId)).ReturnsAsync(customer);
+        _mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>())).ReturnsAsync(customer);
         _mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(policy);
 
         Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() =>
@@ -272,11 +278,11 @@ public class GrievanceServiceTests
         var customerId = Guid.NewGuid();
         var policyId = Guid.NewGuid();
         var claimId = Guid.NewGuid();
-        var customer = new Customer { Id = customerId };
+        var customer = new Customer { Id = customerId, UserId = customerId };
         var policy = new Policy { Id = policyId, CustomerId = customerId };
         var claim = new Claim { Id = claimId, CustomerId = Guid.NewGuid() }; // different customer
 
-        _mockCustomerRepo.Setup(r => r.GetByIdAsync(customerId)).ReturnsAsync(customer);
+        _mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>())).ReturnsAsync(customer);
         _mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(policy);
         _mockUnitOfWork.Setup(u => u.Claims.GetByIdAsync(claimId)).ReturnsAsync(claim);
 
@@ -290,11 +296,11 @@ public class GrievanceServiceTests
         var customerId = Guid.NewGuid();
         var policyId = Guid.NewGuid();
         var claimId = Guid.NewGuid();
-        var customer = new Customer { Id = customerId };
+        var customer = new Customer { Id = customerId, UserId = customerId };
         var policy = new Policy { Id = policyId, CustomerId = customerId };
         var claim = new Claim { Id = claimId, CustomerId = customerId };
 
-        _mockCustomerRepo.Setup(r => r.GetByIdAsync(customerId)).ReturnsAsync(customer);
+        _mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>())).ReturnsAsync(customer);
         _mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(policy);
         _mockUnitOfWork.Setup(u => u.Claims.GetByIdAsync(claimId)).ReturnsAsync(claim);
 

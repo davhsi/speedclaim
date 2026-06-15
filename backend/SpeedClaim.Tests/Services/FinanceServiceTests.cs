@@ -68,7 +68,7 @@ public class FinanceServiceTests
 
         var customerEntity = new SpeedClaim.Api.Models.Customer { Id = customerId, UserId = Guid.NewGuid() };
         var mockCustomerRepo = new Mock<IRepository<SpeedClaim.Api.Models.Customer>>();
-        mockCustomerRepo.Setup(r => r.GetByIdAsync(customerId)).ReturnsAsync(customerEntity);
+        mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<SpeedClaim.Api.Models.Customer, bool>>>())).ReturnsAsync(customerEntity);
         _mockUnitOfWork.Setup(u => u.Customers).Returns(mockCustomerRepo.Object);
 
         var existingStripeCustomer = new SpeedClaim.Api.Models.StripeCustomer { Id = Guid.NewGuid(), UserId = customerEntity.UserId, StripeCustomerId = "cus_test" };
@@ -140,6 +140,11 @@ public class FinanceServiceTests
         {
             new PremiumPayment { Id = Guid.NewGuid(), CustomerId = customerId, Amount = 100 }
         };
+
+        var mockCustomerRepo = new Mock<IRepository<SpeedClaim.Api.Models.Customer>>();
+        mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<SpeedClaim.Api.Models.Customer, bool>>>()))
+            .ReturnsAsync(new SpeedClaim.Api.Models.Customer { Id = customerId, UserId = customerId });
+        _mockUnitOfWork.Setup(u => u.Customers).Returns(mockCustomerRepo.Object);
 
         var mockPaymentRepo = new Mock<IPremiumPaymentRepository>();
         mockPaymentRepo.Setup(r => r.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<PremiumPayment, bool>>>()))
@@ -300,6 +305,11 @@ public class FinanceServiceTests
         var customerId = Guid.NewGuid();
         var payment = new PremiumPayment { Id = paymentId, CustomerId = customerId, Status = PaymentStatus.Pending };
 
+        var mockCustomerRepo = new Mock<IRepository<SpeedClaim.Api.Models.Customer>>();
+        mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<SpeedClaim.Api.Models.Customer, bool>>>()))
+            .ReturnsAsync(new SpeedClaim.Api.Models.Customer { Id = customerId, UserId = customerId });
+        _mockUnitOfWork.Setup(u => u.Customers).Returns(mockCustomerRepo.Object);
+
         var mockPaymentRepo = new Mock<IPremiumPaymentRepository>();
         mockPaymentRepo.Setup(r => r.GetByIdAsync(paymentId)).ReturnsAsync(payment);
         _mockUnitOfWork.Setup(u => u.PremiumPayments).Returns(mockPaymentRepo.Object);
@@ -322,6 +332,11 @@ public class FinanceServiceTests
             Currency = "USD",
             ReceiptUrl = "https://stripe.com/receipt/123"
         };
+
+        var mockCustomerRepo = new Mock<IRepository<SpeedClaim.Api.Models.Customer>>();
+        mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<SpeedClaim.Api.Models.Customer, bool>>>()))
+            .ReturnsAsync(new SpeedClaim.Api.Models.Customer { Id = customerId, UserId = customerId });
+        _mockUnitOfWork.Setup(u => u.Customers).Returns(mockCustomerRepo.Object);
 
         var mockPaymentRepo = new Mock<IPremiumPaymentRepository>();
         mockPaymentRepo.Setup(r => r.GetByIdAsync(paymentId)).ReturnsAsync(payment);
@@ -480,7 +495,7 @@ public class FinanceServiceTests
 
         var mockCustomerRepo = new Mock<IRepository<SpeedClaim.Api.Models.Customer>>();
         var mockStripeRepo = new Mock<IRepository<SpeedClaim.Api.Models.StripeCustomer>>();
-        mockCustomerRepo.Setup(r => r.GetByIdAsync(customerId)).ReturnsAsync(customerRecord);
+        mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<SpeedClaim.Api.Models.Customer, bool>>>())).ReturnsAsync(customerRecord);
         mockStripeRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<SpeedClaim.Api.Models.StripeCustomer, bool>>>())).ReturnsAsync(stripeRecord);
         _mockUnitOfWork.Setup(u => u.Customers).Returns(mockCustomerRepo.Object);
         _mockUnitOfWork.Setup(u => u.StripeCustomers).Returns(mockStripeRepo.Object);
@@ -509,7 +524,7 @@ public class FinanceServiceTests
 
         var mockCustomerRepo = new Mock<IRepository<SpeedClaim.Api.Models.Customer>>();
         var mockStripeRepo = new Mock<IRepository<SpeedClaim.Api.Models.StripeCustomer>>();
-        mockCustomerRepo.Setup(r => r.GetByIdAsync(customerId)).ReturnsAsync(customerRecord);
+        mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<SpeedClaim.Api.Models.Customer, bool>>>())).ReturnsAsync(customerRecord);
         mockStripeRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<SpeedClaim.Api.Models.StripeCustomer, bool>>>())).ReturnsAsync((SpeedClaim.Api.Models.StripeCustomer?)null);
         _mockUnitOfWork.Setup(u => u.Customers).Returns(mockCustomerRepo.Object);
         _mockUnitOfWork.Setup(u => u.StripeCustomers).Returns(mockStripeRepo.Object);
@@ -545,7 +560,7 @@ public class FinanceServiceTests
 
         var customerEntity = new SpeedClaim.Api.Models.Customer { Id = customerId, UserId = userId };
         var mockCustomerRepo = new Mock<IRepository<SpeedClaim.Api.Models.Customer>>();
-        mockCustomerRepo.Setup(r => r.GetByIdAsync(customerId)).ReturnsAsync(customerEntity);
+        mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<SpeedClaim.Api.Models.Customer, bool>>>())).ReturnsAsync(customerEntity);
         _mockUnitOfWork.Setup(u => u.Customers).Returns(mockCustomerRepo.Object);
 
         var mockStripeCustomerRepo = new Mock<IRepository<SpeedClaim.Api.Models.StripeCustomer>>();

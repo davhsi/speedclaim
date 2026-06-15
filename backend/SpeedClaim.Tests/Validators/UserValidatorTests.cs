@@ -167,7 +167,7 @@ public class SingleAddressRequestValidatorTests
         AddressLine2: null,
         City: "Bengaluru",
         State: "Karnataka",
-        Pincode: "560001",
+        PostalCode: "560001",
         Country: "India",
         IsSameAsPermanent: false
     );
@@ -205,15 +205,15 @@ public class SingleAddressRequestValidatorTests
     [Test]
     public void Pincode_With_5_Digits_Fails()
     {
-        var req = ValidRequest() with { Pincode = "56000" };
-        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.Pincode);
+        var req = ValidRequest() with { PostalCode = "56000" };
+        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.PostalCode);
     }
 
     [Test]
     public void Pincode_With_Letters_Fails()
     {
-        var req = ValidRequest() with { Pincode = "5600AB" };
-        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.Pincode);
+        var req = ValidRequest() with { PostalCode = "5600AB" };
+        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.PostalCode);
     }
 
     [Test]

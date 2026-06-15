@@ -64,6 +64,7 @@ public class AgentServiceTests
         var customer = new Customer { Id = customerId, UserId = userId, MaritalStatus = MaritalStatus.Married };
         var user = new User { Id = userId, Email = "test@test.com", Role = UserRole.Customer, Salutation = Salutation.Mr, FirstName = "John", LastName = "Doe" };
 
+        _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync(new Agent { Id = agentId, UserId = agentId });
         _mockProposalRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Proposal, bool>>>())).ReturnsAsync(proposals);
         _mockCustomerRepo.Setup(r => r.GetByIdAsync(customerId)).ReturnsAsync(customer);
         _mockUserRepo.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
@@ -83,6 +84,7 @@ public class AgentServiceTests
         var policies = new List<Policy> { new Policy { Id = Guid.NewGuid() } };
         var commissions = new List<AgentCommission> { new AgentCommission { CommissionAmount = 500 } };
 
+        _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync(new Agent { Id = agentId, UserId = agentId });
         _mockProposalRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Proposal, bool>>>())).ReturnsAsync(proposals);
         _mockPolicyRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Policy, bool>>>())).ReturnsAsync(policies);
         _mockCommissionRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<AgentCommission, bool>>>())).ReturnsAsync(commissions);
@@ -316,6 +318,7 @@ public class AgentServiceTests
     public async Task GetRenewalRemindersAsync_NoPolicies_ReturnsEmpty()
     {
         var agentId = Guid.NewGuid();
+        _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync(new Agent { Id = agentId, UserId = agentId });
         _mockPolicyRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Policy, bool>>>()))
             .ReturnsAsync(new List<Policy>());
 
@@ -331,6 +334,8 @@ public class AgentServiceTests
         var policyId = Guid.NewGuid();
         var customerId = Guid.NewGuid();
         var userId = Guid.NewGuid();
+
+        _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync(new Agent { Id = agentId, UserId = agentId });
 
         var policies = new List<Policy>
         {

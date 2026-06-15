@@ -324,9 +324,10 @@ public class ProposalService : IProposalService
             };
             await _unitOfWork.Policies.AddAsync(policy);
 
-            proposal.PremiumSchedules.Add(new PremiumSchedule
+            await _unitOfWork.PremiumSchedules.AddAsync(new PremiumSchedule
             {
                 Id = Guid.NewGuid(),
+                ProposalId = proposal.Id,
                 PolicyId = policy.Id,
                 InstallmentNumber = 1,
                 DueDate = activationDate,
@@ -340,6 +341,7 @@ public class ProposalService : IProposalService
             proposal.RejectionReason = notes;
         }
 
+        _unitOfWork.Proposals.Update(proposal);
         await _unitOfWork.AuditLogs.AddAsync(new Models.AuditLog
         {
             Id = Guid.NewGuid(), UserId = uId, EntityType = "Proposal", EntityId = pId,

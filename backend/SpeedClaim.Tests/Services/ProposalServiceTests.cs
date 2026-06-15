@@ -41,6 +41,7 @@ public class ProposalServiceTests
         _mockUnitOfWork.Setup(u => u.Agents).Returns(_mockAgentRepo.Object);
         _mockUnitOfWork.Setup(u => u.Customers).Returns(_mockCustomerRepo.Object);
         _mockUnitOfWork.Setup(u => u.Policies).Returns(new Mock<IPolicyRepository>().Object);
+        _mockUnitOfWork.Setup(u => u.PremiumSchedules).Returns(new Mock<IRepository<PremiumSchedule>>().Object);
         _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
         _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
 
@@ -192,12 +193,20 @@ public class ProposalServiceTests
         var proposal = new Proposal { PremiumAmount = 2500, PremiumSchedules = new List<PremiumSchedule>() };
         _mockProposalRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(proposal);
 
+        PremiumSchedule? captured = null;
+        var mockScheduleRepo = new Mock<IRepository<PremiumSchedule>>();
+        mockScheduleRepo.Setup(r => r.AddAsync(It.IsAny<PremiumSchedule>()))
+            .Callback<PremiumSchedule>(ps => captured = ps)
+            .Returns(Task.CompletedTask);
+        _mockUnitOfWork.Setup(u => u.PremiumSchedules).Returns(mockScheduleRepo.Object);
+
         await _proposalService.ApproveOrRejectProposalAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), true, "Looks good");
 
         Assert.That(proposal.Status, Is.EqualTo(ProposalStatus.Approved));
         Assert.That(proposal.UnderwriterNotes, Is.EqualTo("Looks good"));
-        Assert.That(proposal.PremiumSchedules.Count, Is.EqualTo(1));
-        Assert.That(proposal.PremiumSchedules.First().Amount, Is.EqualTo(2500));
+        mockScheduleRepo.Verify(r => r.AddAsync(It.IsAny<PremiumSchedule>()), Times.Once);
+        Assert.That(captured, Is.Not.Null);
+        Assert.That(captured!.Amount, Is.EqualTo(2500));
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
 
@@ -286,6 +295,7 @@ public class ProposalServiceTests
         var proposal = new Proposal { Id = proposalId, ProposalNumber = "PRP-001", Status = ProposalStatus.Submitted, CustomerId = customerId, CreatedAt = DateTimeOffset.UtcNow };
         _mockProposalRepo.Setup(r => r.GetByIdAsync(proposalId)).ReturnsAsync(proposal);
         _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync((Agent?)null);
+        _mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>())).ReturnsAsync(new Customer { Id = customerId, UserId = customerId });
 
         var result = await _proposalService.GetByIdAsync(proposalId.ToString(), customerId.ToString(), isAdmin: false);
 
@@ -320,6 +330,7 @@ public class ProposalServiceTests
         var customerId = Guid.NewGuid();
         var proposal = new Proposal { Id = proposalId, ProposalNumber = "PRP-001", Status = ProposalStatus.DocumentsPending, CustomerId = customerId, CreatedAt = DateTimeOffset.UtcNow };
         _mockProposalRepo.Setup(r => r.GetByIdAsync(proposalId)).ReturnsAsync(proposal);
+        _mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>())).ReturnsAsync(new Customer { Id = customerId, UserId = customerId });
 
         var mockStorageService = new Mock<IStorageService>();
         mockStorageService.Setup(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), It.IsAny<string>(), It.IsAny<string>()))
