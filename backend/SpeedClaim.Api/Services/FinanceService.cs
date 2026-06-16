@@ -279,12 +279,32 @@ public class FinanceService : IFinanceService
         }
     }
 
-    public async Task ReconcileByStripeIntentAsync(string paymentIntentId)
+    public async Task ReconcileByStripeIntentAsync(string paymentIntentId, string? chargeId = null)
     {
         var payment = await _unitOfWork.PremiumPayments.GetByIntentWithScheduleAsync(paymentIntentId);
         if (payment == null) return; // idempotent — if no matching payment, ignore
 
         await ReconcilePaymentAsync(payment.Id.ToString(), "system-webhook");
+
+        // Best-effort: capture the Stripe receipt URL + charge id from the charge.
+        // Never let this fail the webhook — reconciliation above is already persisted.
+        if (!string.IsNullOrEmpty(chargeId))
+        {
+            try
+            {
+                var charge = await _stripeWrapper.GetChargeAsync(chargeId);
+                if (charge != null && !string.IsNullOrEmpty(charge.ReceiptUrl))
+                {
+                    payment.ReceiptUrl = charge.ReceiptUrl;
+                    payment.StripeChargeId = charge.Id;
+                    await _unitOfWork.CompleteAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not fetch Stripe receipt URL for payment {PaymentId}", payment.Id);
+            }
+        }
     }
 
     public async Task ProcessRefundAsync(string paymentId, string financeOfficerId)

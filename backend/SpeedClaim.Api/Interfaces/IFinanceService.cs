@@ -17,7 +17,7 @@ public interface IFinanceService
     // Finance Officer
     Task<IEnumerable<PaymentRecordDto>> GetAllPaymentRecordsAsync();
     Task ReconcilePaymentAsync(string paymentId, string financeOfficerId);
-    Task ReconcileByStripeIntentAsync(string paymentIntentId);
+    Task ReconcileByStripeIntentAsync(string paymentIntentId, string? chargeId = null);
     Task ProcessRefundAsync(string paymentId, string financeOfficerId);
     Task ProcessClaimPayoutAsync(string claimId, string financeOfficerId);
     Task MarkClaimFinanciallySettledAsync(string claimId, string financeOfficerId);

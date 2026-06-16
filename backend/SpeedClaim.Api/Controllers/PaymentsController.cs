@@ -250,7 +250,7 @@ public class PaymentsController : BaseApiController
             var paymentIntent = stripeEvent.Data.Object as Stripe.PaymentIntent;
             if (paymentIntent != null)
             {
-                await _financeService.ReconcileByStripeIntentAsync(paymentIntent.Id);
+                await _financeService.ReconcileByStripeIntentAsync(paymentIntent.Id, paymentIntent.LatestChargeId);
             }
         }
 

@@ -8,5 +8,6 @@ public interface IStripeWrapper
     Task<PaymentIntent> CreatePaymentIntentAsync(PaymentIntentCreateOptions options);
     Task<Customer> CreateCustomerAsync(CustomerCreateOptions options);
     Task<StripeList<PaymentMethod>> ListPaymentMethodsAsync(string stripeCustomerId, string type = "card");
+    Task<Charge> GetChargeAsync(string chargeId);
     Event ConstructEvent(string json, string stripeSignature, string webhookSecret);
 }

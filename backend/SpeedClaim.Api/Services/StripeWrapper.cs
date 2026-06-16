@@ -26,6 +26,12 @@ public class StripeWrapper : IStripeWrapper
         return await service.ListAsync(new PaymentMethodListOptions { Customer = stripeCustomerId, Type = type });
     }
 
+    public async Task<Charge> GetChargeAsync(string chargeId)
+    {
+        var service = new ChargeService();
+        return await service.GetAsync(chargeId);
+    }
+
     public Event ConstructEvent(string json, string stripeSignature, string webhookSecret)
     {
         return EventUtility.ConstructEvent(json, stripeSignature, webhookSecret);

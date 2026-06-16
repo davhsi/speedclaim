@@ -711,6 +711,27 @@ public class FinanceServiceTests
     }
 
     [Test]
+    public async Task ReconcileByStripeIntentAsync_WithChargeId_SetsReceiptUrl()
+    {
+        var paymentId = Guid.NewGuid();
+        var payment = new PremiumPayment { Id = paymentId, Status = PaymentStatus.Pending, ScheduleId = null };
+
+        var mockPaymentRepo = new Mock<IPremiumPaymentRepository>();
+        mockPaymentRepo.Setup(r => r.GetByIntentWithScheduleAsync("pi_test")).ReturnsAsync(payment);
+        mockPaymentRepo.Setup(r => r.GetByIdAsync(paymentId)).ReturnsAsync(payment);
+        _mockUnitOfWork.Setup(u => u.PremiumPayments).Returns(mockPaymentRepo.Object);
+        _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
+        _mockStripeWrapper.Setup(s => s.GetChargeAsync("ch_test"))
+            .ReturnsAsync(new Charge { Id = "ch_test", ReceiptUrl = "https://receipts.stripe.com/live_001" });
+
+        await _financeService.ReconcileByStripeIntentAsync("pi_test", "ch_test");
+
+        Assert.That(payment.Status, Is.EqualTo(PaymentStatus.Paid));
+        Assert.That(payment.ReceiptUrl, Is.EqualTo("https://receipts.stripe.com/live_001"));
+        Assert.That(payment.StripeChargeId, Is.EqualTo("ch_test"));
+    }
+
+    [Test]
     public void ProcessClaimPayoutAsync_ZeroApprovedAmount_ThrowsValidationException()
     {
         var claimId = Guid.NewGuid();
