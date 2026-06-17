@@ -97,7 +97,7 @@ public partial class SpeedClaimDbContext : DbContext
                 {
                     Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
                     Email = "davish.std@gmail.com",
-                    PasswordHash = "$2a$11$O.SrE3dQ5wjiWGc20uH7HuIuFwnrCYiuROffc9k/nk6./69E2z2.S",
+                    PasswordHash = "$2a$11$noTUuePjq5y/ldIskdG1JOVh7IxShG0RPMr3OEK8Mc6eXPKa3WTWK",
                     Salutation = SpeedClaim.Api.Models.Enums.Salutation.Mr,
                     FirstName = "Davish",
                     LastName = "Dev",
@@ -180,23 +180,8 @@ public partial class SpeedClaimDbContext : DbContext
         modelBuilder.Entity<KycRecord>(e =>
         {
             e.HasKey(x => x.Id).HasName("PK_kyc_records");
-            e.HasIndex(x => new { x.IdType, x.IdNumber }).IsUnique().HasDatabaseName("uq_kyc_records_id_type_number");
-            e.Property(x => x.IdNumber).IsRequired().HasMaxLength(50);
-            e.Property(x => x.IdType).HasConversion<string>();
             e.Property(x => x.KycStatus).HasConversion<string>();
             e.HasOne(x => x.User).WithOne(u => u.KycRecord).HasForeignKey<KycRecord>(x => x.UserId).HasConstraintName("FK_kyc_records_users_user_id").OnDelete(DeleteBehavior.Cascade);
-            
-            e.HasData(
-                new KycRecord
-                {
-                    Id = Guid.Parse("33333333-3333-3333-3333-333333333333"),
-                    UserId = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-                    IdType = SpeedClaim.Api.Models.Enums.IdType.Aadhaar,
-                    IdNumber = "999988887777",
-                    KycStatus = SpeedClaim.Api.Models.Enums.KycStatus.Approved,
-                    CreatedAt = new DateTimeOffset(2026, 6, 7, 0, 0, 0, TimeSpan.Zero)
-                }
-            );
         });
 
         // Branches & Agents

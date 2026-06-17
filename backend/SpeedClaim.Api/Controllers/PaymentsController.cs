@@ -117,7 +117,7 @@ public class PaymentsController : BaseApiController
     {
         var officerId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         await _financeService.ReconcilePaymentAsync(paymentId, officerId);
-        return Ok();
+        return Ok(new { message = "Payment reconciled. Policy has been activated if it was pending." });
     }
 
     /// <summary>Process a refund for a payment and revert the associated schedule to Overdue</summary>
@@ -130,7 +130,7 @@ public class PaymentsController : BaseApiController
     {
         var officerId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         await _financeService.ProcessRefundAsync(paymentId, officerId);
-        return Ok();
+        return Ok(new { message = "Refund processed. Premium schedule reverted to overdue." });
     }
 
     /// <summary>Initiate a Stripe PaymentIntent as a claim payout simulation</summary>
@@ -145,7 +145,7 @@ public class PaymentsController : BaseApiController
     {
         var officerId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         await _financeService.ProcessClaimPayoutAsync(claimId, officerId);
-        return Ok();
+        return Ok(new { message = "Claim payout initiated. Claim has been marked as settled." });
     }
 
     /// <summary>Mark a claim as financially settled without a Stripe payout</summary>
@@ -159,7 +159,7 @@ public class PaymentsController : BaseApiController
     {
         var officerId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         await _financeService.MarkClaimFinanciallySettledAsync(claimId, officerId);
-        return Ok();
+        return Ok(new { message = "Claim marked as financially settled." });
     }
 
     /// <summary>Get all pending agent commissions awaiting approval</summary>
@@ -182,7 +182,7 @@ public class PaymentsController : BaseApiController
     {
         var officerId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         await _financeService.ApproveAndPayCommissionAsync(id, officerId);
-        return Ok();
+        return Ok(new { message = "Agent commission approved and marked as paid." });
     }
 
     #endregion

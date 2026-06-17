@@ -36,10 +36,16 @@ public record UpdateFamilyMemberRequest(
     bool IsDependent
 );
 
-public record KycUploadRequest(
+public record AadhaarUploadRequest(
     Guid? CustomerId,
-    IdType IdType,
-    string IdNumber,
+    string AadhaarNumber,
+    IFormFile FrontDocument,
+    IFormFile? BackDocument
+);
+
+public record PanUploadRequest(
+    Guid? CustomerId,
+    string PanNumber,
     IFormFile FrontDocument,
     IFormFile? BackDocument
 );
@@ -48,8 +54,11 @@ public record KycRecordDto(
     Guid Id,
     Guid UserId,
     string KycStatus,
-    string IdType,
-    string IdNumber,
+    bool AadhaarUploaded,
+    string? AadhaarNumber,
+    bool PanUploaded,
+    string? PanNumber,
+    string? RejectionReason,
     DateTimeOffset CreatedAt
 );
 

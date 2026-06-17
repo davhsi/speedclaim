@@ -131,7 +131,7 @@ public class ClaimsController : BaseApiController
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var officerId)) return Unauthorized();
         await _claimService.AssignClaimAsync(id, officerId);
-        return Ok();
+        return Ok(new { message = "Claim assigned to you successfully." });
     }
 
     /// <summary>Update the status of a claim manually</summary>
@@ -146,7 +146,7 @@ public class ClaimsController : BaseApiController
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var officerId)) return Unauthorized();
         if (!Enum.TryParse<ClaimStatus>(request.Status, true, out var claimStatus)) return BadRequest("Invalid Status");
         await _claimService.UpdateClaimStatusAsync(id, claimStatus, officerId, request.Remarks);
-        return Ok();
+        return Ok(new { message = $"Claim status updated to {request.Status}." });
     }
 
     /// <summary>Approve or reject a claim and optionally set the approved payout amount</summary>
@@ -160,7 +160,7 @@ public class ClaimsController : BaseApiController
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var officerId)) return Unauthorized();
         await _claimService.ApproveOrRejectClaimAsync(id, request, officerId);
-        return Ok();
+        return Ok(new { message = request.IsApproved ? "Claim approved successfully." : "Claim rejected." });
     }
 
     /// <summary>Mark an approved claim as financially settled</summary>
@@ -174,7 +174,7 @@ public class ClaimsController : BaseApiController
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var officerId)) return Unauthorized();
         await _claimService.MarkClaimAsSettledAsync(id, officerId);
-        return Ok();
+        return Ok(new { message = "Claim marked as settled." });
     }
 
     /// <summary>Assign a surveyor to a motor or property claim</summary>
@@ -188,7 +188,7 @@ public class ClaimsController : BaseApiController
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var officerId)) return Unauthorized();
         await _claimService.AssignSurveyorAsync(id, request.SurveyorId, officerId, request.Notes);
-        return Ok();
+        return Ok(new { message = "Surveyor assigned to the claim." });
     }
 
     /// <summary>Request additional documents from the customer for a claim</summary>
@@ -201,7 +201,7 @@ public class ClaimsController : BaseApiController
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var officerId)) return Unauthorized();
         await _claimService.RequestAdditionalDocumentsAsync(id, details, officerId);
-        return Ok();
+        return Ok(new { message = "Additional document request sent to the customer." });
     }
 
     /// <summary>Approve cashless pre-authorisation for a cashless claim</summary>
@@ -215,7 +215,7 @@ public class ClaimsController : BaseApiController
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var officerId)) return Unauthorized();
         await _claimService.ApproveCashlessPreAuthAsync(id, officerId);
-        return Ok();
+        return Ok(new { message = "Cashless pre-authorisation approved." });
     }
 
     #endregion
@@ -244,7 +244,7 @@ public class ClaimsController : BaseApiController
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)) return Unauthorized();
         await _claimService.SubmitSurveyReportAsync(id, userId, request);
-        return Ok();
+        return Ok(new { message = "Survey report submitted successfully." });
     }
 
     #endregion

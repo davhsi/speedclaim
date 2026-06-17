@@ -69,7 +69,7 @@ public class ProductsController : BaseApiController
         var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         if (adminId == null) return Unauthorized();
         await _productService.UpdatePremiumRateTableAsync(id, request, adminId);
-        return Ok();
+        return Ok(new { message = "Premium rate table updated." });
     }
 
     /// <summary>Get document requirements for a product</summary>
@@ -95,7 +95,7 @@ public class ProductsController : BaseApiController
         var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         if (adminId == null) return Unauthorized();
         await _productService.ConfigureDocumentRequirementsAsync(id, request, adminId);
-        return Ok();
+        return Ok(new { message = "Document requirements configured." });
     }
 
     /// <summary>Admin — activate or deactivate an insurance product</summary>
@@ -110,7 +110,7 @@ public class ProductsController : BaseApiController
         var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         if (adminId == null) return Unauthorized();
         await _productService.ToggleProductStatusAsync(id, isActive, adminId);
-        return Ok();
+        return Ok(new { message = isActive ? "Product activated." : "Product deactivated." });
     }
 
     #endregion

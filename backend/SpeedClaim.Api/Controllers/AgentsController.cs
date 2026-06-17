@@ -67,7 +67,7 @@ public class AgentsController : BaseApiController
         var agentId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         if (agentId == null) return Unauthorized();
         await _agentService.UpdateAgentProfileAsync(agentId, request);
-        return Ok();
+        return Ok(new { message = "Agent profile updated successfully." });
     }
 
     /// <summary>Get policies with premiums due within the next 30 days for the agent's customers</summary>
@@ -120,7 +120,7 @@ public class AgentsController : BaseApiController
         var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         if (adminId == null) return Unauthorized();
         await _agentService.AssignAgentToBranchAsync(agentId, branchId, adminId);
-        return Ok();
+        return Ok(new { message = "Agent assigned to branch successfully." });
     }
 
     /// <summary>Admin — update an agent's license number and expiry date</summary>
@@ -134,7 +134,7 @@ public class AgentsController : BaseApiController
         var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         if (adminId == null) return Unauthorized();
         await _agentService.UpdateAgentLicenseAsync(agentId, request, adminId);
-        return Ok();
+        return Ok(new { message = "Agent license details updated." });
     }
 
     /// <summary>Admin — activate or deactivate an agent account</summary>
@@ -148,7 +148,7 @@ public class AgentsController : BaseApiController
         var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         if (adminId == null) return Unauthorized();
         await _agentService.ActivateDeactivateAgentAsync(agentId, isActive, adminId);
-        return Ok();
+        return Ok(new { message = isActive ? "Agent account activated." : "Agent account deactivated." });
     }
 
     #endregion

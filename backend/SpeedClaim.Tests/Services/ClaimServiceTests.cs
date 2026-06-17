@@ -43,6 +43,11 @@ public class ClaimServiceTests
         _mockUnitOfWork.Setup(u => u.Surveyors).Returns(new Mock<IRepository<Surveyor>>().Object);
         _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
 
+        var mockKycRepo = new Mock<IRepository<KycRecord>>();
+        mockKycRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>()))
+            .ReturnsAsync(new KycRecord { KycStatus = KycStatus.Approved, AadhaarNumber = "ENC", PanNumber = "ENC" });
+        _mockUnitOfWork.Setup(u => u.KycRecords).Returns(mockKycRepo.Object);
+
         _claimService = new ClaimService(_mockUnitOfWork.Object, new Mock<IStorageService>().Object, new Mock<INotificationService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ClaimService>>());
     }
 

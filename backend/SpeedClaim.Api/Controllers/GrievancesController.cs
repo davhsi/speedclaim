@@ -88,7 +88,7 @@ public class GrievancesController : BaseApiController
     public async Task<IActionResult> AssignGrievance(Guid id, [FromBody] AssignGrievanceRequest request)
     {
         await _grievanceService.AssignGrievanceAsync(id, request.AssignedToId);
-        return Ok();
+        return Ok(new { message = "Grievance assigned to officer." });
     }
 
     /// <summary>Update the status of a grievance and optionally add resolution notes</summary>
@@ -100,7 +100,7 @@ public class GrievancesController : BaseApiController
     public async Task<IActionResult> UpdateGrievanceStatus(Guid id, [FromBody] UpdateGrievanceStatusRequest request)
     {
         await _grievanceService.UpdateGrievanceStatusAsync(id, request);
-        return Ok();
+        return Ok(new { message = "Grievance status updated." });
     }
 
     #endregion

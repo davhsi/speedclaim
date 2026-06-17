@@ -50,7 +50,7 @@ public class AuthController : BaseApiController
     public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest request)
     {
         await _authService.VerifyEmailAsync(request.Token);
-        return Ok();
+        return Ok(new { message = "Email verified successfully. You can now log in." });
     }
 
     /// <summary>Exchange a valid refresh token for a new access token and refresh token pair</summary>
@@ -75,7 +75,7 @@ public class AuthController : BaseApiController
         {
             await _authService.LogoutAsync(userId);
         }
-        return Ok();
+        return Ok(new { message = "Logged out successfully. All sessions have been revoked." });
     }
 
     /// <summary>Request a password reset email</summary>
@@ -86,7 +86,7 @@ public class AuthController : BaseApiController
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
     {
         await _authService.ForgotPasswordAsync(request.Email);
-        return Ok();
+        return Ok(new { message = "If that email is registered, a password reset link has been sent." });
     }
 
     /// <summary>Reset a customer's password using the token from the reset email</summary>
@@ -97,7 +97,7 @@ public class AuthController : BaseApiController
     public async Task<IActionResult> ResetPasswordCustomer([FromBody] ResetPasswordRequest request)
     {
         await _authService.ResetPasswordCustomerAsync(request);
-        return Ok();
+        return Ok(new { message = "Password reset successfully. Please log in with your new password." });
     }
 
     #endregion

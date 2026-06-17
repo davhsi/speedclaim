@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SpeedClaim.Api.Context;
@@ -11,9 +12,11 @@ using SpeedClaim.Api.Context;
 namespace SpeedClaim.Api.Migrations
 {
     [DbContext(typeof(SpeedClaimDbContext))]
-    partial class SpeedClaimDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260616165037_RefactorKycToDualDocument")]
+    partial class RefactorKycToDualDocument
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2521,7 +2524,7 @@ namespace SpeedClaim.Api.Migrations
                             IsDeleted = false,
                             IsEmailVerified = true,
                             LastName = "Dev",
-                            PasswordHash = "$2a$11$noTUuePjq5y/ldIskdG1JOVh7IxShG0RPMr3OEK8Mc6eXPKa3WTWK",
+                            PasswordHash = "$2a$11$O.SrE3dQ5wjiWGc20uH7HuIuFwnrCYiuROffc9k/nk6./69E2z2.S",
                             Phone = "9998887776",
                             Role = "Admin",
                             Salutation = "Mr"

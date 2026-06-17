@@ -146,36 +146,61 @@ public class UserService : IUserService
         return members.Items.Select(m => new FamilyMemberDto(m.Id, m.Salutation.ToString(), m.FirstName, m.LastName, m.FullName, m.DateOfBirth, m.Gender.ToString(), m.Relationship.ToString(), m.IsDependent));
     }
 
-    public async Task UploadKycDocumentsAsync(string customerId, KycUploadRequest request)
+    private async Task<KycRecord> GetOrCreateKycRecordAsync(Guid uid)
+    {
+        var record = await _unitOfWork.KycRecords.FirstOrDefaultAsync(k => k.UserId == uid);
+        if (record != null) return record;
+
+        record = new KycRecord { UserId = uid, KycStatus = KycStatus.Pending };
+        await _unitOfWork.KycRecords.AddAsync(record);
+        return record;
+    }
+
+    public async Task UploadAadhaarAsync(string customerId, AadhaarUploadRequest request)
     {
         var uid = Guid.Parse(customerId);
-        var kycRecord = await _unitOfWork.KycRecords.FirstOrDefaultAsync(k => k.UserId == uid);
-        if (kycRecord == null)
-        {
-            kycRecord = new KycRecord
-            {
-                UserId = uid,
-                KycStatus = KycStatus.Pending,
-                IdType = request.IdType,
-                IdNumber = _encryptionService.Encrypt(request.IdNumber)
-            };
-            await _unitOfWork.KycRecords.AddAsync(kycRecord);
-        }
-        else
-        {
-            kycRecord.IdType = request.IdType;
-            kycRecord.IdNumber = _encryptionService.Encrypt(request.IdNumber);
-            kycRecord.KycStatus = KycStatus.Pending;
-            kycRecord.UpdatedAt = DateTimeOffset.UtcNow;
-        }
+        var record = await GetOrCreateKycRecordAsync(uid);
 
+        record.AadhaarNumber = _encryptionService.Encrypt(request.AadhaarNumber);
+        record.KycStatus = KycStatus.Pending;
+        record.UpdatedAt = DateTimeOffset.UtcNow;
+
+        var frontKey = $"kyc/{uid}/aadhaar/front";
         using var frontStream = request.FrontDocument.OpenReadStream();
-        await _storageService.UploadFileAsync(frontStream, request.FrontDocument.FileName, $"kyc/{uid}/front");
+        await _storageService.UploadFileAsync(frontStream, request.FrontDocument.FileName, frontKey);
+        record.AadhaarDocumentKeyFront = frontKey;
 
         if (request.BackDocument != null)
         {
+            var backKey = $"kyc/{uid}/aadhaar/back";
             using var backStream = request.BackDocument.OpenReadStream();
-            await _storageService.UploadFileAsync(backStream, request.BackDocument.FileName, $"kyc/{uid}/back");
+            await _storageService.UploadFileAsync(backStream, request.BackDocument.FileName, backKey);
+            record.AadhaarDocumentKeyBack = backKey;
+        }
+
+        await _unitOfWork.CompleteAsync();
+    }
+
+    public async Task UploadPanAsync(string customerId, PanUploadRequest request)
+    {
+        var uid = Guid.Parse(customerId);
+        var record = await GetOrCreateKycRecordAsync(uid);
+
+        record.PanNumber = _encryptionService.Encrypt(request.PanNumber);
+        record.KycStatus = KycStatus.Pending;
+        record.UpdatedAt = DateTimeOffset.UtcNow;
+
+        var frontKey = $"kyc/{uid}/pan/front";
+        using var frontStream = request.FrontDocument.OpenReadStream();
+        await _storageService.UploadFileAsync(frontStream, request.FrontDocument.FileName, frontKey);
+        record.PanDocumentKeyFront = frontKey;
+
+        if (request.BackDocument != null)
+        {
+            var backKey = $"kyc/{uid}/pan/back";
+            using var backStream = request.BackDocument.OpenReadStream();
+            await _storageService.UploadFileAsync(backStream, request.BackDocument.FileName, backKey);
+            record.PanDocumentKeyBack = backKey;
         }
 
         await _unitOfWork.CompleteAsync();
@@ -281,10 +306,10 @@ public class UserService : IUserService
 
     public async Task<PagedResponse<KycRecordDto>> GetPendingKycAsync(int page, int pageSize)
     {
-        var (items, total) = await _unitOfWork.KycRecords.GetPagedAsync(page, pageSize, k => k.KycStatus == KycStatus.Pending);
-        return new PagedResponse<KycRecordDto>(
-            items.Select(k => new KycRecordDto(k.Id, k.UserId, k.KycStatus.ToString(), k.IdType.ToString(), _encryptionService.Decrypt(k.IdNumber), k.CreatedAt)),
-            page, pageSize, total);
+        var (items, total) = await _unitOfWork.KycRecords.GetPagedAsync(
+            page, pageSize,
+            k => k.KycStatus == KycStatus.Pending && k.AadhaarNumber != null && k.PanNumber != null);
+        return new PagedResponse<KycRecordDto>(items.Select(MapToKycDto), page, pageSize, total);
     }
 
     public async Task UpdateUserRoleAsync(string targetUserId, string role)
@@ -304,14 +329,26 @@ public class UserService : IUserService
         }
     }
 
+    private KycRecordDto MapToKycDto(KycRecord k)
+    {
+        var aadhaarMasked = k.AadhaarNumber != null
+            ? _encryptionService.Mask(_encryptionService.Decrypt(k.AadhaarNumber))
+            : null;
+        var panMasked = k.PanNumber != null
+            ? _encryptionService.Mask(_encryptionService.Decrypt(k.PanNumber))
+            : null;
+        return new KycRecordDto(
+            k.Id, k.UserId, k.KycStatus.ToString(),
+            k.AadhaarNumber != null, aadhaarMasked,
+            k.PanNumber != null, panMasked,
+            k.RejectionReason, k.CreatedAt);
+    }
+
     public async Task<KycRecordDto?> GetMyKycAsync(string customerId)
     {
         var uid = Guid.Parse(customerId);
         var kycRecord = await _unitOfWork.KycRecords.FirstOrDefaultAsync(k => k.UserId == uid);
-        if (kycRecord == null) return null;
-        
-        var decrypted = _encryptionService.Decrypt(kycRecord.IdNumber);
-        return new KycRecordDto(kycRecord.Id, kycRecord.UserId, kycRecord.KycStatus.ToString(), kycRecord.IdType.ToString(), _encryptionService.Mask(decrypted), kycRecord.CreatedAt);
+        return kycRecord == null ? null : MapToKycDto(kycRecord);
     }
 
     public async Task ApproveRejectKycAsync(string customerId, bool isApproved, string reason, string reviewerId)
@@ -319,6 +356,9 @@ public class UserService : IUserService
         var uid = Guid.Parse(customerId);
         var kycRecord = await _unitOfWork.KycRecords.FirstOrDefaultAsync(k => k.UserId == uid);
         if (kycRecord == null) throw new NotFoundException("KYC Record not found");
+
+        if (isApproved && (kycRecord.AadhaarNumber == null || kycRecord.PanNumber == null))
+            throw new ValidationException("Both Aadhaar and PAN documents must be uploaded before KYC can be approved.");
 
         kycRecord.KycStatus = isApproved ? KycStatus.Approved : KycStatus.Rejected;
         kycRecord.ReviewedAt = DateTimeOffset.UtcNow;

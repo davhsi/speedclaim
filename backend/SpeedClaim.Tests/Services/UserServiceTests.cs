@@ -165,8 +165,8 @@ public class UserServiceTests
     {
         var customerId = Guid.NewGuid();
         var reviewerId = Guid.NewGuid();
-        var kycRecord = new KycRecord { UserId = customerId, KycStatus = KycStatus.Pending };
-        
+        var kycRecord = new KycRecord { UserId = customerId, KycStatus = KycStatus.Pending, AadhaarNumber = "ENC_AADHAAR", PanNumber = "ENC_PAN" };
+
         _mockKycRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>())).ReturnsAsync(kycRecord);
         await _userService.ApproveRejectKycAsync(customerId.ToString(), true, "All good", reviewerId.ToString());
 
@@ -227,7 +227,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task UploadKycDocumentsAsync_WithBackDocument_UploadsBack()
+    public async Task UploadAadhaarAsync_WithBackDocument_UploadsBack()
     {
         var customerId = Guid.NewGuid();
         _mockKycRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>())).ReturnsAsync((KycRecord?)null);
@@ -244,7 +244,7 @@ public class UserServiceTests
         var mockStorage = new Mock<IStorageService>();
         var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object);
 
-        await svc.UploadKycDocumentsAsync(customerId.ToString(), new KycUploadRequest(null, IdType.Aadhaar, "123456789012", mockFront.Object, mockBack.Object));
+        await svc.UploadAadhaarAsync(customerId.ToString(), new AadhaarUploadRequest(null, "123456789012", mockFront.Object, mockBack.Object));
 
         mockStorage.Verify(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), "back.jpg", It.IsAny<string>()), Times.Once);
     }
@@ -337,7 +337,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task UploadKycDocumentsAsync_NewRecord_CreatesKycRecord()
+    public async Task UploadAadhaarAsync_NewRecord_CreatesKycRecord()
     {
         var customerId = Guid.NewGuid();
         _mockKycRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>())).ReturnsAsync((KycRecord?)null);
@@ -349,17 +349,17 @@ public class UserServiceTests
         var mockStorage = new Mock<IStorageService>();
         var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object);
 
-        await svc.UploadKycDocumentsAsync(customerId.ToString(), new KycUploadRequest(null, IdType.Aadhaar, "123456789012", mockFile.Object, null));
+        await svc.UploadAadhaarAsync(customerId.ToString(), new AadhaarUploadRequest(null, "123456789012", mockFile.Object, null));
 
         _mockKycRepository.Verify(r => r.AddAsync(It.IsAny<KycRecord>()), Times.Once);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
 
     [Test]
-    public async Task UploadKycDocumentsAsync_ExistingRecord_UpdatesKycRecord()
+    public async Task UploadAadhaarAsync_ExistingRecord_UpdatesAadhaarNumber()
     {
         var customerId = Guid.NewGuid();
-        var existing = new KycRecord { Id = Guid.NewGuid(), UserId = customerId, KycStatus = KycStatus.Approved, IdType = IdType.Pan, IdNumber = "OLD" };
+        var existing = new KycRecord { Id = Guid.NewGuid(), UserId = customerId, KycStatus = KycStatus.Approved, AadhaarNumber = "OLD" };
         _mockKycRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>())).ReturnsAsync(existing);
         _mockUnitOfWork.Setup(u => u.KycRecords).Returns(_mockKycRepository.Object);
 
@@ -369,11 +369,23 @@ public class UserServiceTests
         var mockStorage = new Mock<IStorageService>();
         var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object);
 
-        await svc.UploadKycDocumentsAsync(customerId.ToString(), new KycUploadRequest(null, IdType.Aadhaar, "NEWID", mockFile.Object, null));
+        await svc.UploadAadhaarAsync(customerId.ToString(), new AadhaarUploadRequest(null, "123456789012", mockFile.Object, null));
 
-        Assert.That(existing.IdNumber, Is.EqualTo("NEWID"));
+        Assert.That(existing.AadhaarNumber, Is.EqualTo("123456789012"));
         Assert.That(existing.KycStatus, Is.EqualTo(KycStatus.Pending));
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public void ApproveRejectKycAsync_MissingAadhaarOrPan_ThrowsValidationException()
+    {
+        var customerId = Guid.NewGuid();
+        var kycRecord = new KycRecord { UserId = customerId, KycStatus = KycStatus.Pending, AadhaarNumber = "ENC_AADHAAR", PanNumber = null };
+        _mockKycRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>())).ReturnsAsync(kycRecord);
+
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() =>
+            _userService.ApproveRejectKycAsync(customerId.ToString(), true, "", Guid.NewGuid().ToString()));
+        Assert.That(ex.Message, Does.Contain("Aadhaar and PAN"));
     }
 
     [Test]
@@ -472,7 +484,7 @@ public class UserServiceTests
     public async Task GetMyKycAsync_RecordExists_ReturnsDto()
     {
         var userId = Guid.NewGuid();
-        var kycRecord = new KycRecord { Id = Guid.NewGuid(), UserId = userId, KycStatus = KycStatus.Pending, IdType = IdType.Aadhaar, IdNumber = "123456789012" };
+        var kycRecord = new KycRecord { Id = Guid.NewGuid(), UserId = userId, KycStatus = KycStatus.Pending, AadhaarNumber = "123456789012", PanNumber = null };
         _mockKycRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>())).ReturnsAsync(kycRecord);
         _mockUnitOfWork.Setup(u => u.KycRecords).Returns(_mockKycRepository.Object);
 
@@ -480,6 +492,8 @@ public class UserServiceTests
 
         Assert.That(result, Is.Not.Null);
         Assert.That(result!.KycStatus, Is.EqualTo(KycStatus.Pending.ToString()));
+        Assert.That(result.AadhaarUploaded, Is.True);
+        Assert.That(result.PanUploaded, Is.False);
     }
 
     [Test]
@@ -498,7 +512,7 @@ public class UserServiceTests
     {
         var records = new List<KycRecord>
         {
-            new KycRecord { Id = Guid.NewGuid(), UserId = Guid.NewGuid(), KycStatus = KycStatus.Pending, IdType = IdType.Pan, IdNumber = "ABCDE1234F" }
+            new KycRecord { Id = Guid.NewGuid(), UserId = Guid.NewGuid(), KycStatus = KycStatus.Pending, AadhaarNumber = "123456789012", PanNumber = "ABCDE1234F" }
         };
         _mockKycRepository.Setup(r => r.GetPagedAsync(
             It.IsAny<int>(), It.IsAny<int>(),

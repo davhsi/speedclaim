@@ -49,11 +49,11 @@ public class UserRepository : Repository<User>, IUserRepository
 
     public async Task<bool> IsAadhaarRegisteredAsync(string aadhaar)
     {
-        return await Context.Users.AnyAsync(u => u.KycRecord != null && u.KycRecord.IdNumber == aadhaar && u.KycRecord.IdType == SpeedClaim.Api.Models.Enums.IdType.Aadhaar);
+        return await Context.Users.AnyAsync(u => u.KycRecord != null && u.KycRecord.AadhaarNumber == aadhaar);
     }
 
     public async Task<bool> IsPanRegisteredAsync(string pan)
     {
-        return await Context.Users.AnyAsync(u => u.KycRecord != null && u.KycRecord.IdNumber == pan && u.KycRecord.IdType == SpeedClaim.Api.Models.Enums.IdType.Pan);
+        return await Context.Users.AnyAsync(u => u.KycRecord != null && u.KycRecord.PanNumber == pan);
     }
 }

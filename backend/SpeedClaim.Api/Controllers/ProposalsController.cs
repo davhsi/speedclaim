@@ -120,7 +120,7 @@ public class ProposalsController : BaseApiController
         var underwriterId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         if (underwriterId == null) return Unauthorized();
         await _proposalService.ApproveOrRejectProposalAsync(id, underwriterId, request.IsApproved, request.Notes);
-        return Ok();
+        return Ok(new { message = request.IsApproved ? "Proposal approved. Policy has been created." : "Proposal rejected." });
     }
 
     /// <summary>Underwriter — request additional documents from the customer before deciding</summary>
@@ -134,7 +134,7 @@ public class ProposalsController : BaseApiController
         var underwriterId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         if (underwriterId == null) return Unauthorized();
         await _proposalService.RequestAdditionalDocumentsAsync(id, underwriterId, request.Details);
-        return Ok();
+        return Ok(new { message = "Additional document request sent to the customer." });
     }
 
     /// <summary>Underwriter — append internal review notes to a proposal</summary>
@@ -148,7 +148,7 @@ public class ProposalsController : BaseApiController
         var underwriterId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         if (underwriterId == null) return Unauthorized();
         await _proposalService.AddUnderwriterNotesAsync(id, underwriterId, request.Notes);
-        return Ok();
+        return Ok(new { message = "Underwriter notes saved." });
     }
 
     #endregion

@@ -68,9 +68,9 @@ public class AddFamilyMemberRequestValidatorTests
 }
 
 [TestFixture]
-public class KycUploadRequestValidatorTests
+public class AadhaarUploadRequestValidatorTests
 {
-    private KycUploadRequestValidator _validator = null!;
+    private AadhaarUploadRequestValidator _validator = null!;
 
     private static Mock<IFormFile> MockFile(string filename = "doc.pdf", long sizeBytes = 1024 * 100)
     {
@@ -81,61 +81,33 @@ public class KycUploadRequestValidatorTests
     }
 
     [SetUp]
-    public void SetUp() => _validator = new KycUploadRequestValidator();
+    public void SetUp() => _validator = new AadhaarUploadRequestValidator();
 
     [Test]
     public void Valid_Aadhaar_Request_Passes()
     {
-        var req = new KycUploadRequest(null, IdType.Aadhaar, "123456789012", MockFile().Object, null);
-        _validator.TestValidate(req).ShouldNotHaveAnyValidationErrors();
-    }
-
-    [Test]
-    public void Valid_Pan_Request_Passes()
-    {
-        var req = new KycUploadRequest(null, IdType.Pan, "ABCDE1234F", MockFile().Object, null);
-        _validator.TestValidate(req).ShouldNotHaveAnyValidationErrors();
-    }
-
-    [Test]
-    public void Valid_Passport_Request_Passes()
-    {
-        var req = new KycUploadRequest(null, IdType.Passport, "A1234567", MockFile().Object, null);
+        var req = new AadhaarUploadRequest(null, "123456789012", MockFile().Object, null);
         _validator.TestValidate(req).ShouldNotHaveAnyValidationErrors();
     }
 
     [Test]
     public void Aadhaar_With_11_Digits_Fails()
     {
-        var req = new KycUploadRequest(null, IdType.Aadhaar, "12345678901", MockFile().Object, null);
-        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.IdNumber);
+        var req = new AadhaarUploadRequest(null, "12345678901", MockFile().Object, null);
+        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.AadhaarNumber);
     }
 
     [Test]
     public void Aadhaar_With_Letters_Fails()
     {
-        var req = new KycUploadRequest(null, IdType.Aadhaar, "12345678901A", MockFile().Object, null);
-        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.IdNumber);
-    }
-
-    [Test]
-    public void Invalid_Pan_Format_Fails()
-    {
-        var req = new KycUploadRequest(null, IdType.Pan, "ABCDE12345", MockFile().Object, null);
-        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.IdNumber);
-    }
-
-    [Test]
-    public void Invalid_Passport_Format_Fails()
-    {
-        var req = new KycUploadRequest(null, IdType.Passport, "AB1234567", MockFile().Object, null);
-        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.IdNumber);
+        var req = new AadhaarUploadRequest(null, "12345678901A", MockFile().Object, null);
+        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.AadhaarNumber);
     }
 
     [Test]
     public void Null_FrontDocument_Fails()
     {
-        var req = new KycUploadRequest(null, IdType.Aadhaar, "123456789012", null!, null);
+        var req = new AadhaarUploadRequest(null, "123456789012", null!, null);
         _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.FrontDocument);
     }
 
@@ -143,7 +115,7 @@ public class KycUploadRequestValidatorTests
     public void File_Exceeding_5MB_Fails()
     {
         var bigFile = MockFile("doc.pdf", 6 * 1024 * 1024);
-        var req = new KycUploadRequest(null, IdType.Aadhaar, "123456789012", bigFile.Object, null);
+        var req = new AadhaarUploadRequest(null, "123456789012", bigFile.Object, null);
         _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.FrontDocument);
     }
 
@@ -151,7 +123,61 @@ public class KycUploadRequestValidatorTests
     public void Disallowed_File_Type_Fails()
     {
         var exeFile = MockFile("document.exe");
-        var req = new KycUploadRequest(null, IdType.Aadhaar, "123456789012", exeFile.Object, null);
+        var req = new AadhaarUploadRequest(null, "123456789012", exeFile.Object, null);
+        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.FrontDocument);
+    }
+}
+
+[TestFixture]
+public class PanUploadRequestValidatorTests
+{
+    private PanUploadRequestValidator _validator = null!;
+
+    private static Mock<IFormFile> MockFile(string filename = "doc.pdf", long sizeBytes = 1024 * 100)
+    {
+        var mock = new Mock<IFormFile>();
+        mock.Setup(f => f.FileName).Returns(filename);
+        mock.Setup(f => f.Length).Returns(sizeBytes);
+        return mock;
+    }
+
+    [SetUp]
+    public void SetUp() => _validator = new PanUploadRequestValidator();
+
+    [Test]
+    public void Valid_Pan_Request_Passes()
+    {
+        var req = new PanUploadRequest(null, "ABCDE1234F", MockFile().Object, null);
+        _validator.TestValidate(req).ShouldNotHaveAnyValidationErrors();
+    }
+
+    [Test]
+    public void Invalid_Pan_Format_Fails()
+    {
+        var req = new PanUploadRequest(null, "ABCDE12345", MockFile().Object, null);
+        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.PanNumber);
+    }
+
+    [Test]
+    public void Null_FrontDocument_Fails()
+    {
+        var req = new PanUploadRequest(null, "ABCDE1234F", null!, null);
+        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.FrontDocument);
+    }
+
+    [Test]
+    public void File_Exceeding_5MB_Fails()
+    {
+        var bigFile = MockFile("doc.pdf", 6 * 1024 * 1024);
+        var req = new PanUploadRequest(null, "ABCDE1234F", bigFile.Object, null);
+        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.FrontDocument);
+    }
+
+    [Test]
+    public void Disallowed_File_Type_Fails()
+    {
+        var exeFile = MockFile("document.exe");
+        var req = new PanUploadRequest(null, "ABCDE1234F", exeFile.Object, null);
         _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.FrontDocument);
     }
 }

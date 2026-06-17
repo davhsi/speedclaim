@@ -57,6 +57,12 @@ public class ProposalService : IProposalService
         var product = await _unitOfWork.InsuranceProducts.GetByIdAsync(productId);
         if (product == null) throw new NotFoundException("Product not found");
 
+        var customerRecord = await _unitOfWork.Customers.GetByIdAsync(customerId);
+        if (customerRecord == null) throw new NotFoundException("Customer not found");
+        var kyc = await _unitOfWork.KycRecords.FirstOrDefaultAsync(k => k.UserId == customerRecord.UserId);
+        if (kyc == null || kyc.KycStatus != KycStatus.Approved)
+            throw new ForbiddenException("KYC must be approved before submitting a proposal.");
+
         var proposal = new Proposal
         {
             ProposalNumber = $"PRP-{DateTime.UtcNow:yyyyMMddHHmmss}-{Random.Shared.Next(1000, 9999)}",

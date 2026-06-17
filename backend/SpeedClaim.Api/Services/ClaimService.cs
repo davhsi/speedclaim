@@ -73,6 +73,10 @@ public class ClaimService : IClaimService
 
     public async Task<ClaimDto> IntimateClaimAsync(Guid customerId, IntimateClaimRequest request)
     {
+        var kyc = await _unitOfWork.KycRecords.FirstOrDefaultAsync(k => k.UserId == customerId);
+        if (kyc == null || kyc.KycStatus != KycStatus.Approved)
+            throw new ForbiddenException("KYC must be approved before intimating a claim.");
+
         var customerRecordId = await ResolveCustomerIdAsync(customerId);
         var policy = await _unitOfWork.Policies.GetByIdAsync(request.PolicyId);
         if (policy == null || policy.CustomerId != customerRecordId)

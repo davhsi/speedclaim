@@ -45,7 +45,7 @@ public class UsersController : BaseApiController
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         await _userService.UpdateProfileAsync(userId, request);
-        return Ok();
+        return Ok(new { message = "Profile updated successfully." });
     }
 
     #endregion
@@ -84,7 +84,7 @@ public class UsersController : BaseApiController
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         await _userService.UpdateFamilyMemberAsync(memberId, userId, request);
-        return Ok();
+        return Ok(new { message = "Family member updated successfully." });
     }
 
     /// <summary>Remove a family member from the customer's profile</summary>
@@ -97,7 +97,7 @@ public class UsersController : BaseApiController
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         await _userService.DeleteFamilyMemberAsync(memberId, userId);
-        return Ok();
+        return Ok(new { message = "Family member removed successfully." });
     }
 
     #endregion
@@ -117,24 +117,38 @@ public class UsersController : BaseApiController
         return Ok(kycRecord);
     }
 
-    /// <summary>Upload KYC identity documents (front and optional back image)</summary>
-    /// <remarks>Agents can upload on behalf of a customer by providing CustomerId in the form. Resets status to Pending on re-upload.</remarks>
+    /// <summary>Upload Aadhaar identity document (front and optional back). Agents can upload on behalf of a customer.</summary>
     [Authorize(Roles = "Customer,Agent")]
-    [HttpPost("kyc")]
-    [ProducesResponseType(200)]
+    [HttpPost("kyc/aadhaar")]
+    [ProducesResponseType(typeof(KycRecordDto), 200)]
     [ProducesResponseType(400)]
-    public async Task<IActionResult> UploadKycDocuments([FromForm] KycUploadRequest request)
+    public async Task<IActionResult> UploadAadhaar([FromForm] AadhaarUploadRequest request)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         var role = User.FindFirstValue(ClaimTypes.Role);
-
         if (role == "Agent" && request.CustomerId.HasValue)
-        {
             userId = request.CustomerId.Value.ToString();
-        }
 
-        await _userService.UploadKycDocumentsAsync(userId, request);
-        return Ok();
+        await _userService.UploadAadhaarAsync(userId, request);
+        var kyc = await _userService.GetMyKycAsync(userId);
+        return Ok(kyc);
+    }
+
+    /// <summary>Upload PAN identity document (front and optional back). Agents can upload on behalf of a customer.</summary>
+    [Authorize(Roles = "Customer,Agent")]
+    [HttpPost("kyc/pan")]
+    [ProducesResponseType(typeof(KycRecordDto), 200)]
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> UploadPan([FromForm] PanUploadRequest request)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        var role = User.FindFirstValue(ClaimTypes.Role);
+        if (role == "Agent" && request.CustomerId.HasValue)
+            userId = request.CustomerId.Value.ToString();
+
+        await _userService.UploadPanAsync(userId, request);
+        var kyc = await _userService.GetMyKycAsync(userId);
+        return Ok(kyc);
     }
 
     #endregion
@@ -162,7 +176,7 @@ public class UsersController : BaseApiController
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         await _userService.UpdateAddressAsync(addressId, userId, request);
-        return Ok();
+        return Ok(new { message = "Address updated successfully." });
     }
 
     /// <summary>Delete an address from the customer's profile</summary>
@@ -175,7 +189,7 @@ public class UsersController : BaseApiController
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         await _userService.DeleteAddressAsync(addressId, userId);
-        return Ok();
+        return Ok(new { message = "Address removed successfully." });
     }
 
     #endregion
@@ -203,7 +217,7 @@ public class UsersController : BaseApiController
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)) return Unauthorized();
         await _notificationService.MarkAsReadAsync(id, userId);
-        return Ok();
+        return Ok(new { message = "Notification marked as read." });
     }
 
     /// <summary>Mark all unread notifications as read for the authenticated user</summary>
@@ -214,7 +228,7 @@ public class UsersController : BaseApiController
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)) return Unauthorized();
         await _notificationService.MarkAllAsReadAsync(userId);
-        return Ok();
+        return Ok(new { message = "All notifications marked as read." });
     }
 
     #endregion
@@ -231,17 +245,19 @@ public class UsersController : BaseApiController
         return Ok(result);
     }
 
-    /// <summary>Approve or reject a customer's KYC submission</summary>
+    /// <summary>Approve or reject a customer's KYC submission. Both Aadhaar and PAN must be uploaded before approval.</summary>
     /// <param name="customerId">Customer user ID</param>
     [Authorize(Roles = "Underwriter,Admin")]
     [HttpPut("{customerId}/kyc/review")]
-    [ProducesResponseType(200)]
+    [ProducesResponseType(typeof(KycRecordDto), 200)]
+    [ProducesResponseType(400)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> ApproveRejectKyc(string customerId, [FromQuery] bool isApproved, [FromQuery] string reason)
     {
         var reviewerId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         await _userService.ApproveRejectKycAsync(customerId, isApproved, reason, reviewerId);
-        return Ok();
+        var kyc = await _userService.GetMyKycAsync(customerId);
+        return Ok(kyc);
     }
 
     #endregion
@@ -268,7 +284,7 @@ public class UsersController : BaseApiController
     public async Task<IActionResult> ChangeUserRole(string userId, [FromBody] string role)
     {
         await _userService.UpdateUserRoleAsync(userId, role);
-        return Ok();
+        return Ok(new { message = $"User role updated to {role}." });
     }
 
     /// <summary>Admin — activate or deactivate a user account. Deactivated users cannot log in</summary>
@@ -281,7 +297,7 @@ public class UsersController : BaseApiController
     {
         var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         await _userService.ActivateDeactivateUserAsync(userId, isActive, adminId);
-        return Ok();
+        return Ok(new { message = isActive ? "User account activated." : "User account deactivated." });
     }
 
     /// <summary>Admin — get all active and revoked user sessions</summary>

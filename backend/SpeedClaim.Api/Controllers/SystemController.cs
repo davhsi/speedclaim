@@ -36,7 +36,7 @@ public class SystemController : BaseApiController
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var adminId)) return Unauthorized();
         await _systemService.UpdateSystemConfigAsync(request, adminId);
-        return Ok();
+        return Ok(new { message = "System configuration updated." });
     }
 
     #endregion
@@ -72,7 +72,7 @@ public class SystemController : BaseApiController
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var adminId)) return Unauthorized();
         await _systemService.ManageEmailTemplatesAsync(request, adminId);
-        return Ok();
+        return Ok(new { message = "Email template saved successfully." });
     }
 
     #endregion

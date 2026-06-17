@@ -73,7 +73,7 @@ public class PoliciesController : BaseApiController
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId)) return Unauthorized();
         await _policyService.RequestEndorsementAsync(id, customerId, request);
-        return Ok();
+        return Ok(new { message = "Endorsement request submitted and is pending underwriter review." });
     }
 
     /// <summary>Get all nominees linked to a policy</summary>
@@ -100,7 +100,7 @@ public class PoliciesController : BaseApiController
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId)) return Unauthorized();
         await _policyService.UpdateNomineeAsync(nomineeId, customerId, request);
-        return Ok();
+        return Ok(new { message = "Nominee details updated successfully." });
     }
 
     /// <summary>Cancel an Active or Pending policy</summary>
@@ -115,7 +115,7 @@ public class PoliciesController : BaseApiController
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId)) return Unauthorized();
         await _policyService.CancelPolicyAsync(id, customerId);
-        return Ok();
+        return Ok(new { message = "Policy cancelled successfully." });
     }
 
     #endregion
@@ -221,7 +221,7 @@ public class PoliciesController : BaseApiController
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var underwriterId)) return Unauthorized();
         await _policyService.ApproveRejectEndorsementAsync(endorsementId, request.IsApproved, request.Reason, underwriterId);
-        return Ok();
+        return Ok(new { message = request.IsApproved ? "Endorsement approved and applied to the policy." : "Endorsement rejected." });
     }
 
     #endregion

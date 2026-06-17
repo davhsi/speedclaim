@@ -6,11 +6,19 @@ public class KycRecord
 {
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
-    
+
     public SpeedClaim.Api.Models.Enums.KycStatus KycStatus { get; set; }
-    public SpeedClaim.Api.Models.Enums.IdType IdType { get; set; }
-    public string IdNumber { get; set; } = string.Empty;
-    
+
+    // Aadhaar document
+    public string? AadhaarNumber { get; set; }
+    public string? AadhaarDocumentKeyFront { get; set; }
+    public string? AadhaarDocumentKeyBack { get; set; }
+
+    // PAN document
+    public string? PanNumber { get; set; }
+    public string? PanDocumentKeyFront { get; set; }
+    public string? PanDocumentKeyBack { get; set; }
+
     public Guid? ReviewedById { get; set; }
     public DateTimeOffset? ReviewedAt { get; set; }
     public string? RejectionReason { get; set; }

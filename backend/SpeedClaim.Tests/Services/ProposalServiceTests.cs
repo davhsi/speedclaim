@@ -35,11 +35,20 @@ public class ProposalServiceTests
         _mockAgentRepo = new Mock<IRepository<Agent>>();
         _mockCustomerRepo = new Mock<IRepository<Customer>>();
 
+        var defaultCustomerUserId = Guid.NewGuid();
+        _mockCustomerRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(new Customer { Id = Guid.NewGuid(), UserId = defaultCustomerUserId });
+
+        var mockKycRepo = new Mock<IRepository<KycRecord>>();
+        mockKycRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>()))
+            .ReturnsAsync(new KycRecord { KycStatus = KycStatus.Approved, AadhaarNumber = "ENC", PanNumber = "ENC" });
+
         _mockUnitOfWork.Setup(u => u.Proposals).Returns(_mockProposalRepo.Object);
         _mockUnitOfWork.Setup(u => u.InsuranceProducts).Returns(_mockProductRepo.Object);
         _mockUnitOfWork.Setup(u => u.PremiumRateTables).Returns(_mockRateRepo.Object);
         _mockUnitOfWork.Setup(u => u.Agents).Returns(_mockAgentRepo.Object);
         _mockUnitOfWork.Setup(u => u.Customers).Returns(_mockCustomerRepo.Object);
+        _mockUnitOfWork.Setup(u => u.KycRecords).Returns(mockKycRepo.Object);
         _mockUnitOfWork.Setup(u => u.Policies).Returns(new Mock<IPolicyRepository>().Object);
         _mockUnitOfWork.Setup(u => u.PremiumSchedules).Returns(new Mock<IRepository<PremiumSchedule>>().Object);
         _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
