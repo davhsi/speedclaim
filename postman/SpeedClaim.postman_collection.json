@@ -734,13 +734,8 @@
               "mode": "formdata",
               "formdata": [
                 {
-                  "key": "idType",
-                  "value": "Aadhaar",
-                  "type": "text"
-                },
-                {
-                  "key": "idNumber",
-                  "value": "123456789012",
+                  "key": "aadhaarNumber",
+                  "value": "777788889999",
                   "type": "text"
                 },
                 {
@@ -756,7 +751,7 @@
               ]
             },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/users/kyc",
+              "raw": "{{baseUrl}}/api/v1/users/kyc/aadhaar",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -764,10 +759,11 @@
                 "api",
                 "v1",
                 "users",
-                "kyc"
+                "kyc",
+                "aadhaar"
               ]
             },
-            "description": "⚠️ Select a PDF/JPG file for frontDocument. File must be ≤ 5 MB. idNumber must be 12 digits for Aadhaar."
+            "description": "⚠️ Select a PDF/JPG file for frontDocument. File must be ≤ 5 MB. aadhaarNumber must be 12 digits."
           },
           "id": "838326da-bd38-4304-b380-bcf94180be55"
         },
@@ -1685,7 +1681,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"customerId\": \"60000000-0000-0000-0000-000000000001\",\n  \"productId\": \"70000000-0000-0000-0000-000000000001\",\n  \"sumAssured\": 300000,\n  \"tenureYears\": 3,\n  \"premiumAmount\": 12000,\n  \"paymentFrequency\": \"Annually\",\n  \"healthDetail\": {\n    \"preExistingConditions\": \"None\",\n    \"networkHospitalCoverage\": \"Pan India\",\n    \"tpaName\": \"Star Health TPA\",\n    \"roomRentLimit\": 5000,\n    \"maternityCovered\": false,\n    \"copayPercentage\": 0\n  },\n  \"lifeDetail\": null,\n  \"motorDetail\": null,\n  \"customerMemberIds\": [],\n  \"nominees\": [{\n    \"fullName\": \"Ananya Sharma\",\n    \"relationship\": \"Spouse\",\n    \"dateOfBirth\": \"1992-03-20\",\n    \"sharePercentage\": 100,\n    \"isMinor\": false,\n    \"appointeeName\": null\n  }]\n}",
+              "raw": "{\n  \"customerId\": \"{{customerRecordId}}\",\n  \"productId\": \"{{productId}}\",\n  \"sumAssured\": 300000,\n  \"tenureYears\": 3,\n  \"premiumAmount\": 12000,\n  \"paymentFrequency\": \"Annually\",\n  \"healthDetail\": {\n    \"preExistingConditions\": \"None\",\n    \"networkHospitalCoverage\": \"Pan India\",\n    \"tpaName\": \"Star Health TPA\",\n    \"roomRentLimit\": 5000,\n    \"maternityCovered\": false,\n    \"copayPercentage\": 0\n  },\n  \"lifeDetail\": null,\n  \"motorDetail\": null,\n  \"customerMemberIds\": [],\n  \"nominees\": [{\n    \"fullName\": \"Ananya Sharma\",\n    \"relationship\": \"Spouse\",\n    \"dateOfBirth\": \"1992-03-20\",\n    \"sharePercentage\": 100,\n    \"isMinor\": false,\n    \"appointeeName\": null\n  }]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1878,7 +1874,7 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/proposals/80000000-0000-0000-0000-000000000004/notes",
+              "raw": "{{baseUrl}}/api/v1/proposals/{{proposalIdUnderReview}}/notes",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1886,7 +1882,7 @@
                 "api",
                 "v1",
                 "proposals",
-                "80000000-0000-0000-0000-000000000004",
+                "{{proposalIdUnderReview}}",
                 "notes"
               ]
             },
@@ -1914,7 +1910,7 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/proposals/80000000-0000-0000-0000-000000000004/request-docs",
+              "raw": "{{baseUrl}}/api/v1/proposals/{{proposalIdUnderReview}}/request-docs",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1922,7 +1918,7 @@
                 "api",
                 "v1",
                 "proposals",
-                "80000000-0000-0000-0000-000000000004",
+                "{{proposalIdUnderReview}}",
                 "request-docs"
               ]
             }
@@ -1949,7 +1945,7 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/proposals/80000000-0000-0000-0000-000000000004/review",
+              "raw": "{{baseUrl}}/api/v1/proposals/{{proposalIdUnderReview}}/review",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1957,7 +1953,7 @@
                 "api",
                 "v1",
                 "proposals",
-                "80000000-0000-0000-0000-000000000004",
+                "{{proposalIdUnderReview}}",
                 "review"
               ]
             },
@@ -2251,7 +2247,7 @@
             "method": "PUT",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/policies/90000000-0000-0000-0000-000000000002/cancel",
+              "raw": "{{baseUrl}}/api/v1/policies/{{cancellablePolicyId}}/cancel",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -2259,7 +2255,7 @@
                 "api",
                 "v1",
                 "policies",
-                "90000000-0000-0000-0000-000000000002",
+                "{{cancellablePolicyId}}",
                 "cancel"
               ]
             },
@@ -2863,7 +2859,7 @@
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/payments/payout/claim/a0000000-0000-0000-0000-000000000004",
+              "raw": "{{baseUrl}}/api/v1/payments/payout/claim/{{activeClaimId}}",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -2873,7 +2869,7 @@
                 "payments",
                 "payout",
                 "claim",
-                "a0000000-0000-0000-0000-000000000004"
+                "{{activeClaimId}}"
               ]
             },
             "description": "Issues a Stripe payout to the customer's saved payment method for the approved claim amount."
@@ -2886,7 +2882,7 @@
             "method": "PUT",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/payments/claims/a0000000-0000-0000-0000-000000000005/settle",
+              "raw": "{{baseUrl}}/api/v1/payments/claims/{{activeClaimId}}/settle",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -2895,7 +2891,7 @@
                 "v1",
                 "payments",
                 "claims",
-                "a0000000-0000-0000-0000-000000000005",
+                "{{activeClaimId}}",
                 "settle"
               ]
             },
@@ -3108,7 +3104,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"policyId\": \"90000000-0000-0000-0000-000000000001\",\n  \"claimantMemberId\": null,\n  \"claimType\": \"Health\",\n  \"claimAmountRequested\": 45000,\n  \"isCashless\": true,\n  \"incidentDate\": \"2026-06-12T00:00:00Z\",\n  \"incidentDescription\": \"Hospitalised for emergency appendectomy at Apollo Hospitals Chennai. Requesting cashless pre-authorisation for surgery and post-operative care.\"\n}",
+              "raw": "{\n  \"policyId\": \"{{policyId}}\",\n  \"claimantMemberId\": null,\n  \"claimType\": \"Health\",\n  \"claimAmountRequested\": 45000,\n  \"isCashless\": true,\n  \"incidentDate\": \"2026-06-12T00:00:00Z\",\n  \"incidentDescription\": \"Hospitalised for emergency appendectomy at Apollo Hospitals Chennai. Requesting cashless pre-authorisation for surgery and post-operative care.\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3407,7 +3403,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"surveyorId\": \"50000000-0000-0000-0000-000000000001\",\n  \"notes\": \"Vehicle inspection required. Please inspect damage and submit report within 5 working days.\"\n}",
+              "raw": "{\n  \"surveyorId\": \"{{surveyorId}}\",\n  \"notes\": \"Vehicle inspection required. Please inspect damage and submit report within 5 working days.\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3415,7 +3411,7 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/claims/a0000000-0000-0000-0000-000000000002/assign-surveyor",
+              "raw": "{{baseUrl}}/api/v1/claims/{{motorClaimId}}/assign-surveyor",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -3423,7 +3419,7 @@
                 "api",
                 "v1",
                 "claims",
-                "a0000000-0000-0000-0000-000000000002",
+                "{{motorClaimId}}",
                 "assign-surveyor"
               ]
             },
@@ -3531,7 +3527,7 @@
               ]
             },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/claims/a0000000-0000-0000-0000-000000000002/survey-report",
+              "raw": "{{baseUrl}}/api/v1/claims/{{motorClaimId}}/survey-report",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -3539,7 +3535,7 @@
                 "api",
                 "v1",
                 "claims",
-                "a0000000-0000-0000-0000-000000000002",
+                "{{motorClaimId}}",
                 "survey-report"
               ]
             },
@@ -3755,7 +3751,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"policyId\": \"90000000-0000-0000-0000-000000000001\",\n  \"claimId\": null,\n  \"category\": \"ClaimDelay\",\n  \"description\": \"My health insurance claim has been pending for over 15 days with no update. I require immediate resolution as hospital bills are outstanding. This is causing significant financial hardship.\"\n}",
+              "raw": "{\n  \"policyId\": \"{{policyId}}\",\n  \"claimId\": null,\n  \"category\": \"ClaimDelay\",\n  \"description\": \"My health insurance claim has been pending for over 15 days with no update. I require immediate resolution as hospital bills are outstanding. This is causing significant financial hardship.\"\n}",
               "options": {
                 "raw": {
                   "language": "json"

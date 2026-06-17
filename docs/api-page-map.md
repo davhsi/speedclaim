@@ -1,6 +1,9 @@
 # SpeedClaim — API Page Map & Endpoint Coverage
 
 > Every page a real user would open in the Angular frontend, what it needs from the API, and whether that endpoint exists.
+>
+> **Base URL:** all routes are versioned — `{{baseUrl}}/api/v1/...` (from `BaseApiController` → `api/v{version:apiVersion}/[controller]`).
+> **Total: 110 endpoints** across 10 controllers (auth, users, agents, products, proposals, policies, payments, claims, grievances, system).
 
 ---
 
@@ -9,24 +12,25 @@
 ### Login Page
 | Action | Endpoint | Status |
 |---|---|---|
-| Login | `POST /api/auth/login` | ✅ |
-| Refresh access token (silent) | `POST /api/auth/refresh` | ✅ |
+| Login | `POST /api/v1/auth/login` | ✅ |
+| Refresh access token (silent) | `POST /api/v1/auth/refresh` | ✅ |
+| Logout (revoke session) | `POST /api/v1/auth/logout` | ✅ |
 
 ### Register Page (Customer self-register)
 | Action | Endpoint | Status |
 |---|---|---|
-| Register new customer | `POST /api/auth/register` | ✅ |
+| Register new customer | `POST /api/v1/auth/register` | ✅ |
 
 ### Email Verification Page
 | Action | Endpoint | Status |
 |---|---|---|
-| Verify email | `POST /api/auth/verify-email` | ✅ |
+| Verify email | `POST /api/v1/auth/verify-email` | ✅ |
 
 ### Forgot Password / Reset Password Pages
 | Action | Endpoint | Status |
 |---|---|---|
-| Request reset link | `POST /api/auth/forgot-password` | ✅ |
-| Submit new password | `POST /api/auth/reset-password` | ✅ |
+| Request reset link | `POST /api/v1/auth/forgot-password` | ✅ |
+| Submit new password | `POST /api/v1/auth/reset-password` | ✅ |
 
 ---
 
@@ -35,113 +39,115 @@
 ### Customer Dashboard
 | Action | Endpoint | Status |
 |---|---|---|
-| Get my policies | `GET /api/policies/my` | ✅ |
-| Get my claims | `GET /api/claims/my` | ✅ |
-| Get my premium schedules | `GET /api/payments/schedule/{policyId}` | ✅ |
-| Get my notifications | `GET /api/users/notifications` | ✅ |
+| Get my policies | `GET /api/v1/policies/my` | ✅ |
+| Get my claims | `GET /api/v1/claims/my` | ✅ |
+| Get my premium schedules | `GET /api/v1/payments/schedule/{policyId}` | ✅ |
+| Get my notifications | `GET /api/v1/users/notifications` | ✅ |
 
 ### Browse Insurance Products Page
 | Action | Endpoint | Status |
 |---|---|---|
-| List all active products | `GET /api/products` | ✅ |
-| Get single product details | `GET /api/products/{id}` | ✅ |
+| List all active products | `GET /api/v1/products` | ✅ |
+| Get single product details | `GET /api/v1/products/{id}` | ✅ |
+| Get document requirements for a product | `GET /api/v1/products/{id}/documents` | ✅ |
 
 ### Get a Quote Page
 | Action | Endpoint | Status |
 |---|---|---|
-| Generate quote | `POST /api/proposals/quote` | ✅ |
+| Generate quote | `POST /api/v1/proposals/quote` | ✅ |
 
 ### Submit Proposal / Apply Page
 | Action | Endpoint | Status |
 |---|---|---|
-| Submit proposal | `POST /api/proposals` | ✅ |
-| Upload supporting documents | `PUT /api/proposals/{id}/documents/{documentKey}` | ✅ |
+| Submit proposal | `POST /api/v1/proposals` | ✅ |
+| Upload supporting documents | `PUT /api/v1/proposals/{id}/documents/{documentKey}` | ✅ |
 
 ### My Proposals Page
 | Action | Endpoint | Status |
 |---|---|---|
-| List my proposals | `GET /api/proposals/my` | ✅ |
-| Get single proposal details | `GET /api/proposals/{id}` | ✅ |
+| List my proposals | `GET /api/v1/proposals/my` | ✅ |
+| Get single proposal details | `GET /api/v1/proposals/{id}` | ✅ |
 
 ### My Policies Page
 | Action | Endpoint | Status |
 |---|---|---|
-| List my policies | `GET /api/policies/my` | ✅ |
-| Get single policy details | `GET /api/policies/{id}` | ✅ |
+| List my policies | `GET /api/v1/policies/my` | ✅ |
+| Get single policy details | `GET /api/v1/policies/{id}` | ✅ |
 
 ### Policy Detail Page
 | Action | Endpoint | Status |
 |---|---|---|
-| Download policy certificate | `GET /api/policies/{id}/download` | ✅ |
-| Get policy status history | `GET /api/policies/{id}/history` | ✅ |
-| Get endorsements for policy | `GET /api/policies/{id}/endorsements` | ✅ |
-| Request endorsement | `POST /api/policies/{id}/endorsements` | ✅ |
-| Update nominee details | `PUT /api/policies/nominees/{nomineeId}` | ✅ |
-| List nominees for a policy | `GET /api/policies/{id}/nominees` | ✅ |
-| Cancel policy | `PUT /api/policies/{id}/cancel` | ✅ |
+| Download policy certificate (plain-text `.txt`) | `GET /api/v1/policies/{id}/download` | ✅ |
+| Get policy status history | `GET /api/v1/policies/{id}/history` | ✅ |
+| Get endorsements for policy | `GET /api/v1/policies/{id}/endorsements` | ✅ |
+| Request endorsement | `POST /api/v1/policies/{id}/endorsements` | ✅ |
+| List nominees for a policy | `GET /api/v1/policies/{id}/nominees` | ✅ |
+| Update nominee details | `PUT /api/v1/policies/nominees/{nomineeId}` | ✅ |
+| Cancel policy | `PUT /api/v1/policies/{id}/cancel` | ✅ |
 
 ### Pay Premium Page
 | Action | Endpoint | Status |
 |---|---|---|
-| Get premium schedule | `GET /api/payments/schedule/{policyId}` | ✅ |
-| Create Stripe PaymentIntent | `POST /api/payments/pay/{scheduleId}` | ✅ |
-| List saved payment methods | `GET /api/payments/methods` | ✅ |
+| Get premium schedule | `GET /api/v1/payments/schedule/{policyId}` | ✅ |
+| Create Stripe PaymentIntent | `POST /api/v1/payments/pay/{scheduleId}` | ✅ |
+| List saved payment methods | `GET /api/v1/payments/methods` | ✅ |
 
 ### Payment History Page
 | Action | Endpoint | Status |
 |---|---|---|
-| Get my payment history | `GET /api/payments/history` | ✅ |
-| Download receipt | `GET /api/payments/{paymentId}/receipt` | ✅ |
+| Get my payment history | `GET /api/v1/payments/history` | ✅ |
+| Download receipt | `GET /api/v1/payments/{paymentId}/receipt` | ✅ |
 
 ### Submit a Claim Page
 | Action | Endpoint | Status |
 |---|---|---|
-| Intimate claim | `POST /api/claims/intimate` | ✅ |
-| Upload claim documents | `PUT /api/claims/{id}/documents/{documentKey}` | ✅ |
+| Intimate claim | `POST /api/v1/claims/intimate` | ✅ |
+| Upload claim documents | `PUT /api/v1/claims/{id}/documents/{documentKey}` | ✅ |
 
 ### My Claims Page
 | Action | Endpoint | Status |
 |---|---|---|
-| List my claims | `GET /api/claims/my` | ✅ |
-| Get single claim details | `GET /api/claims/{id}` | ✅ |
-| Get claim status history | `GET /api/claims/{id}/history` | ✅ |
+| List my claims (filter by `status`, `type`) | `GET /api/v1/claims/my` | ✅ |
+| Get single claim details | `GET /api/v1/claims/{id}` | ✅ |
+| Get claim status history | `GET /api/v1/claims/{id}/history` | ✅ |
 
 ### My Profile Page
 | Action | Endpoint | Status |
 |---|---|---|
-| View profile | `GET /api/users/profile` | ✅ |
-| Update profile | `PUT /api/users/profile` | ✅ |
-| Add address | `POST /api/users/addresses` | ✅ |
-| Update address | `PUT /api/users/addresses/{addressId}` | ✅ |
-| Delete address | `DELETE /api/users/addresses/{addressId}` | ✅ |
+| View profile | `GET /api/v1/users/profile` | ✅ |
+| Update profile | `PUT /api/v1/users/profile` | ✅ |
+| Add address | `POST /api/v1/users/addresses` | ✅ |
+| Update address | `PUT /api/v1/users/addresses/{addressId}` | ✅ |
+| Delete address | `DELETE /api/v1/users/addresses/{addressId}` | ✅ |
 
 ### Family Members Page
 | Action | Endpoint | Status |
 |---|---|---|
-| Add family member | `POST /api/users/family` | ✅ |
-| Update family member | `PUT /api/users/family/{memberId}` | ✅ |
-| List family members | `GET /api/users/family` | ✅ |
-| Delete family member | `DELETE /api/users/family/{memberId}` | ✅ |
+| Add family member | `POST /api/v1/users/family` | ✅ |
+| Update family member | `PUT /api/v1/users/family/{memberId}` | ✅ |
+| List family members | `GET /api/v1/users/family` | ✅ |
+| Delete family member | `DELETE /api/v1/users/family/{memberId}` | ✅ |
 
 ### KYC Documents Page
 | Action | Endpoint | Status |
 |---|---|---|
-| View my KYC status | `GET /api/users/kyc` | ✅ |
-| Upload KYC documents | `POST /api/users/kyc` | ✅ |
+| View my KYC status | `GET /api/v1/users/kyc` | ✅ |
+| Upload Aadhaar (multipart; also allowed for Agent) | `POST /api/v1/users/kyc/aadhaar` | ✅ |
+| Upload PAN (multipart; also allowed for Agent) | `POST /api/v1/users/kyc/pan` | ✅ |
 
 ### Notifications Page
 | Action | Endpoint | Status |
 |---|---|---|
-| List my notifications | `GET /api/users/notifications` | ✅ |
-| Mark notification as read | `PATCH /api/users/notifications/{id}/read` | ✅ |
-| Mark all as read | `PATCH /api/users/notifications/read-all` | ✅ |
+| List my notifications | `GET /api/v1/users/notifications` | ✅ |
+| Mark notification as read | `PATCH /api/v1/users/notifications/{id}/read` | ✅ |
+| Mark all as read | `PATCH /api/v1/users/notifications/read-all` | ✅ |
 
 ### Grievances / Support Page
 | Action | Endpoint | Status |
 |---|---|---|
-| Raise grievance | `POST /api/grievances` | ✅ |
-| List my grievances | `GET /api/grievances/my` | ✅ |
-| Get single grievance status | `GET /api/grievances/{id}` | ✅ |
+| Raise grievance | `POST /api/v1/grievances` | ✅ |
+| List my grievances | `GET /api/v1/grievances/my` | ✅ |
+| Get single grievance status | `GET /api/v1/grievances/{id}` | ✅ |
 
 ---
 
@@ -150,37 +156,37 @@
 ### Agent Dashboard
 | Action | Endpoint | Status |
 |---|---|---|
-| Get dashboard summary | `GET /api/agents/dashboard` | ✅ |
+| Get dashboard summary | `GET /api/v1/agents/dashboard` | ✅ |
 
 ### My Customers Page
 | Action | Endpoint | Status |
 |---|---|---|
-| List assigned customers | `GET /api/agents/customers` | ✅ |
+| List assigned customers | `GET /api/v1/agents/customers` | ✅ |
 
 ### Submit Proposal for Customer
 | Action | Endpoint | Status |
 |---|---|---|
-| Get quote | `POST /api/proposals/quote` | ✅ |
-| Submit proposal (as agent) | `POST /api/proposals` | ✅ |
-| View my proposals | `GET /api/proposals/my` | ✅ |
-| Get single proposal details | `GET /api/proposals/{id}` | ✅ |
-| Upload proposal documents | `PUT /api/proposals/{id}/documents/{documentKey}` | ✅ |
+| Get quote | `POST /api/v1/proposals/quote` | ✅ |
+| Submit proposal (as agent) | `POST /api/v1/proposals` | ✅ |
+| View my proposals | `GET /api/v1/proposals/my` | ✅ |
+| Get single proposal details | `GET /api/v1/proposals/{id}` | ✅ |
+| Upload proposal documents | `PUT /api/v1/proposals/{id}/documents/{documentKey}` | ✅ |
 
 ### Customer Policies Page
 | Action | Endpoint | Status |
 |---|---|---|
-| List policies for assigned customers | `GET /api/policies/assigned` | ✅ |
+| List policies for assigned customers | `GET /api/v1/policies/assigned` | ✅ |
 
 ### Renewal Reminders Page
 | Action | Endpoint | Status |
 |---|---|---|
-| Get upcoming renewals | `GET /api/agents/renewals` | ✅ |
+| Get upcoming renewals | `GET /api/v1/agents/renewals` | ✅ |
 
 ### Agent Profile Page
 | Action | Endpoint | Status |
 |---|---|---|
-| Get agent profile | `GET /api/agents/profile` | ✅ |
-| Update own agent profile | `PUT /api/agents/profile` | ✅ |
+| Get agent profile | `GET /api/v1/agents/profile` | ✅ |
+| Update own agent profile | `PUT /api/v1/agents/profile` | ✅ |
 
 ---
 
@@ -189,29 +195,30 @@
 ### Proposal Review Queue
 | Action | Endpoint | Status |
 |---|---|---|
-| List all proposals | `GET /api/proposals/all` | ✅ |
-| Get single proposal details | `GET /api/proposals/{id}` | ✅ |
-| Approve or reject proposal | `POST /api/proposals/{id}/review` | ✅ |
-| Request additional documents | `POST /api/proposals/{id}/request-docs` | ✅ |
-| Add notes | `PUT /api/proposals/{id}/notes` | ✅ |
+| List all proposals | `GET /api/v1/proposals/all` | ✅ |
+| Get single proposal details | `GET /api/v1/proposals/{id}` | ✅ |
+| Approve or reject proposal | `POST /api/v1/proposals/{id}/review` | ✅ |
+| Request additional documents | `POST /api/v1/proposals/{id}/request-docs` | ✅ |
+| Add notes | `PUT /api/v1/proposals/{id}/notes` | ✅ |
 
 ### KYC Review Queue
 | Action | Endpoint | Status |
 |---|---|---|
-| List pending KYC | `GET /api/users/kyc/pending` | ✅ |
-| Approve/reject KYC | `PUT /api/users/{customerId}/kyc/review` | ✅ |
+| List pending KYC | `GET /api/v1/users/kyc/pending` | ✅ |
+| Approve/reject KYC | `PUT /api/v1/users/{customerId}/kyc/review` | ✅ |
 
 ### Endorsement Review Queue
 | Action | Endpoint | Status |
 |---|---|---|
-| List pending endorsements | `GET /api/policies/endorsements/pending` | ✅ |
-| Approve/reject endorsement | `PUT /api/policies/endorsements/{endorsementId}/review` | ✅ |
+| List pending endorsements | `GET /api/v1/policies/endorsements/pending` | ✅ |
+| Approve/reject endorsement | `PUT /api/v1/policies/endorsements/{endorsementId}/review` | ✅ |
 
 ### All Policies View
 | Action | Endpoint | Status |
 |---|---|---|
-| List all policies | `GET /api/policies/all` | ✅ |
-| Get single policy details | `GET /api/policies/{id}` | ✅ |
+| List all policies | `GET /api/v1/policies/all` | ✅ |
+| Get single policy details | `GET /api/v1/policies/{id}` | ✅ |
+| Get policy status history | `GET /api/v1/policies/{id}/history` | ✅ |
 
 ---
 
@@ -220,23 +227,24 @@
 ### Claims Queue
 | Action | Endpoint | Status |
 |---|---|---|
-| List all claims | `GET /api/claims/all` | ✅ |
-| Get single claim with full details | `GET /api/claims/{id}` | ✅ |
-| Assign claim to self | `PUT /api/claims/{id}/assign` | ✅ |
-| Update claim status | `PUT /api/claims/{id}/status` | ✅ |
-| Approve/reject claim | `PUT /api/claims/{id}/approve` | ✅ |
-| Mark as settled | `PUT /api/claims/{id}/settle` | ✅ |
-| Assign surveyor | `PUT /api/claims/{id}/assign-surveyor` | ✅ |
-| Request additional documents | `POST /api/claims/{id}/request-docs` | ✅ |
-| Approve cashless pre-auth | `PUT /api/claims/{id}/approve-preauth` | ✅ |
+| List all claims (filter by status/type, paged) | `GET /api/v1/claims/all` | ✅ |
+| Get single claim with full details | `GET /api/v1/claims/{id}` | ✅ |
+| Assign claim to self | `PUT /api/v1/claims/{id}/assign` | ✅ |
+| Update claim status | `PUT /api/v1/claims/{id}/status` | ✅ |
+| Approve/reject claim | `PUT /api/v1/claims/{id}/approve` | ✅ |
+| Mark as settled | `PUT /api/v1/claims/{id}/settle` | ✅ |
+| Assign surveyor | `PUT /api/v1/claims/{id}/assign-surveyor` | ✅ |
+| Request additional documents | `POST /api/v1/claims/{id}/request-docs` | ✅ |
+| Approve cashless pre-auth | `PUT /api/v1/claims/{id}/approve-preauth` | ✅ |
+| Submit survey report (also Surveyor) | `POST /api/v1/claims/{id}/survey-report` | ✅ |
 
 ### Grievance Management
 | Action | Endpoint | Status |
 |---|---|---|
-| List all grievances | `GET /api/grievances/all` | ✅ |
-| Get grievance by ID | `GET /api/grievances/{id}` | ✅ |
-| Assign grievance | `PUT /api/grievances/{id}/assign` | ✅ |
-| Update grievance status | `PUT /api/grievances/{id}/status` | ✅ |
+| List all grievances | `GET /api/v1/grievances/all` | ✅ |
+| Get grievance by ID | `GET /api/v1/grievances/{id}` | ✅ |
+| Assign grievance | `PUT /api/v1/grievances/{id}/assign` | ✅ |
+| Update grievance status | `PUT /api/v1/grievances/{id}/status` | ✅ |
 
 ---
 
@@ -245,28 +253,28 @@
 ### Payment Records
 | Action | Endpoint | Status |
 |---|---|---|
-| List all payments | `GET /api/payments/all-records` | ✅ |
-| Manually reconcile payment | `PUT /api/payments/{paymentId}/reconcile` | ✅ |
-| Process refund | `POST /api/payments/{paymentId}/refund` | ✅ |
+| List all payments | `GET /api/v1/payments/all-records` | ✅ |
+| Manually reconcile payment | `PUT /api/v1/payments/{paymentId}/reconcile` | ✅ |
+| Process refund | `POST /api/v1/payments/{paymentId}/refund` | ✅ |
 
 ### Claim Payout
 | Action | Endpoint | Status |
 |---|---|---|
-| Process claim payout (Stripe) | `POST /api/payments/payout/claim/{claimId}` | ✅ |
-| Mark claim financially settled | `PUT /api/payments/claims/{claimId}/settle` | ✅ |
+| Process claim payout (Stripe) | `POST /api/v1/payments/payout/claim/{claimId}` | ✅ |
+| Mark claim financially settled | `PUT /api/v1/payments/claims/{claimId}/settle` | ✅ |
 
 ### Commission Management
 | Action | Endpoint | Status |
 |---|---|---|
-| List pending commissions | `GET /api/payments/commissions/pending` | ✅ |
-| Approve and pay commission | `POST /api/payments/commissions/{id}/approve` | ✅ |
+| List pending commissions | `GET /api/v1/payments/commissions/pending` | ✅ |
+| Approve and pay commission | `POST /api/v1/payments/commissions/{id}/approve` | ✅ |
 
 ### Reports
 | Action | Endpoint | Status |
 |---|---|---|
-| Overdue policies report | `GET /api/payments/reports/overdue` | ✅ |
-| Payment collection summary | `GET /api/payments/reports/summary` | ✅ |
-| Export payments to Excel | `GET /api/payments/reports/export` | ✅ |
+| Overdue policies report | `GET /api/v1/payments/reports/overdue` | ✅ |
+| Payment collection summary (`?period=`) | `GET /api/v1/payments/reports/summary` | ✅ |
+| Export payments to Excel (`.xlsx`) | `GET /api/v1/payments/reports/export` | ✅ |
 
 ---
 
@@ -275,8 +283,8 @@
 ### My Assigned Claims
 | Action | Endpoint | Status |
 |---|---|---|
-| List assigned motor claims | `GET /api/claims/surveyor/assigned` | ✅ |
-| Submit survey report | `POST /api/claims/{id}/survey-report` | ✅ |
+| List assigned motor claims | `GET /api/v1/claims/surveyor/assigned` | ✅ |
+| Submit survey report | `POST /api/v1/claims/{id}/survey-report` | ✅ |
 
 ---
 
@@ -285,43 +293,53 @@
 ### User Management
 | Action | Endpoint | Status |
 |---|---|---|
-| List all users | `GET /api/users/all` | ✅ |
-| Change user role | `PUT /api/users/{userId}/role` | ✅ |
-| Activate/deactivate user | `PUT /api/users/{userId}/status` | ✅ |
-| Reset user password | `POST /api/auth/admin/reset-password/{userId}` | ✅ |
-| View all sessions | `GET /api/users/sessions` | ✅ |
+| List all users (paged) | `GET /api/v1/users/all` | ✅ |
+| Change user role | `PUT /api/v1/users/{userId}/role` | ✅ |
+| Activate/deactivate user | `PUT /api/v1/users/{userId}/status` | ✅ |
+| Reset user password | `POST /api/v1/auth/admin/reset-password/{userId}` | ✅ |
+| View all sessions | `GET /api/v1/users/sessions` | ✅ |
 
 ### Agent Management
 | Action | Endpoint | Status |
 |---|---|---|
-| Register new agent | `POST /api/auth/admin/register-agent` | ✅ |
-| List branches | `GET /api/agents/branches` | ✅ |
-| Create branch | `POST /api/agents/branches` | ✅ |
-| Assign agent to branch | `PUT /api/agents/{agentId}/branch/{branchId}` | ✅ |
-| Update agent license | `PUT /api/agents/{agentId}/license` | ✅ |
-| Activate/deactivate agent | `PUT /api/agents/{agentId}/status` | ✅ |
+| Register new agent | `POST /api/v1/auth/admin/register-agent` | ✅ |
+| List branches | `GET /api/v1/agents/branches` | ✅ |
+| Create branch | `POST /api/v1/agents/branches` | ✅ |
+| Assign agent to branch | `PUT /api/v1/agents/{agentId}/branch/{branchId}` | ✅ |
+| Update agent license | `PUT /api/v1/agents/{agentId}/license` | ✅ |
+| Activate/deactivate agent | `PUT /api/v1/agents/{agentId}/status` | ✅ |
 
 ### Product Catalog Management
 | Action | Endpoint | Status |
 |---|---|---|
-| List products | `GET /api/products` | ✅ |
-| Create product | `POST /api/products` | ✅ |
-| Update premium rate table | `PUT /api/products/{id}/rates` | ✅ |
-| Get document requirements for a product | `GET /api/products/{id}/documents` | ✅ |
-| Configure document requirements for a product | `PUT /api/products/{id}/documents` | ✅ |
-| Toggle product active/inactive | `PUT /api/products/{id}/status` | ✅ |
+| List products | `GET /api/v1/products` | ✅ |
+| Create product | `POST /api/v1/products` | ✅ |
+| Update premium rate table | `PUT /api/v1/products/{id}/rates` | ✅ |
+| Get document requirements for a product | `GET /api/v1/products/{id}/documents` | ✅ |
+| Configure document requirements for a product | `PUT /api/v1/products/{id}/documents` | ✅ |
+| Toggle product active/inactive | `PUT /api/v1/products/{id}/status` | ✅ |
 
 ### System Config
 | Action | Endpoint | Status |
 |---|---|---|
-| View system configs | `GET /api/system/configs` | ✅ |
-| Update system config key | `PUT /api/system/configs` | ✅ |
-| View audit logs | `GET /api/system/audit-logs` | ✅ |
-| View notification/email logs | `GET /api/system/notifications-logs` | ✅ |
-| Manage email templates | `PUT /api/system/email-templates` | ✅ |
+| View system configs | `GET /api/v1/system/configs` | ✅ |
+| Update system config key | `PUT /api/v1/system/configs` | ✅ |
+| View audit logs | `GET /api/v1/system/audit-logs` | ✅ |
+| View notification/email logs | `GET /api/v1/system/notifications-logs` | ✅ |
+| Manage email templates | `PUT /api/v1/system/email-templates` | ✅ |
+
+---
+
+## INTEGRATION / NON-UI ENDPOINTS
+
+These are not driven by any frontend page — they are called by external systems.
+
+| Action | Endpoint | Caller | Status |
+|---|---|---|---|
+| Stripe webhook receiver (handles `payment_intent.succeeded`) | `POST /api/v1/payments/webhook` | Stripe (anonymous, signature-validated) | ✅ |
 
 ---
 
 ## Remaining Known Gaps
 
-No outstanding gaps. All previously identified issues have been resolved.
+No outstanding gaps. All 110 endpoints are implemented and exercised via the Postman "Full Demo" collection. All routes are versioned under `/api/v1`.
