@@ -1,0 +1,3116 @@
+{
+  "summary": {
+    "total": 143,
+    "passed": 143,
+    "failed": 0,
+    "passRate": "100.0%"
+  },
+  "categories": {
+    "Auth/Register": {
+      "total": 15,
+      "passed": 15,
+      "failed": 0
+    },
+    "Auth/RateLimit": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0
+    },
+    "Auth/Login": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0
+    },
+    "Auth/Token": {
+      "total": 9,
+      "passed": 9,
+      "failed": 0
+    },
+    "Auth/AuthZ": {
+      "total": 10,
+      "passed": 10,
+      "failed": 0
+    },
+    "Auth/Admin": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0
+    },
+    "User/Profile": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0
+    },
+    "User/KYC": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0
+    },
+    "User/Admin": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0
+    },
+    "User/Family": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0
+    },
+    "User/Address": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0
+    },
+    "KYC/Upload": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0
+    },
+    "Product": {
+      "total": 9,
+      "passed": 9,
+      "failed": 0
+    },
+    "Proposal/Quote": {
+      "total": 4,
+      "passed": 4,
+      "failed": 0
+    },
+    "Proposal/Submit": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0
+    },
+    "Proposal": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0
+    },
+    "Policy": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0
+    },
+    "Policy/Endorsement": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0
+    },
+    "Policy/Nominee": {
+      "total": 4,
+      "passed": 4,
+      "failed": 0
+    },
+    "Claim/Intimate": {
+      "total": 6,
+      "passed": 6,
+      "failed": 0
+    },
+    "Claim": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0
+    },
+    "Claim/Status": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0
+    },
+    "Claim/Approve": {
+      "total": 4,
+      "passed": 4,
+      "failed": 0
+    },
+    "Claim/Surveyor": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0
+    },
+    "Claim/Settle": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0
+    },
+    "Grievance": {
+      "total": 7,
+      "passed": 7,
+      "failed": 0
+    },
+    "Payment": {
+      "total": 10,
+      "passed": 10,
+      "failed": 0
+    },
+    "Agent": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0
+    },
+    "Agent/Branch": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0
+    },
+    "Agent/License": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0
+    },
+    "System": {
+      "total": 4,
+      "passed": 4,
+      "failed": 0
+    },
+    "Notification": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0
+    },
+    "Webhook": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0
+    }
+  },
+  "scenarios": [
+    {
+      "id": 1,
+      "scenario": "Register: empty body",
+      "category": "Auth/Register",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/register",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Email": [
+            "The Email field is required.",
+            "Email is required."
+          ],
+          "Phone": [
+            "The Phone field is required.",
+            "Phone number is required."
+          ],
+          "LastName": [
+            "The LastName field is required.",
+            "Last Name is required."
+          ],
+          "Password": [
+            "The Password field is required.",
+            "Password is required."
+          ],
+          "FirstName": [
+            "The FirstName field is required.",
+            "First Name is required."
+          ],
+          "PanNumber": [
+            "The PanNumber field is required.",
+            "PAN Number is required."
+          ],
+          "Salutation": [
+            "The Salutation field is required.",
+            "Salutation is required.",
+            "Invalid salutation provided."
+          ],
+          "DateOfBirth": [
+            "Date of Birth is required."
+          ],
+          "AadhaarNumber": [
+            "The AadhaarNumber field is required.",
+            "Aadhaar Number is required."
+          ],
+          "CurrentAddress": [
+            "Current Address is required when not same as permanent."
+          ],
+          "PermanentAddress": [
+            "The PermanentAddress field is required.",
+            "Permanent Address is required."
+          ]
+        },
+        "traceId": "00-792988ccb86a93f0be966ee65d13cab9-c1f363cd3f6c0f40-00"
+      }
+    },
+    {
+      "id": 2,
+      "scenario": "Register: invalid email format",
+      "category": "Auth/Register",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/register",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Email": [
+            "A valid email is required."
+          ]
+        },
+        "traceId": "00-b591981136d161ee795827d9b8da4bae-248aab401261a879-00"
+      }
+    },
+    {
+      "id": 3,
+      "scenario": "Register: weak password (no uppercase)",
+      "category": "Auth/Register",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/register",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Password": [
+            "Password must contain at least one uppercase letter."
+          ]
+        },
+        "traceId": "00-d87205cacd229474041a65508eb68cb0-021582443bd50bac-00"
+      }
+    },
+    {
+      "id": 4,
+      "scenario": "Register: weak password (too short)",
+      "category": "Auth/Register",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/register",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Password": [
+            "Password must be at least 8 characters."
+          ]
+        },
+        "traceId": "00-fe3738b5faa02d0919d47633a2ae3509-83b5e09a5384f64f-00"
+      }
+    },
+    {
+      "id": 5,
+      "scenario": "Register: weak password (no special char)",
+      "category": "Auth/Register",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/register",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Password": [
+            "Password must contain at least one special character."
+          ]
+        },
+        "traceId": "00-0b734e7d73e1f68568aa362f7c90937e-322432f210ab2d64-00"
+      }
+    },
+    {
+      "id": 6,
+      "scenario": "Register: underage (< 18 years)",
+      "category": "Auth/Register",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/register",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "DateOfBirth": [
+            "You must be at least 18 years old to register."
+          ]
+        },
+        "traceId": "00-ea46bed48a2c96d9beeac874ec64d7de-33cf589454535fe7-00"
+      }
+    },
+    {
+      "id": 7,
+      "scenario": "Register: invalid Aadhaar (not 12 digits)",
+      "category": "Auth/Register",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/register",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "AadhaarNumber": [
+            "Aadhaar Number must be exactly 12 digits."
+          ]
+        },
+        "traceId": "00-c5ad035b4423f6b784c177fc0c66513e-1359e6488baf14d7-00"
+      }
+    },
+    {
+      "id": 8,
+      "scenario": "Register: invalid PAN format",
+      "category": "Auth/Register",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/register",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "PanNumber": [
+            "Invalid PAN Number format."
+          ]
+        },
+        "traceId": "00-e4add1f8c965b34fcd6dd52a439a8fd9-8e2d9d79d5e9bc8a-00"
+      }
+    },
+    {
+      "id": 9,
+      "scenario": "Register: invalid salutation",
+      "category": "Auth/Register",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/register",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Salutation": [
+            "Invalid salutation provided."
+          ]
+        },
+        "traceId": "00-9d9c46ccb84d9609376fcc7a4607efe2-cf1bcf000a8f8550-00"
+      }
+    },
+    {
+      "id": 10,
+      "scenario": "Register: salutation-gender mismatch (Mrs with Male)",
+      "category": "Auth/Register",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/register",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "": [
+            "If Salutation is Mrs., Marital Status must strictly be Married."
+          ],
+          "Salutation": [
+            "Salutation does not match the selected gender."
+          ]
+        },
+        "traceId": "00-78e5662e42623be7bcb434e45c981ee4-b71935bec1f68344-00"
+      }
+    },
+    {
+      "id": 11,
+      "scenario": "Register: rate limit triggered (429) \u2014 proves auth rate limiting works",
+      "category": "Auth/RateLimit",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/register",
+      "expectedStatus": 429,
+      "actualStatus": 429,
+      "passed": true,
+      "response": {}
+    },
+    {
+      "id": 12,
+      "scenario": "Register: Mrs requires Married status",
+      "category": "Auth/Register",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/register",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "": [
+            "If Salutation is Mrs., Marital Status must strictly be Married."
+          ]
+        },
+        "traceId": "00-517a9340b093b7ec00c6c44399312f06-6607a51f7c436cbb-00"
+      }
+    },
+    {
+      "id": 13,
+      "scenario": "Register: missing current address when isSameAsPermanent=false",
+      "category": "Auth/Register",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/register",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "CurrentAddress": [
+            "Current Address is required when not same as permanent."
+          ]
+        },
+        "traceId": "00-043a9de3d987e785e6e8c332bf3b22bf-cb916e3e12507152-00"
+      }
+    },
+    {
+      "id": 14,
+      "scenario": "Register: invalid postal code (not 6 digits)",
+      "category": "Auth/Register",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/register",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "PermanentAddress.PostalCode": [
+            "Postal code must be exactly 6 digits."
+          ]
+        },
+        "traceId": "00-749b6253dd7f004f91bbf40cd08e0b5d-3127350ae8fad838-00"
+      }
+    },
+    {
+      "id": 15,
+      "scenario": "Register: duplicate email (already exists)",
+      "category": "Auth/Register",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/register",
+      "expectedStatus": 409,
+      "actualStatus": 409,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/409",
+        "title": "ConflictException",
+        "status": 409,
+        "detail": "Email already registered",
+        "traceId": "0HNMCB6TL692O:00000001"
+      }
+    },
+    {
+      "id": 16,
+      "scenario": "Register: invalid gender enum",
+      "category": "Auth/Register",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/register",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "request": [
+            "The request field is required."
+          ],
+          "$.gender": [
+            "The JSON value could not be converted to SpeedClaim.Api.Dtos.Auth.RegisterUserRequest. Path: $.gender | LineNumber: 0 | BytePositionInLine: 226."
+          ]
+        },
+        "traceId": "00-51e838c83334d21cf6d5f667f82abf90-2c37bf8b79a23b5e-00"
+      }
+    },
+    {
+      "id": 17,
+      "scenario": "Login: empty body",
+      "category": "Auth/Login",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/login",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Email": [
+            "The Email field is required.",
+            "Email is required."
+          ],
+          "Password": [
+            "The Password field is required.",
+            "Password is required."
+          ]
+        },
+        "traceId": "00-f5dda030ee2358eaf23d331250f32af9-c97f6b3d3da7974d-00"
+      }
+    },
+    {
+      "id": 18,
+      "scenario": "Login: invalid email format",
+      "category": "Auth/Login",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/login",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Email": [
+            "A valid email address is required."
+          ]
+        },
+        "traceId": "00-0e595dee92feeb22e6706220728e541a-59cb72a800244116-00"
+      }
+    },
+    {
+      "id": 19,
+      "scenario": "Login: missing password",
+      "category": "Auth/Login",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/login",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Password": [
+            "Password is required."
+          ]
+        },
+        "traceId": "00-e680cdaa6962d5f72a8fbab094fa8e16-8b4ac4b9f93bdf01-00"
+      }
+    },
+    {
+      "id": 20,
+      "scenario": "Login: wrong password (invalid credentials)",
+      "category": "Auth/Login",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/login",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/400",
+        "title": "ValidationException",
+        "status": 400,
+        "detail": "Invalid credentials",
+        "traceId": "0HNMCB6TL692T:00000001"
+      }
+    },
+    {
+      "id": 21,
+      "scenario": "Login: non-existent email",
+      "category": "Auth/Login",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/login",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/400",
+        "title": "ValidationException",
+        "status": 400,
+        "detail": "Invalid credentials",
+        "traceId": "0HNMCB6TL692U:00000001"
+      }
+    },
+    {
+      "id": 22,
+      "scenario": "Verify Email: empty token",
+      "category": "Auth/Token",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/verify-email",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Token": [
+            "Verification token is required."
+          ]
+        },
+        "traceId": "00-027aabf382f42499e2bd0f6d483f5ca6-75fe23f2b09b1a7b-00"
+      }
+    },
+    {
+      "id": 23,
+      "scenario": "Verify Email: invalid/expired token",
+      "category": "Auth/Token",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/verify-email",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/400",
+        "title": "ValidationException",
+        "status": 400,
+        "detail": "Invalid or expired token",
+        "traceId": "0HNMCB6TL6930:00000001"
+      }
+    },
+    {
+      "id": 24,
+      "scenario": "Refresh Token: empty",
+      "category": "Auth/Token",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/refresh",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "RefreshToken": [
+            "Refresh token is required."
+          ]
+        },
+        "traceId": "00-d540ba96fb4c89363968e0c6ea92af8b-5d3dcd09d01487a8-00"
+      }
+    },
+    {
+      "id": 25,
+      "scenario": "Refresh Token: invalid format",
+      "category": "Auth/Token",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/refresh",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/400",
+        "title": "ValidationException",
+        "status": 400,
+        "detail": "Invalid refresh token format",
+        "traceId": "0HNMCB6TL6932:00000001"
+      }
+    },
+    {
+      "id": 26,
+      "scenario": "Forgot Password: empty email",
+      "category": "Auth/Token",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/forgot-password",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Email": [
+            "Email is required.",
+            "A valid email address is required."
+          ]
+        },
+        "traceId": "00-1f25fc26fc5384b109094b4d6aa166b5-cdb190aee09ab27d-00"
+      }
+    },
+    {
+      "id": 27,
+      "scenario": "Forgot Password: invalid email format",
+      "category": "Auth/Token",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/forgot-password",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Email": [
+            "A valid email address is required."
+          ]
+        },
+        "traceId": "00-3c1e67bc0d10b7536f153cc9250a2272-93fa8d63b5362e8e-00"
+      }
+    },
+    {
+      "id": 28,
+      "scenario": "Reset Password: empty token",
+      "category": "Auth/Token",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/reset-password",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Token": [
+            "Reset token is required."
+          ]
+        },
+        "traceId": "00-c7f785ab18f15ca6f6fbba3e0774fddf-1f6910aaa865ab29-00"
+      }
+    },
+    {
+      "id": 29,
+      "scenario": "Reset Password: weak new password",
+      "category": "Auth/Token",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/reset-password",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "NewPassword": [
+            "Password must be at least 8 characters.",
+            "Password must contain at least one uppercase letter.",
+            "Password must contain at least one digit.",
+            "Password must contain at least one special character."
+          ]
+        },
+        "traceId": "00-60544785e6c7028fba6a2955a6e292ee-b98b9f4e3322d1c4-00"
+      }
+    },
+    {
+      "id": 30,
+      "scenario": "Reset Password: invalid token",
+      "category": "Auth/Token",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/reset-password",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/400",
+        "title": "ValidationException",
+        "status": 400,
+        "detail": "Invalid or expired token",
+        "traceId": "0HNMCB6TL6937:00000001"
+      }
+    },
+    {
+      "id": 31,
+      "scenario": "No token: access protected endpoint",
+      "category": "Auth/AuthZ",
+      "method": "GET",
+      "url": "http://localhost:5062/api/v1/users/profile",
+      "expectedStatus": 401,
+      "actualStatus": 401,
+      "passed": true,
+      "response": {}
+    },
+    {
+      "id": 32,
+      "scenario": "Invalid JWT: garbled token",
+      "category": "Auth/AuthZ",
+      "method": "GET",
+      "url": "http://localhost:5062/api/v1/users/profile",
+      "expectedStatus": 401,
+      "actualStatus": 401,
+      "passed": true,
+      "response": {}
+    },
+    {
+      "id": 33,
+      "scenario": "Customer accesses Admin endpoint (role mismatch)",
+      "category": "Auth/AuthZ",
+      "method": "GET",
+      "url": "http://localhost:5062/api/v1/users/all",
+      "expectedStatus": 403,
+      "actualStatus": 403,
+      "passed": true,
+      "response": {}
+    },
+    {
+      "id": 34,
+      "scenario": "Customer accesses Agent endpoint",
+      "category": "Auth/AuthZ",
+      "method": "GET",
+      "url": "http://localhost:5062/api/v1/agents/customers",
+      "expectedStatus": 403,
+      "actualStatus": 403,
+      "passed": true,
+      "response": {}
+    },
+    {
+      "id": 35,
+      "scenario": "Agent accesses Admin-only system configs",
+      "category": "Auth/AuthZ",
+      "method": "GET",
+      "url": "http://localhost:5062/api/v1/system/configs",
+      "expectedStatus": 403,
+      "actualStatus": 403,
+      "passed": true,
+      "response": {}
+    },
+    {
+      "id": 36,
+      "scenario": "Customer accesses Underwriter proposals",
+      "category": "Auth/AuthZ",
+      "method": "GET",
+      "url": "http://localhost:5062/api/v1/proposals/all",
+      "expectedStatus": 403,
+      "actualStatus": 403,
+      "passed": true,
+      "response": {}
+    },
+    {
+      "id": 37,
+      "scenario": "Customer accesses ClaimsOfficer claims list",
+      "category": "Auth/AuthZ",
+      "method": "GET",
+      "url": "http://localhost:5062/api/v1/claims/all",
+      "expectedStatus": 403,
+      "actualStatus": 403,
+      "passed": true,
+      "response": {}
+    },
+    {
+      "id": 38,
+      "scenario": "Customer accesses Finance endpoints",
+      "category": "Auth/AuthZ",
+      "method": "GET",
+      "url": "http://localhost:5062/api/v1/payments/all-records",
+      "expectedStatus": 403,
+      "actualStatus": 403,
+      "passed": true,
+      "response": {}
+    },
+    {
+      "id": 39,
+      "scenario": "Agent accesses admin reset password",
+      "category": "Auth/AuthZ",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/admin/reset-password/019ed3b8-84db-7b7d-9fce-e2e6aca7cf97",
+      "expectedStatus": 403,
+      "actualStatus": 403,
+      "passed": true,
+      "response": {}
+    },
+    {
+      "id": 40,
+      "scenario": "Customer accesses admin register-agent",
+      "category": "Auth/AuthZ",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/admin/register-agent",
+      "expectedStatus": 403,
+      "actualStatus": 403,
+      "passed": true,
+      "response": {}
+    },
+    {
+      "id": 41,
+      "scenario": "Admin Reset Password: user not found",
+      "category": "Auth/Admin",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/admin/reset-password/00000000-0000-0000-0000-000000000000",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "User not found",
+        "traceId": "0HNMCB6TL693I:00000001"
+      }
+    },
+    {
+      "id": 42,
+      "scenario": "Admin Reset Password: weak password",
+      "category": "Auth/Admin",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/admin/reset-password/019ed3b8-84db-7b7d-9fce-e2e6aca7cf97",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "NewPassword": [
+            "Password must be at least 8 characters.",
+            "Password must contain at least one uppercase letter.",
+            "Password must contain at least one digit.",
+            "Password must contain at least one special character."
+          ]
+        },
+        "traceId": "00-f045e5f9530dfc36a987188ff9c7e7b1-fff67b9d01e3220f-00"
+      }
+    },
+    {
+      "id": 43,
+      "scenario": "Register Agent: duplicate email",
+      "category": "Auth/Admin",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/admin/register-agent",
+      "expectedStatus": 409,
+      "actualStatus": 409,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/409",
+        "title": "ConflictException",
+        "status": 409,
+        "detail": "Email already registered",
+        "traceId": "0HNMCB6TL693K:00000001"
+      }
+    },
+    {
+      "id": 44,
+      "scenario": "Register Agent: empty body",
+      "category": "Auth/Admin",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/admin/register-agent",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Email": [
+            "The Email field is required.",
+            "Email is required."
+          ],
+          "Phone": [
+            "The Phone field is required.",
+            "Phone number is required."
+          ],
+          "LastName": [
+            "The LastName field is required.",
+            "Last name is required."
+          ],
+          "Password": [
+            "The Password field is required.",
+            "Password is required."
+          ],
+          "FirstName": [
+            "The FirstName field is required.",
+            "First name is required."
+          ],
+          "PanNumber": [
+            "The PanNumber field is required.",
+            "PAN number is required."
+          ],
+          "AgencyName": [
+            "The AgencyName field is required.",
+            "Agency name is required."
+          ],
+          "Salutation": [
+            "The Salutation field is required.",
+            "Salutation is required.",
+            "Salutation must be one of: Mr, Mrs, Ms, Dr, Prof."
+          ],
+          "AadhaarNumber": [
+            "The AadhaarNumber field is required.",
+            "Aadhaar number is required."
+          ],
+          "LicenseNumber": [
+            "The LicenseNumber field is required.",
+            "License number is required."
+          ],
+          "CurrentAddress": [
+            "Current address is required when not same as permanent."
+          ],
+          "PermanentAddress": [
+            "The PermanentAddress field is required.",
+            "Permanent address is required."
+          ]
+        },
+        "traceId": "00-0e4e5ef12e703a8e6459d157f01317aa-0acbeaacc285bbaf-00"
+      }
+    },
+    {
+      "id": 45,
+      "scenario": "Register Agent: invalid phone (not 10 digits)",
+      "category": "Auth/Admin",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/auth/admin/register-agent",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Phone": [
+            "Phone number must be exactly 10 digits."
+          ]
+        },
+        "traceId": "00-2dc7fc827581f025ef7237cf619aab46-64ee363990d1f54a-00"
+      }
+    },
+    {
+      "id": 46,
+      "scenario": "Get Profile: wrong role (Admin is not Customer)",
+      "category": "User/Profile",
+      "method": "GET",
+      "url": "http://localhost:5062/api/v1/users/profile",
+      "expectedStatus": 403,
+      "actualStatus": 403,
+      "passed": true,
+      "response": {}
+    },
+    {
+      "id": 47,
+      "scenario": "KYC Approve: user not found",
+      "category": "User/KYC",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/users/00000000-0000-0000-0000-000000000000/kyc/review?isApproved=true&reason=ok",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "KYC Record not found",
+        "traceId": "0HNMCB6TL693O:00000001"
+      }
+    },
+    {
+      "id": 48,
+      "scenario": "Change Role: invalid role",
+      "category": "User/Admin",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/users/019ed3b7-7b51-704a-b36a-9a2f6e3a3fd8/role",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/400",
+        "title": "ValidationException",
+        "status": 400,
+        "detail": "Invalid role",
+        "traceId": "0HNMCB6TL693P:00000001"
+      }
+    },
+    {
+      "id": 49,
+      "scenario": "Change Role: user not found",
+      "category": "User/Admin",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/users/00000000-0000-0000-0000-000000000000/role",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "User not found",
+        "traceId": "0HNMCB6TL693Q:00000001"
+      }
+    },
+    {
+      "id": 50,
+      "scenario": "Activate User: user not found",
+      "category": "User/Admin",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/users/00000000-0000-0000-0000-000000000000/status?isActive=true",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "User not found",
+        "traceId": "0HNMCB6TL693R:00000001"
+      }
+    },
+    {
+      "id": 51,
+      "scenario": "Add Family Member: empty body",
+      "category": "User/Family",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/users/family",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "LastName": [
+            "The LastName field is required.",
+            "Last name is required."
+          ],
+          "FirstName": [
+            "The FirstName field is required.",
+            "First name is required."
+          ],
+          "DateOfBirth": [
+            "Date of birth is required."
+          ]
+        },
+        "traceId": "00-bd6e0f30ed4b95fc4b1e1ba51195c97d-bfb00911bff42de0-00"
+      }
+    },
+    {
+      "id": 52,
+      "scenario": "Add Family Member: invalid gender enum",
+      "category": "User/Family",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/users/family",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "request": [
+            "The request field is required."
+          ],
+          "$.gender": [
+            "The JSON value could not be converted to SpeedClaim.Api.Dtos.User.AddFamilyMemberRequest. Path: $.gender | LineNumber: 0 | BytePositionInLine: 74."
+          ]
+        },
+        "traceId": "00-370ab9a82788573d21b2f1cc0143aa51-e6c2b956e9d24738-00"
+      }
+    },
+    {
+      "id": 53,
+      "scenario": "Add Family Member: future DOB",
+      "category": "User/Family",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/users/family",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "DateOfBirth": [
+            "Date of birth must be in the past."
+          ]
+        },
+        "traceId": "00-200eacb34b38d1e55b9ff93f85004731-9337ed156b1e8a90-00"
+      }
+    },
+    {
+      "id": 54,
+      "scenario": "Update Family Member: not found",
+      "category": "User/Family",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/users/family/00000000-0000-0000-0000-000000000000",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Family member not found",
+        "traceId": "0HNMCB6TL693V:00000001"
+      }
+    },
+    {
+      "id": 55,
+      "scenario": "Delete Family Member: not found",
+      "category": "User/Family",
+      "method": "DELETE",
+      "url": "http://localhost:5062/api/v1/users/family/00000000-0000-0000-0000-000000000000",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Family member not found.",
+        "traceId": "0HNMCB6TL6940:00000001"
+      }
+    },
+    {
+      "id": 56,
+      "scenario": "Add Address: empty body",
+      "category": "User/Address",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/users/addresses",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "City": [
+            "The City field is required.",
+            "City is required."
+          ],
+          "State": [
+            "The State field is required.",
+            "State is required."
+          ],
+          "Country": [
+            "The Country field is required.",
+            "Country is required."
+          ],
+          "PostalCode": [
+            "The PostalCode field is required.",
+            "Postal code is required."
+          ],
+          "AddressLine1": [
+            "The AddressLine1 field is required.",
+            "Address Line 1 is required."
+          ]
+        },
+        "traceId": "00-efba73b82942db4e308ea6b495eb124b-542653eb12ce99bb-00"
+      }
+    },
+    {
+      "id": 57,
+      "scenario": "Add Address: invalid postal code",
+      "category": "User/Address",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/users/addresses",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "PostalCode": [
+            "Postal code must be exactly 6 digits."
+          ]
+        },
+        "traceId": "00-fa55bac10ef3c215ecbc5f42f6997abf-237d3050c3eddf03-00"
+      }
+    },
+    {
+      "id": 58,
+      "scenario": "Add Address: missing required fields",
+      "category": "User/Address",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/users/addresses",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "City": [
+            "City is required."
+          ],
+          "State": [
+            "State is required."
+          ],
+          "Country": [
+            "Country is required."
+          ],
+          "PostalCode": [
+            "Postal code is required.",
+            "Postal code must be exactly 6 digits."
+          ],
+          "AddressLine1": [
+            "Address Line 1 is required."
+          ]
+        },
+        "traceId": "00-de68a3ac4152cb0554a3a00509122cae-8142607c5487b154-00"
+      }
+    },
+    {
+      "id": 59,
+      "scenario": "Update Address: not found",
+      "category": "User/Address",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/users/addresses/00000000-0000-0000-0000-000000000000",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Address not found",
+        "traceId": "0HNMCB6TL6944:00000001"
+      }
+    },
+    {
+      "id": 60,
+      "scenario": "Delete Address: not found",
+      "category": "User/Address",
+      "method": "DELETE",
+      "url": "http://localhost:5062/api/v1/users/addresses/00000000-0000-0000-0000-000000000000",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Address not found.",
+        "traceId": "0HNMCB6TL6945:00000001"
+      }
+    },
+    {
+      "id": 61,
+      "scenario": "Aadhaar Upload: invalid number (not 12 digits)",
+      "category": "KYC/Upload",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/users/kyc/aadhaar",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "AadhaarNumber": [
+            "Aadhaar number must be exactly 12 digits."
+          ],
+          "FrontDocument": [
+            "Front document cannot be empty."
+          ]
+        },
+        "traceId": "00-88067c6368916d05fa18bfcf675b5bc5-031fdc72a8579ed9-00"
+      }
+    },
+    {
+      "id": 62,
+      "scenario": "PAN Upload: invalid format",
+      "category": "KYC/Upload",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/users/kyc/pan",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "PanNumber": [
+            "PAN number must be in the format ABCDE1234F."
+          ],
+          "FrontDocument": [
+            "Front document cannot be empty."
+          ]
+        },
+        "traceId": "00-bdaafa6bf6fea82cda29adc0f4d3464f-496398a9800bba81-00"
+      }
+    },
+    {
+      "id": 63,
+      "scenario": "Get Product: not found",
+      "category": "Product",
+      "method": "GET",
+      "url": "http://localhost:5062/api/v1/products/00000000-0000-0000-0000-000000000000",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Product not found.",
+        "traceId": "0HNMCB6TL6948:00000001"
+      }
+    },
+    {
+      "id": 64,
+      "scenario": "Create Product: empty body",
+      "category": "Product",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/products",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Uin": [
+            "The Uin field is required.",
+            "UIN (Unique Identification Number) is required."
+          ],
+          "Domain": [
+            "The Domain field is required.",
+            "Domain is required.",
+            "Domain must be one of: Health, Life, Motor."
+          ],
+          "MaxAge": [
+            "Maximum age must be greater than minimum age."
+          ],
+          "MinAge": [
+            "Minimum age must be at least 1."
+          ],
+          "Description": [
+            "The Description field is required.",
+            "Description is required."
+          ],
+          "ProductName": [
+            "The ProductName field is required.",
+            "Product name is required."
+          ],
+          "MaxSumAssured": [
+            "Maximum sum assured must be greater than minimum sum assured."
+          ],
+          "MinSumAssured": [
+            "Minimum sum assured must be greater than zero."
+          ],
+          "MinTenureYears": [
+            "Minimum tenure must be at least 1 year."
+          ]
+        },
+        "traceId": "00-09a94d6fe31d9f9da4473e583c9a9e05-8656a428f0f1cb19-00"
+      }
+    },
+    {
+      "id": 65,
+      "scenario": "Create Product: invalid domain",
+      "category": "Product",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/products",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Domain": [
+            "Domain must be one of: Health, Life, Motor."
+          ]
+        },
+        "traceId": "00-32ac3b5f91c107f6e6066577a4027644-c5a0d8931ac1c663-00"
+      }
+    },
+    {
+      "id": 66,
+      "scenario": "Create Product: maxAge < minAge",
+      "category": "Product",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/products",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "MaxAge": [
+            "Maximum age must be greater than minimum age."
+          ]
+        },
+        "traceId": "00-5e88b7c3e77a66b90aaf9123397c3153-82d808076041b9c5-00"
+      }
+    },
+    {
+      "id": 67,
+      "scenario": "Create Product: maxSumAssured < minSumAssured",
+      "category": "Product",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/products",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "MaxSumAssured": [
+            "Maximum sum assured must be greater than minimum sum assured."
+          ]
+        },
+        "traceId": "00-c6a1e5b6e1927fffcdf2587f81adbd76-26041ea740395093-00"
+      }
+    },
+    {
+      "id": 68,
+      "scenario": "Create Product: family floater but maxFamilyMembers < 2",
+      "category": "Product",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/products",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "MaxFamilyMembers": [
+            "Maximum family members must be at least 2 when family floater is allowed."
+          ]
+        },
+        "traceId": "00-7a0ef9b7a752493b74b688dbb9d5a647-bbc2507f45c2cd83-00"
+      }
+    },
+    {
+      "id": 69,
+      "scenario": "Update Rates: product not found",
+      "category": "Product",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/products/00000000-0000-0000-0000-000000000000/rates",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Product not found",
+        "traceId": "0HNMCB6TL694E:00000001"
+      }
+    },
+    {
+      "id": 70,
+      "scenario": "Toggle Status: product not found",
+      "category": "Product",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/products/00000000-0000-0000-0000-000000000000/status",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Product not found",
+        "traceId": "0HNMCB6TL694F:00000001"
+      }
+    },
+    {
+      "id": 71,
+      "scenario": "Customer creating product (forbidden)",
+      "category": "Product",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/products",
+      "expectedStatus": 403,
+      "actualStatus": 403,
+      "passed": true,
+      "response": {}
+    },
+    {
+      "id": 72,
+      "scenario": "Generate Quote: empty body",
+      "category": "Proposal/Quote",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/proposals/quote",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Age": [
+            "Age must be between 1 and 100."
+          ],
+          "ProductId": [
+            "The ProductId field is required.",
+            "Product ID is required."
+          ],
+          "SumAssured": [
+            "Sum assured must be greater than zero."
+          ],
+          "TenureYears": [
+            "Tenure must be at least 1 year."
+          ]
+        },
+        "traceId": "00-b81e06d3282c3fe06235262b76df2544-0ae8eeb39c359c8f-00"
+      }
+    },
+    {
+      "id": 73,
+      "scenario": "Generate Quote: age out of range",
+      "category": "Proposal/Quote",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/proposals/quote",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Age": [
+            "Age must be between 1 and 100."
+          ]
+        },
+        "traceId": "00-5d72992f0628d72fcb3fe30b8e5571af-26be47082268d517-00"
+      }
+    },
+    {
+      "id": 74,
+      "scenario": "Generate Quote: zero sum assured",
+      "category": "Proposal/Quote",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/proposals/quote",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "SumAssured": [
+            "Sum assured must be greater than zero."
+          ]
+        },
+        "traceId": "00-60736dca339fc79e3f61512b38c4a988-e921a05bc4c0d5c7-00"
+      }
+    },
+    {
+      "id": 75,
+      "scenario": "Generate Quote: product not found",
+      "category": "Proposal/Quote",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/proposals/quote",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Product not found",
+        "traceId": "0HNMCB6TL694K:00000001"
+      }
+    },
+    {
+      "id": 76,
+      "scenario": "Submit Proposal: empty body",
+      "category": "Proposal/Submit",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/proposals",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Nominees": [
+            "The Nominees field is required."
+          ],
+          "ProductId": [
+            "The ProductId field is required.",
+            "Product ID is required.",
+            "Product ID must be a valid GUID."
+          ],
+          "CustomerId": [
+            "The CustomerId field is required.",
+            "Customer ID is required.",
+            "Customer ID must be a valid GUID."
+          ],
+          "SumAssured": [
+            "Sum assured must be greater than zero."
+          ],
+          "TenureYears": [
+            "Tenure must be at least 1 year."
+          ],
+          "PremiumAmount": [
+            "Premium amount must be greater than zero."
+          ],
+          "PaymentFrequency": [
+            "The PaymentFrequency field is required.",
+            "Payment frequency is required.",
+            "Payment frequency must be one of: Monthly, Quarterly, HalfYearly, Annually."
+          ],
+          "CustomerMemberIds": [
+            "The CustomerMemberIds field is required."
+          ]
+        },
+        "traceId": "00-94b6a552b701e18653ec49c7de5f9bc7-7801ca37dd6b66d6-00"
+      }
+    },
+    {
+      "id": 77,
+      "scenario": "Submit Proposal: invalid customer ID format",
+      "category": "Proposal/Submit",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/proposals",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Nominees": [
+            "The Nominees field is required."
+          ],
+          "ProductId": [
+            "Product ID must be a valid GUID."
+          ],
+          "CustomerId": [
+            "Customer ID must be a valid GUID."
+          ],
+          "CustomerMemberIds": [
+            "The CustomerMemberIds field is required."
+          ]
+        },
+        "traceId": "00-5c41396edb4527b9c6ca97d4ca04795c-380d892a4952a9e3-00"
+      }
+    },
+    {
+      "id": 78,
+      "scenario": "Submit Proposal: invalid payment frequency",
+      "category": "Proposal/Submit",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/proposals",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Nominees": [
+            "The Nominees field is required."
+          ],
+          "PaymentFrequency": [
+            "Payment frequency must be one of: Monthly, Quarterly, HalfYearly, Annually."
+          ],
+          "CustomerMemberIds": [
+            "The CustomerMemberIds field is required."
+          ]
+        },
+        "traceId": "00-379295e65c699ba6c2fb9a33fc77033b-ecf1d907fbc1822f-00"
+      }
+    },
+    {
+      "id": 79,
+      "scenario": "Submit Proposal: nominee shares don't add to 100%",
+      "category": "Proposal/Submit",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/proposals",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Nominees": [
+            "Nominee share percentages must add up to exactly 100%."
+          ],
+          "CustomerMemberIds": [
+            "The CustomerMemberIds field is required."
+          ]
+        },
+        "traceId": "00-d4e06be675b539f2e71432bcfeb85833-5f5087ffdf39ebac-00"
+      }
+    },
+    {
+      "id": 80,
+      "scenario": "Submit Proposal: minor nominee without appointee",
+      "category": "Proposal/Submit",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/proposals",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "CustomerMemberIds": [
+            "The CustomerMemberIds field is required."
+          ],
+          "Nominees[0].AppointeeName": [
+            "Appointee name is required for a minor nominee."
+          ]
+        },
+        "traceId": "00-c3519a258b75e45da262cc47836d2c0e-d32dc1e8a8eb2932-00"
+      }
+    },
+    {
+      "id": 81,
+      "scenario": "Get Proposal: not found",
+      "category": "Proposal",
+      "method": "GET",
+      "url": "http://localhost:5062/api/v1/proposals/00000000-0000-0000-0000-000000000000",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Proposal not found.",
+        "traceId": "0HNMCB6TL694Q:00000001"
+      }
+    },
+    {
+      "id": 82,
+      "scenario": "Customer accessing other's proposal (forbidden)",
+      "category": "Proposal",
+      "method": "GET",
+      "url": "http://localhost:5062/api/v1/proposals/019ed3b8-990e-773a-8a2d-a777a30a5601",
+      "expectedStatus": 403,
+      "actualStatus": 403,
+      "passed": true,
+      "response": {}
+    },
+    {
+      "id": 83,
+      "scenario": "Get Policy: not found",
+      "category": "Policy",
+      "method": "GET",
+      "url": "http://localhost:5062/api/v1/policies/00000000-0000-0000-0000-000000000000",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Policy not found.",
+        "traceId": "0HNMCB6TL694S:00000001"
+      }
+    },
+    {
+      "id": 84,
+      "scenario": "Cancel Policy: not found",
+      "category": "Policy",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/policies/00000000-0000-0000-0000-000000000000/cancel",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Policy not found.",
+        "traceId": "0HNMCB6TL694T:00000001"
+      }
+    },
+    {
+      "id": 85,
+      "scenario": "Request Endorsement: empty body",
+      "category": "Policy/Endorsement",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/policies/530ed510-3aaa-4897-9b74-eaddc37b971a/endorsements",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Description": [
+            "The Description field is required.",
+            "Description is required."
+          ]
+        },
+        "traceId": "00-a413deda6d0fd04968d95758395c035b-c042fb127976dc0d-00"
+      }
+    },
+    {
+      "id": 86,
+      "scenario": "Request Endorsement: description too short",
+      "category": "Policy/Endorsement",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/policies/530ed510-3aaa-4897-9b74-eaddc37b971a/endorsements",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Description": [
+            "Description must be at least 10 characters."
+          ]
+        },
+        "traceId": "00-619b2970eb83c51a15a9a21d8f3faae8-b254c64c7ca750ef-00"
+      }
+    },
+    {
+      "id": 87,
+      "scenario": "Request Endorsement: policy not found",
+      "category": "Policy/Endorsement",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/policies/00000000-0000-0000-0000-000000000000/endorsements",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Policy not found.",
+        "traceId": "0HNMCB6TL6950:00000001"
+      }
+    },
+    {
+      "id": 88,
+      "scenario": "Get Policy Endorsements: access denied (not owner)",
+      "category": "Policy/Endorsement",
+      "method": "GET",
+      "url": "http://localhost:5062/api/v1/policies/00000000-0000-0000-0000-000000000000/endorsements",
+      "expectedStatus": 403,
+      "actualStatus": 403,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/403",
+        "title": "ForbiddenException",
+        "status": 403,
+        "detail": "Access denied or policy not found",
+        "traceId": "0HNMCB6TL6951:00000001"
+      }
+    },
+    {
+      "id": 89,
+      "scenario": "Get Nominees: access denied (not owner)",
+      "category": "Policy/Nominee",
+      "method": "GET",
+      "url": "http://localhost:5062/api/v1/policies/00000000-0000-0000-0000-000000000000/nominees",
+      "expectedStatus": 403,
+      "actualStatus": 403,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/403",
+        "title": "ForbiddenException",
+        "status": 403,
+        "detail": "Access denied or policy not found.",
+        "traceId": "0HNMCB6TL6952:00000001"
+      }
+    },
+    {
+      "id": 90,
+      "scenario": "Update Nominee: not found",
+      "category": "Policy/Nominee",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/policies/nominees/00000000-0000-0000-0000-000000000000",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Nominee not found.",
+        "traceId": "0HNMCB6TL6953:00000001"
+      }
+    },
+    {
+      "id": 91,
+      "scenario": "Update Nominee: share out of range",
+      "category": "Policy/Nominee",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/policies/nominees/00000000-0000-0000-0000-000000000000",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "SharePercentage": [
+            "Share percentage must be between 0.01 and 100."
+          ]
+        },
+        "traceId": "00-19173bec6eca7ce63d7609f1d23b9973-b990c1ad9975a4e1-00"
+      }
+    },
+    {
+      "id": 92,
+      "scenario": "Update Nominee: minor without appointee",
+      "category": "Policy/Nominee",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/policies/nominees/00000000-0000-0000-0000-000000000000",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "AppointeeName": [
+            "Appointee name is required for a minor nominee."
+          ]
+        },
+        "traceId": "00-0baf6f3f648e189b6dcbed78ee768c0e-759031677e24022b-00"
+      }
+    },
+    {
+      "id": 93,
+      "scenario": "Download Policy: not found",
+      "category": "Policy",
+      "method": "GET",
+      "url": "http://localhost:5062/api/v1/policies/00000000-0000-0000-0000-000000000000/download",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Policy not found.",
+        "traceId": "0HNMCB6TL6956:00000001"
+      }
+    },
+    {
+      "id": 94,
+      "scenario": "Approve Endorsement: not found",
+      "category": "Policy/Endorsement",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/policies/endorsements/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/review",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Endorsement not found.",
+        "traceId": "0HNMCB6TL6957:00000001"
+      }
+    },
+    {
+      "id": 95,
+      "scenario": "Intimate Claim: empty body",
+      "category": "Claim/Intimate",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/claims/intimate",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "PolicyId": [
+            "Policy ID is required."
+          ],
+          "IncidentDate": [
+            "Incident date is required."
+          ],
+          "IncidentDescription": [
+            "The IncidentDescription field is required.",
+            "Incident description is required."
+          ],
+          "ClaimAmountRequested": [
+            "Claim amount must be greater than zero."
+          ]
+        },
+        "traceId": "00-0b8f18b40996e0f0221cff44df7d7bb7-a4dfa06c7016da09-00"
+      }
+    },
+    {
+      "id": 96,
+      "scenario": "Intimate Claim: zero amount",
+      "category": "Claim/Intimate",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/claims/intimate",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "ClaimAmountRequested": [
+            "Claim amount must be greater than zero."
+          ]
+        },
+        "traceId": "00-c0856aa11f553f08e48d30fe847e04ea-1ede4a804a188761-00"
+      }
+    },
+    {
+      "id": 97,
+      "scenario": "Intimate Claim: future incident date",
+      "category": "Claim/Intimate",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/claims/intimate",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "IncidentDate": [
+            "Incident date cannot be in the future."
+          ]
+        },
+        "traceId": "00-9c4d06681becd889843faaab3dbd98fa-55305af32d449704-00"
+      }
+    },
+    {
+      "id": 98,
+      "scenario": "Intimate Claim: description too short",
+      "category": "Claim/Intimate",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/claims/intimate",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "IncidentDescription": [
+            "Incident description must be at least 10 characters."
+          ]
+        },
+        "traceId": "00-351e5ab84cd5c569d12f4869b4b3e7ea-3e8046bf53426a20-00"
+      }
+    },
+    {
+      "id": 99,
+      "scenario": "Intimate Claim: policy not found (non-existent GUID)",
+      "category": "Claim/Intimate",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/claims/intimate",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Policy not found or does not belong to the customer.",
+        "traceId": "0HNMCB6TL695C:00000001"
+      }
+    },
+    {
+      "id": 100,
+      "scenario": "Intimate Claim: invalid claim type",
+      "category": "Claim/Intimate",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/claims/intimate",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "request": [
+            "The request field is required."
+          ],
+          "$.claimType": [
+            "The JSON value could not be converted to SpeedClaim.Api.Dtos.Claims.IntimateClaimRequest. Path: $.claimType | LineNumber: 0 | BytePositionInLine: 76."
+          ]
+        },
+        "traceId": "00-3695ad1940de15b656219cb5ad661635-2aa54693f9f314d6-00"
+      }
+    },
+    {
+      "id": 101,
+      "scenario": "Get Claim: not found",
+      "category": "Claim",
+      "method": "GET",
+      "url": "http://localhost:5062/api/v1/claims/00000000-0000-0000-0000-000000000000",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Claim not found.",
+        "traceId": "0HNMCB6TL695E:00000001"
+      }
+    },
+    {
+      "id": 102,
+      "scenario": "Get Claim History: not found",
+      "category": "Claim",
+      "method": "GET",
+      "url": "http://localhost:5062/api/v1/claims/00000000-0000-0000-0000-000000000000/history",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Claim not found.",
+        "traceId": "0HNMCB6TL695F:00000001"
+      }
+    },
+    {
+      "id": 103,
+      "scenario": "Update Claim Status: invalid status value",
+      "category": "Claim/Status",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/claims/54a4764d-ce58-48d7-95ba-0d076ec56e66/status",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Status": [
+            "Invalid claim status. Valid values: Intimated, DocumentsPending, PreAuthRequested, PreAuthApproved, UnderReview, Approved, Rejected, Settled, Withdrawn."
+          ]
+        },
+        "traceId": "00-ba0349c3ab5258c56bb2d4dad6a80d47-99cbb5ae529b3baf-00"
+      }
+    },
+    {
+      "id": 104,
+      "scenario": "Update Claim Status: empty remarks",
+      "category": "Claim/Status",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/claims/54a4764d-ce58-48d7-95ba-0d076ec56e66/status",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Remarks": [
+            "Remarks are required when updating claim status."
+          ]
+        },
+        "traceId": "00-9202ee887e9282a0145b65e05e001b42-fc4ede469ac4d9e6-00"
+      }
+    },
+    {
+      "id": 105,
+      "scenario": "Update Claim Status: claim not found",
+      "category": "Claim/Status",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/claims/00000000-0000-0000-0000-000000000000/status",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Claim not found.",
+        "traceId": "0HNMCB6TL695I:00000001"
+      }
+    },
+    {
+      "id": 106,
+      "scenario": "Approve Claim: reject without reason",
+      "category": "Claim/Approve",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/claims/54a4764d-ce58-48d7-95ba-0d076ec56e66/approve",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Reason": [
+            "Rejection reason is required when rejecting a claim.",
+            "Rejection reason must be at least 10 characters."
+          ]
+        },
+        "traceId": "00-00f062f3ad52c465e1379113023b1f50-b72911d42e929b5e-00"
+      }
+    },
+    {
+      "id": 107,
+      "scenario": "Approve Claim: reject reason too short",
+      "category": "Claim/Approve",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/claims/54a4764d-ce58-48d7-95ba-0d076ec56e66/approve",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Reason": [
+            "Rejection reason must be at least 10 characters."
+          ]
+        },
+        "traceId": "00-ed9cadb5e99670a32e65d471592749d3-79cb3af277880451-00"
+      }
+    },
+    {
+      "id": 108,
+      "scenario": "Approve Claim: approve without amount",
+      "category": "Claim/Approve",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/claims/54a4764d-ce58-48d7-95ba-0d076ec56e66/approve",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Reason": [
+            "The Reason field is required."
+          ],
+          "ApprovedAmount": [
+            "Approved amount is required when approving a claim."
+          ]
+        },
+        "traceId": "00-88d81ad21c16351208a0be1d42677336-aa05af1b0b0d27ff-00"
+      }
+    },
+    {
+      "id": 109,
+      "scenario": "Approve Claim: claim not found",
+      "category": "Claim/Approve",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/claims/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/approve",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Claim not found.",
+        "traceId": "0HNMCB6TL695M:00000001"
+      }
+    },
+    {
+      "id": 110,
+      "scenario": "Assign Surveyor: empty notes",
+      "category": "Claim/Surveyor",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/claims/b6b93dcc-91d7-4368-b9e8-d10a746a81cd/assign-surveyor",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Notes": [
+            "Notes are required when assigning a surveyor."
+          ]
+        },
+        "traceId": "00-cc1023b6d3865a82e2f9f66c92e38a74-9ccad0c272a9f032-00"
+      }
+    },
+    {
+      "id": 111,
+      "scenario": "Assign Surveyor: claim not found",
+      "category": "Claim/Surveyor",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/claims/00000000-0000-0000-0000-000000000000/assign-surveyor",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Claim not found.",
+        "traceId": "0HNMCB6TL695O:00000001"
+      }
+    },
+    {
+      "id": 112,
+      "scenario": "Settle Claim: not found",
+      "category": "Claim/Settle",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/claims/00000000-0000-0000-0000-000000000000/settle",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Claim not found.",
+        "traceId": "0HNMCB6TL695P:00000001"
+      }
+    },
+    {
+      "id": 113,
+      "scenario": "Raise Grievance: empty body",
+      "category": "Grievance",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/grievances",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Description": [
+            "The Description field is required.",
+            "Grievance description is required."
+          ]
+        },
+        "traceId": "00-827ebedf0c733daf79432021260395ed-2fa4bcd4e546a4ae-00"
+      }
+    },
+    {
+      "id": 114,
+      "scenario": "Raise Grievance: description too short",
+      "category": "Grievance",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/grievances",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Description": [
+            "Description must be at least 10 characters."
+          ]
+        },
+        "traceId": "00-98c84fed898f9020fcb4d113786cec76-fc7417d9bf950616-00"
+      }
+    },
+    {
+      "id": 115,
+      "scenario": "Raise Grievance: invalid category",
+      "category": "Grievance",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/grievances",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "request": [
+            "The request field is required."
+          ],
+          "$.category": [
+            "The JSON value could not be converted to SpeedClaim.Api.Dtos.Grievances.RaiseGrievanceRequest. Path: $.category | LineNumber: 0 | BytePositionInLine: 29."
+          ]
+        },
+        "traceId": "00-8353c214f9c16e8caaa4c6f818a39764-445337b646f774a3-00"
+      }
+    },
+    {
+      "id": 116,
+      "scenario": "Get Grievance: not found",
+      "category": "Grievance",
+      "method": "GET",
+      "url": "http://localhost:5062/api/v1/grievances/00000000-0000-0000-0000-000000000000",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Grievance not found.",
+        "traceId": "0HNMCB6TL695T:00000001"
+      }
+    },
+    {
+      "id": 117,
+      "scenario": "Update Grievance Status: not found",
+      "category": "Grievance",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/grievances/00000000-0000-0000-0000-000000000000/status",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Grievance not found.",
+        "traceId": "0HNMCB6TL695U:00000001"
+      }
+    },
+    {
+      "id": 118,
+      "scenario": "Update Grievance Status: resolve without notes",
+      "category": "Grievance",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/grievances/61be6f1f-1cbe-4b22-9b28-faa057f52481/status",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "ResolutionNotes": [
+            "Resolution notes are required when resolving or closing a grievance."
+          ]
+        },
+        "traceId": "00-c98bcf2a1bf739bd5e81fbbc7450125d-9864e505645ab3df-00"
+      }
+    },
+    {
+      "id": 119,
+      "scenario": "Assign Grievance: not found",
+      "category": "Grievance",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/grievances/00000000-0000-0000-0000-000000000000/assign",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Grievance not found.",
+        "traceId": "0HNMCB6TL6960:00000001"
+      }
+    },
+    {
+      "id": 120,
+      "scenario": "Pay Premium: schedule not found",
+      "category": "Payment",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/payments/pay/00000000-0000-0000-0000-000000000000",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Schedule not found.",
+        "traceId": "0HNMCB6TL6961:00000001"
+      }
+    },
+    {
+      "id": 121,
+      "scenario": "Get Schedule: invalid policy ID",
+      "category": "Payment",
+      "method": "GET",
+      "url": "http://localhost:5062/api/v1/payments/schedule/not-a-guid",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/400",
+        "title": "ValidationException",
+        "status": 400,
+        "detail": "Invalid Policy ID",
+        "traceId": "0HNMCB6TL6962:00000001"
+      }
+    },
+    {
+      "id": 122,
+      "scenario": "Download Receipt: not found",
+      "category": "Payment",
+      "method": "GET",
+      "url": "http://localhost:5062/api/v1/payments/00000000-0000-0000-0000-000000000000/receipt",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Payment not found or access denied.",
+        "traceId": "0HNMCB6TL6963:00000001"
+      }
+    },
+    {
+      "id": 123,
+      "scenario": "Reconcile Payment: not found",
+      "category": "Payment",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/payments/00000000-0000-0000-0000-000000000000/reconcile",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Payment not found",
+        "traceId": "0HNMCB6TL6964:00000001"
+      }
+    },
+    {
+      "id": 124,
+      "scenario": "Refund Payment: not found",
+      "category": "Payment",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/payments/00000000-0000-0000-0000-000000000000/refund",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Payment not found",
+        "traceId": "0HNMCB6TL6965:00000001"
+      }
+    },
+    {
+      "id": 125,
+      "scenario": "Process Payout: claim not found",
+      "category": "Payment",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/payments/payout/claim/00000000-0000-0000-0000-000000000000",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Claim not found.",
+        "traceId": "0HNMCB6TL6966:00000001"
+      }
+    },
+    {
+      "id": 126,
+      "scenario": "Mark Claim Settled: not found",
+      "category": "Payment",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/payments/claims/00000000-0000-0000-0000-000000000000/settle",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Claim not found.",
+        "traceId": "0HNMCB6TL6967:00000001"
+      }
+    },
+    {
+      "id": 127,
+      "scenario": "Approve Commission: not found",
+      "category": "Payment",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/payments/commissions/00000000-0000-0000-0000-000000000000/approve",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Commission not found",
+        "traceId": "0HNMCB6TL6968:00000001"
+      }
+    },
+    {
+      "id": 128,
+      "scenario": "Customer accessing finance reports (forbidden)",
+      "category": "Payment",
+      "method": "GET",
+      "url": "http://localhost:5062/api/v1/payments/reports/overdue",
+      "expectedStatus": 403,
+      "actualStatus": 403,
+      "passed": true,
+      "response": {}
+    },
+    {
+      "id": 129,
+      "scenario": "Customer accessing reconcile (forbidden)",
+      "category": "Payment",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/payments/41667489-478d-4ace-ba5a-39d802b4162a/reconcile",
+      "expectedStatus": 403,
+      "actualStatus": 403,
+      "passed": true,
+      "response": {}
+    },
+    {
+      "id": 130,
+      "scenario": "Agent Profile Update: empty body",
+      "category": "Agent",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/agents/profile",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Phone": [
+            "The Phone field is required.",
+            "Phone number is required."
+          ],
+          "LastName": [
+            "The LastName field is required.",
+            "Last name is required."
+          ],
+          "FirstName": [
+            "The FirstName field is required.",
+            "First name is required."
+          ],
+          "Salutation": [
+            "The Salutation field is required.",
+            "Salutation is required.",
+            "Salutation must be one of: Mr, Mrs, Ms, Dr, Prof."
+          ]
+        },
+        "traceId": "00-cac67aa67bed187fe1fa2dbfe06caecb-ca5282c46116dc6c-00"
+      }
+    },
+    {
+      "id": 131,
+      "scenario": "Agent Profile Update: invalid phone",
+      "category": "Agent",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/agents/profile",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Phone": [
+            "Phone number must be exactly 10 digits."
+          ]
+        },
+        "traceId": "00-11080e2649284bf9d43e4ddbd90f30ab-c999e2c27b759d0f-00"
+      }
+    },
+    {
+      "id": 132,
+      "scenario": "Create Branch: empty body",
+      "category": "Agent/Branch",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/agents/branches",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "City": [
+            "The City field is required.",
+            "City is required."
+          ],
+          "Name": [
+            "The Name field is required.",
+            "Branch name is required."
+          ],
+          "Email": [
+            "The Email field is required.",
+            "Email is required."
+          ],
+          "Phone": [
+            "The Phone field is required.",
+            "Phone number is required."
+          ],
+          "State": [
+            "The State field is required.",
+            "State is required."
+          ],
+          "Address": [
+            "The Address field is required.",
+            "Address is required."
+          ]
+        },
+        "traceId": "00-5d02b7d2ffc2d90aa9f0c3a19368075b-ef26fb554ddf9e5b-00"
+      }
+    },
+    {
+      "id": 133,
+      "scenario": "Create Branch: invalid email",
+      "category": "Agent/Branch",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/agents/branches",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Email": [
+            "A valid email address is required."
+          ]
+        },
+        "traceId": "00-cbad4d0774e79efaba7380ee7a991471-e98d9a5d084174ed-00"
+      }
+    },
+    {
+      "id": 134,
+      "scenario": "Assign Agent to Branch: agent not found",
+      "category": "Agent/Branch",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/agents/00000000-0000-0000-0000-000000000000/branch/00000000-0000-0000-0000-000000000000",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Agent not found",
+        "traceId": "0HNMCB6TL696F:00000001"
+      }
+    },
+    {
+      "id": 135,
+      "scenario": "Update Agent License: agent not found",
+      "category": "Agent/License",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/agents/00000000-0000-0000-0000-000000000000/license",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Agent not found",
+        "traceId": "0HNMCB6TL696G:00000001"
+      }
+    },
+    {
+      "id": 136,
+      "scenario": "Update Agent License: expiry in the past",
+      "category": "Agent/License",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/agents/019ed3b7-78f2-7cbc-a7d2-db3f3f45321b/license",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "LicenseExpiry": [
+            "License expiry date must be in the future."
+          ]
+        },
+        "traceId": "00-0890456c3e867005305a846a87e13116-64524fd16bd08569-00"
+      }
+    },
+    {
+      "id": 137,
+      "scenario": "Activate Agent: not found",
+      "category": "Agent",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/agents/00000000-0000-0000-0000-000000000000/status?isActive=true",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Agent not found",
+        "traceId": "0HNMCB6TL696I:00000001"
+      }
+    },
+    {
+      "id": 138,
+      "scenario": "Update Config: empty body",
+      "category": "System",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/system/configs",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "ConfigKey": [
+            "The ConfigKey field is required.",
+            "Config key is required."
+          ],
+          "ConfigValue": [
+            "The ConfigValue field is required.",
+            "Config value is required."
+          ]
+        },
+        "traceId": "00-e2ac34eea50949f1a026a9957a6d42f8-a003408d36f78424-00"
+      }
+    },
+    {
+      "id": 139,
+      "scenario": "Update Config: key too long (> 100 chars)",
+      "category": "System",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/system/configs",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "ConfigKey": [
+            "Config key cannot exceed 100 characters."
+          ]
+        },
+        "traceId": "00-5ca55ecbaf8d8a48efcfb4e1bfb67bb6-019085d66e2866df-00"
+      }
+    },
+    {
+      "id": 140,
+      "scenario": "Email Template: empty body",
+      "category": "System",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/system/email-templates",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Subject": [
+            "The Subject field is required.",
+            "Email subject is required."
+          ],
+          "BodyHtml": [
+            "The BodyHtml field is required.",
+            "Email body is required."
+          ],
+          "TemplateKey": [
+            "The TemplateKey field is required.",
+            "Template key is required."
+          ]
+        },
+        "traceId": "00-76ed918d17727b1ed6fc3c8c3fce1540-e73a67f00b414cda-00"
+      }
+    },
+    {
+      "id": 141,
+      "scenario": "Email Template: missing subject",
+      "category": "System",
+      "method": "PUT",
+      "url": "http://localhost:5062/api/v1/system/email-templates",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        "title": "One or more validation errors occurred.",
+        "status": 400,
+        "errors": {
+          "Subject": [
+            "Email subject is required."
+          ]
+        },
+        "traceId": "00-00683bb83087c367376227f819c9783e-46ced5ad4853db96-00"
+      }
+    },
+    {
+      "id": 142,
+      "scenario": "Mark Notification Read: not found",
+      "category": "Notification",
+      "method": "PATCH",
+      "url": "http://localhost:5062/api/v1/users/notifications/00000000-0000-0000-0000-000000000000/read",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "passed": true,
+      "response": {
+        "type": "https://httpstatuses.com/404",
+        "title": "NotFoundException",
+        "status": 404,
+        "detail": "Notification not found.",
+        "traceId": "0HNMCB6TL696N:00000001"
+      }
+    },
+    {
+      "id": 143,
+      "scenario": "Stripe Webhook: invalid signature",
+      "category": "Webhook",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/payments/webhook",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "passed": true,
+      "response": {
+        "raw": "Invalid Stripe webhook signature."
+      }
+    }
+  ]
+}

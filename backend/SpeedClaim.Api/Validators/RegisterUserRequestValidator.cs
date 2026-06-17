@@ -69,7 +69,9 @@ public class RegisterUserRequestValidator : AbstractValidator<RegisterUserReques
             RuleFor(x => x.PermanentAddress.Line1).NotEmpty().WithMessage("Line 1 is required.");
             RuleFor(x => x.PermanentAddress.City).NotEmpty().WithMessage("City is required.");
             RuleFor(x => x.PermanentAddress.State).NotEmpty().WithMessage("State is required.");
-            RuleFor(x => x.PermanentAddress.PostalCode).NotEmpty().WithMessage("Postal Code is required.");
+            RuleFor(x => x.PermanentAddress.PostalCode)
+                .NotEmpty().WithMessage("Postal Code is required.")
+                .Matches(@"^\d{6}$").WithMessage("Postal code must be exactly 6 digits.");
             RuleFor(x => x.PermanentAddress.Country).NotEmpty().WithMessage("Country is required.");
         });
 
@@ -81,7 +83,9 @@ public class RegisterUserRequestValidator : AbstractValidator<RegisterUserReques
                 RuleFor(x => x.CurrentAddress!.Line1).NotEmpty().WithMessage("Line 1 is required.");
                 RuleFor(x => x.CurrentAddress!.City).NotEmpty().WithMessage("City is required.");
                 RuleFor(x => x.CurrentAddress!.State).NotEmpty().WithMessage("State is required.");
-                RuleFor(x => x.CurrentAddress!.PostalCode).NotEmpty().WithMessage("Postal Code is required.");
+                RuleFor(x => x.CurrentAddress!.PostalCode)
+                    .NotEmpty().WithMessage("Postal Code is required.")
+                    .Matches(@"^\d{6}$").WithMessage("Postal code must be exactly 6 digits.");
                 RuleFor(x => x.CurrentAddress!.Country).NotEmpty().WithMessage("Country is required.");
             });
         });
