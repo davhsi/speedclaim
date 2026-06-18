@@ -93,7 +93,11 @@ public class FinanceService : IFinanceService
             }
         };
 
-        var intent = await _stripeWrapper.CreatePaymentIntentAsync(options);
+        var stripeRequestOptions = new RequestOptions
+        {
+            IdempotencyKey = $"pay-premium-{schedule.Id}"
+        };
+        var intent = await _stripeWrapper.CreatePaymentIntentAsync(options, stripeRequestOptions);
 
         var payment = new PremiumPayment
         {
@@ -354,7 +358,11 @@ public class FinanceService : IFinanceService
             Description = $"Claim payout for claim {claim.ClaimNumber}"
         };
 
-        var intent = await _stripeWrapper.CreatePaymentIntentAsync(options);
+        var stripeRequestOptions = new RequestOptions
+        {
+            IdempotencyKey = $"claim-payout-{cId}"
+        };
+        var intent = await _stripeWrapper.CreatePaymentIntentAsync(options, stripeRequestOptions);
         _logger.LogInformation("Claim payout initiated for Claim {ClaimId}, Amount {Amount}, IntentId {IntentId}", cId, payoutAmount / 100m, intent.Id);
 
         // Mark claim as Settled and log the payout intent

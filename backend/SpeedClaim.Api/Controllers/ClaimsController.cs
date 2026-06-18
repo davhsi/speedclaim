@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SpeedClaim.Api.Filters;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Dtos.Claims;
 using SpeedClaim.Api.Dtos.Common;
@@ -26,6 +27,7 @@ public class ClaimsController : BaseApiController
     /// <remarks>Policy must be in Active status. Claim is created in Intimated state.</remarks>
     [Authorize(Roles = "Customer")]
     [HttpPost("intimate")]
+    [Idempotent]
     [ProducesResponseType(typeof(ClaimDto), 200)]
     [ProducesResponseType(404)]
     [ProducesResponseType(422)]

@@ -82,6 +82,9 @@ builder.Services.AddScoped<IClaimRepository, ClaimRepository>();
 builder.Services.AddScoped<ISubmittedDocumentRepository, SubmittedDocumentRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
+// Idempotency: in-memory distributed cache (swap for Redis in production)
+builder.Services.AddDistributedMemoryCache();
+
 // Add DI Services
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
@@ -137,6 +140,7 @@ builder.Services.AddSwaggerGen(options =>
 
     // Auto-document roles and 401/403 from [Authorize] attributes
     options.OperationFilter<AuthorizeOperationFilter>();
+    options.OperationFilter<IdempotencyOperationFilter>();
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {

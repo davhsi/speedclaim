@@ -51,6 +51,7 @@ public class UnitOfWork : IUnitOfWork
     public IRepository<AuditLog> AuditLogs { get; }
     public IRepository<SystemConfig> SystemConfigs { get; }
     public IRepository<UserConsent> UserConsents { get; }
+    public IRepository<ProcessedWebhookEvent> ProcessedWebhookEvents { get; }
 
     public UnitOfWork(SpeedClaimDbContext context)
     {
@@ -97,6 +98,7 @@ public class UnitOfWork : IUnitOfWork
         AuditLogs = new Repository<AuditLog>(_context);
         SystemConfigs = new Repository<SystemConfig>(_context);
         UserConsents = new Repository<UserConsent>(_context);
+        ProcessedWebhookEvents = new Repository<ProcessedWebhookEvent>(_context);
     }
 
     public async Task<int> CompleteAsync()

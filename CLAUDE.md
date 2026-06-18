@@ -13,7 +13,7 @@ Persistent context for AI sessions. Read this before touching any code.
 - **Payments**: Stripe
 - **Email**: MailKit over SMTP (Gmail App Password)
 - **Auth**: JWT Bearer tokens
-- **Tests**: xUnit + Moq, 368 tests, all passing
+- **Tests**: xUnit + Moq, 385 tests, all passing
 
 ---
 
@@ -64,7 +64,7 @@ dotnet build backend/SpeedClaim.Api
 
 ---
 
-## Models (41 tables in DB)
+## Models (42 tables in DB)
 
 `User`, `Customer`, `Agent`, `Address`, `Branch`, `Session`, `UserToken`, `UserConsent`  
 `InsuranceProduct`, `PremiumRateTable`, `DocumentRequirement`  
@@ -82,6 +82,7 @@ dotnet build backend/SpeedClaim.Api
 `AuditLog`  
 `SystemConfig`  
 `Nominee`, `CustomerMember`  
+`ProcessedWebhookEvent`  
 `__EFMigrationsHistory` (EF internal)
 
 ---
@@ -140,6 +141,26 @@ Stored in git-ignored `appsettings.Development.json` under `JwtSettings:Secret`.
 
 ### 10. Repository + UnitOfWork pattern
 All DB access goes through `IUnitOfWork` → `IRepository<T>`. Direct `DbContext` injection is not used in services. `SaveChangesAsync()` is called via `_unitOfWork.SaveChangesAsync()`.
+
+### 11. Idempotency (three layers)
+
+**Layer 1 — `[Idempotent]` attribute** (`Filters/IdempotentAttribute.cs`):
+- `IAsyncActionFilter` applied to specific endpoints (payments, claims, proposals, grievances, endorsements)
+- Accepts optional `Idempotency-Key` header (GUID) — without it, request processes normally; with an invalid (non-UUID) value, returns `400`
+- Uses `IDistributedCache` (in-memory; swap `AddDistributedMemoryCache()` for Redis in production)
+- Caches 2xx responses; 4xx/5xx are NOT cached so clients can retry
+- Replay responses include `X-Idempotent-Replay: true` header
+- Default TTL: 60 min; payment endpoints use 1440 min (24h)
+- Swagger auto-documents the header via `IdempotencyOperationFilter`
+
+**Layer 2 — Stripe idempotency keys** (`FinanceService`):
+- `PayPremiumAsync` → `RequestOptions { IdempotencyKey = "pay-premium-{scheduleId}" }`
+- `ProcessClaimPayoutAsync` → `RequestOptions { IdempotencyKey = "claim-payout-{claimId}" }`
+- Deterministic keys prevent duplicate Stripe charges even without the header middleware
+
+**Layer 3 — Webhook event deduplication** (`PaymentsController.StripeWebhook`):
+- `ProcessedWebhookEvent` table tracks Stripe event IDs (`stripe_event_id`, unique indexed)
+- Duplicate webhook deliveries return `200 OK` immediately without reprocessing
 
 ---
 
@@ -263,6 +284,6 @@ These appear during `dotnet ef database update` and at runtime. They are real ar
 
 - [ ] Postman workspace with all endpoints preloaded + auth pre-request script
 - [ ] DB seeded with realistic data covering all scenarios
-- [ ] 100% service layer test coverage (currently 368 tests, all passing)
+- [ ] 100% service layer test coverage (currently 385 tests, all passing)
 - [ ] No unhandled exceptions (GlobalExceptionMiddleware covers all routes)
 - [ ] Clean git commits with descriptive messages

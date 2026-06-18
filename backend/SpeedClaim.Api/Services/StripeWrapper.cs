@@ -8,16 +8,16 @@ namespace SpeedClaim.Api.Services;
 [ExcludeFromCodeCoverage]
 public class StripeWrapper : IStripeWrapper
 {
-    public async Task<PaymentIntent> CreatePaymentIntentAsync(PaymentIntentCreateOptions options)
+    public async Task<PaymentIntent> CreatePaymentIntentAsync(PaymentIntentCreateOptions options, RequestOptions? requestOptions = null)
     {
         var service = new PaymentIntentService();
-        return await service.CreateAsync(options);
+        return await service.CreateAsync(options, requestOptions);
     }
 
-    public async Task<Customer> CreateCustomerAsync(CustomerCreateOptions options)
+    public async Task<Customer> CreateCustomerAsync(CustomerCreateOptions options, RequestOptions? requestOptions = null)
     {
         var service = new CustomerService();
-        return await service.CreateAsync(options);
+        return await service.CreateAsync(options, requestOptions);
     }
 
     public async Task<StripeList<PaymentMethod>> ListPaymentMethodsAsync(string stripeCustomerId, string type = "card")

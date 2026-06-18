@@ -1,4 +1,4 @@
-# SpeedClaim — Technical Specification v6.0
+# SpeedClaim — Technical Specification v7.0
 
 > Capstone Project | Domains: Health, Life, Motor | Stack: .NET Web API + Angular + PostgreSQL + Stripe + Azure Blob Storage (local first)
 >
@@ -8,7 +8,7 @@
 >
 > **Changelog v5:** Added Section 9 (Input Validation) covering all 30 FluentValidation validators across every domain. Access token expiry corrected to 15 minutes.
 >
-> **Changelog v6:** Fixed customer/surveyor identity resolution — the JWT subject is the `User.Id`, but `Claim`/`Policy`/`Proposal.customer_id` and `Claim.surveyor_id` are FKs to `customers.id` / `surveyors.id`. `PolicyService` and `ClaimService` now resolve `User.Id → Customer.Id` / `Surveyor.Id` before filtering (mirroring `UserService`), so customer-scoped (`/policy/my`, `/claims/my`, claim intimation) and surveyor-scoped (`/claims/surveyor/assigned`, survey report) endpoints return the correct records. Also: `audit_logs.old_value`/`new_value` are `jsonb` and are now JSON-serialized before persistence (previously caused `invalid input syntax for type json` 500s). Test suite expanded to 365.
+> **Changelog v6:** Fixed customer/surveyor identity resolution — the JWT subject is the `User.Id`, but `Claim`/`Policy`/`Proposal.customer_id` and `Claim.surveyor_id` are FKs to `customers.id` / `surveyors.id`. `PolicyService` and `ClaimService` now resolve `User.Id → Customer.Id` / `Surveyor.Id` before filtering (mirroring `UserService`), so customer-scoped (`/policy/my`, `/claims/my`, claim intimation) and surveyor-scoped (`/claims/surveyor/assigned`, survey report) endpoints return the correct records. Also: `audit_logs.old_value`/`new_value` are `jsonb` and are now JSON-serialized before persistence (previously caused `invalid input syntax for type json` 500s). Test suite expanded to 365. **Changelog v7:** Added three-layer idempotency handling — `[Idempotent]` attribute with `IDistributedCache` on 8 state-changing endpoints, Stripe `RequestOptions.IdempotencyKey` on payment/payout creation, and webhook event deduplication via `ProcessedWebhookEvent` table. Swagger auto-documents the `Idempotency-Key` header via `IdempotencyOperationFilter`. Schema now 42 tables. Test suite expanded to 385.
 
 ---
 
@@ -225,7 +225,7 @@ Paginated responses follow the `PagedResponse<T>` envelope:
 
 ## 8. Database Schema Overview
 
-41 tables across 17 domains.
+42 tables across 18 domains.
 
 | Domain | Tables | Count |
 | --- | --- | --- |
@@ -247,7 +247,8 @@ Paginated responses follow the `PagedResponse<T>` envelope:
 | Documents | submitted_documents | 1 |
 | Notifications & Email | notifications, email_templates, email_logs | 3 |
 | Audit & Config | audit_logs, system_config | 2 |
-| **Total** | | **41** |
+| Idempotency | processed_webhook_events | 1 |
+| **Total** | | **42** |
 
 ---
 
@@ -323,4 +324,47 @@ All request bodies are validated using **FluentValidation** with `AddFluentValid
 
 ---
 
-> Document version: 6.0 | Stack: .NET 10 Web API + Angular + PostgreSQL + Stripe
+## 10. Idempotency
+
+Prevents duplicate side-effects when clients retry requests (network timeouts, double-clicks). Three layers:
+
+### 10.1 `[Idempotent]` Attribute (API-level)
+
+An `IAsyncActionFilter` applied to state-changing endpoints. Clients must send an `Idempotency-Key` header containing a UUID.
+
+**Behaviour:**
+- **No header** → request processes normally (opt-in, not mandatory)
+- **Invalid header (non-UUID)** → `400 Bad Request`
+- **Cache hit (key already processed)** → returns cached response with `X-Idempotent-Replay: true` header
+- **Cache miss** → processes request, caches 2xx response (4xx/5xx are not cached so clients can retry)
+- **Cache backend** → `IDistributedCache` (in-memory; swappable to Redis)
+- **Default TTL** → 60 minutes; payment endpoints use 1440 minutes (24 hours)
+
+**Protected endpoints:**
+
+| Controller | Endpoint | Cache TTL |
+| --- | --- | --- |
+| PaymentsController | `POST pay/{scheduleId}` | 24h |
+| PaymentsController | `POST payout/claim/{claimId}` | 24h |
+| PaymentsController | `POST {paymentId}/refund` | 1h |
+| PaymentsController | `POST commissions/{id}/approve` | 1h |
+| ClaimsController | `POST intimate` | 1h |
+| ProposalsController | `POST` (submit) | 1h |
+| PolicyController | `POST {id}/endorsements` | 1h |
+| GrievancesController | `POST` (raise) | 1h |
+
+### 10.2 Stripe Idempotency Keys
+
+Deterministic `RequestOptions.IdempotencyKey` passed to Stripe SDK calls:
+- `pay-premium-{scheduleId}` for `PayPremiumAsync`
+- `claim-payout-{claimId}` for `ProcessClaimPayoutAsync`
+
+Same schedule/claim always produces the same Stripe key → retries reuse the same PaymentIntent.
+
+### 10.3 Webhook Event Deduplication
+
+`ProcessedWebhookEvent` table stores Stripe event IDs (`stripe_event_id`, unique index). Duplicate webhook deliveries return `200 OK` without reprocessing.
+
+---
+
+> Document version: 7.0 | Stack: .NET 10 Web API + Angular + PostgreSQL + Stripe

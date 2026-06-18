@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SpeedClaim.Api.Dtos.Common;
 using SpeedClaim.Api.Dtos.Sales;
+using SpeedClaim.Api.Filters;
 using SpeedClaim.Api.Interfaces;
 using System.Security.Claims;
 
@@ -39,6 +40,7 @@ public class ProposalsController : BaseApiController
     /// </remarks>
     [Authorize(Roles = "Customer,Agent")]
     [HttpPost]
+    [Idempotent]
     [ProducesResponseType(typeof(ProposalDto), 200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> SubmitProposal([FromBody] SubmitProposalRequest request)

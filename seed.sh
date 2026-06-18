@@ -166,6 +166,9 @@ DELETE FROM users WHERE id != '11111111-1111-1111-1111-111111111111';
 
 -- All branches are seed branches (admin has no branch)
 DELETE FROM branches;
+
+-- Idempotency: clear processed webhook events
+DELETE FROM processed_webhook_events;
 CLEANSQL
 
 # Ensure admin password is Password@123 (hash may differ on fresh migrations)
@@ -431,6 +434,7 @@ info "Submitting Proposal 1 (Customer 1)..."
 PROP1_RESP=$(curl -sf -X POST "$BASE/proposals" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $C1_TOKEN" \
+  -H "Idempotency-Key: $(uuidgen)" \
   -d "{
     \"customerId\":       \"$C1_RECORD_ID\",
     \"productId\":        \"$PRODUCT_ID\",
@@ -466,6 +470,7 @@ info "Submitting Proposal 2 (Customer 2 — stays under review)..."
 PROP2_RESP=$(curl -sf -X POST "$BASE/proposals" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $C2_TOKEN" \
+  -H "Idempotency-Key: $(uuidgen)" \
   -d "{
     \"customerId\":       \"$C2_RECORD_ID\",
     \"productId\":        \"$PRODUCT_ID\",
@@ -561,6 +566,7 @@ info "Submitting Proposal 3 (cancellable policy for Postman demo)..."
 PROP3_RESP=$(curl -sf -X POST "$BASE/proposals" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $C1_TOKEN" \
+  -H "Idempotency-Key: $(uuidgen)" \
   -d "{
     \"customerId\":       \"$C1_RECORD_ID\",
     \"productId\":        \"$PRODUCT_ID\",
@@ -615,6 +621,7 @@ INCIDENT_DATE=$(date -u -v-10d +%Y-%m-%dT%H:%M:%SZ 2>/dev/null \
 CLAIM_RESP=$(curl -sf -X POST "$BASE/claims/intimate" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $C1_TOKEN" \
+  -H "Idempotency-Key: $(uuidgen)" \
   -d "{
     \"policyId\":               \"$POLICY_ID\",
     \"claimantMemberId\":       null,
@@ -635,6 +642,7 @@ info "Intimating Accident claim for Customer 1 (surveyor demo)..."
 MOTOR_CLAIM_RESP=$(curl -sf -X POST "$BASE/claims/intimate" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $C1_TOKEN" \
+  -H "Idempotency-Key: $(uuidgen)" \
   -d "{
     \"policyId\":             \"$POLICY_ID\",
     \"claimantMemberId\":     null,
@@ -655,6 +663,7 @@ info "Raising grievance for Customer 1..."
 GRIEVANCE_RESP=$(curl -sf -X POST "$BASE/grievances" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $C1_TOKEN" \
+  -H "Idempotency-Key: $(uuidgen)" \
   -d "{
     \"policyId\":    \"$POLICY_ID\",
     \"claimId\":     \"$CLAIM_ID\",

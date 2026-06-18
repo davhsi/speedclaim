@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using SpeedClaim.Api.Dtos.Financial;
 using SpeedClaim.Api.Dtos.Payments;
+using SpeedClaim.Api.Filters;
 using SpeedClaim.Api.Interfaces;
 using System.Security.Claims;
 
@@ -17,12 +18,14 @@ public class PaymentsController : BaseApiController
     private readonly IFinanceService _financeService;
     private readonly IStripeWrapper _stripeWrapper;
     private readonly IConfiguration _config;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public PaymentsController(IFinanceService financeService, IStripeWrapper stripeWrapper, IConfiguration config)
+    public PaymentsController(IFinanceService financeService, IStripeWrapper stripeWrapper, IConfiguration config, IUnitOfWork unitOfWork)
     {
         _financeService = financeService;
         _stripeWrapper = stripeWrapper;
         _config = config;
+        _unitOfWork = unitOfWork;
     }
 
     #region Customer Endpoints
@@ -32,6 +35,7 @@ public class PaymentsController : BaseApiController
     /// <param name="scheduleId">Premium schedule installment ID</param>
     [Authorize(Roles = "Customer")]
     [HttpPost("pay/{scheduleId}")]
+    [Idempotent(cacheTimeInMinutes: 1440)]
     [ProducesResponseType(typeof(CreatePaymentIntentResponse), 200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(404)]
@@ -124,6 +128,7 @@ public class PaymentsController : BaseApiController
     /// <param name="paymentId">Payment ID</param>
     [Authorize(Roles = "FinanceOfficer")]
     [HttpPost("{paymentId}/refund")]
+    [Idempotent]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> RefundPayment(string paymentId)
@@ -138,6 +143,7 @@ public class PaymentsController : BaseApiController
     /// <param name="claimId">Claim ID</param>
     [Authorize(Roles = "FinanceOfficer")]
     [HttpPost("payout/claim/{claimId}")]
+    [Idempotent(cacheTimeInMinutes: 1440)]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
     [ProducesResponseType(422)]
@@ -176,6 +182,7 @@ public class PaymentsController : BaseApiController
     /// <param name="id">Commission ID</param>
     [Authorize(Roles = "FinanceOfficer")]
     [HttpPost("commissions/{id}/approve")]
+    [Idempotent]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> ApproveCommission(string id)
@@ -245,6 +252,11 @@ public class PaymentsController : BaseApiController
             return BadRequest("Invalid Stripe webhook signature.");
         }
 
+        var alreadyProcessed = await _unitOfWork.ProcessedWebhookEvents
+            .AnyAsync(e => e.StripeEventId == stripeEvent.Id);
+        if (alreadyProcessed)
+            return Ok();
+
         if (stripeEvent.Type == "payment_intent.succeeded")
         {
             var paymentIntent = stripeEvent.Data.Object as Stripe.PaymentIntent;
@@ -253,6 +265,15 @@ public class PaymentsController : BaseApiController
                 await _financeService.ReconcileByStripeIntentAsync(paymentIntent.Id, paymentIntent.LatestChargeId);
             }
         }
+
+        await _unitOfWork.ProcessedWebhookEvents.AddAsync(new SpeedClaim.Api.Models.ProcessedWebhookEvent
+        {
+            Id = Guid.NewGuid(),
+            StripeEventId = stripeEvent.Id,
+            EventType = stripeEvent.Type,
+            ProcessedAt = DateTimeOffset.UtcNow
+        });
+        await _unitOfWork.CompleteAsync();
 
         return Ok();
     }

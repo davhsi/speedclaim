@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SpeedClaim.Api.Dtos.Common;
 using SpeedClaim.Api.Dtos.Policies;
+using SpeedClaim.Api.Filters;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Models.Enums;
 using System.Security.Claims;
@@ -67,6 +68,7 @@ public class PoliciesController : BaseApiController
     /// <param name="id">Policy ID</param>
     [Authorize(Roles = "Customer")]
     [HttpPost("{id}/endorsements")]
+    [Idempotent]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> RequestEndorsement(Guid id, [FromBody] RequestEndorsementRequest request)

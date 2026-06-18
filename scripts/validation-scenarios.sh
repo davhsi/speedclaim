@@ -151,6 +151,35 @@ fire() {
     "$TOTAL" "$method" "$scenario" "$expected_status" "$status_code"
 }
 
+fire_with_header() {
+  local scenario="$1"
+  local category="$2"
+  local expected_status="$3"
+  local method="$4"
+  local url="$5"
+  local token="${6:-}"
+  local extra_header="${7:-}"
+  local body="${8:-}"
+
+  local curl_args=(-s -w "\n%{http_code}" -X "$method" "$url")
+  [ -n "$token" ] && curl_args+=(-H "Authorization: Bearer $token")
+  [ -n "$extra_header" ] && curl_args+=(-H "$extra_header")
+
+  if [ -n "$body" ]; then
+    curl_args+=(-H "Content-Type: application/json" -d "$body")
+  fi
+
+  local raw
+  raw=$(curl "${curl_args[@]}" 2>/dev/null || echo -e "\n000")
+  local status_code="${raw##*$'\n'}"
+  local response_body="${raw%$'\n'*}"
+
+  record "$scenario" "$category" "$expected_status" "$status_code" "$response_body" "$method" "$url"
+  printf "  [%s] #%-3d %-4s %-60s expected=%s got=%s\n" \
+    "$([ "$status_code" = "$expected_status" ] && echo "PASS" || echo "FAIL")" \
+    "$TOTAL" "$method" "$scenario" "$expected_status" "$status_code"
+}
+
 fire_form() {
   local scenario="$1"
   local category="$2"
@@ -1505,6 +1534,39 @@ fire "Intimate Claim: negative claim amount" \
 fire "Proposal: nominee name too long (>100 chars)" \
   "FieldEdge" 400 POST "$API/proposals" "$CUSTOMER_TOKEN" \
   "{\"customerId\":\"$CUSTOMER_USER_ID\",\"productId\":\"$PRODUCT_ID\",\"sumAssured\":500000,\"tenureYears\":10,\"premiumAmount\":5000,\"paymentFrequency\":\"Monthly\",\"nominees\":[{\"fullName\":\"$LONG_101\",\"relationship\":\"Spouse\",\"dateOfBirth\":\"1996-01-01\",\"sharePercentage\":100,\"isMinor\":false}]}"
+
+# ── Idempotency ──────────────────────────────────────────────────────────────
+echo ""
+echo "▸ Idempotency"
+
+fire_with_header "Idempotency: invalid key (not a UUID) on proposal submit" \
+  "Idempotency" 400 POST "$API/proposals" "$CUSTOMER_TOKEN" \
+  "Idempotency-Key: not-a-valid-uuid" \
+  "{\"customerId\":\"$CUSTOMER_USER_ID\",\"productId\":\"$PRODUCT_ID\",\"sumAssured\":200000,\"tenureYears\":2,\"premiumAmount\":8000,\"paymentFrequency\":\"Monthly\"}"
+
+fire_with_header "Idempotency: invalid key (not a UUID) on claim intimate" \
+  "Idempotency" 400 POST "$API/claims/intimate" "$CUSTOMER_TOKEN" \
+  "Idempotency-Key: abc-123" \
+  "{\"policyId\":\"$POLICY_ID\",\"claimType\":\"Health\",\"claimAmountRequested\":10000,\"incidentDate\":\"2025-01-01T10:00:00Z\",\"incidentDescription\":\"Test\"}"
+
+fire_with_header "Idempotency: invalid key (not a UUID) on grievance" \
+  "Idempotency" 400 POST "$API/grievances" "$CUSTOMER_TOKEN" \
+  "Idempotency-Key: bad-key" \
+  "{\"policyId\":\"$POLICY_ID\",\"category\":\"ClaimDelay\",\"description\":\"Test grievance\"}"
+
+fire_with_header "Idempotency: empty key — passes through to normal validation" \
+  "Idempotency" 400 POST "$API/proposals" "$CUSTOMER_TOKEN" \
+  "Idempotency-Key: " \
+  "{}"
+
+fire "Idempotency: no header on proposal submit — passes through normally" \
+  "Idempotency" 400 POST "$API/proposals" "$CUSTOMER_TOKEN" \
+  "{}"
+
+fire_with_header "Idempotency: valid key on proposal submit — validation still runs" \
+  "Idempotency" 400 POST "$API/proposals" "$CUSTOMER_TOKEN" \
+  "Idempotency-Key: $(uuidgen | tr '[:upper:]' '[:lower:]')" \
+  "{}"
 
 echo ""
 

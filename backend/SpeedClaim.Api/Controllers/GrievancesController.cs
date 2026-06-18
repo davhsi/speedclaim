@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SpeedClaim.Api.Dtos.Common;
 using SpeedClaim.Api.Dtos.Grievances;
+using SpeedClaim.Api.Filters;
 using SpeedClaim.Api.Interfaces;
 using System.Security.Claims;
 
@@ -25,6 +26,7 @@ public class GrievancesController : BaseApiController
     /// <remarks>PolicyId and ClaimId are optional. Grievance is opened in Open status.</remarks>
     [Authorize(Roles = "Customer")]
     [HttpPost]
+    [Idempotent]
     [ProducesResponseType(typeof(GrievanceDto), 200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(404)]

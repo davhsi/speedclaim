@@ -47,6 +47,7 @@ public interface IUnitOfWork : IDisposable
     IRepository<AuditLog> AuditLogs { get; }
     IRepository<SystemConfig> SystemConfigs { get; }
     IRepository<UserConsent> UserConsents { get; }
+    IRepository<ProcessedWebhookEvent> ProcessedWebhookEvents { get; }
 
     Task<int> CompleteAsync();
 }

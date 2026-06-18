@@ -53,6 +53,7 @@ public partial class SpeedClaimDbContext : DbContext
     public DbSet<AuditLog> AuditLogs { get; set; } = null!;
     public DbSet<SystemConfig> SystemConfigs { get; set; } = null!;
     public DbSet<UserConsent> UserConsents { get; set; } = null!;
+    public DbSet<ProcessedWebhookEvent> ProcessedWebhookEvents { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -544,6 +545,14 @@ public partial class SpeedClaimDbContext : DbContext
             e.Property(x => x.ConsentVersion).HasMaxLength(10);
             e.Property(x => x.IpAddress).HasMaxLength(45);
             e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ProcessedWebhookEvent>(e =>
+        {
+            e.HasKey(x => x.Id).HasName("PK_processed_webhook_events");
+            e.HasIndex(x => x.StripeEventId).IsUnique().HasDatabaseName("uq_processed_webhook_events_stripe_event_id");
+            e.Property(x => x.StripeEventId).IsRequired().HasMaxLength(255);
+            e.Property(x => x.EventType).IsRequired().HasMaxLength(100);
         });
     }
     

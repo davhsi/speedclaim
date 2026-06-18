@@ -82,7 +82,7 @@ public class FinanceServiceTests
             Id = "pi_test_123",
             ClientSecret = "secret_123"
         };
-        _mockStripeWrapper.Setup(s => s.CreatePaymentIntentAsync(It.IsAny<PaymentIntentCreateOptions>()))
+        _mockStripeWrapper.Setup(s => s.CreatePaymentIntentAsync(It.IsAny<PaymentIntentCreateOptions>(), It.IsAny<RequestOptions>()))
             .ReturnsAsync(paymentIntent);
 
         var mockPaymentRepo = new Mock<IPremiumPaymentRepository>();
@@ -399,7 +399,7 @@ public class FinanceServiceTests
         _mockUnitOfWork.Setup(u => u.ClaimStatusHistories).Returns(mockHistoryRepo.Object);
 
         var paymentIntent = new PaymentIntent { Id = "pi_payout_123" };
-        _mockStripeWrapper.Setup(s => s.CreatePaymentIntentAsync(It.IsAny<PaymentIntentCreateOptions>()))
+        _mockStripeWrapper.Setup(s => s.CreatePaymentIntentAsync(It.IsAny<PaymentIntentCreateOptions>(), It.IsAny<RequestOptions>()))
             .ReturnsAsync(paymentIntent);
         _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
 
@@ -408,7 +408,7 @@ public class FinanceServiceTests
         Assert.That(claim.Status, Is.EqualTo(ClaimStatus.Settled));
         Assert.That(claim.SettlementDate, Is.Not.Null);
         _mockStripeWrapper.Verify(s => s.CreatePaymentIntentAsync(It.Is<PaymentIntentCreateOptions>(
-            o => o.Amount == 50000 && o.Currency == "usd")), Times.Once);
+            o => o.Amount == 50000 && o.Currency == "usd"), It.IsAny<RequestOptions>()), Times.Once);
         mockHistoryRepo.Verify(r => r.AddAsync(It.IsAny<ClaimStatusHistory>()), Times.Once);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
@@ -573,11 +573,11 @@ public class FinanceServiceTests
         mockUserRepo.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
         _mockUnitOfWork.Setup(u => u.Users).Returns(mockUserRepo.Object);
 
-        _mockStripeWrapper.Setup(s => s.CreateCustomerAsync(It.IsAny<Stripe.CustomerCreateOptions>()))
+        _mockStripeWrapper.Setup(s => s.CreateCustomerAsync(It.IsAny<Stripe.CustomerCreateOptions>(), It.IsAny<RequestOptions>()))
             .ReturnsAsync(new Stripe.Customer { Id = "cus_new_123" });
 
         var paymentIntent = new Stripe.PaymentIntent { Id = "pi_new_123", ClientSecret = "secret_new" };
-        _mockStripeWrapper.Setup(s => s.CreatePaymentIntentAsync(It.IsAny<Stripe.PaymentIntentCreateOptions>()))
+        _mockStripeWrapper.Setup(s => s.CreatePaymentIntentAsync(It.IsAny<Stripe.PaymentIntentCreateOptions>(), It.IsAny<RequestOptions>()))
             .ReturnsAsync(paymentIntent);
 
         var mockPaymentRepo = new Mock<IPremiumPaymentRepository>();
@@ -747,5 +747,87 @@ public class FinanceServiceTests
 
         Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() =>
             _financeService.ProcessClaimPayoutAsync(claimId.ToString(), Guid.NewGuid().ToString()));
+    }
+
+    // --- Stripe Idempotency Key Tests ---
+
+    [Test]
+    public async Task PayPremiumAsync_PassesIdempotencyKeyToStripe()
+    {
+        var customerId = Guid.NewGuid();
+        var scheduleId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+        var request = new CreatePaymentIntentRequest { PolicyId = policyId };
+
+        var schedule = new PremiumSchedule
+        {
+            Id = scheduleId,
+            PolicyId = policyId,
+            Amount = 100.0m,
+            Status = PremiumScheduleStatus.Upcoming,
+            InstallmentNumber = 1
+        };
+
+        _mockUnitOfWork.Setup(u => u.PremiumSchedules)
+            .Returns(Mock.Of<IRepository<PremiumSchedule>>(r =>
+                r.GetByIdAsync(scheduleId) == Task.FromResult<PremiumSchedule?>(schedule)));
+
+        var customer = new SpeedClaim.Api.Models.Customer { Id = customerId, UserId = Guid.NewGuid() };
+        _mockUnitOfWork.Setup(u => u.Customers)
+            .Returns(Mock.Of<IRepository<SpeedClaim.Api.Models.Customer>>(r =>
+                r.FirstOrDefaultAsync(It.IsAny<System.Linq.Expressions.Expression<Func<SpeedClaim.Api.Models.Customer, bool>>>()) == Task.FromResult<SpeedClaim.Api.Models.Customer?>(customer)));
+
+        var stripeCustomer = new SpeedClaim.Api.Models.StripeCustomer { UserId = customer.UserId, StripeCustomerId = "cus_test" };
+        _mockUnitOfWork.Setup(u => u.StripeCustomers)
+            .Returns(Mock.Of<IRepository<SpeedClaim.Api.Models.StripeCustomer>>(r =>
+                r.FirstOrDefaultAsync(It.IsAny<System.Linq.Expressions.Expression<Func<SpeedClaim.Api.Models.StripeCustomer, bool>>>()) == Task.FromResult<SpeedClaim.Api.Models.StripeCustomer?>(stripeCustomer)));
+
+        var paymentIntent = new PaymentIntent { Id = "pi_idem_test", ClientSecret = "secret_idem" };
+        _mockStripeWrapper.Setup(s => s.CreatePaymentIntentAsync(It.IsAny<PaymentIntentCreateOptions>(), It.IsAny<RequestOptions>()))
+            .ReturnsAsync(paymentIntent);
+
+        var mockPaymentRepo = new Mock<IPremiumPaymentRepository>();
+        _mockUnitOfWork.Setup(u => u.PremiumPayments).Returns(mockPaymentRepo.Object);
+        _mockConfig.Setup(c => c["Stripe:PublishableKey"]).Returns("pk_test");
+
+        await _financeService.PayPremiumAsync(customerId.ToString(), scheduleId.ToString(), request);
+
+        _mockStripeWrapper.Verify(s => s.CreatePaymentIntentAsync(
+            It.IsAny<PaymentIntentCreateOptions>(),
+            It.Is<RequestOptions>(r => r.IdempotencyKey == $"pay-premium-{scheduleId}")),
+            Times.Once);
+    }
+
+    [Test]
+    public async Task ProcessClaimPayoutAsync_PassesIdempotencyKeyToStripe()
+    {
+        var claimId = Guid.NewGuid();
+        var officerId = Guid.NewGuid();
+        var claim = new Claim
+        {
+            Id = claimId,
+            ClaimNumber = "CLM-IDEM-001",
+            Status = ClaimStatus.Approved,
+            ClaimAmountApproved = 500m
+        };
+
+        var mockClaimRepo = new Mock<IClaimRepository>();
+        mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+        _mockUnitOfWork.Setup(u => u.Claims).Returns(mockClaimRepo.Object);
+
+        var mockHistoryRepo = new Mock<IRepository<ClaimStatusHistory>>();
+        _mockUnitOfWork.Setup(u => u.ClaimStatusHistories).Returns(mockHistoryRepo.Object);
+        _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
+
+        var paymentIntent = new PaymentIntent { Id = "pi_payout_idem" };
+        _mockStripeWrapper.Setup(s => s.CreatePaymentIntentAsync(It.IsAny<PaymentIntentCreateOptions>(), It.IsAny<RequestOptions>()))
+            .ReturnsAsync(paymentIntent);
+
+        await _financeService.ProcessClaimPayoutAsync(claimId.ToString(), officerId.ToString());
+
+        _mockStripeWrapper.Verify(s => s.CreatePaymentIntentAsync(
+            It.IsAny<PaymentIntentCreateOptions>(),
+            It.Is<RequestOptions>(r => r.IdempotencyKey == $"claim-payout-{claimId}")),
+            Times.Once);
     }
 }
