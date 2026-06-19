@@ -314,19 +314,15 @@ public class UserService : IUserService
 
     public async Task UpdateUserRoleAsync(string targetUserId, string role)
     {
+        if (!Enum.TryParse<UserRole>(role, out var parsedRole))
+            throw new ValidationException("Invalid role");
+
         var uid = Guid.Parse(targetUserId);
         var user = await _unitOfWork.Users.GetByIdAsync(uid);
         if (user == null) throw new NotFoundException("User not found");
 
-        if (Enum.TryParse<UserRole>(role, out var parsedRole))
-        {
-            user.Role = parsedRole;
-            await _unitOfWork.CompleteAsync();
-        }
-        else
-        {
-            throw new ValidationException("Invalid role");
-        }
+        user.Role = parsedRole;
+        await _unitOfWork.CompleteAsync();
     }
 
     private KycRecordDto MapToKycDto(KycRecord k)

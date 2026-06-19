@@ -30,21 +30,25 @@ FINANCE_EMAIL="financeofficer@speedclaim.com"
 SURVEYOR_EMAIL="surveyor@speedclaim.com"
 PASSWORD="Password@123"
 
-# Known IDs from environment
-CUSTOMER_USER_ID="019ed3b7-7b51-704a-b36a-9a2f6e3a3fd8"
-POLICY_ID="530ed510-3aaa-4897-9b74-eaddc37b971a"
-CLAIM_ID="54a4764d-ce58-48d7-95ba-0d076ec56e66"
-PROPOSAL_ID="019ed3b8-990e-773a-8a2d-a777a30a5601"
-PRODUCT_ID="70000000-0000-0000-0000-000000000001"
-SCHEDULE_ID="ee055aea-bee5-4562-9d8b-c9c9ce3c3cf1"
-PAYMENT_ID="41667489-478d-4ace-ba5a-39d802b4162a"
-GRIEVANCE_ID="61be6f1f-1cbe-4b22-9b28-faa057f52481"
-MOTOR_CLAIM_ID="b6b93dcc-91d7-4368-b9e8-d10a746a81cd"
-CANCELLABLE_POLICY_ID="c3bf257a-ce23-4050-9a9e-5b1aa4792c29"
+# Read IDs from Postman environment (written by seed.sh)
+ENV_FILE="postman/SpeedClaim.postman_environment.json"
+[ -f "$ENV_FILE" ] || { echo "ERROR: $ENV_FILE not found. Run seed.sh first." >&2; exit 1; }
+penv() { python3 -c "import json,sys; env=json.load(open('$ENV_FILE')); print(next((v['value'] for v in env['values'] if v['key']=='$1'),''))"; }
+
+CUSTOMER_USER_ID="$(penv customerUserId)"
+POLICY_ID="$(penv policyId)"
+CLAIM_ID="$(penv claimId)"
+PROPOSAL_ID="$(penv proposalId)"
+PRODUCT_ID="$(penv productId)"
+SCHEDULE_ID="$(penv scheduleId)"
+PAYMENT_ID="$(penv paymentId)"
+GRIEVANCE_ID="$(penv grievanceId)"
+MOTOR_CLAIM_ID="$(penv motorClaimId)"
+CANCELLABLE_POLICY_ID="$(penv cancellablePolicyId)"
 FAKE_GUID="00000000-0000-0000-0000-000000000000"
 NONEXISTENT="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
-TARGET_USER_ID="019ed3b8-84db-7b7d-9fce-e2e6aca7cf97"
-AGENT_USER_ID="019ed3b7-78f2-7cbc-a7d2-db3f3f45321b"
+TARGET_USER_ID="$(penv targetUserId)"
+AGENT_USER_ID="$(penv agentUserId)"
 
 # Long strings for boundary tests
 LONG_101=$(python3 -c "print('A'*101)")
@@ -89,6 +93,7 @@ record() {
   SCENARIOS=$(
     SCENARIOS_JSON="$SCENARIOS" \
     RESPONSE_BODY="$response_body" \
+    REQUEST_BODY="${body:-}" \
     ENTRY_ID="$TOTAL" \
     ENTRY_SCENARIO="$scenario" \
     ENTRY_CATEGORY="$category" \
@@ -107,6 +112,12 @@ try:
 except:
     response_obj = {"raw": response_text}
 
+request_text = os.environ.get("REQUEST_BODY", "{}")
+try:
+    request_obj = json.loads(request_text) if request_text.strip() else {}
+except:
+    request_obj = {"raw": request_text}
+
 entry = {
     "id": int(os.environ["ENTRY_ID"]),
     "scenario": os.environ["ENTRY_SCENARIO"],
@@ -116,6 +127,7 @@ entry = {
     "expectedStatus": int(os.environ["ENTRY_EXPECTED"]),
     "actualStatus": int(os.environ["ENTRY_ACTUAL"]),
     "passed": os.environ["ENTRY_PASSED"] == "true",
+    "request": request_obj,
     "response": response_obj
 }
 scenarios.append(entry)
