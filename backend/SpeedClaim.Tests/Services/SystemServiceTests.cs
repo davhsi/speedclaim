@@ -109,6 +109,33 @@ public class SystemServiceTests
     }
 
     [Test]
+    public async Task GetEmailTemplatesAsync_ReturnsAllTemplates()
+    {
+        var templates = new List<EmailTemplate>
+        {
+            new EmailTemplate { Id = Guid.NewGuid(), TemplateKey = "Welcome", Subject = "Welcome!", BodyHtml = "<p>Hi</p>", IsActive = true, CreatedAt = DateTimeOffset.UtcNow }
+        };
+        _mockUnitOfWork.Setup(u => u.EmailTemplates.GetAllAsync()).ReturnsAsync(templates);
+
+        var result = (await _systemService.GetEmailTemplatesAsync()).ToList();
+
+        Assert.That(result.Count, Is.EqualTo(1));
+        Assert.That(result[0].TemplateKey, Is.EqualTo("Welcome"));
+        Assert.That(result[0].Subject, Is.EqualTo("Welcome!"));
+        Assert.That(result[0].IsActive, Is.True);
+    }
+
+    [Test]
+    public async Task GetEmailTemplatesAsync_NoTemplates_ReturnsEmpty()
+    {
+        _mockUnitOfWork.Setup(u => u.EmailTemplates.GetAllAsync()).ReturnsAsync(new List<EmailTemplate>());
+
+        var result = (await _systemService.GetEmailTemplatesAsync()).ToList();
+
+        Assert.That(result, Is.Empty);
+    }
+
+    [Test]
     public async Task ManageEmailTemplatesAsync_UpdatesExistingTemplate()
     {
         var existing = new EmailTemplate { Id = Guid.NewGuid(), TemplateKey = "WelcomeEmail", Subject = "Old Subject", BodyHtml = "Old Body" };

@@ -312,6 +312,62 @@ public class AgentServiceTests
             _agentService.UpdateAgentProfileAsync(Guid.NewGuid().ToString(), new UpdateAgentProfileRequest("Mr", "A", "B", "123")));
     }
 
+    // --- GetAllAgentsAsync tests ---
+
+    [Test]
+    public async Task GetAllAgentsAsync_ReturnsAllAgentProfiles()
+    {
+        var userId = Guid.NewGuid();
+        var agentId = Guid.NewGuid();
+        var agents = new List<Agent>
+        {
+            new Agent { Id = agentId, UserId = userId, AgentCode = "AG-001", AgentType = AgentType.Internal, LicenseNumber = "LIC-1", LicenseExpiry = DateOnly.FromDateTime(DateTime.UtcNow.AddYears(1)), CommissionRate = 0.10m, IsActive = true }
+        };
+        var user = new User { Id = userId, Email = "agent@test.com", FirstName = "Alice", LastName = "Smith", Role = UserRole.Agent, Salutation = Salutation.Ms };
+
+        _mockAgentRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(agents);
+        _mockUserRepo.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
+        _mockBranchRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Branch?)null);
+
+        var result = (await _agentService.GetAllAgentsAsync()).ToList();
+
+        Assert.That(result.Count, Is.EqualTo(1));
+        Assert.That(result[0].AgentCode, Is.EqualTo("AG-001"));
+        Assert.That(result[0].Email, Is.EqualTo("agent@test.com"));
+    }
+
+    [Test]
+    public async Task GetAllAgentsAsync_NoAgents_ReturnsEmpty()
+    {
+        _mockAgentRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Agent>());
+
+        var result = (await _agentService.GetAllAgentsAsync()).ToList();
+
+        Assert.That(result, Is.Empty);
+    }
+
+    [Test]
+    public async Task GetAllAgentsAsync_WithBranch_IncludesBranchDetails()
+    {
+        var userId = Guid.NewGuid();
+        var branchId = Guid.NewGuid();
+        var agents = new List<Agent>
+        {
+            new Agent { Id = Guid.NewGuid(), UserId = userId, BranchId = branchId, AgentCode = "AG-002" }
+        };
+        var user = new User { Id = userId, Email = "a@b.com", FirstName = "X", LastName = "Y", Role = UserRole.Agent, Salutation = Salutation.Mr };
+        var branch = new Branch { Id = branchId, Name = "North Branch", City = "Chicago" };
+
+        _mockAgentRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(agents);
+        _mockUserRepo.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
+        _mockBranchRepo.Setup(r => r.GetByIdAsync(branchId)).ReturnsAsync(branch);
+
+        var result = (await _agentService.GetAllAgentsAsync()).ToList();
+
+        Assert.That(result[0].BranchName, Is.EqualTo("North Branch"));
+        Assert.That(result[0].BranchCity, Is.EqualTo("Chicago"));
+    }
+
     // --- GetRenewalRemindersAsync tests ---
 
     [Test]

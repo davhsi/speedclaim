@@ -37,6 +37,8 @@ public class UserServiceTests
 
         _mockUnitOfWork.Setup(u => u.Users).Returns(_mockUserRepository.Object);
         _mockUnitOfWork.Setup(u => u.Customers).Returns(_mockCustomerRepository.Object);
+        _mockKycRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<KycRecord, bool>>>()))
+            .ReturnsAsync(new List<KycRecord>());
         _mockUnitOfWork.Setup(u => u.KycRecords).Returns(_mockKycRepository.Object);
         _mockAddressRepository = new Mock<IRepository<Address>>();
         _mockAddressRepository.Setup(r => r.GetPagedAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<System.Linq.Expressions.Expression<System.Func<SpeedClaim.Api.Models.Address, bool>>>(), It.IsAny<System.Func<System.Linq.IQueryable<SpeedClaim.Api.Models.Address>, System.Linq.IQueryable<SpeedClaim.Api.Models.Address>>>()))
@@ -544,5 +546,118 @@ public class UserServiceTests
         var result = await _userService.GetAllSessionsAsync();
 
         Assert.That(result.Count(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public void UploadAadhaarAsync_DuplicateAadhaar_ThrowsConflictException()
+    {
+        var customerId = Guid.NewGuid();
+        var otherUserId = Guid.NewGuid();
+        var existingRecord = new KycRecord { Id = Guid.NewGuid(), UserId = otherUserId, AadhaarNumber = "123456789012" };
+        _mockKycRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<KycRecord, bool>>>()))
+            .ReturnsAsync(new List<KycRecord> { existingRecord });
+        _mockKycRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>())).ReturnsAsync((KycRecord?)null);
+
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.FileName).Returns("front.jpg");
+        mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
+
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _userService.UploadAadhaarAsync(customerId.ToString(), new AadhaarUploadRequest(null, "123456789012", mockFile.Object, null)));
+        Assert.That(ex.Message, Does.Contain("Aadhaar number is already registered"));
+    }
+
+    [Test]
+    public void UploadPanAsync_DuplicatePan_ThrowsConflictException()
+    {
+        var customerId = Guid.NewGuid();
+        var otherUserId = Guid.NewGuid();
+        var existingRecord = new KycRecord { Id = Guid.NewGuid(), UserId = otherUserId, PanNumber = "ABCDE1234F" };
+        _mockKycRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<KycRecord, bool>>>()))
+            .ReturnsAsync(new List<KycRecord> { existingRecord });
+        _mockKycRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>())).ReturnsAsync((KycRecord?)null);
+
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.FileName).Returns("front.jpg");
+        mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
+
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _userService.UploadPanAsync(customerId.ToString(), new PanUploadRequest(null, "ABCDE1234F", mockFile.Object, null)));
+        Assert.That(ex.Message, Does.Contain("PAN number is already registered"));
+    }
+
+    [Test]
+    public async Task UploadAadhaarAsync_SameUserReupload_Succeeds()
+    {
+        var customerId = Guid.NewGuid();
+        _mockKycRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<KycRecord, bool>>>()))
+            .ReturnsAsync(new List<KycRecord>());
+        var existing = new KycRecord { Id = Guid.NewGuid(), UserId = customerId, AadhaarNumber = "OLD" };
+        _mockKycRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>())).ReturnsAsync(existing);
+
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.FileName).Returns("front.jpg");
+        mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
+        var mockStorage = new Mock<IStorageService>();
+        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object);
+
+        await svc.UploadAadhaarAsync(customerId.ToString(), new AadhaarUploadRequest(null, "123456789012", mockFile.Object, null));
+
+        Assert.That(existing.AadhaarNumber, Is.EqualTo("123456789012"));
+    }
+
+    [Test]
+    public async Task GetSurveyorsAsync_ReturnsActiveSurveyors()
+    {
+        var userId = Guid.NewGuid();
+        var surveyorId = Guid.NewGuid();
+        var surveyors = new List<Surveyor>
+        {
+            new Surveyor { Id = surveyorId, UserId = userId, IsActive = true }
+        };
+        var user = new User { Id = userId, FirstName = "John", LastName = "Inspector", Email = "j@test.com", Role = UserRole.Customer, Salutation = Salutation.Mr };
+
+        var mockSurveyorRepo = new Mock<IRepository<Surveyor>>();
+        mockSurveyorRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Surveyor, bool>>>())).ReturnsAsync(surveyors);
+        _mockUnitOfWork.Setup(u => u.Surveyors).Returns(mockSurveyorRepo.Object);
+        _mockUserRepository.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
+
+        var result = (await _userService.GetSurveyorsAsync()).ToList();
+
+        Assert.That(result.Count, Is.EqualTo(1));
+        Assert.That(result[0].FirstName, Is.EqualTo("John"));
+        Assert.That(result[0].FullName, Is.EqualTo("Mr John Inspector"));
+    }
+
+    [Test]
+    public async Task GetSurveyorsAsync_NoSurveyors_ReturnsEmpty()
+    {
+        var mockSurveyorRepo = new Mock<IRepository<Surveyor>>();
+        mockSurveyorRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Surveyor, bool>>>())).ReturnsAsync(new List<Surveyor>());
+        _mockUnitOfWork.Setup(u => u.Surveyors).Returns(mockSurveyorRepo.Object);
+
+        var result = (await _userService.GetSurveyorsAsync()).ToList();
+
+        Assert.That(result, Is.Empty);
+    }
+
+    [Test]
+    public async Task UploadPanAsync_SameUserReupload_Succeeds()
+    {
+        var customerId = Guid.NewGuid();
+        _mockKycRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<KycRecord, bool>>>()))
+            .ReturnsAsync(new List<KycRecord>());
+        var existing = new KycRecord { Id = Guid.NewGuid(), UserId = customerId, PanNumber = "OLD" };
+        _mockKycRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>())).ReturnsAsync(existing);
+
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.FileName).Returns("front.jpg");
+        mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
+        var mockStorage = new Mock<IStorageService>();
+        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object);
+
+        await svc.UploadPanAsync(customerId.ToString(), new PanUploadRequest(null, "ABCDE1234F", mockFile.Object, null));
+
+        Assert.That(existing.PanNumber, Is.EqualTo("ABCDE1234F"));
     }
 }
