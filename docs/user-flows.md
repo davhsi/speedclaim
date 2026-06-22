@@ -14,6 +14,7 @@
 | Underwriter | Created by Admin | Underwriter Portal |
 | Claims Officer | Created by Admin | Claims Portal |
 | Finance Officer | Created by Admin | Finance Portal |
+| Surveyor | Created by Admin | Surveyor Portal |
 | Admin | Pre-seeded / super user | Admin Portal |
 
 ---
@@ -371,7 +372,39 @@ flowchart TD
 
 ---
 
-## 5. End-to-End Policy Lifecycle
+## 5. Surveyor Flows
+
+### 5.1 Viewing Assigned Claims
+
+**User story:** As a surveyor I want to see all motor/property claims assigned to me so I can plan my inspections.
+
+```mermaid
+flowchart TD
+    A[Surveyor logs in\nPOST /api/auth/login] --> B[View assigned claims\nGET /api/claims/surveyor/assigned]
+    B --> C[List of motor & property claims\nwith claim details & documents]
+    C --> D[Select a claim to inspect]
+```
+
+---
+
+### 5.2 Submitting a Survey Report
+
+**User story:** As a surveyor I want to submit my inspection findings so the claims officer can make a decision.
+
+```mermaid
+flowchart TD
+    A[Visit site & inspect\ndamage or property] --> B[Prepare survey report]
+    B --> C[Submit report\nPOST /api/claims/:id/survey-report\nremarks · estimated amount · photos]
+    C --> D{Assigned to\nthis claim?}
+    D -->|No — 404| E[Error: not assigned]
+    D -->|Yes| F[Report uploaded\nMotor details updated with\nsurveyor remarks & estimated amount]
+    F --> G[Status: UnderReview\nClaims Officer notified]
+    G --> H[Claims Officer makes\nfinal decision]
+```
+
+---
+
+## 6. End-to-End Policy Lifecycle
 
 > A single view of how all actors interact across the full life of a policy.
 
@@ -381,11 +414,12 @@ flowchart LR
     AGENT([Agent])
     UW([Underwriter])
     CO([Claims Officer])
+    SV([Surveyor])
     FO([Finance Officer])
     ADMIN([Admin])
 
     ADMIN -->|Creates agent accounts\nManages products & users| AGENT
-    ADMIN -->|Configures roles & system| UW & CO & FO
+    ADMIN -->|Configures roles & system| UW & CO & FO & SV
 
     CUST -->|Registers · submits KYC| UW
     AGENT -->|Submits proposal\non behalf of customer| UW
@@ -396,6 +430,8 @@ flowchart LR
 
     CUST -->|Pays premium installments| FO
     CUST -->|Files claim| CO
+    CO -->|Assigns motor/property claim| SV
+    SV -->|Submits survey report| CO
     CO -->|Approves claim| FO
     FO -->|Processes payout| CUST
 
