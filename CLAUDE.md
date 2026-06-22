@@ -9,11 +9,11 @@ Persistent context for AI sessions. Read this before touching any code.
 **SpeedClaim** is a full-stack insurance claims management platform built as an internship capstone project.
 
 - **Backend**: .NET 10 Web API (C#), EF Core, PostgreSQL
-- **Frontend**: Angular (in `frontend/`)
+- **Frontend**: Angular 21 + Tailwind CSS 4 (in `frontend/`)
 - **Payments**: Stripe
 - **Email**: MailKit over SMTP (Gmail App Password)
 - **Auth**: JWT Bearer tokens
-- **Tests**: xUnit + Moq, 385 tests, all passing
+- **Tests**: xUnit + Moq, 396 tests, all passing
 
 ---
 
@@ -37,7 +37,14 @@ InsuranceApp/
 │   │   ├── appsettings.json     # Non-secret defaults (committed)
 │   │   └── appsettings.Development.json  # ALL secrets (git-ignored)
 │   └── SpeedClaim.Tests/        # xUnit test project
-├── frontend/                    # Angular app
+├── frontend/                    # Angular 21 app
+│   ├── src/app/
+│   │   ├── core/                # Guards, interceptors, services, models
+│   │   ├── features/            # Feature modules (see below)
+│   │   └── shared/              # Reusable components, pipes, validators
+│   ├── proxy.conf.js            # Dev proxy → backend (localhost:5062)
+│   ├── package.json
+│   └── angular.json
 ├── docs/
 │   └── spec.md                  # Architecture + API spec
 └── CLAUDE.md                    # This file
@@ -50,6 +57,10 @@ InsuranceApp/
 ```bash
 # Run API (from repo root)
 dotnet run --project backend/SpeedClaim.Api
+
+# Run Angular frontend
+cd frontend && npx ng serve        # serves at http://localhost:4200
+# Use `npx ng serve` to catch compilation errors (not ng build or tsc)
 
 # Run all tests
 dotnet test backend/SpeedClaim.Tests
@@ -272,6 +283,51 @@ These appear during `dotnet ef database update` and at runtime. They are real ar
 
 ---
 
+## Frontend Architecture (Angular 21 + Tailwind CSS 4)
+
+### Tech Stack
+- **Angular 21** with standalone components (no NgModules)
+- **Tailwind CSS 4** via `@tailwindcss/postcss`
+- **RxJS 7.8** for reactive state
+- **Vitest** for unit testing (not Karma/Jasmine)
+- Dev proxy in `proxy.conf.js` forwards `/api/*` → `http://localhost:5062`
+
+### Feature Modules (role-based routing)
+
+| Route prefix | Role | Module |
+| --- | --- | --- |
+| `/auth` | Guest | Login, Register, Forgot/Reset Password, Verify Email |
+| `/` (root) | Customer | Portal — dashboard, policies, claims, proposals, payments, KYC, grievances, products, quotes, family, profile |
+| `/agent` | Agent | Dashboard, customers, customer KYC, proposals, policies, commissions, renewals, profile |
+| `/claims-officer` | ClaimsOfficer | Dashboard, claims (list + detail), grievances (list + detail), profile |
+| `/finance-officer` | FinanceOfficer | Dashboard, payments, payouts, commissions, reports, profile |
+| `/underwriter` | Underwriter | Dashboard, proposals, policies, KYC review, endorsements, profile |
+| `/surveyor` | Surveyor | Claims, survey report, history, profile |
+| `/admin` | Admin | Users, agents, products, system config |
+
+### Guards
+Route guards in `core/guards/`: `auth`, `guest`, `admin`, `agent`, `claims-officer`, `finance-officer`, `surveyor`, `underwriter`. Each checks JWT role claim.
+
+### Shared Components
+Reusable UI in `shared/components/`: `data-table`, `pagination`, `stat-card`, `status-badge`, `timeline`, `toast`, `confirm-dialog`, `empty-state`, `file-upload`, `skeleton-loader`.
+
+Custom pipes: `date-format`, `money`, `time-ago`.
+
+### Interceptors
+- `auth.interceptor.ts` — attaches JWT `Authorization` header
+- `error.interceptor.ts` — global HTTP error handling with toast notifications
+
+---
+
+## KYC Duplicate Detection
+
+Aadhaar and PAN uploads now enforce uniqueness across users:
+- `UploadAadhaarAsync` / `UploadPanAsync` decrypt all existing records and compare plaintext
+- Duplicate detected → `ConflictException` (HTTP 409)
+- Same user re-uploading their own document is allowed (re-upload flow)
+
+---
+
 ## Commit Message Rules
 
 - **NEVER include `Co-Authored-By: Claude` in any commit message.** User's evaluator will see git history.
@@ -284,6 +340,6 @@ These appear during `dotnet ef database update` and at runtime. They are real ar
 
 - [ ] Postman workspace with all endpoints preloaded + auth pre-request script
 - [ ] DB seeded with realistic data covering all scenarios
-- [ ] 100% service layer test coverage (currently 385 tests, all passing)
+- [ ] 100% service layer test coverage (currently 396 tests, all passing)
 - [ ] No unhandled exceptions (GlobalExceptionMiddleware covers all routes)
 - [ ] Clean git commits with descriptive messages
