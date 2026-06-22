@@ -1,0 +1,97 @@
+<div class="animate-sc-fade max-w-[820px]">
+  <a routerLink="/agent/customers"
+     class="inline-flex items-center gap-1.5 text-[13px] font-medium text-muted hover:text-ink mb-4.5 transition-colors">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Back to my customers
+  </a>
+
+  @if (loading()) {
+    <app-skeleton variant="card" />
+  } @else if (customer(); as cust) {
+    <!-- Header Card -->
+    <div class="bg-white border border-line rounded-card shadow-sm p-[22px] mb-4">
+      <div class="flex items-center gap-4 mb-5 pb-5 border-b border-line">
+        <div class="w-[52px] h-[52px] rounded-card bg-primary text-white flex items-center justify-center text-xl font-bold shrink-0">
+          {{ initials(cust) }}
+        </div>
+        <div class="flex-1">
+          <div class="text-lg font-semibold text-ink">{{ cust.fullName }}</div>
+          <div class="text-xs text-muted sc-numeric mt-0.5">ID: {{ cust.id }} · Customer since {{ formatDate(cust.createdAt) }}</div>
+        </div>
+        <span class="inline-flex items-center gap-[5px] text-[10px] font-semibold tracking-wide uppercase px-2.5 py-1 rounded-full"
+              [class]="cust.isActive ? 'bg-success-bg text-success border border-success-border' : 'bg-danger-bg text-danger border border-danger-border'">
+          {{ cust.isActive ? 'Active' : 'Inactive' }}
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <div class="text-xs text-muted mb-1">Email</div>
+          <div class="text-sm font-medium text-ink">{{ cust.email }}</div>
+        </div>
+        <div>
+          <div class="text-xs text-muted mb-1">Phone</div>
+          <div class="text-sm font-medium text-ink sc-numeric">{{ cust.phone }}</div>
+        </div>
+        <div>
+          <div class="text-xs text-muted mb-1">Role</div>
+          <div class="text-sm font-medium text-ink">{{ cust.role }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex gap-1 mb-4">
+      <button (click)="activeTab = 'policies'"
+              class="px-4 py-2 rounded-control text-[13px] font-semibold border-none cursor-pointer transition-colors"
+              [class]="activeTab === 'policies' ? 'bg-primary text-white' : 'bg-white text-body border border-line'">
+        Policies ({{ customerPolicies().length }})
+      </button>
+      <button (click)="activeTab = 'proposals'"
+              class="px-4 py-2 rounded-control text-[13px] font-semibold border-none cursor-pointer transition-colors"
+              [class]="activeTab === 'proposals' ? 'bg-primary text-white' : 'bg-white text-body border border-line'">
+        Proposals ({{ customerProposals().length }})
+      </button>
+    </div>
+
+    <!-- Policies Tab -->
+    @if (activeTab === 'policies') {
+      <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
+        @if (customerPolicies().length === 0) {
+          <div class="px-4 py-10 text-center text-sm text-muted">No policies found for this customer.</div>
+        } @else {
+          @for (pol of customerPolicies(); track pol.id) {
+            <div class="flex items-center gap-3.5 px-[18px] py-3.5 border-b border-line">
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-semibold text-ink">{{ pol.productName }}</div>
+                <div class="text-xs text-muted sc-numeric">{{ pol.policyNumber }} · {{ pol.coverageAmount | money }} cover</div>
+              </div>
+              <div class="text-sm font-semibold text-ink sc-numeric">{{ pol.premiumAmount | money }}/yr</div>
+              <app-status-badge [status]="pol.status" />
+            </div>
+          }
+        }
+      </div>
+    }
+
+    <!-- Proposals Tab -->
+    @if (activeTab === 'proposals') {
+      <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
+        @if (customerProposals().length === 0) {
+          <div class="px-4 py-10 text-center text-sm text-muted">No proposals found for this customer.</div>
+        } @else {
+          @for (prop of customerProposals(); track prop.id) {
+            <div class="flex items-center gap-3.5 px-[18px] py-3.5 border-b border-line">
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-semibold text-ink">{{ prop.productName }}</div>
+                <div class="text-xs text-muted sc-numeric">{{ prop.proposalNumber }} · {{ prop.sumAssured | money }} cover</div>
+              </div>
+              <div class="text-sm font-semibold text-ink sc-numeric">{{ prop.premiumAmount | money }}/yr</div>
+              <app-status-badge [status]="prop.status" />
+            </div>
+          }
+        }
+      </div>
+    }
+  }
+</div>

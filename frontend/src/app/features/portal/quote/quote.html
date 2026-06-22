@@ -1,0 +1,149 @@
+<div class="animate-sc-fade max-w-[720px]">
+  <div class="mb-5">
+    <h1 class="text-xl font-semibold text-ink">Get a quote</h1>
+    <p class="text-sm text-muted mt-0.5">Tell us a few details and see your premium instantly.</p>
+  </div>
+
+  @if (!quoteResult()) {
+    <div class="bg-white border border-line rounded-card shadow-sm p-6">
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <!-- Product Selection -->
+        @if (!preselectedProduct()) {
+          <div class="mb-5">
+            <div class="text-[13px] font-semibold text-ink mb-2.5">Choose a product</div>
+            <select formControlName="productId" class="h-[42px] text-sm" (change)="onProductChange()">
+              <option value="">Select product...</option>
+              @for (p of products(); track p.id) {
+                <option [value]="p.id">{{ p.name }} ({{ p.domain }})</option>
+              }
+            </select>
+          </div>
+        } @else {
+          <div class="p-4 bg-primary-light rounded-[10px] mb-5 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-[10px] bg-white/70 flex items-center justify-center shrink-0">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="text-primary"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <div>
+              <div class="text-sm font-semibold text-ink">{{ preselectedProduct()!.name }}</div>
+              <div class="text-xs text-primary font-medium">{{ preselectedProduct()!.domain }}</div>
+            </div>
+          </div>
+        }
+
+        @if (selectedProduct(); as sp) {
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-5">
+            <div>
+              <label class="block text-[13px] font-medium mb-1.5">Sum assured (₹)</label>
+              <input type="number" formControlName="sumAssured" [min]="sp.minSumAssured" [max]="sp.maxSumAssured" placeholder="e.g., 500000" class="h-[42px]">
+              <p class="text-xs text-muted mt-1">Range: {{ sp.minSumAssured | money }} - {{ sp.maxSumAssured | money }}</p>
+            </div>
+            <div>
+              <label class="block text-[13px] font-medium mb-1.5">Tenure (years)</label>
+              <input type="number" formControlName="tenureYears" [min]="sp.minTenure" [max]="sp.maxTenure" placeholder="e.g., 5" class="h-[42px]">
+              <p class="text-xs text-muted mt-1">Range: {{ sp.minTenure }} - {{ sp.maxTenure }} years</p>
+            </div>
+            <div>
+              <label class="block text-[13px] font-medium mb-1.5">Payment frequency</label>
+              <select formControlName="paymentFrequency" class="h-[42px]">
+                <option value="Monthly">Monthly</option>
+                <option value="Quarterly">Quarterly</option>
+                <option value="HalfYearly">Half Yearly</option>
+                <option value="Annually">Annually</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[13px] font-medium mb-1.5">Date of birth</label>
+              <input type="date" formControlName="dateOfBirth" class="h-[42px]">
+            </div>
+            <div>
+              <label class="block text-[13px] font-medium mb-1.5">Gender</label>
+              <select formControlName="gender" class="h-[42px]">
+                <option value="">Select...</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Motor fields -->
+          @if (sp.domain === 'Motor') {
+            <div class="border-t border-line pt-5 mb-5">
+              <div class="text-[13px] font-semibold text-ink mb-3">Vehicle details</div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label class="block text-[13px] font-medium mb-1.5">Vehicle make</label>
+                  <input type="text" formControlName="vehicleMake" placeholder="e.g., Maruti Suzuki" class="h-[42px]">
+                </div>
+                <div>
+                  <label class="block text-[13px] font-medium mb-1.5">Vehicle model</label>
+                  <input type="text" formControlName="vehicleModel" placeholder="e.g., Swift" class="h-[42px]">
+                </div>
+                <div>
+                  <label class="block text-[13px] font-medium mb-1.5">Manufacture year</label>
+                  <input type="number" formControlName="manufactureYear" placeholder="e.g., 2023" class="h-[42px] sc-numeric">
+                </div>
+                <div>
+                  <label class="block text-[13px] font-medium mb-1.5">IDV (₹)</label>
+                  <input type="number" formControlName="insuredDeclaredValue" placeholder="e.g., 600000" class="h-[42px] sc-numeric">
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- Health fields -->
+          @if (sp.domain === 'Health') {
+            <div class="border-t border-line pt-5 mb-5">
+              <label class="block text-[13px] font-medium mb-1.5">Pre-existing conditions</label>
+              <textarea formControlName="preExistingConditions" rows="3" placeholder="List any pre-existing medical conditions..."></textarea>
+            </div>
+          }
+
+          <!-- Life fields -->
+          @if (sp.domain === 'Life') {
+            <div class="border-t border-line pt-5 mb-5">
+              <label class="flex items-center gap-2.5 cursor-pointer">
+                <input type="checkbox" formControlName="isSmoker" class="w-4 h-4 rounded accent-primary">
+                <span class="text-[13px] font-medium text-ink">I am a smoker / tobacco user</span>
+              </label>
+            </div>
+          }
+        }
+
+        <button
+          type="submit"
+          [disabled]="form.invalid || submitting()"
+          class="w-full h-11 bg-primary text-white rounded-control text-[14px] font-semibold hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {{ submitting() ? 'Calculating...' : 'Calculate Premium' }}
+        </button>
+      </form>
+    </div>
+  } @else {
+    <!-- Quote Result -->
+    <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
+      <div class="p-8 text-center border-b border-line">
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-success-bg mb-3">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1F9D6B" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h2 class="text-xl font-bold text-ink mb-1">Your Premium Quote</h2>
+        <p class="text-sm text-muted">{{ quoteResult()!.productName }}</p>
+        <div class="mt-5">
+          <div class="text-4xl font-bold text-primary sc-numeric">{{ quoteResult()!.totalPremium | money }}</div>
+          <div class="text-sm text-muted mt-1">per {{ quoteResult()!.paymentFrequency | lowercase }}</div>
+        </div>
+      </div>
+      <div class="p-6 space-y-3 text-sm">
+        <div class="flex justify-between"><span class="text-muted">Sum Assured</span><span class="font-semibold sc-numeric">{{ quoteResult()!.sumAssured | money }}</span></div>
+        <div class="flex justify-between"><span class="text-muted">Tenure</span><span class="font-semibold">{{ quoteResult()!.tenureYears }} years</span></div>
+        <div class="flex justify-between"><span class="text-muted">Base Premium</span><span class="font-semibold sc-numeric">{{ quoteResult()!.basePremium | money }}</span></div>
+        <div class="flex justify-between"><span class="text-muted">GST</span><span class="font-semibold sc-numeric">{{ quoteResult()!.gst | money }}</span></div>
+        <div class="flex justify-between pt-3 border-t border-line font-bold text-ink"><span>Total</span><span class="sc-numeric">{{ quoteResult()!.totalPremium | money }}</span></div>
+      </div>
+      <div class="px-6 pb-6 flex gap-3">
+        <button (click)="quoteResult.set(null)" class="flex-1 h-11 border border-line bg-white rounded-control text-sm font-semibold text-body hover:bg-surface-alt transition-colors">Recalculate</button>
+        <button (click)="applyNow()" class="flex-1 h-11 bg-accent text-white rounded-control text-sm font-semibold hover:bg-accent-hover transition-colors">Apply Now</button>
+      </div>
+    </div>
+  }
+</div>

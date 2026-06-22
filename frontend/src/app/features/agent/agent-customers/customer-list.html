@@ -1,0 +1,82 @@
+<div class="animate-sc-fade">
+  <div class="flex flex-wrap gap-3 items-end justify-between mb-5">
+    <div>
+      <h1 class="text-xl font-semibold text-ink">My customers</h1>
+      <p class="text-sm text-muted mt-0.5">{{ filteredCustomers().length }} assigned customers</p>
+    </div>
+    <div class="flex gap-2">
+      <input
+        type="text"
+        placeholder="Search by name or email..."
+        [value]="searchQuery()"
+        (input)="searchQuery.set($any($event.target).value)"
+        class="h-10 px-3 border border-line rounded-control text-[13px] bg-white outline-none min-w-[200px]"
+      />
+    </div>
+  </div>
+
+  <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-sm">
+        <thead>
+          <tr class="border-b border-line bg-surface">
+            <th class="px-4 py-3 text-left font-semibold text-ink text-xs">Customer</th>
+            <th class="px-4 py-3 text-left font-semibold text-ink text-xs">Email</th>
+            <th class="px-4 py-3 text-left font-semibold text-ink text-xs">Phone</th>
+            <th class="px-4 py-3 text-left font-semibold text-ink text-xs">Status</th>
+            <th class="px-4 py-3 text-left font-semibold text-ink text-xs">Joined</th>
+            <th class="px-4 py-3 text-center font-semibold text-ink text-xs">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            @for (i of [1,2,3,4,5]; track i) {
+              <tr class="border-b border-line">
+                <td colspan="6" class="px-4 py-3"><app-skeleton variant="table-row" /></td>
+              </tr>
+            }
+          } @else {
+            @for (cust of filteredCustomers(); track cust.id) {
+              <tr class="border-b border-line hover:bg-surface transition-colors">
+                <td class="px-4 py-3.5">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+                         [style.background]="avatarColor(cust.id)">
+                      {{ initials(cust) }}
+                    </div>
+                    <div class="min-w-0">
+                      <div class="font-semibold text-ink truncate">{{ cust.fullName }}</div>
+                      <div class="text-xs text-muted sc-numeric">ID: {{ cust.id }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-4 py-3.5 text-muted text-[13px]">{{ cust.email }}</td>
+                <td class="px-4 py-3.5 text-ink sc-numeric">{{ cust.phone }}</td>
+                <td class="px-4 py-3.5">
+                  <span class="inline-flex items-center gap-[5px] text-[10px] font-semibold tracking-wide uppercase px-2.5 py-1 rounded-full"
+                        [class]="cust.isActive ? 'bg-success-bg text-success border border-success-border' : 'bg-danger-bg text-danger border border-danger-border'">
+                    {{ cust.isActive ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td class="px-4 py-3.5 text-muted text-[13px]">{{ formatDate(cust.createdAt) }}</td>
+                <td class="px-4 py-3.5 text-center">
+                  <a [routerLink]="['/agent/customers', cust.id]"
+                     class="bg-transparent border-none text-primary cursor-pointer px-1.5 py-1 font-semibold text-[13px]">
+                    View
+                  </a>
+                </td>
+              </tr>
+            }
+            @if (filteredCustomers().length === 0) {
+              <tr>
+                <td colspan="6" class="px-4 py-10 text-center text-sm text-muted">
+                  {{ searchQuery() ? 'No customers match your search.' : 'No customers assigned yet.' }}
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

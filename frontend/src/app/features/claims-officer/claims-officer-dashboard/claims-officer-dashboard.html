@@ -1,0 +1,73 @@
+<div class="animate-[sc-fade_.25s_ease-out]">
+  <div class="mb-6">
+    <h1 class="text-[22px] font-semibold text-ink tracking-tight">Good morning, {{ firstName() }}</h1>
+    <p class="text-sm text-muted mt-1">{{ newClaimsCount() }} new claims and {{ openGrievancesCount() }} open grievances need your attention.</p>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
+    <div (click)="navigateTo('/claims-officer/claims')" class="cursor-pointer">
+      <app-stat-card
+        title="New claims to action"
+        [value]="newClaimsCount().toString()"
+        iconBgClass="bg-warning-bg text-warning"
+        [icon]="iconClaims"
+      />
+    </div>
+    <div (click)="navigateTo('/claims-officer/claims')" class="cursor-pointer">
+      <app-stat-card
+        title="Claims under review"
+        [value]="activeClaimsCount().toString()"
+        iconBgClass="bg-info-bg text-info"
+        [icon]="iconClock"
+      />
+    </div>
+    <div (click)="navigateTo('/claims-officer/claims')" class="cursor-pointer">
+      <app-stat-card
+        title="Awaiting surveyor report"
+        [value]="surveyorPendingCount().toString()"
+        iconBgClass="bg-primary-light text-primary"
+        [icon]="iconSurveyor"
+      />
+    </div>
+    <div (click)="navigateTo('/claims-officer/grievances')" class="cursor-pointer">
+      <app-stat-card
+        title="Open grievances"
+        [value]="openGrievancesCount().toString()"
+        iconBgClass="bg-danger-bg text-danger"
+        [icon]="iconGrievance"
+      />
+    </div>
+  </div>
+
+  <!-- Recent claims -->
+  <div class="bg-white border border-line rounded-xl shadow-sm overflow-hidden">
+    <div class="px-5 py-4 border-b border-line flex items-center justify-between">
+      <h2 class="text-[15px] font-semibold text-ink">Recent claims</h2>
+      <button (click)="navigateTo('/claims-officer/claims')" class="text-[13px] font-medium text-primary bg-transparent border-none cursor-pointer">View all →</button>
+    </div>
+    @for (claim of recentClaims(); track claim.id) {
+      <div (click)="openClaim(claim.id)" class="flex items-center gap-3.5 px-5 py-3.5 border-b border-line cursor-pointer hover:bg-surface transition-colors">
+        <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" [class]="getTypeBgClass(claim.claimType)">
+          <span class="text-[10px] font-bold" [class]="getTypeFgClass(claim.claimType)">{{ getTypeAbbr(claim.claimType) }}</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-baseline gap-2 flex-wrap">
+            <span class="text-[13px] font-semibold text-primary sc-numeric">{{ claim.claimNumber }}</span>
+            <span class="text-[13px] font-medium text-ink">Claim #{{ claim.id }}</span>
+          </div>
+          <div class="text-xs text-muted mt-0.5">{{ claim.claimType }} · {{ claim.claimAmountRequested | money }}</div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          @if (claim.isCashless) {
+            <span class="text-[9px] font-bold text-primary bg-primary-light border border-primary/30 px-1.5 py-0.5 rounded-full tracking-wide">CL</span>
+          }
+          <app-status-badge [status]="claim.status" />
+          <span class="text-xs text-muted whitespace-nowrap">{{ claim.intimationDate | dateFormat }}</span>
+        </div>
+      </div>
+    } @empty {
+      <div class="px-5 py-12 text-center text-sm text-muted">No claims found</div>
+    }
+  </div>
+</div>

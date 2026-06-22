@@ -1,0 +1,22 @@
+<div class="relative pl-8">
+  @for (item of items(); track $index; let last = $last) {
+    <div class="relative pb-6" [class.pb-0]="last">
+      <div class="absolute left-[-25px] top-1 w-3 h-3 rounded-full border-2 border-primary bg-white z-10"></div>
+      @if (!last) {
+        <div class="absolute left-[-20px] top-4 w-0.5 h-full bg-line"></div>
+      }
+      <div class="flex flex-col gap-1">
+        <div class="flex items-center gap-2">
+          <app-status-badge [status]="item.status" />
+          <span class="text-xs text-muted">{{ item.date | dateFormat:'long' }}</span>
+        </div>
+        @if (item.remarks) {
+          <p class="text-sm text-body mt-1">{{ item.remarks }}</p>
+        }
+        @if (item.changedBy) {
+          <p class="text-xs text-muted">by {{ item.changedBy }}</p>
+        }
+      </div>
+    </div>
+  }
+</div>

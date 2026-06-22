@@ -1,0 +1,56 @@
+<div class="animate-sc-fade">
+  <div class="mb-5">
+    <h1 class="text-xl font-semibold text-ink">Customer policies</h1>
+    <p class="text-sm text-muted mt-0.5">All active and past policies for your assigned customers.</p>
+  </div>
+
+  <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-sm">
+        <thead>
+          <tr class="border-b border-line bg-surface">
+            <th class="px-4 py-3 text-left font-semibold text-ink text-xs">Policy ID</th>
+            <th class="px-4 py-3 text-left font-semibold text-ink text-xs">Product</th>
+            <th class="px-4 py-3 text-left font-semibold text-ink text-xs">Domain</th>
+            <th class="px-4 py-3 text-left font-semibold text-ink text-xs">Cover</th>
+            <th class="px-4 py-3 text-left font-semibold text-ink text-xs">Premium</th>
+            <th class="px-4 py-3 text-left font-semibold text-ink text-xs">Status</th>
+            <th class="px-4 py-3 text-left font-semibold text-ink text-xs">End Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            @for (i of [1,2,3,4,5]; track i) {
+              <tr class="border-b border-line">
+                <td colspan="7" class="px-4 py-3"><app-skeleton variant="table-row" /></td>
+              </tr>
+            }
+          } @else {
+            @for (pol of policies(); track pol.id) {
+              <tr class="border-b border-line hover:bg-surface transition-colors">
+                <td class="px-4 py-3.5 text-ink font-semibold sc-numeric text-xs">{{ pol.policyNumber }}</td>
+                <td class="px-4 py-3.5">
+                  <div class="font-semibold text-ink">{{ pol.productName }}</div>
+                </td>
+                <td class="px-4 py-3.5 text-ink">{{ pol.domain }}</td>
+                <td class="px-4 py-3.5 text-ink font-semibold sc-numeric">{{ pol.coverageAmount | money }}</td>
+                <td class="px-4 py-3.5 text-ink font-semibold sc-numeric">{{ pol.premiumAmount | money }}</td>
+                <td class="px-4 py-3.5">
+                  <app-status-badge [status]="pol.status" />
+                </td>
+                <td class="px-4 py-3.5 text-muted text-xs">{{ formatDate(pol.endDate) }}</td>
+              </tr>
+            }
+            @if (policies().length === 0) {
+              <tr>
+                <td colspan="7" class="px-4 py-10 text-center text-sm text-muted">
+                  No policies found for your customers.
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,58 @@
+<div class="animate-sc-fade">
+  <div class="flex flex-wrap gap-3 items-end justify-between mb-5">
+    <div>
+      <h1 class="text-xl font-semibold text-ink">My proposals</h1>
+      <p class="text-sm text-muted mt-0.5">Proposals you have submitted on behalf of your customers.</p>
+    </div>
+    <a routerLink="/agent/proposals/new"
+       class="h-10 px-4 border-none bg-accent rounded-control text-[13px] font-semibold text-white inline-flex items-center cursor-pointer hover:bg-accent-dark transition-colors">
+      + New proposal
+    </a>
+  </div>
+
+  <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-sm">
+        <thead>
+          <tr class="border-b border-line bg-surface">
+            <th class="px-4 py-3 text-left font-semibold text-ink text-xs">Proposal ID</th>
+            <th class="px-4 py-3 text-left font-semibold text-ink text-xs">Product</th>
+            <th class="px-4 py-3 text-left font-semibold text-ink text-xs">Cover</th>
+            <th class="px-4 py-3 text-left font-semibold text-ink text-xs">Premium</th>
+            <th class="px-4 py-3 text-left font-semibold text-ink text-xs">Status</th>
+            <th class="px-4 py-3 text-left font-semibold text-ink text-xs">Submitted</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            @for (i of [1,2,3,4]; track i) {
+              <tr class="border-b border-line">
+                <td colspan="6" class="px-4 py-3"><app-skeleton variant="table-row" /></td>
+              </tr>
+            }
+          } @else {
+            @for (prop of proposals(); track prop.id) {
+              <tr class="border-b border-line hover:bg-surface transition-colors">
+                <td class="px-4 py-3.5 text-ink font-semibold sc-numeric text-xs">{{ prop.proposalNumber }}</td>
+                <td class="px-4 py-3.5 text-ink">{{ prop.productName }}</td>
+                <td class="px-4 py-3.5 text-ink font-semibold sc-numeric">{{ prop.sumAssured | money }}</td>
+                <td class="px-4 py-3.5 text-ink sc-numeric">{{ prop.premiumAmount | money }}</td>
+                <td class="px-4 py-3.5">
+                  <app-status-badge [status]="prop.status" />
+                </td>
+                <td class="px-4 py-3.5 text-muted text-xs">{{ formatDate(prop.createdAt) }}</td>
+              </tr>
+            }
+            @if (proposals().length === 0) {
+              <tr>
+                <td colspan="6" class="px-4 py-10 text-center text-sm text-muted">
+                  No proposals submitted yet.
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

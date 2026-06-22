@@ -1,0 +1,73 @@
+<div class="animate-sc-fade">
+  <div class="flex justify-between items-end flex-wrap gap-3 mb-5">
+    <div>
+      <div class="text-xl font-semibold text-ink">Payments</div>
+      <div class="text-sm text-muted mt-0.5">Your premium payments and claim payouts.</div>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
+      <div class="hidden md:grid grid-cols-5 gap-3 px-[18px] py-3 bg-surface border-b border-line">
+        @for (h of ['Description','Date','Amount','Status','Receipt']; track h) {
+          <div class="text-[11px] font-semibold tracking-[.04em] uppercase text-muted">{{ h }}</div>
+        }
+      </div>
+      @for (i of [1,2,3]; track i) {
+        <div class="px-[18px] py-3.5 border-b border-line animate-pulse">
+          <div class="h-4 bg-surface-alt rounded w-1/3 mb-2"></div>
+          <div class="h-3 bg-surface-alt rounded w-1/2"></div>
+        </div>
+      }
+    </div>
+  } @else if (payments().length === 0) {
+    <app-empty-state title="No payments yet" message="Your premium payment history will appear here." />
+  } @else {
+    <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
+      <!-- Desktop Table Header -->
+      <div class="hidden md:grid grid-cols-5 gap-3 px-[18px] py-3 bg-surface border-b border-line">
+        <div class="text-[11px] font-semibold tracking-[.04em] uppercase text-muted" style="grid-column: span 1.4">Description</div>
+        <div class="text-[11px] font-semibold tracking-[.04em] uppercase text-muted">Date</div>
+        <div class="text-[11px] font-semibold tracking-[.04em] uppercase text-muted text-center">Amount</div>
+        <div class="text-[11px] font-semibold tracking-[.04em] uppercase text-muted text-right">Status</div>
+        <div class="text-[11px] font-semibold tracking-[.04em] uppercase text-muted text-center">Receipt</div>
+      </div>
+
+      @for (p of payments(); track p.id) {
+        <!-- Desktop Row -->
+        <div class="hidden md:grid grid-cols-5 gap-3 items-center px-[18px] py-3.5 border-b border-line hover:bg-surface transition-colors">
+          <div>
+            <div class="text-[13px] font-semibold text-ink">{{ p.paymentType }}</div>
+            <div class="text-xs text-muted sc-numeric">{{ p.policyNumber }}</div>
+          </div>
+          <div class="text-[13px] text-body sc-numeric">{{ p.paymentDate | dateFormat }}</div>
+          <div class="text-[13px] font-bold text-center sc-numeric" [class]="p.status === 'Paid' ? 'text-success' : 'text-ink'">{{ p.amount | money }}</div>
+          <div class="text-right"><app-status-badge [status]="p.status" /></div>
+          <div class="text-center">
+            @if (p.status === 'Paid') {
+              <button class="inline-flex items-center gap-1 h-7 px-2.5 border border-line bg-white rounded-md text-[11px] font-semibold text-primary cursor-pointer">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                PDF
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Mobile Card -->
+        <div class="md:hidden px-[18px] py-4 border-b border-line">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <div class="text-sm font-semibold text-ink">{{ p.paymentType }}</div>
+              <div class="text-xs text-muted sc-numeric">{{ p.policyNumber }}</div>
+            </div>
+            <app-status-badge [status]="p.status" />
+          </div>
+          <div class="flex justify-between items-center text-sm">
+            <span class="text-muted sc-numeric">{{ p.paymentDate | dateFormat }}</span>
+            <span class="font-bold sc-numeric" [class]="p.status === 'Paid' ? 'text-success' : 'text-ink'">{{ p.amount | money }}</span>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

@@ -1,0 +1,56 @@
+@if (loading()) {
+  <div class="animate-pulse space-y-4 max-w-[720px]">
+    <div class="h-8 bg-surface-alt rounded w-1/3"></div>
+    <div class="h-48 bg-surface-alt rounded-card"></div>
+  </div>
+} @else if (grievance()) {
+  <div class="animate-sc-fade max-w-[720px]">
+    <!-- Back button -->
+    <button class="inline-flex items-center gap-1.5 text-[13px] font-medium text-muted hover:text-ink cursor-pointer mb-4 bg-transparent border-none p-0" (click)="router.navigate(['/grievances'])">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Back to grievances
+    </button>
+
+    <!-- Header Card -->
+    <div class="bg-white border border-line rounded-card shadow-sm p-6 mb-5">
+      <div class="flex items-start justify-between flex-wrap gap-3 mb-5">
+        <div>
+          <div class="text-xs text-muted sc-numeric mb-0.5">{{ grievance()!.grievanceNumber }}</div>
+          <div class="text-xl font-bold text-ink">{{ grievance()!.description || 'Grievance' }}</div>
+        </div>
+        <app-status-badge [status]="grievance()!.status" />
+      </div>
+
+      <div class="grid grid-cols-2 gap-[18px] mb-5">
+        <div>
+          <div class="text-xs text-muted mb-0.5">Category</div>
+          <div class="text-[15px] font-semibold text-ink">{{ grievance()!.category }}</div>
+        </div>
+        <div>
+          <div class="text-xs text-muted mb-0.5">Filed on</div>
+          <div class="text-[15px] font-semibold text-ink">{{ grievance()!.createdAt | dateFormat }}</div>
+        </div>
+      </div>
+
+      <div class="pt-5 border-t border-line">
+        <div class="text-xs text-muted mb-2">Description</div>
+        <p class="text-sm text-body leading-relaxed">{{ grievance()!.description }}</p>
+      </div>
+    </div>
+
+    <!-- Resolution -->
+    @if (grievance()!.resolutionNotes) {
+      <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-line bg-success-bg">
+          <div class="flex items-center gap-2.5">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1F9D6B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+            <span class="text-[15px] font-bold text-[#167850]">Resolution</span>
+          </div>
+        </div>
+        <div class="p-6">
+          <p class="text-sm text-body leading-relaxed">{{ grievance()!.resolutionNotes }}</p>
+        </div>
+      </div>
+    }
+  </div>
+}

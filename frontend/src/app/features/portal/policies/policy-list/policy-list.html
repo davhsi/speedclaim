@@ -1,0 +1,56 @@
+<div class="animate-sc-fade">
+  <div class="mb-5">
+    <div class="text-xl font-semibold text-ink">My policies</div>
+    <div class="text-sm text-muted mt-0.5">Everything you are covered for, in one place.</div>
+  </div>
+
+  @if (loading()) {
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-[18px]" style="grid-template-columns:repeat(auto-fill,minmax(330px,1fr))">
+      @for (i of [1,2,3]; track i) {
+        <div class="bg-white rounded-card border border-line p-5 animate-pulse">
+          <div class="h-4 bg-surface-alt rounded w-1/3 mb-3"></div>
+          <div class="h-3 bg-surface-alt rounded w-2/3 mb-2"></div>
+          <div class="h-3 bg-surface-alt rounded w-1/2"></div>
+        </div>
+      }
+    </div>
+  } @else if (policies().length === 0) {
+    <div class="col-span-full p-[52px] text-center bg-white border border-line rounded-card">
+      <div class="w-[60px] h-[60px] rounded-2xl bg-surface flex items-center justify-center mx-auto mb-[18px]">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div class="text-base font-semibold text-ink mb-1.5">No policies yet</div>
+      <div class="text-sm text-muted mb-5 leading-relaxed">Get your first quote — it only takes two minutes.</div>
+      <button class="h-10 px-5 bg-accent border-none rounded-control text-[13px] font-semibold text-white cursor-pointer" (click)="router.navigate(['/quote'])">Get a quote</button>
+    </div>
+  } @else {
+    <div class="grid gap-[18px]" style="grid-template-columns:repeat(auto-fill,minmax(330px,1fr))">
+      @for (p of policies(); track p.id) {
+        <div class="bg-white border border-line rounded-card shadow-sm p-5 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all"
+             (click)="router.navigate(['/policies', p.id])">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-11 h-11 rounded-[11px] flex items-center justify-center shrink-0"
+                 [class]="domainBgClass(p.domain)">
+              <span class="w-[23px] h-[23px] flex" [innerHTML]="domainIcon(p.domain)"></span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="text-[15px] font-semibold text-ink truncate">{{ p.productName }}</div>
+              <div class="text-xs text-muted sc-numeric">{{ p.policyNumber }}</div>
+            </div>
+            <app-status-badge [status]="p.status" />
+          </div>
+          <div class="flex gap-6 pt-3.5 border-t border-line">
+            <div>
+              <div class="text-[11px] text-muted">Sum assured</div>
+              <div class="text-[15px] font-bold text-ink sc-numeric">{{ p.coverageAmount | money }}</div>
+            </div>
+            <div>
+              <div class="text-[11px] text-muted">Premium</div>
+              <div class="text-[15px] font-bold text-ink sc-numeric">{{ p.premiumAmount | money }}</div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

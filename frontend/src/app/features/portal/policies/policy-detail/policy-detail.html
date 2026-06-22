@@ -1,0 +1,178 @@
+@if (loading()) {
+  <div class="animate-pulse space-y-4 max-w-[860px]">
+    <div class="h-8 bg-surface-alt rounded w-1/3"></div>
+    <div class="h-64 bg-surface-alt rounded-card"></div>
+  </div>
+} @else if (policy()) {
+  <div class="animate-sc-fade max-w-[860px]">
+    <!-- Back button -->
+    <button class="inline-flex items-center gap-1.5 text-[13px] font-medium text-muted hover:text-ink cursor-pointer mb-4 bg-transparent border-none p-0" (click)="router.navigate(['/policies'])">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Back to policies
+    </button>
+
+    <!-- Header Card -->
+    <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden mb-5">
+      <div class="p-6 flex gap-4 items-start flex-wrap">
+        <div class="w-[50px] h-[50px] rounded-[12px] flex items-center justify-center shrink-0"
+             [class]="domainBgClass()">
+          <span class="w-[26px] h-[26px] flex" [innerHTML]="domainIcon()"></span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="text-xs text-muted sc-numeric mb-0.5">{{ policy()!.policyNumber }}</div>
+          <div class="text-xl font-bold text-ink">{{ policy()!.productName }}</div>
+        </div>
+        <div class="flex flex-col items-end gap-2">
+          <app-status-badge [status]="policy()!.status" />
+          <button class="inline-flex items-center gap-1.5 h-[34px] px-3 border border-line bg-white rounded-control text-xs font-medium text-body hover:bg-surface-alt transition-colors" (click)="downloadCert()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Certificate
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="flex border-t border-line">
+        @for (tab of tabs; track tab; let i = $index) {
+          <button
+            class="px-5 py-3 text-[13px] font-semibold transition-colors border-b-2"
+            [class]="activeTab() === i ? 'text-primary border-primary' : 'text-muted hover:text-body border-transparent'"
+            (click)="activeTab.set(i)"
+          >{{ tab }}</button>
+        }
+      </div>
+
+      <!-- Tab Content -->
+      <div class="p-6">
+        @switch (activeTab()) {
+          @case (0) {
+            <!-- Overview -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-[18px] mb-5">
+              <div>
+                <div class="text-xs text-muted mb-0.5">Sum assured</div>
+                <div class="text-[15px] font-semibold text-ink sc-numeric">{{ policy()!.coverageAmount | money }}</div>
+              </div>
+              <div>
+                <div class="text-xs text-muted mb-0.5">Premium</div>
+                <div class="text-[15px] font-semibold text-ink sc-numeric">{{ policy()!.premiumAmount | money }} / {{ policy()!.paymentFrequency }}</div>
+              </div>
+              <div>
+                <div class="text-xs text-muted mb-0.5">Type</div>
+                <div class="text-[15px] font-semibold text-ink">{{ policy()!.type }}</div>
+              </div>
+              <div>
+                <div class="text-xs text-muted mb-0.5">Valid from</div>
+                <div class="text-[15px] font-semibold text-ink">{{ policy()!.startDate | dateFormat }}</div>
+              </div>
+              <div>
+                <div class="text-xs text-muted mb-0.5">Valid to</div>
+                <div class="text-[15px] font-semibold text-ink">{{ policy()!.endDate | dateFormat }}</div>
+              </div>
+              <div>
+                <div class="text-xs text-muted mb-0.5">Currency</div>
+                <div class="text-[15px] font-semibold text-ink">{{ policy()!.currency }}</div>
+              </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="flex gap-2.5 flex-wrap pt-5 border-t border-line">
+              @if (policy()!.status === 'Active') {
+                <button class="h-10 px-4 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover transition-colors" (click)="router.navigate(['/pay', policy()!.id])">Pay Premium</button>
+                <button class="h-10 px-4 border border-line bg-white text-[13px] font-semibold text-body rounded-control hover:bg-surface-alt transition-colors" (click)="showEndorsementForm.set(true)">Request Endorsement</button>
+                <button class="h-10 px-4 border border-danger text-[13px] font-semibold text-danger rounded-control hover:bg-danger-bg transition-colors" (click)="showCancelDialog.set(true)">Cancel Policy</button>
+              }
+              @if (policy()!.status === 'Pending') {
+                <div class="w-full bg-warning-bg border border-warning-border rounded-[10px] px-4 py-3.5 flex items-center gap-3.5">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D9920A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <div>
+                    <div class="text-[13px] font-semibold text-[#AA7008]">Pending activation</div>
+                    <div class="text-xs text-body">Your policy is being reviewed and will be activated shortly.</div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+          @case (1) {
+            <!-- Nominees -->
+            @for (n of nominees(); track n.id) {
+              <div class="flex items-center justify-between px-4 py-3.5 border-b border-line last:border-0">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-full bg-primary-light text-primary flex items-center justify-center text-xs font-bold shrink-0">
+                    {{ n.name.charAt(0) }}
+                  </div>
+                  <div>
+                    <div class="text-sm font-semibold text-ink">{{ n.name }}</div>
+                    <div class="text-xs text-muted">{{ n.relationship }}</div>
+                  </div>
+                </div>
+                <span class="text-sm font-bold text-primary sc-numeric">{{ n.sharePercentage }}%</span>
+              </div>
+            }
+            @if (nominees().length === 0) {
+              <p class="text-sm text-muted py-6 text-center">No nominees configured.</p>
+            }
+          }
+          @case (2) {
+            <!-- Endorsements -->
+            @if (showEndorsementForm()) {
+              <div class="p-5 bg-surface rounded-card border border-line mb-4 space-y-3" [formGroup]="endorsementForm">
+                <div class="text-[13px] font-semibold text-ink mb-2">Request an endorsement</div>
+                <div>
+                  <label class="block text-xs text-muted mb-1.5">Type</label>
+                  <select formControlName="type" class="text-sm h-[42px]">
+                    <option value="NomineeChange">Nominee Change</option>
+                    <option value="AddressChange">Address Change</option>
+                    <option value="ContactUpdate">Contact Update</option>
+                    <option value="SumAssuredChange">Sum Assured Change</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs text-muted mb-1.5">Description</label>
+                  <textarea formControlName="description" rows="3" placeholder="Describe the change..." class="text-sm"></textarea>
+                </div>
+                <div class="flex gap-2">
+                  <button class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover" (click)="submitEndorsement()">Submit</button>
+                  <button class="h-9 px-4 border border-line text-[13px] font-medium text-body rounded-control hover:bg-surface-alt" (click)="showEndorsementForm.set(false)">Cancel</button>
+                </div>
+              </div>
+            } @else if (policy()!.status === 'Active') {
+              <button class="text-[13px] text-primary font-semibold hover:underline mb-4" (click)="showEndorsementForm.set(true)">+ Request Endorsement</button>
+            }
+            @for (e of endorsements(); track e.id) {
+              <div class="flex items-center justify-between px-4 py-3.5 border-b border-line last:border-0">
+                <div>
+                  <div class="text-sm font-semibold text-ink">{{ e.type }}</div>
+                  <div class="text-xs text-muted mt-0.5">{{ e.description }}</div>
+                </div>
+                <app-status-badge [status]="e.status" />
+              </div>
+            }
+            @if (endorsements().length === 0 && !showEndorsementForm()) {
+              <p class="text-sm text-muted py-6 text-center">No endorsement requests.</p>
+            }
+          }
+          @case (3) {
+            <!-- History -->
+            @if (historyItems().length) {
+              <app-timeline [items]="historyItems()" />
+            } @else {
+              <p class="text-sm text-muted py-6 text-center">No history available.</p>
+            }
+          }
+        }
+      </div>
+    </div>
+  </div>
+
+  @if (showCancelDialog()) {
+    <app-confirm-dialog
+      title="Cancel Policy"
+      message="Are you sure you want to cancel this policy? This action cannot be undone."
+      confirmLabel="Cancel Policy"
+      variant="danger"
+      (confirmed)="confirmCancel()"
+      (cancelled)="showCancelDialog.set(false)"
+    />
+  }
+}

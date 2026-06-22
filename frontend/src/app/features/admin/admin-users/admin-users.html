@@ -1,0 +1,307 @@
+<div class="animate-[sc-fade_.25s_ease-out]">
+
+  <!-- Stat Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
+    <app-stat-card title="Total users" [value]="totalUsers().toString()" iconBgClass="bg-primary-light text-primary"
+      [icon]="iconUsers" />
+    <app-stat-card title="Active" [value]="activeUsers().toString()" iconBgClass="bg-success-bg text-success"
+      [icon]="iconCheck" />
+    <app-stat-card title="Inactive" [value]="inactiveUsers().toString()" iconBgClass="bg-danger-bg text-danger"
+      [icon]="iconUserX" />
+    <app-stat-card title="Active sessions" [value]="activeSessions().toString()" iconBgClass="bg-info-bg text-info"
+      [icon]="iconActivity" />
+  </div>
+
+  <!-- Toolbar + Table Card -->
+  <div class="bg-white border border-line rounded-xl shadow-sm overflow-hidden">
+
+    <!-- Toolbar -->
+    <div class="px-5 py-3.5 border-b border-line flex items-center gap-3 flex-wrap">
+      <div class="relative">
+        <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-muted" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event); currentPage.set(1)" placeholder="Search users…"
+          class="w-52 h-8 pl-8 pr-3 border-[1.5px] border-line rounded-[7px] text-[12.5px] text-ink bg-[#F7F9FA] outline-none" />
+      </div>
+
+      <select [ngModel]="roleFilter()" (ngModelChange)="roleFilter.set($event); currentPage.set(1)"
+        class="h-8 px-2.5 border-[1.5px] border-line rounded-[7px] text-[12.5px] text-body bg-[#F7F9FA] outline-none cursor-pointer">
+        <option value="">All roles</option>
+        <option value="Admin">Admin</option>
+        <option value="ClaimsOfficer">Claims Officer</option>
+        <option value="FinanceOfficer">Finance Officer</option>
+        <option value="Underwriter">Underwriter</option>
+        <option value="Surveyor">Surveyor</option>
+        <option value="Agent">Agent</option>
+        <option value="Customer">Customer</option>
+      </select>
+
+      <select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event); currentPage.set(1)"
+        class="h-8 px-2.5 border-[1.5px] border-line rounded-[7px] text-[12.5px] text-body bg-[#F7F9FA] outline-none cursor-pointer">
+        <option value="">All statuses</option>
+        <option value="Active">Active</option>
+        <option value="Inactive">Inactive</option>
+      </select>
+
+      <div class="flex-1"></div>
+      <span class="text-xs text-muted sc-numeric">{{ filteredUsers().length }} user{{ filteredUsers().length !== 1 ? 's' : '' }}</span>
+      <button (click)="openInviteModal()" class="h-8 px-3.5 bg-primary text-white text-[12.5px] font-semibold rounded-[7px] border-none cursor-pointer flex items-center gap-1.5 hover:opacity-90 transition-opacity">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Invite user
+      </button>
+    </div>
+
+    <!-- Table -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <thead>
+          <tr class="border-b border-line bg-[#FAFBFC]">
+            <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider w-10">#</th>
+            <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider">User</th>
+            <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider">Role</th>
+            <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider">Status</th>
+            <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider">Joined</th>
+            <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider">Sessions</th>
+            <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of paginatedUsers(); track user.id; let i = $index) {
+            <tr class="border-b border-line hover:bg-surface/50 transition-colors">
+              <td class="px-5 py-3 text-[12.5px] text-muted sc-numeric">{{ (currentPage() - 1) * pageSize + i + 1 }}</td>
+
+              <!-- User -->
+              <td class="px-5 py-3">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
+                    [style.background]="avatarBg(user.fullName)" [style.color]="avatarFg(user.fullName)">
+                    {{ initials(user.fullName) }}
+                  </div>
+                  <div class="min-w-0">
+                    <div class="text-[13px] font-semibold text-ink truncate">{{ user.fullName }}</div>
+                    <div class="text-[11px] text-muted truncate">{{ user.email }}</div>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Role -->
+              <td class="px-5 py-3">
+                <span class="inline-flex items-center gap-1.5 px-2 py-[3px] rounded-full text-[11px] font-semibold border"
+                  [style.background]="roleBadge(user.role).bg"
+                  [style.color]="roleBadge(user.role).fg"
+                  [style.border-color]="roleBadge(user.role).bdr">
+                  <span class="w-[5px] h-[5px] rounded-full" [style.background]="roleBadge(user.role).dot"></span>
+                  {{ formatRole(user.role) }}
+                </span>
+              </td>
+
+              <!-- Status -->
+              <td class="px-5 py-3">
+                <app-status-badge [status]="user.isActive ? 'Active' : 'Inactive'" />
+              </td>
+
+              <!-- Joined -->
+              <td class="px-5 py-3 text-[12.5px] text-body whitespace-nowrap">{{ user.createdAt | dateFormat }}</td>
+
+              <!-- Sessions -->
+              <td class="px-5 py-3">
+                @if (userSessionCount(user.id) > 0) {
+                  <button (click)="openSessionsModal(user)" class="text-[12.5px] font-semibold text-info bg-transparent border-none cursor-pointer hover:underline">
+                    {{ userSessionCount(user.id) }} active
+                  </button>
+                } @else {
+                  <span class="text-[12.5px] text-muted">&mdash;</span>
+                }
+              </td>
+
+              <!-- Actions -->
+              <td class="px-5 py-3 text-right">
+                <div class="flex items-center justify-end gap-1">
+                  <button title="Change role" (click)="openChangeRoleModal(user)"
+                    class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface transition-colors">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </button>
+                  <button [title]="user.isActive ? 'Deactivate' : 'Activate'" (click)="toggleUserStatus(user)"
+                    class="w-7 h-7 rounded-md border flex items-center justify-center cursor-pointer hover:bg-surface transition-colors"
+                    [style.border-color]="user.isActive ? '#F5B4B4' : '#B2E4CE'">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" [attr.stroke]="user.isActive ? '#D14343' : '#1F9D6B'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 11-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+                  </button>
+                  <button title="Reset password" (click)="openResetPwModal(user)"
+                    class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface transition-colors">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="7" class="px-5 py-12 text-center text-sm text-muted">No users found</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    @if (filteredUsers().length > 0) {
+      <div class="px-5 py-3 border-t border-line flex items-center justify-between">
+        <span class="text-xs text-muted sc-numeric">
+          Showing {{ (currentPage() - 1) * pageSize + 1 }}&ndash;{{ min(currentPage() * pageSize, filteredUsers().length) }} of {{ filteredUsers().length }}
+        </span>
+        <div class="flex items-center gap-2">
+          <button (click)="prevPage()" [disabled]="currentPage() <= 1"
+            class="h-7 px-2.5 text-xs font-medium border border-line rounded-md bg-white cursor-pointer disabled:opacity-40 disabled:cursor-default hover:bg-surface transition-colors">
+            &larr; Prev
+          </button>
+          <span class="text-xs text-body sc-numeric">Page {{ currentPage() }} of {{ totalPages() }}</span>
+          <button (click)="nextPage()" [disabled]="currentPage() >= totalPages()"
+            class="h-7 px-2.5 text-xs font-medium border border-line rounded-md bg-white cursor-pointer disabled:opacity-40 disabled:cursor-default hover:bg-surface transition-colors">
+            Next &rarr;
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- ══════════ MODALS ══════════ -->
+
+  <!-- Change Role -->
+  @if (activeModal() === 'changeRole') {
+    <div class="fixed inset-0 z-[200] flex items-center justify-center p-4" (click)="closeModal()">
+      <div class="absolute inset-0 bg-black/40"></div>
+      <div class="relative bg-white rounded-xl shadow-lg max-w-md w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
+        <h3 class="text-[15px] font-bold text-ink mb-0.5">Change role</h3>
+        <p class="text-[12.5px] text-muted mb-5">{{ selectedUser()?.fullName }} &middot; {{ selectedUser()?.email }}</p>
+
+        <div class="flex flex-col gap-2 mb-5">
+          @for (r of roleOptions; track r.role) {
+            <button (click)="selectedRole.set(r.role)"
+              class="w-full flex items-center gap-3 p-3 rounded-lg border-[1.5px] cursor-pointer text-left transition-colors"
+              [style.background]="selectedRole() === r.role ? r.bg : '#fff'"
+              [style.border-color]="selectedRole() === r.role ? r.fg : '#E2E6EB'">
+              <span class="w-2.5 h-2.5 rounded-full shrink-0" [style.background]="r.dot"></span>
+              <div class="flex-1 min-w-0">
+                <div class="text-[13px] font-semibold" [style.color]="selectedRole() === r.role ? r.fg : '#3C4654'">{{ r.label }}</div>
+                <div class="text-[11px] text-muted">{{ r.desc }}</div>
+              </div>
+              @if (selectedRole() === r.role) {
+                <svg class="shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" [attr.stroke]="r.fg" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              }
+            </button>
+          }
+        </div>
+
+        <div class="flex justify-end gap-2">
+          <button (click)="closeModal()" class="h-9 px-4 text-[13px] font-medium text-body border border-line rounded-lg bg-white cursor-pointer hover:bg-surface transition-colors">Cancel</button>
+          <button (click)="saveRole()" class="h-9 px-4 text-[13px] font-semibold text-white bg-primary rounded-lg border-none cursor-pointer hover:opacity-90 transition-opacity">Save role</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- View Sessions -->
+  @if (activeModal() === 'sessions') {
+    <div class="fixed inset-0 z-[200] flex items-center justify-center p-4" (click)="closeModal()">
+      <div class="absolute inset-0 bg-black/40"></div>
+      <div class="relative bg-white rounded-xl shadow-lg max-w-lg w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
+        <h3 class="text-[15px] font-bold text-ink mb-0.5">Active sessions</h3>
+        <p class="text-[12.5px] text-muted mb-5">Sessions for {{ selectedUser()?.fullName }}</p>
+
+        <div class="max-h-[320px] overflow-y-auto">
+          @for (s of userSessionsForModal(); track s.id) {
+            <div class="flex items-center gap-3 p-3 border border-line rounded-lg mb-2">
+              <div class="w-8 h-8 rounded-lg bg-surface flex items-center justify-center shrink-0">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[13px] font-medium text-ink truncate">{{ s.userAgent || 'Unknown device' }}</div>
+                <div class="text-[11px] text-muted">IP: {{ s.ipAddress }} &middot; Since {{ s.createdAt | dateFormat }}</div>
+              </div>
+              @if (!s.isRevoked) {
+                <span class="text-[10px] font-bold text-success bg-success-bg border border-success/20 px-1.5 py-0.5 rounded-full shrink-0">Active</span>
+              } @else {
+                <span class="text-[10px] font-bold text-muted bg-surface border border-line px-1.5 py-0.5 rounded-full shrink-0">Revoked</span>
+              }
+            </div>
+          } @empty {
+            <div class="text-center text-sm text-muted py-8">No sessions found for this user</div>
+          }
+        </div>
+
+        <div class="flex justify-end mt-5">
+          <button (click)="closeModal()" class="h-9 px-4 text-[13px] font-medium text-body border border-line rounded-lg bg-white cursor-pointer hover:bg-surface transition-colors">Close</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Reset Password -->
+  @if (activeModal() === 'resetPw') {
+    <div class="fixed inset-0 z-[200] flex items-center justify-center p-4" (click)="closeModal()">
+      <div class="absolute inset-0 bg-black/40"></div>
+      <div class="relative bg-white rounded-xl shadow-lg max-w-sm w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
+        @if (!resetPwSent()) {
+          <div class="flex items-center justify-center w-10 h-10 rounded-full bg-warning-bg mb-4">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D9920A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <h3 class="text-[15px] font-bold text-ink mb-1">Reset password</h3>
+          <p class="text-[12.5px] text-body mb-5">This will generate a temporary password for <span class="font-semibold text-ink">{{ selectedUser()?.email }}</span>. The user will need to change it on next login.</p>
+          <div class="flex justify-end gap-2">
+            <button (click)="closeModal()" class="h-9 px-4 text-[13px] font-medium text-body border border-line rounded-lg bg-white cursor-pointer hover:bg-surface transition-colors">Cancel</button>
+            <button (click)="confirmResetPw()" class="h-9 px-4 text-[13px] font-semibold text-white bg-warning rounded-lg border-none cursor-pointer hover:opacity-90 transition-opacity">Reset password</button>
+          </div>
+        } @else {
+          <div class="flex items-center justify-center w-10 h-10 rounded-full bg-success-bg mb-4">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1F9D6B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h3 class="text-[15px] font-bold text-ink mb-1">Password reset</h3>
+          <p class="text-[12.5px] text-body mb-5">A temporary password has been set for <span class="font-semibold text-ink">{{ selectedUser()?.email }}</span>.</p>
+          <div class="flex justify-end">
+            <button (click)="closeModal()" class="h-9 px-4 text-[13px] font-semibold text-white bg-primary rounded-lg border-none cursor-pointer hover:opacity-90 transition-opacity">Done</button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Invite User -->
+  @if (activeModal() === 'invite') {
+    <div class="fixed inset-0 z-[200] flex items-center justify-center p-4" (click)="closeModal()">
+      <div class="absolute inset-0 bg-black/40"></div>
+      <div class="relative bg-white rounded-xl shadow-lg max-w-md w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
+        <h3 class="text-[15px] font-bold text-ink mb-5">Invite user</h3>
+
+        <div class="space-y-4 mb-6">
+          <div>
+            <label class="block text-[12px] font-semibold text-body mb-1.5">Full name</label>
+            <input type="text" [(ngModel)]="inviteForm.name" placeholder="e.g. Priya Nair"
+              class="w-full h-9 px-3 border-[1.5px] border-line rounded-lg text-[13px] text-ink bg-[#F7F9FA] outline-none" />
+          </div>
+          <div>
+            <label class="block text-[12px] font-semibold text-body mb-1.5">Email</label>
+            <input type="email" [(ngModel)]="inviteForm.email" placeholder="e.g. priya&#64;speedclaim.in"
+              class="w-full h-9 px-3 border-[1.5px] border-line rounded-lg text-[13px] text-ink bg-[#F7F9FA] outline-none" />
+          </div>
+          <div>
+            <label class="block text-[12px] font-semibold text-body mb-1.5">Role</label>
+            <select [(ngModel)]="inviteForm.role"
+              class="w-full h-9 px-3 border-[1.5px] border-line rounded-lg text-[13px] text-body bg-[#F7F9FA] outline-none cursor-pointer">
+              <option value="Admin">Admin</option>
+              <option value="ClaimsOfficer">Claims Officer</option>
+              <option value="FinanceOfficer">Finance Officer</option>
+              <option value="Underwriter">Underwriter</option>
+              <option value="Surveyor">Surveyor</option>
+              <option value="Agent">Agent</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2">
+          <button (click)="closeModal()" class="h-9 px-4 text-[13px] font-medium text-body border border-line rounded-lg bg-white cursor-pointer hover:bg-surface transition-colors">Cancel</button>
+          <button (click)="submitInvite()" [disabled]="!inviteForm.name || !inviteForm.email"
+            class="h-9 px-4 text-[13px] font-semibold text-white bg-primary rounded-lg border-none cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-default">
+            Send invite
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

@@ -1,0 +1,38 @@
+<div class="animate-sc-fade max-w-[720px]">
+  <div class="flex justify-between items-end flex-wrap gap-3 mb-5">
+    <div>
+      <div class="text-xl font-semibold text-ink">Grievances</div>
+      <div class="text-sm text-muted mt-0.5">Raise a concern and track its resolution.</div>
+    </div>
+    <button class="h-10 px-4 bg-primary border-none rounded-control text-[13px] font-semibold text-white cursor-pointer hover:bg-primary-hover transition-colors"
+            (click)="router.navigate(['/grievances/new'])">
+      + Raise grievance
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
+      @for (i of [1,2,3]; track i) {
+        <div class="flex items-center gap-3.5 px-[18px] py-4 border-b border-line animate-pulse">
+          <div class="flex-1"><div class="h-4 bg-surface-alt rounded w-1/3 mb-2"></div><div class="h-3 bg-surface-alt rounded w-1/2"></div></div>
+        </div>
+      }
+    </div>
+  } @else if (grievances().length === 0) {
+    <app-empty-state title="No grievances" message="If you have a complaint or concern, you can raise a grievance here." actionLabel="Raise Grievance" actionRoute="/grievances/new" />
+  } @else {
+    <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
+      @for (g of grievances(); track g.id) {
+        <div class="flex items-center gap-3.5 px-[18px] py-4 border-b border-line cursor-pointer hover:bg-surface transition-colors"
+             (click)="router.navigate(['/grievances', g.id])">
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-semibold text-ink">{{ g.description }}</div>
+            <div class="text-xs text-muted sc-numeric">{{ g.grievanceNumber }} · {{ g.category }} · {{ g.createdAt | dateFormat }}</div>
+          </div>
+          <app-status-badge [status]="g.status" />
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted shrink-0 ml-1"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </div>
+      }
+    </div>
+  }
+</div>

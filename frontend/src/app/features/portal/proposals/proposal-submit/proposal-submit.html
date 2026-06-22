@@ -1,0 +1,113 @@
+<div class="animate-sc-fade max-w-[720px]">
+  <div class="mb-5">
+    <h1 class="text-xl font-semibold text-ink">Submit a proposal</h1>
+    <p class="text-sm text-muted mt-0.5">Complete all steps to submit your insurance proposal.</p>
+  </div>
+
+  <!-- Stepper -->
+  <div class="flex items-center mb-6">
+    @for (s of stepLabels; track s; let i = $index) {
+      <div class="flex items-center" [class]="i < stepLabels.length - 1 ? 'flex-1' : ''">
+        <div class="flex flex-col items-center gap-1.5">
+          <div class="w-[30px] h-[30px] rounded-full border-2 flex items-center justify-center text-[13px] font-semibold shrink-0"
+               [class]="i <= step() ? 'border-primary bg-primary text-white' : 'border-line bg-white text-muted'">
+            {{ i + 1 }}
+          </div>
+          <span class="text-xs whitespace-nowrap" [class]="i <= step() ? 'text-ink font-semibold' : 'text-muted'">{{ s }}</span>
+        </div>
+        @if (i < stepLabels.length - 1) {
+          <div class="flex-1 h-0.5 mx-2 mb-5" [class]="i < step() ? 'bg-primary' : 'bg-line'"></div>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="bg-white border border-line rounded-card shadow-sm p-6">
+    @switch (step()) {
+      @case (0) {
+        <div class="text-[15px] font-semibold text-ink mb-4">Proposer details</div>
+        <div class="grid grid-cols-2 gap-3.5" [formGroup]="form">
+          <div>
+            <label class="block text-[13px] font-medium mb-1.5">Product ID</label>
+            <input type="number" formControlName="productId" class="h-[42px]" />
+          </div>
+          <div>
+            <label class="block text-[13px] font-medium mb-1.5">Sum assured (₹)</label>
+            <input type="number" formControlName="sumAssured" class="h-[42px] sc-numeric" />
+          </div>
+          <div>
+            <label class="block text-[13px] font-medium mb-1.5">Tenure (years)</label>
+            <input type="number" formControlName="tenureYears" class="h-[42px]" />
+          </div>
+          <div>
+            <label class="block text-[13px] font-medium mb-1.5">Payment frequency</label>
+            <select formControlName="paymentFrequency" class="h-[42px]">
+              <option value="Monthly">Monthly</option>
+              <option value="Quarterly">Quarterly</option>
+              <option value="HalfYearly">Half Yearly</option>
+              <option value="Annually">Annually</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex justify-end mt-5 pt-5 border-t border-line">
+          <button class="h-10 px-5 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover transition-colors" (click)="step.set(1)">Continue</button>
+        </div>
+      }
+      @case (1) {
+        <div class="text-[15px] font-semibold text-ink mb-2">Nominees</div>
+        <p class="text-sm text-muted mb-4">Add at least one nominee. Shares must total 100%.</p>
+        @for (n of nominees.controls; track $index; let i = $index) {
+          <div class="grid grid-cols-4 gap-3 p-4 bg-surface rounded-[10px] mb-3" [formGroup]="nominees.at(i)">
+            <div>
+              <label class="block text-xs text-muted mb-1">Name</label>
+              <input formControlName="name" placeholder="Full name" class="h-[42px]" />
+            </div>
+            <div>
+              <label class="block text-xs text-muted mb-1">Relationship</label>
+              <select formControlName="relationship" class="h-[42px]">
+                <option value="Spouse">Spouse</option><option value="Son">Son</option><option value="Daughter">Daughter</option>
+                <option value="Father">Father</option><option value="Mother">Mother</option><option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs text-muted mb-1">Share %</label>
+              <input type="number" formControlName="sharePercentage" placeholder="%" class="h-[42px] sc-numeric" />
+            </div>
+            <div>
+              <label class="block text-xs text-muted mb-1">DOB</label>
+              <div class="flex items-center gap-2">
+                <input type="date" formControlName="dateOfBirth" class="h-[42px] flex-1" />
+                <button class="text-danger hover:text-red-700 shrink-0 p-1" (click)="nominees.removeAt(i)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+        <button class="text-[13px] text-primary font-semibold hover:underline" (click)="addNominee()">+ Add Nominee</button>
+        <div class="flex justify-between mt-5 pt-5 border-t border-line">
+          <button class="h-10 px-5 border border-line bg-white text-[13px] font-semibold text-body rounded-control hover:bg-surface-alt transition-colors" (click)="step.set(0)">Back</button>
+          <button class="h-10 px-5 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover transition-colors" (click)="step.set(2)">Continue</button>
+        </div>
+      }
+      @case (2) {
+        <div class="text-[15px] font-semibold text-ink mb-2">Documents</div>
+        <p class="text-sm text-muted mb-4">Upload required documents.</p>
+        @for (doc of docRequirements(); track doc.documentKey) {
+          <div class="mb-4">
+            <app-file-upload [label]="doc.documentName" [hint]="doc.description" (fileSelected)="onDocSelected(doc.documentKey, $event)" />
+          </div>
+        }
+        @if (docRequirements().length === 0) {
+          <p class="text-sm text-muted py-4">No specific documents required. You can upload after submission if needed.</p>
+        }
+        <div class="flex justify-between mt-5 pt-5 border-t border-line">
+          <button class="h-10 px-5 border border-line bg-white text-[13px] font-semibold text-body rounded-control hover:bg-surface-alt transition-colors" (click)="step.set(1)">Back</button>
+          <button class="h-10 px-5 bg-accent text-white text-[13px] font-semibold rounded-control hover:bg-accent-hover transition-colors disabled:opacity-50" [disabled]="submitting()" (click)="submit()">
+            {{ submitting() ? 'Submitting...' : 'Submit Proposal' }}
+          </button>
+        </div>
+      }
+    }
+  </div>
+</div>

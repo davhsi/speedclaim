@@ -1,0 +1,119 @@
+<div class="animate-[sc-fade_.25s_ease-out]">
+  <button (click)="goBack()" class="inline-flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-primary text-[13px] font-medium p-0 mb-4">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Back to KYC queue
+  </button>
+
+  @if (kyc(); as k) {
+    <div class="flex items-center gap-2.5 flex-wrap mb-1">
+      <span class="text-xl font-semibold text-ink">KYC Review</span>
+      <app-status-badge [status]="k.kycStatus" />
+    </div>
+    <div class="text-[13px] text-muted mb-5 sc-numeric">Customer {{ k.userId }} · Submitted {{ k.createdAt | dateFormat }}</div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_296px] gap-5 items-start">
+      <!-- Left column -->
+      <div>
+        <!-- Identity documents -->
+        <div class="bg-white border border-line rounded-xl shadow-sm p-5">
+          <div class="flex justify-between items-center mb-4">
+            <div class="text-sm font-semibold text-ink">Identity documents</div>
+            <button (click)="revealed.set(!revealed())" class="flex items-center gap-1.5 h-[34px] px-3.5 border border-line bg-white rounded-lg text-xs font-semibold text-primary cursor-pointer hover:bg-surface transition-colors">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                @if (revealed()) {
+                  <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>
+                } @else {
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                }
+              </svg>
+              {{ revealed() ? 'Hide identity' : 'Reveal identity' }}
+            </button>
+          </div>
+
+          <!-- Aadhaar -->
+          <div class="border border-line rounded-lg p-4 mb-3">
+            <div class="flex items-center gap-2 mb-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="10" x2="18" y2="10"/></svg>
+              <span class="text-[13px] font-semibold text-ink">Aadhaar card</span>
+              @if (k.aadhaarUploaded) {
+                <span class="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-success-bg text-success border border-success-border ml-auto">Uploaded</span>
+              } @else {
+                <span class="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-danger-bg text-danger border border-danger-border ml-auto">Missing</span>
+              }
+            </div>
+            @if (k.aadhaarNumber) {
+              <div class="text-sm text-body sc-numeric">{{ revealed() ? k.aadhaarNumber : maskAadhaar(k.aadhaarNumber) }}</div>
+            }
+          </div>
+
+          <!-- PAN -->
+          <div class="border border-line rounded-lg p-4">
+            <div class="flex items-center gap-2 mb-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="10" x2="18" y2="10"/></svg>
+              <span class="text-[13px] font-semibold text-ink">PAN card</span>
+              @if (k.panUploaded) {
+                <span class="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-success-bg text-success border border-success-border ml-auto">Uploaded</span>
+              } @else {
+                <span class="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-danger-bg text-danger border border-danger-border ml-auto">Missing</span>
+              }
+            </div>
+            @if (k.panNumber) {
+              <div class="text-sm text-body sc-numeric">{{ revealed() ? k.panNumber : maskPan(k.panNumber) }}</div>
+            }
+          </div>
+
+          <div class="mt-4 text-[11px] text-muted flex items-center gap-1.5">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            Access to decrypted identity data is logged per DPDP Act requirements.
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column -->
+      <div class="lg:sticky lg:top-20">
+        <div class="bg-white border border-line rounded-xl shadow-sm p-5">
+          <div class="text-sm font-semibold text-ink mb-3.5">KYC decision</div>
+          @if (k.kycStatus === 'Pending') {
+            <div class="bg-warning-bg border border-warning-border rounded-lg p-3 mb-3.5">
+              <div class="text-xs font-medium text-warning-dark">Verify the applicant's identity documents before making a decision.</div>
+            </div>
+            <div class="flex flex-col gap-2.5">
+              <button (click)="showDialog.set('approve')" class="w-full h-[42px] rounded-lg border-none text-sm font-semibold text-white cursor-pointer bg-success hover:bg-success-dark transition-colors">
+                Approve KYC
+              </button>
+              <button (click)="showDialog.set('reject')" class="w-full h-[42px] rounded-lg border-none text-sm font-semibold text-white cursor-pointer bg-danger hover:bg-danger-dark transition-colors">
+                Reject KYC
+              </button>
+            </div>
+          } @else {
+            <div class="text-[13px] text-muted py-2">Decision recorded — <span class="font-semibold">{{ k.kycStatus }}</span></div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (showDialog() === 'approve') {
+    <app-confirm-dialog
+      title="Approve KYC"
+      message="This will approve the customer's identity verification. Please confirm this is your final decision."
+      confirmLabel="Approve"
+      (confirmed)="onApprove()"
+      (cancelled)="showDialog.set(null)"
+    />
+  }
+
+  @if (showDialog() === 'reject') {
+    <div class="fixed inset-0 z-[400] flex items-center justify-center p-4" (click)="showDialog.set(null)">
+      <div class="absolute inset-0 bg-black/40"></div>
+      <div class="relative bg-white rounded-xl shadow-lg max-w-md w-full p-6" (click)="$event.stopPropagation()">
+        <h3 class="text-lg font-semibold text-ink mb-2">Reject KYC</h3>
+        <textarea [(ngModel)]="rejectReason" rows="3" placeholder="Rejection reason *" class="w-full p-3 border border-line rounded-lg text-sm outline-none resize-y mb-4"></textarea>
+        <div class="flex justify-end gap-3">
+          <button (click)="showDialog.set(null)" class="px-4 py-2 text-sm font-medium text-body bg-white border border-line rounded-lg hover:bg-surface-alt transition-colors">Cancel</button>
+          <button (click)="onReject()" class="px-4 py-2 text-sm font-medium text-white bg-danger rounded-lg hover:bg-red-700 transition-colors">Reject</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

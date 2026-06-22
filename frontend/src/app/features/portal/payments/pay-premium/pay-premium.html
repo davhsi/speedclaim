@@ -1,0 +1,75 @@
+<div class="animate-sc-fade max-w-[560px]">
+  <div class="mb-5">
+    <h1 class="text-xl font-semibold text-ink">Pay premium</h1>
+    <p class="text-sm text-muted mt-0.5">Select an installment to pay.</p>
+  </div>
+
+  @if (loading()) {
+    <div class="animate-pulse space-y-3">
+      @for (i of [1,2,3]; track i) {
+        <div class="h-16 bg-surface-alt rounded-card"></div>
+      }
+    </div>
+  } @else {
+    <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
+      <!-- Amount header -->
+      @if (nextDue(); as due) {
+        <div class="p-6 text-center border-b border-line">
+          <div class="text-[13px] text-muted mb-1.5">Amount due</div>
+          <div class="text-[38px] font-bold text-ink sc-numeric leading-none">{{ due.amountDue | money }}</div>
+          <div class="inline-flex items-center gap-1.5 mt-2.5 bg-warning-bg text-warning border border-warning-border text-xs font-semibold px-2.5 py-1 rounded-full">
+            Due by {{ due.dueDate | dateFormat }}
+          </div>
+        </div>
+      }
+
+      <!-- Schedule -->
+      <div class="p-5 border-b border-line">
+        <div class="text-[13px] font-semibold text-ink mb-3">Payment schedule</div>
+        @for (s of schedule(); track s.id) {
+          <div class="flex justify-between items-center py-2.5 border-b border-line last:border-0">
+            <div>
+              <div class="text-[13px] font-semibold text-ink">Installment #{{ s.installmentNumber }}</div>
+              <div class="text-xs text-muted sc-numeric">Due {{ s.dueDate | dateFormat }}</div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="text-sm font-bold text-ink sc-numeric">{{ s.amountDue | money }}</div>
+              @if (s.status === 'Due' || s.status === 'Overdue') {
+                <button
+                  class="h-8 px-3.5 bg-accent text-white text-xs font-semibold rounded-control hover:bg-accent-hover transition-colors disabled:opacity-40"
+                  [disabled]="paying()"
+                  (click)="pay(s)"
+                >
+                  {{ paying() && payingId() === s.id ? 'Processing...' : 'Pay' }}
+                </button>
+              } @else {
+                <app-status-badge [status]="s.status" />
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Payment method placeholder -->
+      <div class="p-5">
+        <div class="text-[13px] font-semibold text-ink mb-2.5">Pay with saved card</div>
+        <div class="flex items-center gap-3 p-3.5 border border-line rounded-[10px]">
+          <div class="w-10 h-7 bg-[#1A1F71] rounded flex items-center justify-center">
+            <span class="text-white text-[9px] font-bold">VISA</span>
+          </div>
+          <div class="flex-1">
+            <div class="text-[13px] font-semibold text-ink sc-numeric">•••• 4242</div>
+            <div class="text-xs text-muted">Expires 12/28</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    @if (paymentSuccess()) {
+      <div class="mt-5 p-4 bg-success-bg border border-success-border rounded-card flex items-center gap-3">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1F9D6B" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+        <div class="text-sm text-[#167850] font-medium">Payment initiated successfully. Your payment is being processed and will be confirmed shortly.</div>
+      </div>
+    }
+  }
+</div>

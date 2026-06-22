@@ -1,0 +1,48 @@
+<div class="animate-[sc-fade_.25s_ease-out] max-w-[680px]">
+  <div class="mb-6">
+    <h1 class="text-xl font-semibold text-ink">My profile</h1>
+    <p class="text-sm text-muted mt-0.5">Manage your account details and preferences.</p>
+  </div>
+
+  <div class="bg-white border border-line rounded-xl shadow-sm p-6">
+    <!-- Avatar + name -->
+    <div class="flex items-center gap-4 mb-6 pb-6 border-b border-line">
+      <div class="w-14 h-14 rounded-xl bg-accent text-white flex items-center justify-center text-[22px] font-bold shrink-0">
+        {{ userInitials() }}
+      </div>
+      <div>
+        <div class="text-lg font-semibold text-ink">{{ fullName() }}</div>
+        <div class="text-[13px] text-muted mt-0.5">Claims Officer</div>
+      </div>
+    </div>
+
+    <!-- Fields -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-5">
+      <div>
+        <label class="block text-[13px] font-medium text-body mb-1.5">Full name</label>
+        <input [value]="fullName()" readonly class="w-full h-[42px] px-3 border border-line rounded-lg text-sm outline-none bg-surface text-muted" />
+      </div>
+      <div>
+        <label class="block text-[13px] font-medium text-body mb-1.5">Email</label>
+        <input [value]="email()" readonly class="w-full h-[42px] px-3 border border-line rounded-lg text-sm outline-none bg-surface text-muted" />
+      </div>
+      <div>
+        <label class="block text-[13px] font-medium text-body mb-1.5">Phone</label>
+        <input [value]="phone()" readonly class="w-full h-[42px] px-3 border border-line rounded-lg text-sm outline-none bg-surface text-muted" />
+      </div>
+      <div>
+        <label class="block text-[13px] font-medium text-body mb-1.5">Department</label>
+        <input value="Claims Processing" readonly class="w-full h-[42px] px-3 border border-line rounded-lg text-sm outline-none bg-surface text-muted" />
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex justify-between gap-3 pt-5 border-t border-line flex-wrap">
+      <button (click)="onLogout()" class="h-[42px] px-5 border border-danger-border bg-danger-bg rounded-lg text-sm font-semibold text-danger cursor-pointer flex items-center gap-2 hover:opacity-90 transition-opacity">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign out
+      </button>
+      <button (click)="onResetPassword()" class="h-[42px] px-5 border border-line bg-white rounded-lg text-sm font-semibold text-body cursor-pointer hover:bg-surface transition-colors">Reset password</button>
+    </div>
+  </div>
+</div>

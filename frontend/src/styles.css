@@ -1,0 +1,169 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", "Fira Code", "Courier New", monospace;
+
+  --color-primary: #0F6E8C;
+  --color-primary-dark: #0A5469;
+  --color-primary-hover: #0D6280;
+  --color-primary-light: #E6F4F8;
+  --color-primary-muted: #B3D9E6;
+
+  --color-accent: #F2784B;
+  --color-accent-dark: #D45E2F;
+  --color-accent-hover: #E06840;
+  --color-accent-light: #FEF0EA;
+
+  --color-ink: #1A2230;
+  --color-body: #3C4654;
+  --color-muted: #6B7685;
+  --color-line: #E2E6EB;
+  --color-surface: #F7F9FA;
+  --color-surface-alt: #EEF1F4;
+
+  --color-success: #1F9D6B;
+  --color-success-bg: #E8F7F1;
+  --color-success-border: #B2E4CE;
+
+  --color-warning: #D9920A;
+  --color-warning-bg: #FEF6E6;
+  --color-warning-border: #FAD88A;
+
+  --color-danger: #D14343;
+  --color-danger-bg: #FBE9E9;
+  --color-danger-border: #F5B4B4;
+
+  --color-info: #2D7FF9;
+  --color-info-bg: #E8F0FE;
+  --color-info-border: #B0CCFC;
+
+  --color-sidebar: #12202F;
+
+  --radius-sm: 4px;
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --radius-modal: 16px;
+  --radius-full: 999px;
+
+  --shadow-xs: 0 1px 2px rgba(26, 34, 48, 0.05);
+  --shadow-sm: 0 1px 4px rgba(26, 34, 48, 0.08);
+  --shadow-md: 0 4px 12px rgba(26, 34, 48, 0.10);
+  --shadow-lg: 0 8px 24px rgba(26, 34, 48, 0.12);
+  --shadow-dropdown: 0 4px 16px rgba(26, 34, 48, 0.12);
+  --shadow-modal: 0 16px 48px rgba(26, 34, 48, 0.18);
+  --shadow-focus: 0 0 0 3px rgba(15, 110, 140, 0.25);
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-sans);
+    color: var(--color-body);
+    background: var(--color-surface);
+  }
+
+  input,
+  select,
+  textarea,
+  button {
+    font-family: inherit;
+    font-size: inherit;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="date"],
+  input[type="search"],
+  select,
+  textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-control);
+    background: white;
+    color: var(--color-ink);
+    font-size: 14px;
+    line-height: 22px;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-focus);
+  }
+
+  input.ng-invalid.ng-touched,
+  select.ng-invalid.ng-touched,
+  textarea.ng-invalid.ng-touched {
+    border-color: var(--color-danger);
+  }
+
+  input.ng-invalid.ng-touched:focus,
+  select.ng-invalid.ng-touched:focus,
+  textarea.ng-invalid.ng-touched:focus {
+    box-shadow: 0 0 0 3px rgba(209, 67, 67, 0.2);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #cdd4db;
+    border-radius: 8px;
+    border: 2px solid var(--color-surface);
+  }
+}
+
+@utility sc-numeric {
+  font-feature-settings: "tnum";
+}
+
+@utility visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+@layer base {
+  @keyframes sc-fade {
+    from { transform: translateY(7px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  @keyframes sc-shimmer {
+    0% { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+  }
+}
+
+@utility animate-sc-fade {
+  animation: sc-fade 0.25s ease-out;
+}

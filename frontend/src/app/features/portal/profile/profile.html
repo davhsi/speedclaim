@@ -1,0 +1,239 @@
+<div class="animate-sc-fade max-w-[760px]">
+  <div class="mb-5">
+    <h1 class="text-xl font-semibold text-ink">Profile</h1>
+    <p class="text-sm text-muted mt-0.5">Manage your personal details, family members, and KYC.</p>
+  </div>
+
+  @if (profile()) {
+    <!-- Profile header card -->
+    <div class="bg-white border border-line rounded-card shadow-sm p-6 mb-5">
+      <div class="flex items-center gap-4 mb-5">
+        <div class="w-[60px] h-[60px] rounded-full bg-primary-light text-primary flex items-center justify-center text-[22px] font-bold">
+          {{ userInitials() }}
+        </div>
+        <div>
+          <div class="text-lg font-bold text-ink">{{ profile()!.firstName }} {{ profile()!.lastName }}</div>
+          <div class="text-[13px] text-muted">Customer since {{ profile()!.createdAt | dateFormat }}</div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="flex border-b border-line -mx-6 px-6">
+        @for (tab of tabs; track tab; let i = $index) {
+          <button
+            class="px-4 py-2.5 text-[13px] font-semibold transition-colors border-b-2"
+            [class]="activeTab() === i ? 'text-primary border-primary' : 'text-muted hover:text-body border-transparent'"
+            (click)="activeTab.set(i)"
+          >{{ tab }}</button>
+        }
+      </div>
+    </div>
+  }
+
+  @switch (activeTab()) {
+    @case (0) {
+      <!-- Personal Info -->
+      @if (profile()) {
+        <div class="bg-white border border-line rounded-card shadow-sm p-6 mb-5">
+          <div class="text-[13px] font-semibold text-ink mb-4">Personal details</div>
+          <div class="grid grid-cols-2 gap-3.5" [formGroup]="profileForm">
+            <div>
+              <label class="block text-xs text-muted mb-1.5">First name</label>
+              <input formControlName="firstName" class="h-[42px]" />
+            </div>
+            <div>
+              <label class="block text-xs text-muted mb-1.5">Last name</label>
+              <input formControlName="lastName" class="h-[42px]" />
+            </div>
+            <div>
+              <label class="block text-xs text-muted mb-1.5">Email</label>
+              <input formControlName="email" class="h-[42px] bg-surface-alt" readonly />
+            </div>
+            <div>
+              <label class="block text-xs text-muted mb-1.5">Phone</label>
+              <input formControlName="phone" class="h-[42px] sc-numeric" />
+            </div>
+            <div>
+              <label class="block text-xs text-muted mb-1.5">Marital status</label>
+              <select formControlName="maritalStatus" class="h-[42px]">
+                <option value="Single">Single</option><option value="Married">Married</option>
+                <option value="Divorced">Divorced</option><option value="Widowed">Widowed</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs text-muted mb-1.5">Date of birth</label>
+              <div class="text-[15px] font-semibold text-ink mt-2">{{ profile()!.dateOfBirth | dateFormat }}</div>
+            </div>
+          </div>
+          <div class="flex justify-end mt-5 pt-5 border-t border-line">
+            <button class="h-10 px-5 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover transition-colors" (click)="saveProfile()">Save changes</button>
+          </div>
+        </div>
+
+        <!-- Addresses -->
+        <div class="bg-white border border-line rounded-card shadow-sm p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div class="text-[13px] font-semibold text-ink">Addresses</div>
+            <button class="text-[13px] text-primary font-semibold hover:underline" (click)="showAddressForm.set(!showAddressForm())">{{ showAddressForm() ? 'Cancel' : '+ Add address' }}</button>
+          </div>
+          @if (showAddressForm()) {
+            <div class="p-4 bg-surface rounded-[10px] mb-4 space-y-3" [formGroup]="addressForm">
+              <div class="grid grid-cols-2 gap-3.5">
+                <div><label class="block text-xs text-muted mb-1.5">Line 1</label><input formControlName="line1" class="h-[42px]" /></div>
+                <div><label class="block text-xs text-muted mb-1.5">Line 2</label><input formControlName="line2" class="h-[42px]" /></div>
+                <div><label class="block text-xs text-muted mb-1.5">City</label><input formControlName="city" class="h-[42px]" /></div>
+                <div><label class="block text-xs text-muted mb-1.5">State</label><input formControlName="state" class="h-[42px]" /></div>
+                <div><label class="block text-xs text-muted mb-1.5">Postal code</label><input formControlName="postalCode" class="h-[42px] sc-numeric" /></div>
+                <div><label class="block text-xs text-muted mb-1.5">Type</label><select formControlName="type" class="h-[42px]"><option value="Permanent">Permanent</option><option value="Current">Current</option></select></div>
+              </div>
+              <button class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover" (click)="saveAddress()">Save address</button>
+            </div>
+          }
+          @if (profile()?.permanentAddress) {
+            <div class="flex items-center justify-between p-4 border border-line rounded-[10px] mb-3">
+              <div>
+                <div class="text-xs font-semibold text-muted uppercase mb-1">Permanent</div>
+                <div class="text-sm text-ink">{{ profile()!.permanentAddress!.line1 }}{{ profile()!.permanentAddress!.line2 ? ', ' + profile()!.permanentAddress!.line2 : '' }}</div>
+                <div class="text-sm text-body">{{ profile()!.permanentAddress!.city }}, {{ profile()!.permanentAddress!.state }} {{ profile()!.permanentAddress!.postalCode }}</div>
+              </div>
+              <button class="text-xs text-danger hover:underline shrink-0" (click)="deleteAddr(profile()!.permanentAddress!)">Remove</button>
+            </div>
+          }
+          @if (profile()?.currentAddress) {
+            <div class="flex items-center justify-between p-4 border border-line rounded-[10px]">
+              <div>
+                <div class="text-xs font-semibold text-muted uppercase mb-1">Current</div>
+                <div class="text-sm text-ink">{{ profile()!.currentAddress!.line1 }}{{ profile()!.currentAddress!.line2 ? ', ' + profile()!.currentAddress!.line2 : '' }}</div>
+                <div class="text-sm text-body">{{ profile()!.currentAddress!.city }}, {{ profile()!.currentAddress!.state }} {{ profile()!.currentAddress!.postalCode }}</div>
+              </div>
+              <button class="text-xs text-danger hover:underline shrink-0" (click)="deleteAddr(profile()!.currentAddress!)">Remove</button>
+            </div>
+          }
+        </div>
+      }
+    }
+    @case (1) {
+      <!-- Family Members -->
+      <div class="flex justify-between items-end flex-wrap gap-3 mb-5">
+        <div>
+          <div class="text-[15px] font-semibold text-ink">Family members</div>
+          <div class="text-sm text-muted mt-0.5">Dependents you can add to family floater policies.</div>
+        </div>
+        <button class="h-10 px-4 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover transition-colors" (click)="showMemberForm.set(!showMemberForm())">{{ showMemberForm() ? 'Cancel' : '+ Add member' }}</button>
+      </div>
+
+      @if (showMemberForm()) {
+        <div class="bg-white border border-line rounded-card shadow-sm p-6 mb-5 space-y-3.5" [formGroup]="memberForm">
+          <div class="grid grid-cols-2 gap-3.5">
+            <div><label class="block text-xs text-muted mb-1.5">Name</label><input formControlName="name" class="h-[42px]" /></div>
+            <div><label class="block text-xs text-muted mb-1.5">Date of birth</label><input type="date" formControlName="dateOfBirth" class="h-[42px]" /></div>
+            <div><label class="block text-xs text-muted mb-1.5">Relationship</label>
+              <select formControlName="relationship" class="h-[42px]">
+                <option value="Spouse">Spouse</option><option value="Son">Son</option><option value="Daughter">Daughter</option>
+                <option value="Father">Father</option><option value="Mother">Mother</option><option value="Other">Other</option>
+              </select>
+            </div>
+            <div><label class="block text-xs text-muted mb-1.5">Gender</label>
+              <select formControlName="gender" class="h-[42px]">
+                <option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+          <button class="h-10 px-5 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover" (click)="saveMember()">Add member</button>
+        </div>
+      }
+
+      <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
+        @for (m of familyMembers(); track m.id) {
+          <div class="flex items-center gap-3.5 px-[18px] py-4 border-b border-line last:border-0">
+            <div class="w-10 h-10 rounded-full bg-primary-light text-primary flex items-center justify-center text-[13px] font-bold shrink-0">
+              {{ m.name.charAt(0) }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-semibold text-ink">{{ m.name }}</div>
+              <div class="text-xs text-muted sc-numeric">{{ m.relationship }} · {{ m.dateOfBirth | dateFormat }} · {{ m.gender }}</div>
+            </div>
+            <button class="text-xs text-danger hover:underline shrink-0" (click)="deleteMember(m.id)">Remove</button>
+          </div>
+        }
+        @if (familyMembers().length === 0 && !showMemberForm()) {
+          <div class="px-[18px] py-10 text-center">
+            <p class="text-sm text-muted">No family members added yet.</p>
+          </div>
+        }
+      </div>
+    }
+    @case (2) {
+      <!-- KYC -->
+      <div class="mb-5">
+        <div class="text-[15px] font-semibold text-ink">Know Your Customer (KYC)</div>
+        <div class="text-sm text-muted mt-0.5">Verify your identity to activate policies and claims.</div>
+      </div>
+
+      @if (kyc()?.status === 'Approved') {
+        <div class="bg-success-bg border border-success-border rounded-card p-[18px] flex gap-3.5 items-center mb-5">
+          <div class="w-11 h-11 rounded-full bg-white flex items-center justify-center shrink-0">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1F9D6B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+          </div>
+          <div>
+            <div class="text-[15px] font-bold text-[#167850]">Your KYC is verified</div>
+            <div class="text-[13px] text-body mt-0.5">No action needed.</div>
+          </div>
+        </div>
+      }
+
+      @if (kyc()) {
+        <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden mb-5">
+          <div class="flex items-center gap-3.5 px-[18px] py-4 border-b border-line">
+            <div class="w-10 h-10 rounded-[10px] bg-primary-light flex items-center justify-center shrink-0">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="text-primary"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M15 8h4M15 12h4M7 16h10"/></svg>
+            </div>
+            <div class="flex-1">
+              <div class="text-sm font-semibold text-ink">Aadhaar</div>
+              <div class="text-xs text-muted font-mono sc-numeric">{{ kyc()!.aadhaarNumber }}</div>
+            </div>
+            <app-status-badge [status]="kyc()!.status" />
+          </div>
+          <div class="flex items-center gap-3.5 px-[18px] py-4">
+            <div class="w-10 h-10 rounded-[10px] bg-primary-light flex items-center justify-center shrink-0">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="text-primary"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            </div>
+            <div class="flex-1">
+              <div class="text-sm font-semibold text-ink">PAN</div>
+              <div class="text-xs text-muted font-mono sc-numeric">{{ kyc()!.panNumber }}</div>
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (kyc()?.rejectionReason) {
+        <div class="p-4 bg-danger-bg border border-danger-border rounded-card flex items-center gap-3 mb-5">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D14343" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <div class="text-sm text-danger">{{ kyc()!.rejectionReason }}</div>
+        </div>
+      }
+
+      @if (!kyc() || kyc()!.status !== 'Approved') {
+        <div class="bg-white border border-line rounded-card shadow-sm p-6 space-y-5">
+          <div class="text-[13px] font-semibold text-ink">Upload KYC documents</div>
+          <div>
+            <label class="block text-xs text-muted mb-1.5">Aadhaar number</label>
+            <input type="text" [(value)]="aadhaarNum" placeholder="12 digit Aadhaar number" class="h-[42px] sc-numeric mb-2" />
+            <app-file-upload label="Aadhaar document" hint="Front page (PDF, JPG, PNG up to 5MB)" (fileSelected)="aadhaarFile = $event" />
+            <button class="mt-2 h-9 px-4 bg-primary text-white text-xs font-semibold rounded-control hover:bg-primary-hover disabled:opacity-40" [disabled]="!aadhaarFile" (click)="uploadAadhaar()">Upload Aadhaar</button>
+          </div>
+          <div>
+            <label class="block text-xs text-muted mb-1.5">PAN number</label>
+            <input type="text" [(value)]="panNum" placeholder="e.g., ABCDE1234F" class="h-[42px] mb-2" />
+            <app-file-upload label="PAN document" hint="Front page (PDF, JPG, PNG up to 5MB)" (fileSelected)="panFile = $event" />
+            <button class="mt-2 h-9 px-4 bg-primary text-white text-xs font-semibold rounded-control hover:bg-primary-hover disabled:opacity-40" [disabled]="!panFile" (click)="uploadPan()">Upload PAN</button>
+          </div>
+        </div>
+      }
+    }
+  }
+</div>
+
+@if (deleteConfirm()) {
+  <app-confirm-dialog title="Confirm Delete" message="Are you sure?" variant="danger" (confirmed)="confirmDelete()" (cancelled)="deleteConfirm.set(null)" />
+}

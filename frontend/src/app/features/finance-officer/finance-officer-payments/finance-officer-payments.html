@@ -1,0 +1,91 @@
+<div class="animate-[sc-fade_.25s_ease-out]">
+  <div class="flex items-end justify-between flex-wrap gap-3 mb-5">
+    <div>
+      <h1 class="text-xl font-semibold text-ink">Payment records</h1>
+      <p class="text-sm text-muted mt-1">{{ filteredRecords().length }} records — reconcile failed payments or process refunds.</p>
+    </div>
+    <div class="flex gap-2 flex-wrap">
+      <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()" class="h-[38px] px-2.5 border border-line rounded-lg text-[13px] bg-white text-body cursor-pointer">
+        <option value="All">All statuses</option>
+        <option value="Paid">Paid</option>
+        <option value="Pending">Pending</option>
+        <option value="Failed">Failed</option>
+        <option value="Reconciled">Reconciled</option>
+        <option value="Refunded">Refunded</option>
+      </select>
+      <div class="relative">
+        <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input [(ngModel)]="searchQuery" (ngModelChange)="onFilterChange()" placeholder="Search ID, reference, customer…" class="h-[38px] pl-8 pr-3 border border-line rounded-lg text-[13px] bg-white min-w-[240px]" />
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white border border-line rounded-xl shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-sm">
+        <thead>
+          <tr class="border-b-2 border-line bg-surface">
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide whitespace-nowrap">Payment ID</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Reference</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Customer</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide whitespace-nowrap">Amount</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Method</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide whitespace-nowrap">Date</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Status</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of pagedRecords(); track p.id) {
+            <tr class="border-b border-line hover:bg-surface transition-colors">
+              <td class="px-4 py-3.5 text-xs font-semibold text-primary sc-numeric whitespace-nowrap">PAY-{{ p.id }}</td>
+              <td class="px-4 py-3.5 text-xs text-primary sc-numeric whitespace-nowrap">{{ p.policyNumber ?? 'N/A' }}</td>
+              <td class="px-4 py-3.5 text-sm font-medium text-ink">{{ p.customerName }}</td>
+              <td class="px-4 py-3.5 font-semibold text-ink sc-numeric whitespace-nowrap">{{ p.amount | money }}</td>
+              <td class="px-4 py-3.5">
+                <span class="text-[11px] font-semibold text-muted bg-surface-alt px-2 py-0.5 rounded-full tracking-wide">{{ p.paymentType }}</span>
+              </td>
+              <td class="px-4 py-3.5 text-[13px] text-muted whitespace-nowrap">{{ p.paidAt | dateFormat }}</td>
+              <td class="px-4 py-3.5"><app-status-badge [status]="p.status" /></td>
+              <td class="px-4 py-3.5">
+                <div class="flex gap-1.5">
+                  @if (p.status === 'Pending' || p.status === 'Failed') {
+                    <button (click)="openReconcile(p)" class="h-[30px] px-3 border border-primary bg-white text-primary rounded-md text-xs font-semibold cursor-pointer whitespace-nowrap hover:bg-primary-light transition-colors">Reconcile</button>
+                  }
+                  @if (p.status === 'Paid') {
+                    <button (click)="openRefund(p)" class="h-[30px] px-3 border border-danger bg-white text-danger rounded-md text-xs font-semibold cursor-pointer whitespace-nowrap hover:bg-danger-bg transition-colors">Refund</button>
+                  }
+                  @if (p.status !== 'Pending' && p.status !== 'Failed' && p.status !== 'Paid') {
+                    <span class="text-sm text-muted">—</span>
+                  }
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="8" class="px-4 py-12 text-center text-sm text-muted">No records found</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="px-4 py-3 border-t border-line flex items-center justify-between">
+      <span class="text-[13px] text-muted">{{ pageLabel() }}</span>
+      <div class="flex gap-2">
+        <button (click)="prevPage()" [disabled]="page() === 0" class="h-[34px] px-3.5 border border-line bg-white rounded-lg text-[13px] text-body cursor-pointer disabled:opacity-40">Previous</button>
+        <button (click)="nextPage()" [disabled]="page() >= totalPages() - 1" class="h-[34px] px-3.5 border border-line bg-white rounded-lg text-[13px] text-body cursor-pointer disabled:opacity-40">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+@if (dialogTarget()) {
+  <app-confirm-dialog
+    [title]="dialogTitle()"
+    [message]="dialogMessage()"
+    [confirmLabel]="dialogConfirmLabel()"
+    [variant]="dialogVariant()"
+    (confirmed)="onConfirm()"
+    (cancelled)="dialogTarget.set(null)"
+  />
+}

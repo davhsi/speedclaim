@@ -1,0 +1,12 @@
+<div class="flex flex-col items-center justify-center py-16 px-4 text-center">
+  <div class="w-16 h-16 rounded-full bg-surface-alt flex items-center justify-center mb-4">
+    <span class="text-2xl text-muted" [innerHTML]="icon()"></span>
+  </div>
+  <h3 class="text-lg font-semibold text-ink mb-2">{{ title() }}</h3>
+  <p class="text-sm text-muted max-w-md mb-6">{{ message() }}</p>
+  @if (actionLabel() && actionRoute()) {
+    <a [routerLink]="actionRoute()" class="px-4 py-2 bg-primary text-white rounded-control text-sm font-medium hover:bg-primary-hover transition-colors">
+      {{ actionLabel() }}
+    </a>
+  }
+</div>

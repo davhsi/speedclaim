@@ -1,0 +1,82 @@
+<div class="animate-sc-fade">
+  <div class="mb-5">
+    <h1 class="text-xl font-semibold text-ink">Commissions</h1>
+    <p class="text-sm text-muted mt-0.5">Your earnings from new business and renewals. Finance processes payouts monthly.</p>
+  </div>
+
+  <!-- Summary Cards -->
+  @if (loading()) {
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-6">
+      @for (i of [1,2,3]; track i) {
+        <app-skeleton variant="card" />
+      }
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-6">
+      <div class="bg-white border border-line rounded-card p-[18px]">
+        <div class="text-xs text-muted mb-2">YTD earned</div>
+        <div class="text-[26px] font-bold text-ink sc-numeric">{{ (dashboard()?.totalCommission ?? 0) | money }}</div>
+        <div class="text-xs text-success mt-1.5">Total commissions</div>
+      </div>
+      <div class="bg-white border border-line rounded-card p-[18px]">
+        <div class="text-xs text-muted mb-2">Pending approval</div>
+        <div class="text-[26px] font-bold text-warning sc-numeric">{{ pendingTotal | money }}</div>
+        <div class="text-xs text-muted mt-1.5">{{ commissions().length }} commissions awaiting</div>
+      </div>
+      <div class="bg-white border border-line rounded-card p-[18px]">
+        <div class="text-xs text-muted mb-2">Total policies</div>
+        <div class="text-[26px] font-bold text-ink sc-numeric">{{ (dashboard()?.totalPolicies ?? 0) }}</div>
+        <div class="text-xs text-muted mt-1.5">Earning commissions</div>
+      </div>
+    </div>
+  }
+
+  <!-- Commission Table -->
+  <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
+    <div class="px-[18px] py-3.5 border-b border-line flex items-center justify-between">
+      <span class="text-[15px] font-semibold text-ink">Commission history</span>
+      <span class="text-xs text-muted">Read-only · contact Finance to dispute</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-sm">
+        <thead>
+          <tr class="border-b border-line bg-surface">
+            <th class="px-4 py-[11px] text-left text-[11px] font-semibold text-muted uppercase tracking-wide">ID</th>
+            <th class="px-4 py-[11px] text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Policy</th>
+            <th class="px-4 py-[11px] text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Amount</th>
+            <th class="px-4 py-[11px] text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Date</th>
+            <th class="px-4 py-[11px] text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            @for (i of [1,2,3,4,5,6]; track i) {
+              <tr class="border-b border-line">
+                <td colspan="5" class="px-4 py-3"><app-skeleton variant="table-row" /></td>
+              </tr>
+            }
+          } @else {
+            @for (cm of commissions(); track cm.id) {
+              <tr class="border-b border-line hover:bg-surface transition-colors">
+                <td class="px-4 py-3.5 text-xs font-semibold text-primary sc-numeric">{{ cm.id }}</td>
+                <td class="px-4 py-3.5 text-xs text-muted sc-numeric">{{ cm.policyId }}</td>
+                <td class="px-4 py-3.5 font-bold text-ink sc-numeric">{{ cm.commissionAmount | money }}</td>
+                <td class="px-4 py-3.5 text-[13px] text-muted">{{ formatDate(cm.createdAt) }}</td>
+                <td class="px-4 py-3.5">
+                  <app-status-badge [status]="cm.status === 'Paid' ? 'Paid' : 'Pending'" />
+                </td>
+              </tr>
+            }
+            @if (commissions().length === 0) {
+              <tr>
+                <td colspan="5" class="px-4 py-10 text-center text-sm text-muted">
+                  No commission records found.
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

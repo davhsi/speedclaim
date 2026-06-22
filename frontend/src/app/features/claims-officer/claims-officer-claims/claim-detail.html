@@ -1,0 +1,244 @@
+<div class="animate-[sc-fade_.25s_ease-out]">
+  <!-- Back -->
+  <button (click)="goBack()" class="inline-flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-primary text-[13px] font-medium p-0 mb-4">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Back to claims queue
+  </button>
+
+  @if (claim(); as c) {
+    <!-- Header card -->
+    <div class="bg-white border border-line rounded-xl shadow-sm px-6 py-5 mb-5">
+      <div class="flex items-start justify-between gap-4 flex-wrap mb-4 pb-4 border-b border-line">
+        <div>
+          <div class="flex items-center gap-2.5 flex-wrap mb-1.5">
+            <span class="text-[21px] font-bold text-ink sc-numeric">{{ c.claimNumber }}</span>
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide" [class]="getTypePillClass(c.claimType)">{{ c.claimType }}</span>
+            <app-status-badge [status]="c.status" />
+            @if (c.isCashless) {
+              <span class="inline-flex items-center gap-1 bg-primary-light text-primary border border-primary/30 text-[10px] font-bold tracking-wide px-2.5 py-1 rounded-full">CASHLESS</span>
+            }
+          </div>
+          <div class="text-[13px] text-muted">Customer #{{ c.customerId }} · Policy {{ c.policyNumber }}</div>
+        </div>
+        <div class="text-right shrink-0">
+          <div class="text-[28px] font-bold text-ink sc-numeric leading-none">{{ c.claimAmountRequested | money }}</div>
+          <div class="text-xs text-muted mt-1">Requested amount</div>
+          @if (c.claimAmountApproved) {
+            <div class="text-sm font-semibold text-success mt-1 sc-numeric">{{ c.claimAmountApproved | money }} approved</div>
+          }
+        </div>
+      </div>
+      <div class="grid grid-cols-2 lg:grid-cols-4 border border-line rounded-lg overflow-hidden">
+        <div class="p-3 border-r border-b lg:border-b-0 border-line">
+          <div class="text-[11px] font-semibold text-muted uppercase tracking-wide mb-1">Intimation date</div>
+          <div class="text-[13px] font-semibold text-ink">{{ c.intimationDate | dateFormat }}</div>
+        </div>
+        <div class="p-3 border-b lg:border-b-0 lg:border-r border-line">
+          <div class="text-[11px] font-semibold text-muted uppercase tracking-wide mb-1">Policy</div>
+          <div class="text-[13px] font-semibold text-ink sc-numeric">{{ c.policyNumber }}</div>
+        </div>
+        <div class="p-3 border-r border-line">
+          <div class="text-[11px] font-semibold text-muted uppercase tracking-wide mb-1">Incident date</div>
+          <div class="text-[13px] font-semibold text-ink">{{ c.incidentDate | dateFormat }}</div>
+        </div>
+        <div class="p-3">
+          <div class="text-[11px] font-semibold text-muted uppercase tracking-wide mb-1">Assigned officer</div>
+          <div class="text-[13px] font-semibold" [class]="c.assignedOfficerId ? 'text-ink' : 'text-muted'">{{ c.assignedOfficerId ? 'Assigned' : 'Unassigned' }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2-col: main + action rail -->
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_312px] gap-5 items-start">
+      <!-- LEFT -->
+      <div>
+        <!-- Incident description -->
+        <div class="bg-white border border-line rounded-xl shadow-sm p-5 mb-4">
+          <h3 class="text-sm font-semibold text-ink mb-3">Incident description</h3>
+          <p class="text-[13px] text-body leading-relaxed">{{ c.incidentDescription }}</p>
+        </div>
+
+        <!-- Status timeline -->
+        <div class="bg-white border border-line rounded-xl shadow-sm p-5 mb-4">
+          <h3 class="text-sm font-semibold text-ink mb-5">Status timeline</h3>
+          @if (timelineItems().length > 0) {
+            <app-timeline [items]="timelineItems()" />
+          } @else {
+            <p class="text-sm text-muted">No status history available.</p>
+          }
+        </div>
+
+        <!-- Documents -->
+        @if (c.documents && c.documents.length > 0) {
+          <div class="bg-white border border-line rounded-xl shadow-sm p-5 mb-4">
+            <h3 class="text-sm font-semibold text-ink mb-3">Documents</h3>
+            @for (doc of c.documents; track doc.id) {
+              <div class="flex items-center gap-3 py-2.5 border-b border-surface last:border-0">
+                <div class="w-8 h-8 rounded-lg bg-info-bg flex items-center justify-center shrink-0">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-info"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </div>
+                <div class="flex-1 text-[13px] font-medium text-ink">{{ doc.documentName }}</div>
+                <span class="text-[10px] font-semibold uppercase tracking-wide px-2.5 py-0.5 rounded-full bg-success-bg text-success border border-success-border">Uploaded</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- RIGHT: Action rail -->
+      <div class="lg:sticky lg:top-20 flex flex-col gap-3.5">
+        <!-- Assignment -->
+        <div class="bg-white border border-line rounded-xl shadow-sm p-[18px]">
+          <div class="text-xs font-bold text-muted uppercase tracking-wider mb-3">Assignment</div>
+          @if (isAssignedToSelf()) {
+            <div class="flex items-center gap-2 bg-success-bg border border-success-border rounded-lg px-3 py-2.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-success"><polyline points="20 6 9 16 4 11"/></svg>
+              <span class="text-[13px] font-semibold text-success">Assigned to you</span>
+            </div>
+          } @else if (c.assignedOfficerId) {
+            <div class="flex items-center gap-2 bg-surface border border-line rounded-lg px-3 py-2.5 mb-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-muted"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span class="text-[13px] text-body">Officer #{{ c.assignedOfficerId }}</span>
+            </div>
+          } @else {
+            <button (click)="onAssignSelf()" class="flex items-center justify-center gap-2 w-full h-10 border border-primary bg-primary-light rounded-lg text-[13px] font-semibold text-primary cursor-pointer hover:bg-primary/10 transition-colors">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+              Assign to self
+            </button>
+          }
+        </div>
+
+        <!-- Decision -->
+        @if (showDecisionCard()) {
+          <div class="bg-white border border-line rounded-xl shadow-sm p-[18px]">
+            <div class="text-xs font-bold text-muted uppercase tracking-wider mb-3">Decision</div>
+            @if (canApprove()) {
+              <button (click)="openModal('approve')" class="flex items-center justify-center gap-2 w-full h-11 border-none bg-success rounded-lg text-sm font-semibold text-white cursor-pointer hover:opacity-90 transition-opacity mb-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 16 4 11"/></svg>
+                Approve claim
+              </button>
+            }
+            @if (canReject()) {
+              <button (click)="openModal('reject')" class="flex items-center justify-center gap-2 w-full h-10 border-none bg-danger rounded-lg text-[13px] font-semibold text-white cursor-pointer hover:opacity-90 transition-opacity mb-2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                Reject claim
+              </button>
+            }
+            @if (canSettle()) {
+              <button (click)="openModal('settle')" class="flex items-center justify-center gap-2 w-full h-11 border-none bg-primary rounded-lg text-sm font-semibold text-white cursor-pointer hover:opacity-90 transition-opacity">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                Mark settled
+              </button>
+            }
+            @if (isTerminal()) {
+              <div class="bg-surface rounded-lg p-3.5 text-center">
+                <div class="text-[13px] font-semibold text-muted">Claim {{ c.status }}</div>
+                <div class="text-xs text-muted mt-1">No further action required</div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Case actions -->
+        <div class="bg-white border border-line rounded-xl shadow-sm p-[18px]">
+          <div class="text-xs font-bold text-muted uppercase tracking-wider mb-3">Case actions</div>
+          <div class="flex flex-col gap-2">
+            @if (canAssignSurveyor()) {
+              <button (click)="openModal('assignSurveyor')" class="flex items-center gap-2 w-full h-10 px-3 border border-line bg-white rounded-lg text-[13px] font-medium text-body cursor-pointer hover:bg-surface transition-colors">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                Assign surveyor
+              </button>
+            }
+            @if (c.surveyorId) {
+              <div class="flex items-center gap-2 px-3 py-2.5 bg-surface border border-line rounded-lg">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-success"><polyline points="20 6 9 16 4 11"/></svg>
+                <span class="text-xs text-body">Surveyor assigned</span>
+              </div>
+            }
+            @if (canRequestDocs()) {
+              <button (click)="openModal('requestDocs')" class="flex items-center gap-2 w-full h-10 px-3 border border-line bg-white rounded-lg text-[13px] font-medium text-body cursor-pointer hover:bg-surface transition-colors">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Request documents
+              </button>
+            }
+            @if (canApprovePreAuth()) {
+              <button (click)="openModal('preAuth')" class="flex items-center gap-2 w-full h-10 px-3 border border-primary bg-primary-light rounded-lg text-[13px] font-semibold text-primary cursor-pointer hover:bg-primary/10 transition-colors">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                Approve cashless pre-auth
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="bg-white border border-line rounded-xl p-12 text-center">
+      <p class="text-sm text-muted">Loading claim details...</p>
+    </div>
+  }
+
+  <!-- Modal -->
+  @if (modalType()) {
+    <div (click)="closeModal()" class="fixed inset-0 bg-black/45 z-[400] flex items-center justify-center p-4">
+      <div (click)="$event.stopPropagation()" class="bg-white rounded-2xl shadow-modal w-[480px] max-w-[92vw] p-7 animate-[sc-fade_.2s_ease-out]">
+        <div class="flex items-start justify-between mb-5">
+          <h3 class="text-[17px] font-semibold text-ink">{{ modalTitle() }}</h3>
+          <button (click)="closeModal()" class="bg-transparent border-none cursor-pointer text-muted p-0.5 flex shrink-0 ml-3">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        @switch (modalType()) {
+          @case ('approve') {
+            <div class="mb-4">
+              <label class="block text-[13px] font-medium text-ink mb-1.5">Approved amount <span class="text-danger">*</span></label>
+              <input [(ngModel)]="modalAmount" type="number" placeholder="e.g. 42500" class="w-full h-11 px-3 border border-line rounded-lg text-sm text-ink outline-none sc-numeric" />
+            </div>
+            <div class="mb-5">
+              <label class="block text-[13px] font-medium text-ink mb-1.5">Notes (optional)</label>
+              <textarea [(ngModel)]="modalNotes" placeholder="Approval notes..." class="w-full h-20 px-3 py-2.5 border border-line rounded-lg text-[13px] text-body resize-y outline-none leading-relaxed"></textarea>
+            </div>
+          }
+          @case ('reject') {
+            <div class="mb-5">
+              <label class="block text-[13px] font-medium text-ink mb-1.5">Rejection reason <span class="text-danger">*</span></label>
+              <textarea [(ngModel)]="modalReason" placeholder="Provide a clear reason for rejection..." class="w-full h-24 px-3 py-2.5 border border-line rounded-lg text-[13px] text-body resize-y outline-none leading-relaxed"></textarea>
+            </div>
+          }
+          @case ('settle') {
+            <div class="mb-5">
+              <label class="block text-[13px] font-medium text-ink mb-1.5">Settlement confirmation</label>
+              <p class="text-[13px] text-body">This will mark the claim as financially settled. The approved amount of <strong class="sc-numeric">{{ claim()?.claimAmountApproved | money }}</strong> will be recorded.</p>
+            </div>
+          }
+          @case ('assignSurveyor') {
+            <div class="mb-4">
+              <label class="block text-[13px] font-medium text-ink mb-1.5">Surveyor ID</label>
+              <input [(ngModel)]="modalSurveyorId" type="number" placeholder="Enter surveyor ID" class="w-full h-11 px-3 border border-line rounded-lg text-[13px] text-body outline-none" />
+            </div>
+            <div class="mb-5">
+              <label class="block text-[13px] font-medium text-ink mb-1.5">Instructions (optional)</label>
+              <input [(ngModel)]="modalNotes" placeholder="Any instructions for the surveyor..." class="w-full h-11 px-3 border border-line rounded-lg text-[13px] text-ink outline-none" />
+            </div>
+          }
+          @case ('requestDocs') {
+            <div class="mb-5">
+              <label class="block text-[13px] font-medium text-ink mb-1.5">Documents required</label>
+              <textarea [(ngModel)]="modalDocs" placeholder="List the documents required..." class="w-full h-24 px-3 py-2.5 border border-line rounded-lg text-[13px] text-body resize-y outline-none leading-relaxed"></textarea>
+            </div>
+          }
+          @case ('preAuth') {
+            <div class="bg-primary-light border border-primary/30 rounded-lg px-3.5 py-3 mb-5 text-[13px] text-primary leading-relaxed">
+              Approving cashless pre-authorisation will notify the hospital TPA immediately.
+            </div>
+          }
+        }
+
+        <div class="flex gap-2.5 justify-end">
+          <button (click)="closeModal()" class="h-11 px-5 border border-line bg-white rounded-lg text-sm font-semibold text-body cursor-pointer hover:bg-surface transition-colors">Cancel</button>
+          <button (click)="onModalConfirm()" class="h-11 px-6 border-none rounded-lg text-sm font-semibold text-white cursor-pointer hover:opacity-90 transition-opacity" [class]="modalConfirmBg()">{{ modalConfirmLabel() }}</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,111 @@
+<div class="animate-[sc-fade_.25s_ease-out]">
+  <div class="mb-5">
+    <h1 class="text-xl font-semibold text-ink">Reports</h1>
+    <p class="text-sm text-muted mt-1">Overdue policies, collection summary, and Excel export.</p>
+  </div>
+
+  <!-- Overdue Policies -->
+  <div class="bg-white border border-line rounded-xl shadow-sm overflow-hidden mb-6">
+    <div class="px-5 py-4 border-b border-line flex items-center justify-between">
+      <div>
+        <h2 class="text-[15px] font-semibold text-ink">Overdue policies</h2>
+        <p class="text-[13px] text-muted mt-0.5">Policies with premium payments past due date</p>
+      </div>
+      <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-danger bg-danger-bg border border-danger-border px-3 py-1.5 rounded-full">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        {{ overdueList().length }} overdue
+      </span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-sm">
+        <thead>
+          <tr class="border-b-2 border-line bg-surface">
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide whitespace-nowrap">Policy ID</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Customer</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Type</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide whitespace-nowrap">Premium due</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide whitespace-nowrap">Days overdue</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide whitespace-nowrap">Due date</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (o of overdueList(); track o.policyId) {
+            <tr class="border-b border-line">
+              <td class="px-4 py-3.5 text-xs font-semibold text-primary sc-numeric whitespace-nowrap">{{ o.policyNumber }}</td>
+              <td class="px-4 py-3.5 text-sm font-medium text-ink">{{ o.customerName }}</td>
+              <td class="px-4 py-3.5">
+                <span class="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full" [class]="typeBadge(o.domain)">{{ o.domain }}</span>
+              </td>
+              <td class="px-4 py-3.5 font-bold text-ink sc-numeric whitespace-nowrap">{{ o.amountDue | money }}</td>
+              <td class="px-4 py-3.5">
+                <span class="text-[13px] font-semibold" [class]="daysColor(o.daysOverdue)">{{ o.daysOverdue }} days</span>
+              </td>
+              <td class="px-4 py-3.5 text-[13px] text-muted whitespace-nowrap">{{ o.dueDate | dateFormat }}</td>
+            </tr>
+          } @empty {
+            <tr><td colspan="6" class="px-4 py-12 text-center text-sm text-muted">No overdue policies</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Collection Summary -->
+  <div class="bg-white border border-line rounded-xl shadow-sm overflow-hidden mb-6">
+    <div class="px-5 py-4 border-b border-line flex items-center justify-between">
+      <div>
+        <h2 class="text-[15px] font-semibold text-ink">Collection summary</h2>
+        <p class="text-[13px] text-muted mt-0.5">Aggregated inflow and outflow for the selected period</p>
+      </div>
+      <select [(ngModel)]="summaryPeriod" (ngModelChange)="loadSummary()" class="h-9 px-2.5 border border-line rounded-lg text-[13px] font-medium bg-white text-ink cursor-pointer">
+        @for (p of periods; track p) {
+          <option [value]="p">{{ p }}</option>
+        }
+      </select>
+    </div>
+    <div class="grid grid-cols-2 lg:grid-cols-4">
+      <div class="p-5 lg:border-r border-b lg:border-b-0 border-line">
+        <div class="text-[11px] font-semibold text-muted uppercase tracking-wide mb-2.5">Total collected</div>
+        <div class="text-2xl font-bold text-success sc-numeric leading-none">{{ summary()?.totalCollected | money }}</div>
+        <div class="text-xs text-muted mt-1.5">Premiums + settlements</div>
+      </div>
+      <div class="p-5 lg:border-r border-b lg:border-b-0 border-line">
+        <div class="text-[11px] font-semibold text-muted uppercase tracking-wide mb-2.5">Premiums</div>
+        <div class="text-2xl font-bold text-primary sc-numeric leading-none">{{ summary()?.premiums | money }}</div>
+        <div class="text-xs text-muted mt-1.5">Policy premium receipts</div>
+      </div>
+      <div class="p-5 lg:border-r border-line">
+        <div class="text-[11px] font-semibold text-muted uppercase tracking-wide mb-2.5">Claims paid out</div>
+        <div class="text-2xl font-bold text-warning sc-numeric leading-none">{{ summary()?.claimsPaid | money }}</div>
+        <div class="text-xs text-muted mt-1.5">Approved claim settlements</div>
+      </div>
+      <div class="p-5">
+        <div class="text-[11px] font-semibold text-muted uppercase tracking-wide mb-2.5">Net inflow</div>
+        <div class="text-2xl font-bold text-ink sc-numeric leading-none">{{ summary()?.netInflow | money }}</div>
+        <div class="text-xs text-muted mt-1.5">After claims paid</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export to Excel -->
+  <div class="bg-white border border-line rounded-xl shadow-sm overflow-hidden">
+    <div class="px-5 py-4 border-b border-line">
+      <h2 class="text-[15px] font-semibold text-ink">Export to Excel</h2>
+      <p class="text-[13px] text-muted mt-0.5">Download payment data as a .xlsx file for the selected date range</p>
+    </div>
+    <div class="p-5 flex items-end gap-4 flex-wrap">
+      <div>
+        <div class="text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">From date</div>
+        <input type="date" [(ngModel)]="exportFrom" class="h-[38px] px-3 border border-line rounded-lg text-sm text-ink bg-white cursor-pointer" />
+      </div>
+      <div>
+        <div class="text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">To date</div>
+        <input type="date" [(ngModel)]="exportTo" class="h-[38px] px-3 border border-line rounded-lg text-sm text-ink bg-white cursor-pointer" />
+      </div>
+      <button (click)="onExport()" [disabled]="exporting()" class="h-[38px] px-5 border-none rounded-lg text-sm font-semibold text-white cursor-pointer flex items-center gap-2 transition-colors disabled:cursor-wait" [class]="exporting() ? 'bg-muted' : 'bg-success hover:bg-success/90'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        {{ exporting() ? 'Generating…' : 'Export to Excel' }}
+      </button>
+    </div>
+  </div>
+</div>

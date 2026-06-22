@@ -1,0 +1,86 @@
+<div class="animate-sc-fade max-w-[680px]">
+  <div class="mb-5">
+    <h1 class="text-xl font-semibold text-ink">My profile</h1>
+    <p class="text-sm text-muted mt-0.5">View and update your agent account details.</p>
+  </div>
+
+  @if (profile(); as p) {
+    <div class="bg-white border border-line rounded-card shadow-sm p-6 mb-5">
+      <!-- Agent header -->
+      <div class="flex items-center gap-4 pb-5 border-b border-line mb-5">
+        <div class="w-16 h-16 rounded-xl bg-primary text-white flex items-center justify-center text-2xl font-bold shrink-0">
+          {{ userInitials() }}
+        </div>
+        <div>
+          <div class="text-lg font-bold text-ink">{{ p.fullName }}</div>
+          <div class="text-[13px] text-muted">Agent ID: {{ p.agentCode }}</div>
+          <div class="flex items-center gap-2 mt-1.5">
+            <span
+              class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full"
+              [class]="p.isActive ? 'bg-success-bg text-success border border-success-border' : 'bg-danger-bg text-danger border border-danger-border'"
+            >{{ p.isActive ? 'Active' : 'Inactive' }}</span>
+            <span class="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-primary-light text-primary border border-primary-muted">{{ p.agentType }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <div class="grid grid-cols-2 gap-3.5" [formGroup]="profileForm">
+        <div>
+          <label class="block text-xs text-muted mb-1.5">Salutation</label>
+          <select formControlName="salutation" class="h-[42px]">
+            <option value="Mr">Mr</option>
+            <option value="Mrs">Mrs</option>
+            <option value="Ms">Ms</option>
+            <option value="Dr">Dr</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-muted mb-1.5">Email</label>
+          <input type="text" [value]="p.email" class="h-[42px] bg-surface-alt" readonly />
+        </div>
+        <div>
+          <label class="block text-xs text-muted mb-1.5">First name</label>
+          <input formControlName="firstName" class="h-[42px]" />
+        </div>
+        <div>
+          <label class="block text-xs text-muted mb-1.5">Last name</label>
+          <input formControlName="lastName" class="h-[42px]" />
+        </div>
+        <div>
+          <label class="block text-xs text-muted mb-1.5">Phone</label>
+          <input formControlName="phone" class="h-[42px] sc-numeric" />
+        </div>
+        <div>
+          <label class="block text-xs text-muted mb-1.5">License number</label>
+          <input type="text" [value]="p.licenseNumber" class="h-[42px] bg-surface-alt" readonly />
+        </div>
+        <div>
+          <label class="block text-xs text-muted mb-1.5">License expiry</label>
+          <input type="text" [value]="p.licenseExpiry | dateFormat" class="h-[42px] bg-surface-alt" readonly />
+        </div>
+        <div>
+          <label class="block text-xs text-muted mb-1.5">Branch</label>
+          <input type="text" [value]="p.branchName ? p.branchName + ', ' + p.branchCity : 'Not assigned'" class="h-[42px] bg-surface-alt" readonly />
+        </div>
+        <div>
+          <label class="block text-xs text-muted mb-1.5">Commission rate</label>
+          <input type="text" [value]="p.commissionRate + '%'" class="h-[42px] bg-surface-alt" readonly />
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex justify-between items-center mt-5 pt-5 border-t border-line">
+        <button
+          class="h-10 px-4 bg-white border border-line text-[13px] font-semibold text-body rounded-control hover:bg-surface transition-colors"
+          (click)="resetPassword()"
+        >Reset password</button>
+        <button
+          class="h-10 px-5 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover disabled:opacity-40 transition-colors"
+          [disabled]="profileForm.invalid || saving()"
+          (click)="saveProfile()"
+        >{{ saving() ? 'Saving...' : 'Save changes' }}</button>
+      </div>
+    </div>
+  }
+</div>

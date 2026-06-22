@@ -1,0 +1,78 @@
+<div class="animate-sc-fade">
+  <div class="mb-6">
+    <h1 class="text-2xl font-semibold text-ink tracking-tight">Dashboard</h1>
+    <p class="text-sm text-muted mt-0.5">Your targets, portfolio, and activity at a glance.</p>
+  </div>
+
+  <!-- KPI Cards -->
+  @if (loading()) {
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
+      @for (i of [1,2,3,4]; track i) {
+        <app-skeleton variant="card" />
+      }
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
+      <a routerLink="/agent/customers" class="bg-white border border-line rounded-card shadow-sm p-[18px] cursor-pointer hover:shadow-md transition-shadow">
+        <div class="flex justify-between items-start mb-3">
+          <span class="text-xs font-medium text-muted">Assigned customers</span>
+        </div>
+        <div class="text-[28px] font-bold text-ink sc-numeric leading-none mb-2">{{ dashboard()?.totalCustomers ?? 0 }}</div>
+        <div class="text-xs text-success">+{{ newCustomersThisMonth }} this month</div>
+      </a>
+
+      <a routerLink="/agent/proposals" class="bg-white border border-line rounded-card shadow-sm p-[18px] cursor-pointer hover:shadow-md transition-shadow">
+        <div class="flex justify-between items-start mb-3">
+          <span class="text-xs font-medium text-muted">Proposals in flight</span>
+        </div>
+        <div class="text-[28px] font-bold text-ink sc-numeric leading-none mb-2">{{ pendingProposals }}</div>
+        <div class="text-xs text-muted">Awaiting approval</div>
+      </a>
+
+      <a routerLink="/agent/renewals" class="bg-white border border-line rounded-card shadow-sm p-[18px] cursor-pointer hover:shadow-md transition-shadow">
+        <div class="flex justify-between items-start mb-3">
+          <span class="text-xs font-medium text-muted">Upcoming renewals</span>
+        </div>
+        <div class="text-[28px] font-bold text-ink sc-numeric leading-none mb-2">{{ renewals().length }}</div>
+        <div class="text-xs text-warning">Next 30 days</div>
+      </a>
+
+      <a routerLink="/agent/commissions" class="bg-white border border-line rounded-card shadow-sm p-[18px] cursor-pointer hover:shadow-md transition-shadow">
+        <div class="flex justify-between items-start mb-3">
+          <span class="text-xs font-medium text-muted">Commission YTD</span>
+        </div>
+        <div class="text-[28px] font-bold text-ink sc-numeric leading-none mb-2">{{ (dashboard()?.totalCommission ?? 0) | money }}</div>
+        <div class="text-xs text-success">On track</div>
+      </a>
+    </div>
+  }
+
+  <!-- Recent Activity -->
+  <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
+    <div class="px-[18px] py-4 border-b border-line">
+      <span class="text-[15px] font-semibold text-ink">Recent activity</span>
+    </div>
+    @if (loading()) {
+      @for (i of [1,2,3,4]; track i) {
+        <app-skeleton variant="table-row" />
+      }
+    } @else {
+      @for (item of recentActivity; track $index) {
+        <div class="flex items-center gap-3.5 px-[18px] py-3.5 border-b border-line">
+          <div class="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 text-[11px] font-bold tracking-tight"
+               [style.background]="item.bg" [style.color]="item.iconFg">
+            {{ item.initial }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-semibold text-ink">{{ item.title }}</div>
+            <div class="text-xs text-muted mt-0.5">{{ item.subtitle }}</div>
+          </div>
+          <div class="text-xs text-muted shrink-0">{{ item.time }}</div>
+        </div>
+      }
+      @if (recentActivity.length === 0) {
+        <div class="px-[18px] py-10 text-center text-sm text-muted">No recent activity</div>
+      }
+    }
+  </div>
+</div>

@@ -1,0 +1,30 @@
+<header class="h-14 shrink-0 bg-white border-b border-line flex items-center gap-3 px-5 sticky top-0 z-20">
+  <!-- Mobile: Logo -->
+  <div class="flex items-center gap-2 flex-1 lg:hidden">
+    <button class="p-1.5 rounded-control hover:bg-surface-alt text-muted mr-1" (click)="menuToggle.emit()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+    <div class="w-7 h-7 rounded-[7px] bg-primary flex items-center justify-center">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    </div>
+    <span class="text-[15px] font-bold text-ink">SpeedClaim</span>
+  </div>
+
+  <!-- Desktop: Page Title -->
+  <div class="hidden lg:flex flex-1 text-[15px] font-semibold text-ink">{{ pageTitle() }}</div>
+
+  <!-- Right: Bell + Avatar -->
+  <a routerLink="/notifications" class="relative p-2 text-body hover:text-ink transition-colors">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+    @if (notifService.unreadCount() > 0) {
+      <span class="absolute top-[5px] right-[5px] min-w-[15px] h-[15px] bg-danger text-white text-[9px] font-bold rounded-full flex items-center justify-center px-[3px] border-[1.5px] border-white">
+        {{ notifService.unreadCount() > 9 ? '9+' : notifService.unreadCount() }}
+      </span>
+    }
+  </a>
+  <a routerLink="/profile" class="w-[30px] h-[30px] rounded-full bg-primary-light text-primary flex items-center justify-center text-[11px] font-bold cursor-pointer">
+    {{ userInitial() }}
+  </a>
+</header>

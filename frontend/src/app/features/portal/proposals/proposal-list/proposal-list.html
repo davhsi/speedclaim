@@ -1,0 +1,42 @@
+<div class="animate-sc-fade">
+  <div class="flex justify-between items-end flex-wrap gap-3 mb-5">
+    <div>
+      <div class="text-xl font-semibold text-ink">My proposals</div>
+      <div class="text-sm text-muted mt-0.5">Track applications you have submitted.</div>
+    </div>
+    <button class="h-10 px-4 bg-primary border-none rounded-control text-[13px] font-semibold text-white cursor-pointer hover:bg-primary-hover transition-colors"
+            (click)="router.navigate(['/products'])">
+      + New proposal
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
+      @for (i of [1,2,3]; track i) {
+        <div class="flex items-center gap-3.5 px-[18px] py-4 border-b border-line animate-pulse">
+          <div class="flex-1"><div class="h-4 bg-surface-alt rounded w-1/3 mb-2"></div><div class="h-3 bg-surface-alt rounded w-1/2"></div></div>
+        </div>
+      }
+    </div>
+  } @else if (proposals().length === 0) {
+    <app-empty-state title="No proposals yet" message="Get a quote to start your first insurance proposal." actionLabel="Get a Quote" actionRoute="/quote" />
+  } @else {
+    <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
+      @for (p of proposals(); track p.id) {
+        <div class="flex items-center gap-3.5 px-[18px] py-4 border-b border-line cursor-pointer hover:bg-surface transition-colors"
+             (click)="router.navigate(['/proposals', p.id])">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-0.5">
+              <span class="text-sm font-semibold text-ink">{{ p.productName }}</span>
+            </div>
+            <div class="text-xs text-muted sc-numeric">{{ p.proposalNumber }} · {{ p.sumAssured | money }} cover · Submitted {{ p.createdAt | dateFormat }}</div>
+          </div>
+          <div class="text-right flex flex-col items-end gap-1.5">
+            <app-status-badge [status]="p.status" />
+            <span class="text-[13px] font-semibold text-ink sc-numeric">{{ p.premiumAmount | money }}/yr</span>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

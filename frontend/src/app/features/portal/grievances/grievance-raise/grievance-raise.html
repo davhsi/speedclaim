@@ -1,0 +1,42 @@
+<div class="animate-sc-fade max-w-[560px]">
+  <div class="mb-5">
+    <h1 class="text-xl font-semibold text-ink">Raise a grievance</h1>
+    <p class="text-sm text-muted mt-0.5">Describe your concern and we will get back to you.</p>
+  </div>
+
+  <div class="bg-white border border-line rounded-card shadow-sm p-6" [formGroup]="form">
+    <div class="mb-4">
+      <label class="block text-[13px] font-medium mb-1.5">Category</label>
+      <select formControlName="category" class="h-[42px]">
+        <option value="ClaimDelay">Claim Delay</option>
+        <option value="PolicyServicing">Policy Servicing</option>
+        <option value="PremiumIssue">Premium Issue</option>
+        <option value="MisSelling">Mis-Selling</option>
+        <option value="AgentMisconduct">Agent Misconduct</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+
+    <div class="mb-5">
+      <label class="block text-[13px] font-medium mb-1.5">Description</label>
+      <textarea formControlName="description" rows="5" placeholder="Describe your concern in detail (10-2000 characters)..."></textarea>
+      @if (form.controls.description.touched && form.controls.description.errors) {
+        <p class="text-xs text-danger mt-1">
+          @if (form.controls.description.errors['minlength']) { Minimum 10 characters required. }
+          @if (form.controls.description.errors['required']) { Description is required. }
+        </p>
+      }
+    </div>
+
+    <div class="flex gap-3 pt-5 border-t border-line">
+      <button class="h-10 px-5 border border-line bg-white text-[13px] font-semibold text-body rounded-control hover:bg-surface-alt transition-colors" (click)="router.navigate(['/grievances'])">Cancel</button>
+      <button
+        class="h-10 px-5 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover transition-colors disabled:opacity-40"
+        [disabled]="form.invalid || submitting()"
+        (click)="submit()"
+      >
+        {{ submitting() ? 'Submitting...' : 'Submit Grievance' }}
+      </button>
+    </div>
+  </div>
+</div>

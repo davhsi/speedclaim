@@ -1,0 +1,249 @@
+<div class="animate-[sc-fade_.25s_ease-out]">
+
+  <!-- Stat Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
+    <app-stat-card title="Total products" [value]="totalProducts().toString()" iconBgClass="bg-primary-light text-primary" [icon]="iconPackage" />
+    <app-stat-card title="Active" [value]="activeProducts().toString()" iconBgClass="bg-success-bg text-success" [icon]="iconCheck" />
+    <app-stat-card title="Motor products" [value]="motorCount().toString()" iconBgClass="bg-info-bg text-info" [icon]="iconCar" />
+    <app-stat-card title="Inactive" [value]="inactiveCount().toString()" iconBgClass="bg-danger-bg text-danger" [icon]="iconX" />
+  </div>
+
+  <!-- Toolbar + Table -->
+  <div class="bg-white border border-line rounded-xl shadow-sm overflow-hidden">
+    <div class="px-5 py-4 border-b border-line flex items-center gap-3 flex-wrap">
+      <div class="relative flex-1 min-w-[180px] max-w-[260px]">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" placeholder="Search products…" class="w-full h-8 pl-8 pr-3 border border-line rounded-lg text-[12.5px] text-ink bg-surface outline-none focus:border-primary transition-colors" />
+      </div>
+      <div class="flex-1"></div>
+      <button (click)="openCreateModal()" class="h-8 px-4 bg-primary text-white text-[12.5px] font-semibold rounded-lg border-none cursor-pointer hover:opacity-90 transition-opacity flex items-center gap-1.5">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add product
+      </button>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <thead>
+          <tr class="border-b border-line bg-surface/40">
+            <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider">Product Name</th>
+            <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider">Domain</th>
+            <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider">Sum Range</th>
+            <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider">Tenure</th>
+            <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider">Status</th>
+            <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of filteredProducts(); track p.id) {
+            <tr class="border-b border-line hover:bg-surface/50 transition-colors">
+              <td class="px-5 py-3">
+                <div class="text-[13px] font-semibold text-ink">{{ p.name }}</div>
+                <div class="text-[11px] text-muted mt-0.5">{{ p.uin }}</div>
+              </td>
+              <td class="px-5 py-3">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border" [style.background]="domainBadge(p.domain).bg" [style.color]="domainBadge(p.domain).fg" [style.border-color]="domainBadge(p.domain).bdr">{{ p.domain }}</span>
+              </td>
+              <td class="px-5 py-3 text-[12.5px] text-body sc-numeric whitespace-nowrap">{{ formatSum(p.minSumAssured) }} – {{ formatSum(p.maxSumAssured) }}</td>
+              <td class="px-5 py-3 text-[12.5px] text-body whitespace-nowrap">{{ p.minTenure }}–{{ p.maxTenure }} yrs</td>
+              <td class="px-5 py-3"><app-status-badge [status]="p.isActive ? 'Active' : 'Inactive'" /></td>
+              <td class="px-5 py-3">
+                <div class="flex items-center justify-end gap-1">
+                  <button (click)="openEditRatesModal(p)" title="Edit rates" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                  </button>
+                  <button (click)="openEditDocsModal(p)" title="Document requirements" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                  </button>
+                  <button (click)="toggleProductStatus(p)" [title]="p.isActive ? 'Deactivate' : 'Activate'" class="w-7 h-7 rounded-md border bg-white flex items-center justify-center cursor-pointer hover:bg-surface" [style.border-color]="p.isActive ? '#F5B4B4' : '#B2E4CE'">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" [attr.stroke]="p.isActive ? '#D14343' : '#1F9D6B'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 11-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="6" class="px-5 py-12 text-center text-sm text-muted">No products found</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Create Product Modal -->
+  @if (activeModal() === 'create') {
+    <div class="fixed inset-0 z-[400] flex items-center justify-center p-4" (click)="closeModal()">
+      <div class="absolute inset-0 bg-black/40"></div>
+      <div class="relative bg-white rounded-xl shadow-lg max-w-lg w-full max-h-[85vh] overflow-y-auto animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-line">
+          <h3 class="text-[15px] font-semibold text-ink">Add product</h3>
+          <button (click)="closeModal()" class="text-muted bg-transparent border-none cursor-pointer p-1">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="px-6 py-5 space-y-4">
+          <div>
+            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Product Name</label>
+            <input type="text" [(ngModel)]="createForm.productName" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Domain</label>
+              <select [(ngModel)]="createForm.domain" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary bg-white">
+                <option value="Motor">Motor</option>
+                <option value="Health">Health</option>
+                <option value="Life">Life</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">UIN</label>
+              <input type="text" [(ngModel)]="createForm.uin" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Description</label>
+            <textarea [(ngModel)]="createForm.description" rows="2" class="w-full px-3 py-2 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary resize-none"></textarea>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Min Age</label>
+              <input type="number" [(ngModel)]="createForm.minAge" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Max Age</label>
+              <input type="number" [(ngModel)]="createForm.maxAge" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Min Sum Assured</label>
+              <input type="number" [(ngModel)]="createForm.minSumAssured" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Max Sum Assured</label>
+              <input type="number" [(ngModel)]="createForm.maxSumAssured" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Min Tenure (years)</label>
+              <input type="number" [(ngModel)]="createForm.minTenureYears" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Max Tenure (years)</label>
+              <input type="number" [(ngModel)]="createForm.maxTenureYears" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Waiting Period (days)</label>
+              <input type="number" [(ngModel)]="createForm.waitingPeriodDays" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+            </div>
+            <div class="flex items-end pb-1.5 gap-2">
+              <label class="flex items-center gap-2 cursor-pointer text-[13px] text-ink">
+                <input type="checkbox" [(ngModel)]="createForm.allowsFamilyFloater" class="w-4 h-4 accent-primary" />
+                Family floater
+              </label>
+            </div>
+          </div>
+          @if (createForm.allowsFamilyFloater) {
+            <div>
+              <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Max Family Members</label>
+              <input type="number" [(ngModel)]="createForm.maxFamilyMembers" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+            </div>
+          }
+        </div>
+        <div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-line">
+          <button (click)="closeModal()" class="h-9 px-4 bg-white text-body text-[13px] font-medium rounded-lg border border-line cursor-pointer hover:bg-surface">Cancel</button>
+          <button (click)="createProduct()" class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-lg border-none cursor-pointer hover:opacity-90">Create product</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Edit Rates Modal -->
+  @if (activeModal() === 'editRates') {
+    <div class="fixed inset-0 z-[400] flex items-center justify-center p-4" (click)="closeModal()">
+      <div class="absolute inset-0 bg-black/40"></div>
+      <div class="relative bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[85vh] overflow-y-auto animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-line">
+          <h3 class="text-[15px] font-semibold text-ink">Premium rates — {{ selectedProduct()?.name }}</h3>
+          <button (click)="closeModal()" class="text-muted bg-transparent border-none cursor-pointer p-1">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="px-6 py-5">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left mb-4">
+              <thead>
+                <tr class="border-b border-line">
+                  <th class="px-3 py-2 text-[11px] font-semibold text-muted uppercase">Age Min</th>
+                  <th class="px-3 py-2 text-[11px] font-semibold text-muted uppercase">Age Max</th>
+                  <th class="px-3 py-2 text-[11px] font-semibold text-muted uppercase">Sum Min</th>
+                  <th class="px-3 py-2 text-[11px] font-semibold text-muted uppercase">Sum Max</th>
+                  <th class="px-3 py-2 text-[11px] font-semibold text-muted uppercase">Annual Premium</th>
+                  <th class="px-3 py-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (band of rateBands(); track $index; let i = $index) {
+                  <tr class="border-b border-line">
+                    <td class="px-3 py-2"><input type="number" [value]="band.ageMin" (input)="updateRateBand(i, 'ageMin', $event)" class="w-16 h-7 px-2 border border-line rounded text-xs text-ink outline-none focus:border-primary" /></td>
+                    <td class="px-3 py-2"><input type="number" [value]="band.ageMax" (input)="updateRateBand(i, 'ageMax', $event)" class="w-16 h-7 px-2 border border-line rounded text-xs text-ink outline-none focus:border-primary" /></td>
+                    <td class="px-3 py-2"><input type="number" [value]="band.sumAssuredMin" (input)="updateRateBand(i, 'sumAssuredMin', $event)" class="w-24 h-7 px-2 border border-line rounded text-xs text-ink outline-none focus:border-primary" /></td>
+                    <td class="px-3 py-2"><input type="number" [value]="band.sumAssuredMax" (input)="updateRateBand(i, 'sumAssuredMax', $event)" class="w-24 h-7 px-2 border border-line rounded text-xs text-ink outline-none focus:border-primary" /></td>
+                    <td class="px-3 py-2"><input type="number" [value]="band.annualPremium" (input)="updateRateBand(i, 'annualPremium', $event)" class="w-24 h-7 px-2 border border-line rounded text-xs text-ink outline-none focus:border-primary" /></td>
+                    <td class="px-3 py-2"><button (click)="removeRateBand(i)" class="text-danger text-xs bg-transparent border-none cursor-pointer font-medium">Remove</button></td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="6" class="px-3 py-6 text-center text-xs text-muted">No rate bands — add one below</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <button (click)="addRateBand()" class="text-xs text-primary font-semibold bg-transparent border-none cursor-pointer mb-4">+ Add rate band</button>
+        </div>
+        <div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-line">
+          <button (click)="closeModal()" class="h-9 px-4 bg-white text-body text-[13px] font-medium rounded-lg border border-line cursor-pointer hover:bg-surface">Cancel</button>
+          <button (click)="saveRates()" class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-lg border-none cursor-pointer hover:opacity-90">Save rates</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Edit Document Requirements Modal -->
+  @if (activeModal() === 'editDocs') {
+    <div class="fixed inset-0 z-[400] flex items-center justify-center p-4" (click)="closeModal()">
+      <div class="absolute inset-0 bg-black/40"></div>
+      <div class="relative bg-white rounded-xl shadow-lg max-w-lg w-full max-h-[85vh] overflow-y-auto animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-line">
+          <h3 class="text-[15px] font-semibold text-ink">Document requirements — {{ selectedProduct()?.name }}</h3>
+          <button (click)="closeModal()" class="text-muted bg-transparent border-none cursor-pointer p-1">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="px-6 py-5">
+          @for (doc of productDocs(); track doc.id; let i = $index) {
+            <div class="flex items-center gap-3 p-3 border border-line rounded-lg mb-2">
+              <div class="flex-1 min-w-0">
+                <div class="text-[13px] font-semibold text-ink">{{ doc.label }}</div>
+                <div class="text-[11px] text-muted mt-0.5">{{ doc.description }}</div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="text-[10px] font-semibold" [style.color]="doc.isMandatory ? '#1F9D6B' : '#6B7685'">{{ doc.isMandatory ? 'Required' : 'Optional' }}</span>
+                <button (click)="toggleDocRequired(i)" class="relative w-9 h-5 rounded-full cursor-pointer border-none transition-colors" [style.background]="doc.isMandatory ? '#0F6E8C' : '#D1D5DB'">
+                  <div class="absolute top-[2px] w-4 h-4 bg-white rounded-full shadow-sm transition-[left]" [style.left]="doc.isMandatory ? '18px' : '2px'"></div>
+                </button>
+              </div>
+            </div>
+          } @empty {
+            <div class="py-8 text-center text-sm text-muted">No document requirements configured</div>
+          }
+        </div>
+        <div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-line">
+          <button (click)="closeModal()" class="h-9 px-4 bg-white text-body text-[13px] font-medium rounded-lg border border-line cursor-pointer hover:bg-surface">Cancel</button>
+          <button (click)="saveDocs()" class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-lg border-none cursor-pointer hover:opacity-90">Save requirements</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

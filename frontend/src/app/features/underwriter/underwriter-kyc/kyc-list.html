@@ -1,0 +1,49 @@
+<div class="animate-[sc-fade_.25s_ease-out]">
+  <div class="mb-5">
+    <h1 class="text-xl font-semibold text-ink">Know Your Customer (KYC) review</h1>
+    <p class="text-sm text-muted mt-1">{{ totalRecords() }} customers awaiting identity verification. Click Review to inspect documents.</p>
+  </div>
+
+  <div class="bg-white border border-line rounded-xl shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="border-b-2 border-line bg-surface">
+            <th class="px-4 py-[11px] text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Customer ID</th>
+            <th class="px-4 py-[11px] text-left text-[11px] font-semibold text-muted uppercase tracking-wide whitespace-nowrap">Document type</th>
+            <th class="px-4 py-[11px] text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Submitted</th>
+            <th class="px-4 py-[11px] text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Status</th>
+            <th class="px-4 py-[11px] text-left text-[11px] font-semibold text-muted uppercase tracking-wide"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (k of kycRecords(); track k.id) {
+            <tr class="border-b border-line">
+              <td class="px-4 py-[14px]">
+                <div class="text-xs text-muted sc-numeric">{{ k.userId }}</div>
+              </td>
+              <td class="px-4 py-[14px] text-body">Aadhaar + PAN</td>
+              <td class="px-4 py-[14px] text-muted text-[13px] whitespace-nowrap">{{ k.createdAt | dateFormat }}</td>
+              <td class="px-4 py-[14px]"><app-status-badge [status]="k.kycStatus" /></td>
+              <td class="px-4 py-[14px]">
+                <button (click)="openKyc(k.userId)" class="h-[34px] px-3.5 border border-primary bg-transparent rounded-[7px] text-xs font-semibold text-primary cursor-pointer whitespace-nowrap hover:bg-primary-light transition-colors">
+                  Review
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="px-4 py-12 text-center text-sm text-muted">No KYC records pending review</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (totalPages() > 1) {
+      <div class="px-4 py-3 border-t border-line flex items-center justify-between">
+        <span class="text-[13px] text-muted">Page {{ currentPage() }} of {{ totalPages() }} · {{ totalRecords() }} total</span>
+        <app-pagination [currentPage]="currentPage()" [totalPages]="totalPages()" (pageChange)="onPageChange($event)" />
+      </div>
+    }
+  </div>
+</div>

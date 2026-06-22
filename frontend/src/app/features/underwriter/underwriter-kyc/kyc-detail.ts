@@ -1,0 +1,73 @@
+import { Component, inject, signal, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge';
+import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog';
+import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
+import { UnderwriterService, UnderwriterKycDto } from '../services/underwriter.service';
+import { ToastService } from '../../../shared/components/toast/toast.service';
+import { FormsModule } from '@angular/forms';
+
+@Component({
+  selector: 'app-uw-kyc-detail',
+  standalone: true,
+  imports: [StatusBadgeComponent, ConfirmDialogComponent, DateFormatPipe, FormsModule],
+  templateUrl: './kyc-detail.html',
+})
+export class KycDetailComponent implements OnInit {
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private uwService = inject(UnderwriterService);
+  private toast = inject(ToastService);
+
+  kyc = signal<UnderwriterKycDto | null>(null);
+  revealed = signal(false);
+  showDialog = signal<'approve' | 'reject' | null>(null);
+  rejectReason = '';
+
+  ngOnInit(): void {
+    const userId = this.route.snapshot.paramMap.get('userId')!;
+    this.uwService.getPendingKyc(1, 100).subscribe({
+      next: (res) => {
+        const record = res.data.find(k => k.userId === userId);
+        if (record) this.kyc.set(record);
+      },
+    });
+  }
+
+  maskAadhaar(num: string): string {
+    if (num.length <= 4) return num;
+    return 'X'.repeat(num.length - 4) + num.slice(-4);
+  }
+
+  maskPan(num: string): string {
+    if (num.length <= 4) return num;
+    return num.slice(0, 3) + '*'.repeat(num.length - 4) + num.slice(-1);
+  }
+
+  onApprove(): void {
+    const userId = this.kyc()!.userId;
+    this.uwService.reviewKyc(userId, true, 'Approved').subscribe({
+      next: () => {
+        this.toast.success('KYC approved.');
+        this.showDialog.set(null);
+        this.router.navigate(['/underwriter/kyc']);
+      },
+    });
+  }
+
+  onReject(): void {
+    if (!this.rejectReason.trim()) return;
+    const userId = this.kyc()!.userId;
+    this.uwService.reviewKyc(userId, false, this.rejectReason).subscribe({
+      next: () => {
+        this.toast.error('KYC rejected.');
+        this.showDialog.set(null);
+        this.router.navigate(['/underwriter/kyc']);
+      },
+    });
+  }
+
+  goBack(): void {
+    this.router.navigate(['/underwriter/kyc']);
+  }
+}

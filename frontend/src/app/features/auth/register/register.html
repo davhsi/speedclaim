@@ -1,0 +1,258 @@
+<h2 class="text-2xl font-semibold text-ink mb-1">Create account</h2>
+<p class="text-sm text-muted mb-7">Fill in your details to register with SpeedClaim.</p>
+
+@if (errorMessage()) {
+  <div class="mb-4 p-3 rounded-control bg-danger-bg border border-danger-border text-sm text-danger">
+    {{ errorMessage() }}
+  </div>
+}
+
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5">
+  <!-- Personal Info -->
+  <fieldset>
+    <legend class="text-sm font-semibold text-ink mb-3 flex items-center gap-2">
+      <span class="w-6 h-6 rounded-full bg-primary text-white text-xs flex items-center justify-center">1</span>
+      Personal Information
+    </legend>
+    <div class="grid grid-cols-2 gap-3 mb-3">
+      <div>
+        <label class="block text-[13px] font-medium text-body mb-1.5">Salutation</label>
+        <select formControlName="salutationTitle">
+          <option value="" disabled>Select</option>
+          @for (s of salutations; track s) { <option [value]="s">{{ s }}</option> }
+        </select>
+      </div>
+      <div>
+        <label class="block text-[13px] font-medium text-body mb-1.5">Gender</label>
+        <select formControlName="gender">
+          <option value="" disabled>Select</option>
+          @for (g of genders; track g) { <option [value]="g">{{ g }}</option> }
+        </select>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-3 mb-3">
+      <div>
+        <label class="block text-[13px] font-medium text-body mb-1.5">First name</label>
+        <input type="text" formControlName="firstName" placeholder="First name">
+      </div>
+      <div>
+        <label class="block text-[13px] font-medium text-body mb-1.5">Last name</label>
+        <input type="text" formControlName="lastName" placeholder="Last name">
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="block text-[13px] font-medium text-body mb-1.5">Email</label>
+      <input type="email" formControlName="email" placeholder="you@example.com" autocomplete="email">
+    </div>
+    <div class="grid grid-cols-2 gap-3 mb-3">
+      <div>
+        <label class="block text-[13px] font-medium text-body mb-1.5">Phone</label>
+        <input type="tel" formControlName="phone" placeholder="10-digit number">
+        @if (form.controls.phone.touched && form.controls.phone.errors?.['phone']) {
+          <p class="text-xs text-danger mt-0.5">Enter a valid 10-digit phone number.</p>
+        }
+      </div>
+      <div>
+        <label class="block text-[13px] font-medium text-body mb-1.5">Date of birth</label>
+        <input type="date" formControlName="dateOfBirth">
+        @if (form.controls.dateOfBirth.touched && form.controls.dateOfBirth.errors?.['minAge']) {
+          <p class="text-xs text-danger mt-0.5">Must be at least 18 years old.</p>
+        }
+      </div>
+    </div>
+    <div>
+      <label class="block text-[13px] font-medium text-body mb-1.5">Marital status</label>
+      <select formControlName="maritalStatus">
+        <option value="" disabled>Select</option>
+        @for (m of maritalStatuses; track m) { <option [value]="m">{{ m }}</option> }
+      </select>
+    </div>
+  </fieldset>
+
+  <!-- Password -->
+  <fieldset>
+    <legend class="text-sm font-semibold text-ink mb-3 flex items-center gap-2">
+      <span class="w-6 h-6 rounded-full bg-primary text-white text-xs flex items-center justify-center">2</span>
+      Password
+    </legend>
+    <div class="mb-3">
+      <label class="block text-[13px] font-medium text-body mb-1.5">Password</label>
+      <input type="password" formControlName="password" placeholder="Min 8 characters" autocomplete="new-password">
+      @if (form.controls.password.touched && form.controls.password.errors?.['passwordStrength']) {
+        <div class="text-xs text-danger mt-0.5 space-y-0.5">
+          @if (form.controls.password.errors?.['passwordStrength']?.['minLength']) { <p>At least 8 characters</p> }
+          @if (form.controls.password.errors?.['passwordStrength']?.['uppercase']) { <p>One uppercase letter</p> }
+          @if (form.controls.password.errors?.['passwordStrength']?.['lowercase']) { <p>One lowercase letter</p> }
+          @if (form.controls.password.errors?.['passwordStrength']?.['digit']) { <p>One digit</p> }
+          @if (form.controls.password.errors?.['passwordStrength']?.['special']) { <p>One special character</p> }
+        </div>
+      }
+    </div>
+    <div>
+      <label class="block text-[13px] font-medium text-body mb-1.5">Confirm password</label>
+      <input type="password" formControlName="confirmPassword" placeholder="Repeat password" autocomplete="new-password">
+      @if (form.controls.confirmPassword.touched && form.controls.confirmPassword.errors?.['passwordMismatch']) {
+        <p class="text-xs text-danger mt-0.5">Passwords do not match.</p>
+      }
+    </div>
+  </fieldset>
+
+  <!-- KYC -->
+  <fieldset>
+    <legend class="text-sm font-semibold text-ink mb-3 flex items-center gap-2">
+      <span class="w-6 h-6 rounded-full bg-primary text-white text-xs flex items-center justify-center">3</span>
+      KYC Details
+    </legend>
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-[13px] font-medium text-body mb-1.5">Aadhaar number</label>
+        <input type="text" formControlName="aadhaarNumber" placeholder="12-digit number" maxlength="12">
+        @if (form.controls.aadhaarNumber.touched && form.controls.aadhaarNumber.errors?.['aadhaar']) {
+          <p class="text-xs text-danger mt-0.5">Enter a valid 12-digit Aadhaar number.</p>
+        }
+      </div>
+      <div>
+        <label class="block text-[13px] font-medium text-body mb-1.5">PAN number</label>
+        <input type="text" formControlName="panNumber" placeholder="ABCDE1234F" maxlength="10" class="uppercase">
+        @if (form.controls.panNumber.touched && form.controls.panNumber.errors?.['pan']) {
+          <p class="text-xs text-danger mt-0.5">Enter a valid PAN (e.g. ABCDE1234F).</p>
+        }
+      </div>
+    </div>
+  </fieldset>
+
+  <!-- Permanent Address -->
+  <fieldset formGroupName="permanentAddress">
+    <legend class="text-sm font-semibold text-ink mb-3 flex items-center gap-2">
+      <span class="w-6 h-6 rounded-full bg-primary text-white text-xs flex items-center justify-center">4</span>
+      Permanent Address
+    </legend>
+    <div class="space-y-3">
+      <div>
+        <label class="block text-[13px] font-medium text-body mb-1.5">Address line 1</label>
+        <input type="text" formControlName="line1" placeholder="Street, building, flat number">
+      </div>
+      <div>
+        <label class="block text-[13px] font-medium text-body mb-1.5">Address line 2 (optional)</label>
+        <input type="text" formControlName="line2" placeholder="Landmark, area">
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[13px] font-medium text-body mb-1.5">City</label>
+          <input type="text" formControlName="city" placeholder="City">
+        </div>
+        <div>
+          <label class="block text-[13px] font-medium text-body mb-1.5">State</label>
+          <select formControlName="state">
+            <option value="" disabled>Select state</option>
+            @for (state of states; track state) { <option [value]="state">{{ state }}</option> }
+          </select>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[13px] font-medium text-body mb-1.5">Postal code</label>
+          <input type="text" formControlName="postalCode" placeholder="6-digit PIN" maxlength="6">
+        </div>
+        <div>
+          <label class="block text-[13px] font-medium text-body mb-1.5">Country</label>
+          <input type="text" formControlName="country" readonly>
+        </div>
+      </div>
+    </div>
+  </fieldset>
+
+  <!-- Current Address -->
+  <fieldset>
+    <legend class="text-sm font-semibold text-ink mb-3 flex items-center gap-2">
+      <span class="w-6 h-6 rounded-full bg-primary text-white text-xs flex items-center justify-center">5</span>
+      Current Address
+    </legend>
+    <label class="flex items-center gap-2 text-sm text-body mb-3 cursor-pointer">
+      <input type="checkbox" [checked]="sameAsPermanent()" (change)="toggleSameAddress()" class="w-4 h-4 rounded accent-primary">
+      Same as permanent address
+    </label>
+    @if (!sameAsPermanent()) {
+      <div class="space-y-3" formGroupName="currentAddress">
+        <div>
+          <label class="block text-[13px] font-medium text-body mb-1.5">Address line 1</label>
+          <input type="text" formControlName="line1" placeholder="Street, building, flat number">
+        </div>
+        <div>
+          <label class="block text-[13px] font-medium text-body mb-1.5">Address line 2 (optional)</label>
+          <input type="text" formControlName="line2" placeholder="Landmark, area">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[13px] font-medium text-body mb-1.5">City</label>
+            <input type="text" formControlName="city" placeholder="City">
+          </div>
+          <div>
+            <label class="block text-[13px] font-medium text-body mb-1.5">State</label>
+            <select formControlName="state">
+              <option value="" disabled>Select state</option>
+              @for (state of states; track state) { <option [value]="state">{{ state }}</option> }
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[13px] font-medium text-body mb-1.5">Postal code</label>
+            <input type="text" formControlName="postalCode" placeholder="6-digit PIN" maxlength="6">
+          </div>
+          <div>
+            <label class="block text-[13px] font-medium text-body mb-1.5">Country</label>
+            <input type="text" formControlName="country" readonly>
+          </div>
+        </div>
+      </div>
+    }
+  </fieldset>
+
+  <!-- Consent -->
+  <fieldset>
+    <legend class="text-sm font-semibold text-ink mb-3 flex items-center gap-2">
+      <span class="w-6 h-6 rounded-full bg-primary text-white text-xs flex items-center justify-center">6</span>
+      Consent
+    </legend>
+    <div class="space-y-3">
+      <label class="flex items-start gap-2 text-sm text-body cursor-pointer">
+        <input type="checkbox" formControlName="consentDataProcessing" class="w-4 h-4 mt-0.5 rounded accent-primary">
+        <span>I consent to the processing of my personal data as per the Digital Personal Data Protection Act, 2023.</span>
+      </label>
+      <label class="flex items-start gap-2 text-sm text-body cursor-pointer">
+        <input type="checkbox" formControlName="consentKycCollection" class="w-4 h-4 mt-0.5 rounded accent-primary">
+        <span>I consent to the collection and verification of my KYC documents (Aadhaar, PAN).</span>
+      </label>
+      @if (form.controls.consentDataProcessing.touched && form.controls.consentDataProcessing.errors) {
+        <p class="text-xs text-danger">Data processing consent is required.</p>
+      }
+      @if (form.controls.consentKycCollection.touched && form.controls.consentKycCollection.errors) {
+        <p class="text-xs text-danger">KYC consent is required.</p>
+      }
+    </div>
+  </fieldset>
+
+  <button
+    type="submit"
+    [disabled]="loading()"
+    class="w-full h-11 bg-primary text-white font-semibold text-[14px] rounded-control hover:bg-primary-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+  >
+    @if (loading()) {
+      <span class="inline-flex items-center gap-2">
+        <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+        </svg>
+        Creating account...
+      </span>
+    } @else {
+      Create account
+    }
+  </button>
+</form>
+
+<p class="text-sm text-center text-muted mt-6">
+  Already have an account?
+  <a routerLink="/auth/login" class="text-primary font-semibold hover:text-primary-dark">Sign in</a>
+</p>

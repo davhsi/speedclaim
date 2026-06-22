@@ -1,0 +1,221 @@
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { StatCardComponent } from '../../../shared/components/stat-card/stat-card';
+import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge';
+import { AdminService } from '../services/admin.service';
+import { ToastService } from '../../../shared/components/toast/toast.service';
+import { UserDto, BranchDto, AgentProfileDto } from '../../../core/models/api.models';
+
+@Component({
+  selector: 'app-admin-agents',
+  standalone: true,
+  imports: [FormsModule, StatCardComponent, StatusBadgeComponent],
+  templateUrl: './admin-agents.html',
+})
+export class AdminAgentsComponent implements OnInit {
+  private adminService = inject(AdminService);
+  private toastService = inject(ToastService);
+
+  activeTab = signal<'agents' | 'branches'>('agents');
+  agents = signal<UserDto[]>([]);
+  agentProfiles = signal<AgentProfileDto[]>([]);
+  branches = signal<BranchDto[]>([]);
+  loading = signal(true);
+  searchQuery = signal('');
+
+  activeModal = signal<'register' | 'assignBranch' | 'updateLicense' | 'editBranch' | null>(null);
+  selectedAgent = signal<UserDto | null>(null);
+  selectedBranch = signal<BranchDto | null>(null);
+  selectedBranchId = signal<number | null>(null);
+
+  regForm = { firstName: '', lastName: '', email: '', phone: '', password: '', licenseNumber: '', agencyName: '', aadhaarNumber: '', panNumber: '' };
+  licForm = { licenseNumber: '', licenseExpiry: '' };
+  branchForm = { name: '', city: '', state: '', address: '', phone: '', email: '' };
+
+  filteredAgents = computed(() => {
+    const q = this.searchQuery().toLowerCase();
+    const list = this.agents();
+    if (!q) return list;
+    return list.filter(a => a.fullName.toLowerCase().includes(q) || a.email.toLowerCase().includes(q));
+  });
+
+  totalAgents = computed(() => this.agents().length);
+  activeAgents = computed(() => this.agents().filter(a => a.isActive).length);
+  branchCount = computed(() => this.branches().length);
+  expiringLicenses = computed(() => {
+    const now = new Date();
+    const threshold = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
+    return this.agentProfiles().filter(ap => {
+      if (!ap.licenseExpiry) return false;
+      const exp = new Date(ap.licenseExpiry);
+      return exp <= threshold && exp >= now;
+    }).length;
+  });
+
+  iconBriefcase = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>';
+  iconCheck = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+  iconBuilding = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4"/><line x1="8" y1="6" x2="8" y2="6.01"/><line x1="12" y1="6" x2="12" y2="6.01"/><line x1="16" y1="6" x2="16" y2="6.01"/><line x1="8" y1="10" x2="8" y2="10.01"/><line x1="12" y1="10" x2="12" y2="10.01"/><line x1="16" y1="10" x2="16" y2="10.01"/><line x1="8" y1="14" x2="8" y2="14.01"/><line x1="12" y1="14" x2="12" y2="14.01"/><line x1="16" y1="14" x2="16" y2="14.01"/></svg>';
+  iconAlert = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+
+  ngOnInit(): void {
+    this.loadData();
+  }
+
+  private loadData(): void {
+    this.adminService.getAllUsers(1, 200).subscribe({
+      next: res => {
+        this.agents.set(res.data.filter(u => u.role === 'Agent'));
+        this.loading.set(false);
+      },
+    });
+    this.adminService.getAgentProfiles().subscribe({
+      next: profiles => this.agentProfiles.set(profiles),
+      error: () => {},
+    });
+    this.adminService.getBranches().subscribe({
+      next: branches => this.branches.set(branches),
+    });
+  }
+
+  initials(name: string): string {
+    const parts = name.trim().split(/\s+/);
+    return (parts[0][0] + (parts[1]?.[0] ?? '')).toUpperCase();
+  }
+
+  avatarBg(name: string): string {
+    const palettes = ['#E6F4F8', '#E8F7F1', '#FEF0EA', '#EEF4FF', '#FEF6E6', '#F3E8FF'];
+    const h = name.charCodeAt(0) + (name.charCodeAt(1) || 0);
+    return palettes[h % palettes.length];
+  }
+
+  avatarFg(name: string): string {
+    const palettes = ['#0F6E8C', '#1F9D6B', '#D45E2F', '#2D7FF9', '#D9920A', '#7C3AED'];
+    const h = name.charCodeAt(0) + (name.charCodeAt(1) || 0);
+    return palettes[h % palettes.length];
+  }
+
+  getAgentProfile(userId: number): AgentProfileDto | undefined {
+    return this.agentProfiles().find(ap => ap.userId === userId);
+  }
+
+  getAgentBranch(userId: number): string {
+    const ap = this.getAgentProfile(userId);
+    return ap?.branchName ?? '—';
+  }
+
+  licBadge(expiryStr: string): { label: string; bg: string; fg: string; bdr: string } {
+    const exp = new Date(expiryStr);
+    const now = new Date();
+    const daysLeft = Math.floor((exp.getTime() - now.getTime()) / 86400000);
+    if (daysLeft < 0) return { label: 'Expired', bg: '#FBE9E9', fg: '#D14343', bdr: '#F5B4B4' };
+    if (daysLeft < 90) return { label: 'Expiring', bg: '#FEF6E6', fg: '#D9920A', bdr: '#FAD88A' };
+    return { label: 'Valid', bg: '#E8F7F1', fg: '#1F9D6B', bdr: '#B2E4CE' };
+  }
+
+  openRegisterModal(): void {
+    this.regForm = { firstName: '', lastName: '', email: '', phone: '', password: '', licenseNumber: '', agencyName: '', aadhaarNumber: '', panNumber: '' };
+    this.activeModal.set('register');
+  }
+
+  openAssignBranchModal(agent: UserDto): void {
+    this.selectedAgent.set(agent);
+    const profile = this.getAgentProfile(agent.id);
+    this.selectedBranchId.set(profile?.branchId ?? null);
+    this.activeModal.set('assignBranch');
+  }
+
+  openUpdateLicenseModal(agent: UserDto): void {
+    this.selectedAgent.set(agent);
+    const profile = this.getAgentProfile(agent.id);
+    this.licForm = { licenseNumber: profile?.licenseNumber ?? '', licenseExpiry: profile?.licenseExpiry ?? '' };
+    this.activeModal.set('updateLicense');
+  }
+
+  openEditBranchModal(br: BranchDto): void {
+    this.selectedBranch.set(br);
+    this.branchForm = { name: br.name, city: br.city, state: br.state, address: br.address, phone: br.phone, email: br.email };
+    this.activeModal.set('editBranch');
+  }
+
+  closeModal(): void {
+    this.activeModal.set(null);
+  }
+
+  toggleAgentStatus(agent: UserDto): void {
+    const next = !agent.isActive;
+    const profile = this.getAgentProfile(agent.id);
+    const agentId = profile?.agentId ?? agent.id;
+    this.adminService.toggleAgentStatus(agentId, next).subscribe({
+      next: () => {
+        this.agents.update(list => list.map(a => a.id === agent.id ? { ...a, isActive: next } : a));
+        this.toastService.success(agent.fullName + (next ? ' activated' : ' deactivated'));
+      },
+      error: () => this.toastService.error('Failed to update status'),
+    });
+  }
+
+  registerAgent(): void {
+    const f = this.regForm;
+    this.adminService.registerAgent({
+      email: f.email,
+      password: f.password || 'TempPass@123',
+      salutationTitle: 'Mr',
+      firstName: f.firstName,
+      lastName: f.lastName,
+      phone: f.phone,
+      licenseNumber: f.licenseNumber,
+      agencyName: f.agencyName,
+      aadhaarNumber: f.aadhaarNumber,
+      panNumber: f.panNumber,
+      maritalStatus: 'Single',
+      permanentAddress: { line1: '', city: '', state: '', postalCode: '', country: 'India' },
+      currentAddress: { line1: '', city: '', state: '', postalCode: '', country: 'India' },
+    }).subscribe({
+      next: () => {
+        this.toastService.success('Agent registered successfully');
+        this.closeModal();
+        this.loadData();
+      },
+      error: () => this.toastService.error('Failed to register agent'),
+    });
+  }
+
+  assignBranch(): void {
+    const agent = this.selectedAgent();
+    const branchId = this.selectedBranchId();
+    if (!agent || !branchId) return;
+    const profile = this.getAgentProfile(agent.id);
+    const agentId = profile?.agentId ?? agent.id;
+    this.adminService.assignAgentToBranch(agentId, branchId).subscribe({
+      next: () => {
+        this.toastService.success('Branch assigned');
+        this.closeModal();
+        this.loadData();
+      },
+      error: () => this.toastService.error('Failed to assign branch'),
+    });
+  }
+
+  updateLicense(): void {
+    const agent = this.selectedAgent();
+    if (!agent) return;
+    const profile = this.getAgentProfile(agent.id);
+    const agentId = profile?.agentId ?? agent.id;
+    this.adminService.updateAgentLicense(agentId, {
+      licenseNumber: this.licForm.licenseNumber,
+      licenseExpiry: this.licForm.licenseExpiry,
+    }).subscribe({
+      next: () => {
+        this.toastService.success('License updated');
+        this.closeModal();
+        this.loadData();
+      },
+      error: () => this.toastService.error('Failed to update license'),
+    });
+  }
+
+  saveBranch(): void {
+    this.toastService.success('Branch updated');
+    this.closeModal();
+  }
+}

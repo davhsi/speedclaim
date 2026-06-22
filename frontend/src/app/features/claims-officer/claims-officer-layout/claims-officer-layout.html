@@ -1,0 +1,64 @@
+<div class="min-h-screen flex bg-surface">
+  <app-claims-officer-sidebar [collapsed]="sidebarCollapsed()" (toggle)="toggleSidebar()" />
+  <div class="flex-1 flex flex-col min-h-screen transition-[margin] duration-200 lg:ml-[244px]">
+    <!-- Topbar -->
+    <header class="h-14 shrink-0 bg-white border-b border-line flex items-center gap-3 px-6 sticky top-0 z-20">
+      <button class="lg:hidden bg-transparent border-none cursor-pointer text-muted p-1 flex" (click)="toggleSidebar()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div class="flex-1 text-[15px] font-semibold text-ink">{{ pageTitle() }}</div>
+
+      <!-- Notifications bell -->
+      <div class="relative">
+        <button (click)="toggleNotifPanel()" class="relative bg-transparent border-none cursor-pointer text-muted p-2 flex">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          @if (notifService.unreadCount() > 0) {
+            <span class="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-danger border-[1.5px] border-white flex items-center justify-center text-[9px] font-bold text-white">{{ notifService.unreadCount() }}</span>
+          }
+        </button>
+
+        @if (notifPanelOpen()) {
+          <div class="absolute top-[calc(100%+8px)] right-0 w-[340px] bg-white border border-line rounded-xl shadow-dropdown z-50 overflow-hidden animate-[sc-fade_.18s_ease-out]">
+            <div class="flex items-center justify-between px-4 py-3.5 border-b border-line">
+              <span class="text-sm font-semibold text-ink">
+                Notifications
+                @if (notifService.unreadCount() > 0) {
+                  <span class="text-danger"> · {{ notifService.unreadCount() }} unread</span>
+                }
+              </span>
+              <button (click)="onMarkAllRead()" class="bg-transparent border-none cursor-pointer text-xs font-semibold text-primary">Mark all read</button>
+            </div>
+            <div class="max-h-[360px] overflow-y-auto">
+              @for (n of notifService.notifications(); track n.id) {
+                <div (click)="onReadNotification(n)" class="flex items-start gap-3 px-4 py-3.5 border-b border-line cursor-pointer hover:bg-surface transition-colors" [class.bg-primary-light/30]="!n.isRead">
+                  <div class="w-[7px] h-[7px] rounded-full shrink-0 mt-1.5" [class]="n.isRead ? 'bg-transparent' : 'bg-primary'"></div>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-[13px] text-ink mb-0.5" [class.font-semibold]="!n.isRead">{{ n.title }}</div>
+                    <div class="text-xs text-body leading-relaxed mb-1">{{ n.message }}</div>
+                    <div class="text-[11px] text-muted">{{ n.createdAt | timeAgo }}</div>
+                  </div>
+                </div>
+              } @empty {
+                <div class="px-4 py-8 text-center text-sm text-muted">No notifications</div>
+              }
+            </div>
+            <div class="px-4 py-3 text-center border-t border-line">
+              <button (click)="notifPanelOpen.set(false)" class="bg-transparent border-none cursor-pointer text-xs text-muted font-medium">Close</button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div (click)="navigateTo('/claims-officer/profile')" class="w-[30px] h-[30px] rounded-full bg-accent text-white flex items-center justify-center text-[11px] font-bold cursor-pointer">
+        {{ userInitials() }}
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="flex-1 overflow-y-auto p-6">
+      <div class="max-w-[1300px] mx-auto">
+        <router-outlet />
+      </div>
+    </main>
+  </div>
+</div>

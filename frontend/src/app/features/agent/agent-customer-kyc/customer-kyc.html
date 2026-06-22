@@ -1,0 +1,99 @@
+<div class="animate-sc-fade max-w-[620px]">
+  <div class="flex items-center gap-3 mb-5">
+    <a routerLink="/agent/customers" class="w-9 h-9 rounded-full bg-surface-alt flex items-center justify-center hover:bg-line transition-colors">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-ink"><polyline points="15 18 9 12 15 6"/></svg>
+    </a>
+    <div>
+      <h1 class="text-lg font-semibold text-ink">Submit KYC for customer</h1>
+      <p class="text-sm text-muted">Upload identity documents on behalf of a customer.</p>
+    </div>
+  </div>
+
+  <div class="bg-white border border-line rounded-card shadow-sm p-6 space-y-5">
+    <!-- Customer selector -->
+    <div>
+      <label class="block text-xs font-medium text-body mb-1.5">Select customer</label>
+      <select class="h-[42px]" (change)="onCustomerChange($event)">
+        <option value="">Choose a customer...</option>
+        @for (c of customers(); track c.id) {
+          <option [value]="c.id">{{ c.fullName }} ({{ c.email }})</option>
+        }
+      </select>
+    </div>
+
+    @if (existingKyc(); as kyc) {
+      <div class="p-3 bg-info-bg border border-info-border rounded-[10px] flex items-center gap-3">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-info)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <div class="text-xs text-body">
+          KYC status: <strong>{{ kyc.status }}</strong>
+          @if (kyc.aadhaarNumber) { · Aadhaar: {{ kyc.aadhaarNumber }} }
+          @if (kyc.panNumber) { · PAN: {{ kyc.panNumber }} }
+        </div>
+      </div>
+    }
+
+    <!-- ID type selector -->
+    <div>
+      <label class="block text-xs font-medium text-body mb-2">Document type</label>
+      <div class="flex gap-3">
+        <button
+          class="flex-1 h-[42px] rounded-[10px] border text-[13px] font-semibold transition-colors flex items-center justify-center gap-2"
+          [class]="idType() === 'aadhaar' ? 'border-primary bg-primary-light text-primary' : 'border-line bg-white text-body hover:bg-surface'"
+          (click)="idType.set('aadhaar')"
+        >
+          <span class="w-2 h-2 rounded-full" [style.background]="idType() === 'aadhaar' ? 'var(--color-primary)' : 'var(--color-line)'"></span>
+          Aadhaar
+        </button>
+        <button
+          class="flex-1 h-[42px] rounded-[10px] border text-[13px] font-semibold transition-colors flex items-center justify-center gap-2"
+          [class]="idType() === 'pan' ? 'border-primary bg-primary-light text-primary' : 'border-line bg-white text-body hover:bg-surface'"
+          (click)="idType.set('pan')"
+        >
+          <span class="w-2 h-2 rounded-full" [style.background]="idType() === 'pan' ? 'var(--color-primary)' : 'var(--color-line)'"></span>
+          PAN Card
+        </button>
+      </div>
+    </div>
+
+    <!-- ID number -->
+    <div>
+      <label class="block text-xs font-medium text-body mb-1.5">{{ idType() === 'aadhaar' ? 'Aadhaar number' : 'PAN number' }}</label>
+      <input
+        type="text"
+        [(value)]="idNumber"
+        class="h-[42px] sc-numeric"
+        [placeholder]="idType() === 'aadhaar' ? '12 digit Aadhaar number' : 'e.g., ABCDE1234F'"
+      />
+      <div class="text-[11px] text-muted mt-1">{{ idType() === 'aadhaar' ? 'Encrypted with AES-256. Only the last 4 digits are visible to staff.' : 'Encrypted at rest. Only the last 4 characters are visible.' }}</div>
+    </div>
+
+    <!-- File uploads -->
+    <div>
+      <label class="block text-xs font-medium text-body mb-1.5">{{ idType() === 'aadhaar' ? 'Aadhaar front' : 'PAN front' }}</label>
+      <app-file-upload label="Upload front page" hint="PDF, JPG, PNG up to 5MB" (fileSelected)="frontFile = $event" />
+    </div>
+
+    @if (idType() === 'aadhaar') {
+      <div>
+        <label class="block text-xs font-medium text-body mb-1.5">Aadhaar back (optional)</label>
+        <app-file-upload label="Upload back page" hint="PDF, JPG, PNG up to 5MB" (fileSelected)="backFile = $event" />
+      </div>
+    }
+
+    <!-- DPDP consent -->
+    <div class="p-3.5 bg-warning-bg border border-warning-border rounded-[10px]">
+      <div class="text-[11px] font-semibold text-[#AA7008] uppercase tracking-wider mb-1.5">DPDP Act Notice</div>
+      <div class="text-xs text-body leading-relaxed">This customer's ID data is encrypted at rest, access-logged, and processed only for KYC verification in accordance with the Digital Personal Data Protection Act, 2023.</div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex justify-end gap-3 pt-4 border-t border-line">
+      <a routerLink="/agent/customers" class="h-10 px-5 bg-white border border-line text-[13px] font-semibold text-body rounded-control hover:bg-surface transition-colors flex items-center">Cancel</a>
+      <button
+        class="h-10 px-5 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover disabled:opacity-40 transition-colors"
+        [disabled]="!selectedCustomerId() || !frontFile || !idNumber || submitting()"
+        (click)="submit()"
+      >{{ submitting() ? 'Submitting...' : 'Submit KYC' }}</button>
+    </div>
+  </div>
+</div>

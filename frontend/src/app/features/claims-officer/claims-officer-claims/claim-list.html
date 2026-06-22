@@ -1,0 +1,94 @@
+<div class="animate-[sc-fade_.25s_ease-out]">
+  <!-- Header -->
+  <div class="flex items-end justify-between flex-wrap gap-3 mb-5">
+    <div>
+      <h1 class="text-xl font-semibold text-ink">Claims queue</h1>
+      <p class="text-sm text-muted mt-1">{{ totalRecords() }} claims — click any row to open the detail.</p>
+    </div>
+    <div class="flex gap-2 flex-wrap">
+      <select [(ngModel)]="typeFilter" (ngModelChange)="onFilterChange()" class="h-[38px] px-2.5 border border-line rounded-lg text-[13px] bg-white text-body outline-none cursor-pointer">
+        <option value="">All types</option>
+        <option value="Health">Health</option>
+        <option value="Motor">Motor</option>
+        <option value="Life">Life</option>
+        <option value="Accident">Accident</option>
+        <option value="Theft">Theft</option>
+        <option value="NaturalDamage">Natural Damage</option>
+      </select>
+      <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()" class="h-[38px] px-2.5 border border-line rounded-lg text-[13px] bg-white text-body outline-none cursor-pointer">
+        <option value="">All statuses</option>
+        <option value="Intimated">Intimated</option>
+        <option value="UnderReview">Under Review</option>
+        <option value="DocumentsPending">Docs Pending</option>
+        <option value="PreAuthRequested">Pre-Auth Requested</option>
+        <option value="PreAuthApproved">Pre-Auth Approved</option>
+        <option value="Approved">Approved</option>
+        <option value="Settled">Settled</option>
+        <option value="Rejected">Rejected</option>
+        <option value="Withdrawn">Withdrawn</option>
+      </select>
+      <div class="relative">
+        <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-muted)"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input [(ngModel)]="searchQuery" (ngModelChange)="onFilterChange()" placeholder="Search claim, customer..." class="h-[38px] pl-8 pr-3 border border-line rounded-lg text-[13px] bg-white outline-none min-w-[220px]" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="bg-white border border-line rounded-xl shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-sm">
+        <thead>
+          <tr class="border-b-2 border-line bg-surface">
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide whitespace-nowrap">Claim no.</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Type</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Customer · Policy</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide whitespace-nowrap">Requested amt</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Status</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Cashless</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide whitespace-nowrap">Intimation date</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (claim of claims(); track claim.id) {
+            <tr (click)="openClaim(claim.id)" class="border-b border-line cursor-pointer hover:bg-surface transition-colors">
+              <td class="px-4 py-3.5 text-xs font-semibold text-primary sc-numeric whitespace-nowrap">{{ claim.claimNumber }}</td>
+              <td class="px-4 py-3.5">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide" [class]="getTypePillClass(claim.claimType)">{{ claim.claimType }}</span>
+              </td>
+              <td class="px-4 py-3.5">
+                <div class="font-semibold text-ink">Customer #{{ claim.customerId }}</div>
+                <div class="text-xs text-muted mt-0.5 sc-numeric">{{ claim.policyNumber }}</div>
+              </td>
+              <td class="px-4 py-3.5 font-semibold text-ink sc-numeric whitespace-nowrap">{{ claim.claimAmountRequested | money }}</td>
+              <td class="px-4 py-3.5"><app-status-badge [status]="claim.status" /></td>
+              <td class="px-4 py-3.5">
+                @if (claim.isCashless) {
+                  <span class="text-[10px] font-bold text-primary bg-primary-light border border-primary/30 px-2.5 py-0.5 rounded-full tracking-wide">Cashless</span>
+                } @else {
+                  <span class="text-[13px] text-muted">—</span>
+                }
+              </td>
+              <td class="px-4 py-3.5 text-[13px] text-muted whitespace-nowrap">{{ claim.intimationDate | dateFormat }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (claims().length === 0 && !loading()) {
+      <app-empty-state
+        title="No claims match these filters"
+        message="Try clearing the type or status filter to see all claims."
+      />
+    }
+
+    <div class="px-4 border-t border-line">
+      <app-pagination
+        [currentPage]="currentPage()"
+        [totalPages]="totalPages()"
+        (pageChange)="onPageChange($event)"
+      />
+    </div>
+  </div>
+</div>

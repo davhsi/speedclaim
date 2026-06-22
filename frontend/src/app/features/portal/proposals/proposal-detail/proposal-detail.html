@@ -1,0 +1,127 @@
+@if (loading()) {
+  <div class="animate-pulse space-y-4 max-w-[860px]">
+    <div class="h-8 bg-surface-alt rounded w-1/3"></div>
+    <div class="h-48 bg-surface-alt rounded-card"></div>
+  </div>
+} @else if (proposal()) {
+  <div class="animate-sc-fade max-w-[860px]">
+    <!-- Back button -->
+    <button class="inline-flex items-center gap-1.5 text-[13px] font-medium text-muted hover:text-ink cursor-pointer mb-4 bg-transparent border-none p-0" (click)="router.navigate(['/proposals'])">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Back to proposals
+    </button>
+
+    <!-- Header Card -->
+    <div class="bg-white border border-line rounded-card shadow-sm p-6 mb-5">
+      <div class="flex gap-4 items-start flex-wrap">
+        <div class="w-[50px] h-[50px] rounded-[12px] flex items-center justify-center shrink-0"
+             [class]="domainBgClass()">
+          <span class="w-[26px] h-[26px] flex" [innerHTML]="domainIcon()"></span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="text-xs text-muted sc-numeric mb-0.5">{{ proposal()!.proposalNumber }}</div>
+          <div class="text-xl font-bold text-ink">{{ proposal()!.productName }}</div>
+        </div>
+        <app-status-badge [status]="proposal()!.status" />
+      </div>
+    </div>
+
+    <!-- Details -->
+    <div class="bg-white border border-line rounded-card shadow-sm p-6 mb-5">
+      <div class="text-[13px] font-semibold text-ink mb-4">Proposal details</div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-[18px]">
+        <div>
+          <div class="text-xs text-muted mb-0.5">Domain</div>
+          <div class="text-[15px] font-semibold text-ink">{{ proposal()!.domain }}</div>
+        </div>
+        <div>
+          <div class="text-xs text-muted mb-0.5">Sum assured</div>
+          <div class="text-[15px] font-semibold text-ink sc-numeric">{{ proposal()!.sumAssured | money }}</div>
+        </div>
+        <div>
+          <div class="text-xs text-muted mb-0.5">Premium</div>
+          <div class="text-[15px] font-semibold text-ink sc-numeric">{{ proposal()!.premiumAmount | money }}</div>
+        </div>
+        <div>
+          <div class="text-xs text-muted mb-0.5">Tenure</div>
+          <div class="text-[15px] font-semibold text-ink">{{ proposal()!.tenureYears }} years</div>
+        </div>
+        <div>
+          <div class="text-xs text-muted mb-0.5">Frequency</div>
+          <div class="text-[15px] font-semibold text-ink">{{ proposal()!.paymentFrequency }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Members -->
+    @if (proposal()!.members && proposal()!.members!.length > 0) {
+      <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden mb-5">
+        <div class="px-6 py-4 border-b border-line">
+          <div class="text-[13px] font-semibold text-ink">Members</div>
+        </div>
+        @for (m of proposal()!.members!; track m.id) {
+          <div class="flex items-center gap-3.5 px-6 py-3.5 border-b border-line last:border-0">
+            <div class="w-9 h-9 rounded-full bg-primary-light text-primary flex items-center justify-center text-xs font-bold shrink-0">
+              {{ m.name.charAt(0) }}
+            </div>
+            <div>
+              <div class="text-sm font-semibold text-ink">{{ m.name }}</div>
+              <div class="text-xs text-muted">{{ m.relationship }}</div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Nominees -->
+    @if (proposal()!.nominees && proposal()!.nominees!.length > 0) {
+      <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden mb-5">
+        <div class="px-6 py-4 border-b border-line">
+          <div class="text-[13px] font-semibold text-ink">Nominees</div>
+        </div>
+        @for (n of proposal()!.nominees!; track n.id) {
+          <div class="flex items-center justify-between px-6 py-3.5 border-b border-line last:border-0">
+            <div class="flex items-center gap-3.5">
+              <div class="w-9 h-9 rounded-full bg-primary-light text-primary flex items-center justify-center text-xs font-bold shrink-0">
+                {{ n.name.charAt(0) }}
+              </div>
+              <div>
+                <div class="text-sm font-semibold text-ink">{{ n.name }}</div>
+                <div class="text-xs text-muted">{{ n.relationship }}</div>
+              </div>
+            </div>
+            <span class="text-sm font-bold text-primary sc-numeric">{{ n.sharePercentage }}%</span>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Documents -->
+    @if (proposal()!.documents && proposal()!.documents!.length > 0) {
+      <div class="bg-white border border-line rounded-card shadow-sm p-6 mb-5">
+        <div class="text-[13px] font-semibold text-ink mb-3">Documents</div>
+        @for (doc of proposal()!.documents!; track doc.id) {
+          <div class="flex items-center justify-between py-3 border-b border-line last:border-0">
+            <div class="flex items-center gap-3">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="text-muted"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span class="text-sm text-ink">{{ doc.documentName }}</span>
+            </div>
+            <span class="text-xs text-muted">{{ doc.uploadedAt | dateFormat }}</span>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Upload Documents (if pending) -->
+    @if (proposal()!.status === 'DocumentsPending') {
+      <div class="bg-white border border-line rounded-card shadow-sm p-6">
+        <div class="text-[13px] font-semibold text-ink mb-3">Upload documents</div>
+        <div class="p-4 bg-info-bg border border-info-border rounded-[10px] flex items-center gap-3 mb-4">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2D7FF9" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <div class="text-xs text-body">Additional documents have been requested. Please upload them to proceed.</div>
+        </div>
+        <app-file-upload label="Select document" hint="PDF, JPG, PNG up to 5MB" (fileSelected)="onDocUpload($event)" />
+      </div>
+    }
+  </div>
+}

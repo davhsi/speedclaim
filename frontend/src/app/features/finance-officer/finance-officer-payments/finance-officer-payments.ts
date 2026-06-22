@@ -1,0 +1,117 @@
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge';
+import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog';
+import { MoneyPipe } from '../../../shared/pipes/money.pipe';
+import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
+import { ToastService } from '../../../shared/components/toast/toast.service';
+import { FinanceOfficerService } from '../services/finance-officer.service';
+import { FinancePaymentRecordDto } from '../../../core/models/api.models';
+
+@Component({
+  selector: 'app-finance-officer-payments',
+  standalone: true,
+  imports: [FormsModule, StatusBadgeComponent, ConfirmDialogComponent, MoneyPipe, DateFormatPipe],
+  templateUrl: './finance-officer-payments.html',
+})
+export class FinanceOfficerPaymentsComponent implements OnInit {
+  private financeService = inject(FinanceOfficerService);
+  private toast = inject(ToastService);
+  private moneyPipe = new MoneyPipe();
+
+  allRecords = signal<FinancePaymentRecordDto[]>([]);
+  searchQuery = '';
+  statusFilter = 'All';
+  page = signal(0);
+  pageSize = 8;
+
+  dialogTarget = signal<FinancePaymentRecordDto | null>(null);
+  dialogAction = signal<'reconcile' | 'refund'>('reconcile');
+  dialogTitle = signal('');
+  dialogMessage = signal('');
+  dialogConfirmLabel = signal('');
+  dialogVariant = signal<'danger' | 'default'>('default');
+
+  filteredRecords = computed(() => {
+    const q = this.searchQuery.toLowerCase();
+    return this.allRecords().filter(p => {
+      const matchStatus = this.statusFilter === 'All' || p.status === this.statusFilter;
+      const matchSearch = !q ||
+        `PAY-${p.id}`.toLowerCase().includes(q) ||
+        (p.policyNumber ?? '').toLowerCase().includes(q) ||
+        p.customerName.toLowerCase().includes(q);
+      return matchStatus && matchSearch;
+    });
+  });
+
+  totalPages = computed(() => Math.max(1, Math.ceil(this.filteredRecords().length / this.pageSize)));
+
+  pagedRecords = computed(() => {
+    const start = this.page() * this.pageSize;
+    return this.filteredRecords().slice(start, start + this.pageSize);
+  });
+
+  pageLabel = computed(() => {
+    const filtered = this.filteredRecords();
+    if (filtered.length === 0) return 'No records found';
+    const start = this.page() * this.pageSize + 1;
+    const end = Math.min(start + this.pageSize - 1, filtered.length);
+    return `Showing ${start}–${end} of ${filtered.length}`;
+  });
+
+  ngOnInit(): void {
+    this.financeService.getAllPaymentRecords().subscribe({
+      next: (records) => this.allRecords.set(records),
+    });
+  }
+
+  onFilterChange(): void {
+    this.page.set(0);
+  }
+
+  prevPage(): void { this.page.update(p => Math.max(0, p - 1)); }
+  nextPage(): void { this.page.update(p => Math.min(this.totalPages() - 1, p + 1)); }
+
+  openReconcile(p: FinancePaymentRecordDto): void {
+    this.dialogAction.set('reconcile');
+    this.dialogTitle.set('Reconcile payment');
+    this.dialogMessage.set(`Manually reconcile PAY-${p.id} for ${this.moneyPipe.transform(p.amount)} (${p.customerName}). This marks the payment as reconciled in the system.`);
+    this.dialogConfirmLabel.set('Reconcile');
+    this.dialogVariant.set('default');
+    this.dialogTarget.set(p);
+  }
+
+  openRefund(p: FinancePaymentRecordDto): void {
+    this.dialogAction.set('refund');
+    this.dialogTitle.set('Confirm refund');
+    this.dialogMessage.set(`This will initiate a refund of ${this.moneyPipe.transform(p.amount)} to ${p.customerName} (${p.policyNumber}). This action cannot be undone.`);
+    this.dialogConfirmLabel.set('Confirm refund');
+    this.dialogVariant.set('danger');
+    this.dialogTarget.set(p);
+  }
+
+  onConfirm(): void {
+    const target = this.dialogTarget();
+    if (!target) return;
+
+    if (this.dialogAction() === 'reconcile') {
+      this.financeService.reconcilePayment(target.id).subscribe({
+        next: () => {
+          this.allRecords.update(list => list.map(p => p.id === target.id ? { ...p, status: 'Reconciled' } : p));
+          this.toast.success(`Payment PAY-${target.id} reconciled successfully`);
+        },
+        error: () => this.toast.error('Failed to reconcile payment'),
+      });
+    } else {
+      this.financeService.refundPayment(target.id).subscribe({
+        next: () => {
+          this.allRecords.update(list => list.map(p => p.id === target.id ? { ...p, status: 'Refunded' } : p));
+          this.toast.success(`Refund of ${this.moneyPipe.transform(target.amount)} initiated for ${target.customerName}`);
+        },
+        error: () => this.toast.error('Failed to process refund'),
+      });
+    }
+
+    this.dialogTarget.set(null);
+  }
+}

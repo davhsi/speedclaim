@@ -1,0 +1,55 @@
+<div class="animate-[sc-fade_.25s_ease-out]">
+  <div class="flex justify-between items-end flex-wrap gap-3 mb-5">
+    <div>
+      <h1 class="text-xl font-semibold text-ink">All policies</h1>
+      <p class="text-sm text-muted mt-1">{{ filteredPolicies().length }} policies — click any row for details and history.</p>
+    </div>
+    <div class="relative">
+      <svg class="absolute left-[10px] top-1/2 -translate-y-1/2 pointer-events-none" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input
+        [(ngModel)]="searchTerm"
+        placeholder="Search ID, customer or product..."
+        class="h-10 pl-9 pr-3.5 border border-line rounded-lg text-[13px] bg-white outline-none min-w-[280px] focus:border-primary transition-colors"
+      />
+    </div>
+  </div>
+
+  <div class="bg-white border border-line rounded-xl shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="border-b-2 border-line bg-surface">
+            <th class="px-4 py-[11px] text-left text-[11px] font-semibold text-muted uppercase tracking-wide whitespace-nowrap">Policy ID</th>
+            <th class="px-4 py-[11px] text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Product</th>
+            <th class="px-4 py-[11px] text-left text-[11px] font-semibold text-muted uppercase tracking-wide whitespace-nowrap">Sum assured</th>
+            <th class="px-4 py-[11px] text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Premium</th>
+            <th class="px-4 py-[11px] text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Status</th>
+            <th class="px-4 py-[11px] text-left text-[11px] font-semibold text-muted uppercase tracking-wide whitespace-nowrap">End date</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (pol of filteredPolicies(); track pol.id) {
+            <tr (click)="openPolicy(pol.id)" class="border-b border-line cursor-pointer hover:bg-surface transition-colors">
+              <td class="px-4 py-[13px] text-xs font-semibold text-primary sc-numeric whitespace-nowrap">{{ pol.policyNumber }}</td>
+              <td class="px-4 py-[13px] text-body">{{ pol.productName }}</td>
+              <td class="px-4 py-[13px] font-semibold text-ink sc-numeric">{{ pol.coverageAmount | money }}</td>
+              <td class="px-4 py-[13px] text-body sc-numeric">{{ pol.premiumAmount | money }}/{{ pol.paymentFrequency }}</td>
+              <td class="px-4 py-[13px]"><app-status-badge [status]="pol.status" /></td>
+              <td class="px-4 py-[13px] text-muted text-[13px] whitespace-nowrap">{{ pol.endDate | dateFormat }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="px-4 py-12 text-center text-sm text-muted">No policies found</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (totalPages() > 1) {
+      <div class="px-4 py-3 border-t border-line flex items-center justify-between">
+        <span class="text-[13px] text-muted">Page {{ currentPage() }} of {{ totalPages() }}</span>
+        <app-pagination [currentPage]="currentPage()" [totalPages]="totalPages()" (pageChange)="onPageChange($event)" />
+      </div>
+    }
+  </div>
+</div>

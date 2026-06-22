@@ -1,0 +1,114 @@
+<div class="animate-sc-fade max-w-[680px]">
+  <div class="mb-5">
+    <h1 class="text-xl font-semibold text-ink">File a claim</h1>
+    <p class="text-sm text-muted mt-0.5">We will guide you through it — it only takes a few minutes.</p>
+  </div>
+
+  <!-- Stepper -->
+  <div class="flex items-center mb-6">
+    @for (s of stepLabels; track s; let i = $index) {
+      <div class="flex items-center" [class]="i < stepLabels.length - 1 ? 'flex-1' : ''">
+        <div class="flex flex-col items-center gap-1.5">
+          <div class="w-[30px] h-[30px] rounded-full border-2 flex items-center justify-center text-[13px] font-semibold shrink-0"
+               [class]="i <= step() ? 'border-primary bg-primary text-white' : 'border-line bg-white text-muted'">
+            {{ i + 1 }}
+          </div>
+          <span class="text-xs whitespace-nowrap" [class]="i <= step() ? 'text-ink font-semibold' : 'text-muted'">{{ s }}</span>
+        </div>
+        @if (i < stepLabels.length - 1) {
+          <div class="flex-1 h-0.5 mx-2 mb-5" [class]="i < step() ? 'bg-primary' : 'bg-line'"></div>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="bg-white border border-line rounded-card shadow-sm p-6">
+    @switch (step()) {
+      @case (0) {
+        <div class="text-[15px] font-semibold text-ink mb-4">Which policy is this claim for?</div>
+        @if (policiesLoading()) {
+          <div class="animate-pulse"><div class="h-10 bg-surface-alt rounded"></div></div>
+        } @else {
+          @for (p of activePolicies(); track p.id) {
+            <div
+              class="flex items-center gap-[13px] border-[1.5px] rounded-[10px] p-3.5 mb-3 cursor-pointer transition-all"
+              [class]="policyControl.value === p.id.toString() ? 'border-primary bg-primary-light' : 'border-line bg-white hover:border-primary-muted'"
+              (click)="policyControl.setValue(p.id.toString())"
+            >
+              <div class="w-10 h-10 rounded-[10px] bg-surface-alt flex items-center justify-center shrink-0">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="text-muted"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-semibold text-ink">{{ p.productName }}</div>
+                <div class="text-xs text-muted sc-numeric">{{ p.policyNumber }} · {{ p.coverageAmount | money }} cover</div>
+              </div>
+            </div>
+          }
+          @if (activePolicies().length === 0) {
+            <p class="text-sm text-muted py-4">No active policies available for claims.</p>
+          }
+        }
+        <div class="flex justify-end mt-5 pt-5 border-t border-line">
+          <button class="h-10 px-5 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover transition-colors disabled:opacity-40" [disabled]="!policyControl.value" (click)="step.set(1)">Continue</button>
+        </div>
+      }
+      @case (1) {
+        <div class="text-[15px] font-semibold text-ink mb-4">Claim details</div>
+        <div class="grid grid-cols-2 gap-3.5" [formGroup]="claimForm">
+          <div>
+            <label class="block text-[13px] font-medium mb-1.5">Claim type</label>
+            <select formControlName="claimType" class="h-[42px]">
+              <option value="Health">Health</option>
+              <option value="Accident">Accident</option>
+              <option value="Death">Death</option>
+              <option value="Maturity">Maturity</option>
+              <option value="Theft">Theft</option>
+              <option value="NaturalDamage">Natural Damage</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[13px] font-medium mb-1.5">Amount requested (₹)</label>
+            <input type="number" formControlName="claimAmountRequested" placeholder="0.00" class="h-[42px] sc-numeric" />
+          </div>
+          <div>
+            <label class="block text-[13px] font-medium mb-1.5">Incident date</label>
+            <input type="date" formControlName="incidentDate" class="h-[42px]" />
+          </div>
+          <div class="flex items-center gap-2.5 pt-7">
+            <input type="checkbox" formControlName="isCashless" id="cashless" class="w-4 h-4 accent-primary" />
+            <label for="cashless" class="text-[13px] font-medium text-ink cursor-pointer">Cashless claim</label>
+          </div>
+          <div class="col-span-2">
+            <label class="block text-[13px] font-medium mb-1.5">Incident description</label>
+            <textarea formControlName="incidentDescription" rows="4" placeholder="Describe what happened..."></textarea>
+          </div>
+        </div>
+        <div class="flex justify-between mt-5 pt-5 border-t border-line">
+          <button class="h-10 px-5 border border-line bg-white text-[13px] font-semibold text-body rounded-control hover:bg-surface-alt transition-colors" (click)="step.set(0)">Back</button>
+          <button class="h-10 px-5 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover transition-colors disabled:opacity-40" [disabled]="claimForm.invalid" (click)="step.set(2)">Continue</button>
+        </div>
+      }
+      @case (2) {
+        <div class="text-[15px] font-semibold text-ink mb-2">Upload documents & submit</div>
+        <p class="text-sm text-muted mb-4">Attach supporting evidence for your claim.</p>
+        <app-file-upload label="Supporting documents" hint="Hospital bills, police reports, etc. (PDF, JPG, PNG)" (fileSelected)="onFileSelected($event)" />
+        @if (uploadedFiles.length > 0) {
+          <div class="mt-3 space-y-1.5">
+            @for (f of uploadedFiles; track f.name) {
+              <div class="flex items-center gap-2 text-xs text-muted">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                {{ f.name }}
+              </div>
+            }
+          </div>
+        }
+        <div class="flex justify-between mt-5 pt-5 border-t border-line">
+          <button class="h-10 px-5 border border-line bg-white text-[13px] font-semibold text-body rounded-control hover:bg-surface-alt transition-colors" (click)="step.set(1)">Back</button>
+          <button class="h-10 px-5 bg-accent text-white text-[13px] font-semibold rounded-control hover:bg-accent-hover transition-colors disabled:opacity-50" [disabled]="submitting()" (click)="submit()">
+            {{ submitting() ? 'Filing...' : 'File Claim' }}
+          </button>
+        </div>
+      }
+    }
+  </div>
+</div>

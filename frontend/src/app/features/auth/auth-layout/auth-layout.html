@@ -1,0 +1,45 @@
+<div class="min-h-screen flex">
+  <!-- Left Panel: Marketing -->
+  <div class="hidden lg:flex lg:flex-1 flex-col justify-center items-center p-8 relative overflow-hidden"
+       style="background: linear-gradient(160deg, #0F6E8C 0%, #0A3040 100%);">
+    <div class="absolute inset-0 opacity-[.08]" style="background-image: radial-gradient(circle at 20% 30%, #fff 1px, transparent 1px); background-size: 28px 28px;"></div>
+    <div class="relative max-w-[360px]">
+      <div class="flex items-center gap-2.5 mb-7">
+        <div class="w-9 h-9 rounded-[9px] bg-white/[.16] flex items-center justify-center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <span class="text-[19px] font-bold text-white tracking-tight">SpeedClaim</span>
+      </div>
+      <h1 class="text-[30px] leading-[1.2] font-bold text-white tracking-tight mb-3.5">Insurance that moves at your speed.</h1>
+      <p class="text-[15px] leading-relaxed text-white/[.78]">Manage health, motor and life policies, file claims, and track everything in one calm, secure place.</p>
+      <div class="flex gap-5 mt-9">
+        <div>
+          <div class="text-[22px] font-bold text-white">4.8L+</div>
+          <div class="text-xs text-white/60">policies served</div>
+        </div>
+        <div>
+          <div class="text-[22px] font-bold text-white">98%</div>
+          <div class="text-xs text-white/60">claims settled</div>
+        </div>
+        <div>
+          <div class="text-[22px] font-bold text-white">3 days</div>
+          <div class="text-xs text-white/60">avg. settlement</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Panel: Form -->
+  <div class="flex-1 flex flex-col justify-center items-center p-8 min-h-screen bg-surface">
+    <div class="w-full max-w-[380px] animate-sc-fade">
+      <!-- Mobile Logo -->
+      <div class="lg:hidden flex items-center justify-center gap-2.5 mb-8">
+        <div class="w-9 h-9 rounded-[9px] bg-primary flex items-center justify-center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <span class="text-xl font-bold text-ink tracking-tight">SpeedClaim</span>
+      </div>
+      <router-outlet />
+    </div>
+  </div>
+</div>

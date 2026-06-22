@@ -1,0 +1,53 @@
+<div class="animate-sc-fade">
+  <div class="mb-5">
+    <div class="text-xl font-semibold text-ink">Browse products</div>
+    <div class="text-sm text-muted mt-0.5">Find the right cover for your family, your vehicle, and your future.</div>
+  </div>
+
+  <!-- Domain Filter Pills -->
+  <div class="flex gap-2 mb-5 flex-wrap">
+    @for (tab of domainTabs; track tab.value) {
+      <button
+        class="h-[34px] px-3.5 rounded-full text-[13px] font-medium transition-colors cursor-pointer"
+        [class]="selectedDomain() === tab.value
+          ? 'bg-primary text-white border-none font-semibold'
+          : 'bg-white border border-line text-body hover:bg-surface-alt'"
+        (click)="selectedDomain.set(tab.value)"
+      >
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="grid gap-[18px]" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))">
+      @for (i of [1,2,3,4]; track i) { <app-skeleton variant="card" /> }
+    </div>
+  } @else if (filteredProducts().length === 0) {
+    <app-empty-state title="No products found" message="No products available in this category." />
+  } @else {
+    <div class="grid gap-[18px]" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))">
+      @for (product of filteredProducts(); track product.id) {
+        <a [routerLink]="['/products', product.id]"
+           class="bg-white border border-line rounded-card shadow-sm p-5 cursor-pointer flex flex-col hover:shadow-md hover:-translate-y-0.5 transition-all no-underline">
+          <div class="flex justify-between items-start mb-3.5">
+            <div class="w-[46px] h-[46px] rounded-[11px] flex items-center justify-center"
+                 [class]="domainBg(product.domain)">
+              <span class="w-6 h-6 flex" [innerHTML]="domainIcon(product.domain)"></span>
+            </div>
+          </div>
+          <div class="text-[11px] font-semibold tracking-[.05em] uppercase mb-1" [class]="domainFg(product.domain)">{{ product.domain }}</div>
+          <div class="text-base font-semibold text-ink mb-2">{{ product.name }}</div>
+          <div class="text-[13px] text-body leading-relaxed flex-1 mb-4 line-clamp-2">{{ product.description }}</div>
+          <div class="flex justify-between items-center pt-3.5 border-t border-line">
+            <div>
+              <div class="text-[11px] text-muted">From</div>
+              <div class="text-sm font-bold text-ink sc-numeric">{{ product.minSumAssured | money }}</div>
+            </div>
+            <span class="text-[13px] text-primary font-semibold">View details →</span>
+          </div>
+        </a>
+      }
+    </div>
+  }
+</div>

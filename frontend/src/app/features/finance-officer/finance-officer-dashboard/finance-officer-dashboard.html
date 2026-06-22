@@ -1,0 +1,83 @@
+<div class="animate-[sc-fade_.25s_ease-out]">
+  <div class="mb-6">
+    <h1 class="text-[22px] font-semibold text-ink tracking-tight">Good morning, {{ firstName() }}</h1>
+    <p class="text-sm text-muted mt-[3px]">{{ payoutCount() }} claims awaiting payout and {{ commissionCount() }} pending commissions need your attention.</p>
+  </div>
+
+  <!-- Stat cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
+    <!-- Total payments collected -->
+    <div (click)="navigateTo('/finance-officer/payments')" class="bg-white border border-line rounded-xl shadow-[0_1px_4px_rgba(26,34,48,.08)] p-5 cursor-pointer transition-shadow hover:shadow-[0_4px_12px_rgba(26,34,48,.10)]">
+      <div class="flex justify-between items-start mb-3.5">
+        <div class="w-10 h-10 rounded-[10px] bg-success-bg flex items-center justify-center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1F9D6B" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        </div>
+        <span class="text-[10px] font-semibold text-success bg-success-bg border border-success-border px-2 py-[3px] rounded-full uppercase tracking-wide">This month</span>
+      </div>
+      <div class="text-[22px] font-bold text-ink sc-numeric leading-tight mb-[5px]">{{ totalPaid() }}</div>
+      <div class="text-[13px] text-muted">Total payments collected</div>
+    </div>
+
+    <!-- Commissions to approve -->
+    <div (click)="navigateTo('/finance-officer/commissions')" class="bg-white border border-line rounded-xl shadow-[0_1px_4px_rgba(26,34,48,.08)] p-5 cursor-pointer transition-shadow hover:shadow-[0_4px_12px_rgba(26,34,48,.10)]">
+      <div class="flex justify-between items-start mb-3.5">
+        <div class="w-10 h-10 rounded-[10px] bg-warning-bg flex items-center justify-center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D9920A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+        </div>
+        <span class="text-[10px] font-semibold text-warning bg-warning-bg border border-warning-border px-2 py-[3px] rounded-full uppercase tracking-wide">Pending</span>
+      </div>
+      <div class="text-[22px] font-bold text-ink sc-numeric leading-tight mb-[5px]">{{ pendingCommTotal() }}</div>
+      <div class="text-[13px] text-muted">Commissions to approve</div>
+    </div>
+
+    <!-- Overdue policies -->
+    <div (click)="navigateTo('/finance-officer/reports')" class="bg-white border border-line rounded-xl shadow-[0_1px_4px_rgba(26,34,48,.08)] p-5 cursor-pointer transition-shadow hover:shadow-[0_4px_12px_rgba(26,34,48,.10)]">
+      <div class="flex justify-between items-start mb-3.5">
+        <div class="w-10 h-10 rounded-[10px] bg-danger-bg flex items-center justify-center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D14343" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <span class="text-[10px] font-semibold text-danger bg-danger-bg border border-danger-border px-2 py-[3px] rounded-full uppercase tracking-wide">Overdue</span>
+      </div>
+      <div class="text-[32px] font-bold text-ink sc-numeric leading-none mb-[5px]">{{ overdueCount() }}</div>
+      <div class="text-[13px] text-muted">Overdue policies</div>
+    </div>
+
+    <!-- Claims awaiting payout -->
+    <div (click)="navigateTo('/finance-officer/payouts')" class="bg-white border border-line rounded-xl shadow-[0_1px_4px_rgba(26,34,48,.08)] p-5 cursor-pointer transition-shadow hover:shadow-[0_4px_12px_rgba(26,34,48,.10)]">
+      <div class="flex justify-between items-start mb-3.5">
+        <div class="w-10 h-10 rounded-[10px] bg-info-bg flex items-center justify-center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2D7FF9" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a1 1 0 11-2 0 1 1 0 012 0z"/></svg>
+        </div>
+        <span class="text-[10px] font-semibold text-info bg-info-bg border border-info-border px-2 py-[3px] rounded-full uppercase tracking-wide">Action</span>
+      </div>
+      <div class="text-[32px] font-bold text-ink sc-numeric leading-none mb-[5px]">{{ payoutCount() }}</div>
+      <div class="text-[13px] text-muted">Claims awaiting payout</div>
+    </div>
+  </div>
+
+  <!-- Recent payments -->
+  <div class="bg-white border border-line rounded-xl shadow-[0_1px_4px_rgba(26,34,48,.08)] overflow-hidden">
+    <div class="px-5 py-4 border-b border-line flex items-center justify-between">
+      <h2 class="text-[15px] font-semibold text-ink">Recent payments</h2>
+      <button (click)="navigateTo('/finance-officer/payments')" class="text-[13px] font-medium text-primary bg-transparent border-none cursor-pointer p-0">View all →</button>
+    </div>
+    @for (p of recentPayments(); track p.id) {
+      <div class="flex items-center gap-3.5 px-5 py-[13px] border-b border-line hover:bg-surface transition-colors">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-baseline gap-2 flex-wrap">
+            <span class="text-[13px] font-semibold text-primary sc-numeric">PAY-{{ p.id }}</span>
+            <span class="text-[13px] font-medium text-ink">{{ p.customerName }}</span>
+          </div>
+          <div class="text-xs text-muted mt-px">{{ p.policyNumber ?? 'N/A' }} · {{ p.paymentType }}</div>
+        </div>
+        <div class="flex items-center gap-3 shrink-0">
+          <span class="text-sm font-semibold text-ink sc-numeric">{{ p.amount | money }}</span>
+          <app-status-badge [status]="p.status" />
+          <span class="text-xs text-muted whitespace-nowrap">{{ p.paidAt | dateFormat }}</span>
+        </div>
+      </div>
+    } @empty {
+      <div class="px-5 py-12 text-center text-sm text-muted">No recent payments</div>
+    }
+  </div>
+</div>

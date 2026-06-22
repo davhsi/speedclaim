@@ -1,0 +1,292 @@
+<div class="animate-[sc-fade_.25s_ease-out]">
+
+  <!-- Stat Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
+    <app-stat-card title="Total agents" [value]="totalAgents().toString()" iconBgClass="bg-primary-light text-primary" [icon]="iconBriefcase" />
+    <app-stat-card title="Active" [value]="activeAgents().toString()" iconBgClass="bg-success-bg text-success" [icon]="iconCheck" />
+    <app-stat-card title="Branches" [value]="branchCount().toString()" iconBgClass="bg-info-bg text-info" [icon]="iconBuilding" />
+    <app-stat-card title="Expiring licenses" [value]="expiringLicenses().toString()" iconBgClass="bg-warning-bg text-warning" [icon]="iconAlert" />
+  </div>
+
+  <!-- Tabs + Content -->
+  <div class="bg-white border border-line rounded-xl shadow-sm overflow-hidden">
+    <!-- Tab header -->
+    <div class="flex items-center gap-0 px-5 border-b border-line">
+      <button (click)="activeTab.set('agents')" class="px-4 py-3 text-[13px] border-b-2 -mb-px transition-colors bg-transparent cursor-pointer" [class]="activeTab() === 'agents' ? 'font-semibold text-primary border-primary' : 'font-medium text-body border-transparent'">Agents</button>
+      <button (click)="activeTab.set('branches')" class="px-4 py-3 text-[13px] border-b-2 -mb-px transition-colors bg-transparent cursor-pointer" [class]="activeTab() === 'branches' ? 'font-semibold text-primary border-primary' : 'font-medium text-body border-transparent'">Branches</button>
+      <div class="flex-1"></div>
+      @if (activeTab() === 'agents') {
+        <div class="flex items-center gap-3 py-2">
+          <div class="relative">
+            <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" placeholder="Search agents…" class="w-48 h-8 pl-8 pr-3 border-[1.5px] border-line rounded-[7px] text-[12.5px] text-ink bg-[#F7F9FA] outline-none" />
+          </div>
+          <button (click)="openRegisterModal()" class="h-8 px-3.5 bg-primary text-white text-[12.5px] font-semibold rounded-[7px] border-none cursor-pointer flex items-center gap-1.5">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Register agent
+          </button>
+        </div>
+      }
+    </div>
+
+    <!-- Agents Tab -->
+    @if (activeTab() === 'agents') {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead>
+            <tr class="border-b border-line">
+              <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider">Agent</th>
+              <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider">Branch</th>
+              <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider">License</th>
+              <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider">Status</th>
+              <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (agent of filteredAgents(); track agent.id) {
+              <tr class="border-b border-line hover:bg-surface/50 transition-colors">
+                <td class="px-5 py-3">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0" [style.background]="avatarBg(agent.fullName)" [style.color]="avatarFg(agent.fullName)">{{ initials(agent.fullName) }}</div>
+                    <div>
+                      <div class="text-[13px] font-semibold text-ink">{{ agent.fullName }}</div>
+                      <div class="text-[11px] text-muted">{{ agent.email }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-5 py-3 text-[12.5px] text-body">{{ getAgentBranch(agent.id) }}</td>
+                <td class="px-5 py-3">
+                  @if (getAgentProfile(agent.id); as ap) {
+                    <div class="text-[12px] text-body font-mono">{{ ap.licenseNumber }}</div>
+                    <div class="flex items-center gap-1.5 mt-0.5">
+                      <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full border" [style.background]="licBadge(ap.licenseExpiry).bg" [style.color]="licBadge(ap.licenseExpiry).fg" [style.border-color]="licBadge(ap.licenseExpiry).bdr">{{ licBadge(ap.licenseExpiry).label }}</span>
+                      <span class="text-[10px] text-muted">{{ ap.licenseExpiry }}</span>
+                    </div>
+                  } @else {
+                    <span class="text-[12px] text-muted">&mdash;</span>
+                  }
+                </td>
+                <td class="px-5 py-3"><app-status-badge [status]="agent.isActive ? 'Active' : 'Inactive'" /></td>
+                <td class="px-5 py-3 text-right">
+                  <div class="flex items-center justify-end gap-1">
+                    <button title="Assign branch" (click)="openAssignBranchModal(agent)" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface transition-colors">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    </button>
+                    <button title="Update license" (click)="openUpdateLicenseModal(agent)" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface transition-colors">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    </button>
+                    <button title="Toggle status" (click)="toggleAgentStatus(agent)" class="w-7 h-7 rounded-md border flex items-center justify-center cursor-pointer hover:bg-surface transition-colors" [style.border-color]="agent.isActive ? '#F5B4B4' : '#B2E4CE'">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" [attr.stroke]="agent.isActive ? '#D14343' : '#1F9D6B'" stroke-width="2"><path d="M18.36 6.64a9 9 0 11-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="px-5 py-12 text-center text-sm text-muted">No agents found</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <!-- Branches Tab -->
+    @if (activeTab() === 'branches') {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead>
+            <tr class="border-b border-line">
+              <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider">Branch</th>
+              <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider">City</th>
+              <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider">State</th>
+              <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider">Status</th>
+              <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (br of branches(); track br.id) {
+              <tr class="border-b border-line hover:bg-surface/50 transition-colors">
+                <td class="px-5 py-3 text-[13px] font-semibold text-ink">{{ br.name }}</td>
+                <td class="px-5 py-3 text-[12.5px] text-body">{{ br.city }}</td>
+                <td class="px-5 py-3 text-[12.5px] text-body">{{ br.state }}</td>
+                <td class="px-5 py-3"><app-status-badge [status]="br.isActive ? 'Active' : 'Inactive'" /></td>
+                <td class="px-5 py-3 text-right">
+                  <button (click)="openEditBranchModal(br)" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface transition-colors">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="px-5 py-12 text-center text-sm text-muted">No branches found</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+  <!-- ══════ Register Agent Modal ══════ -->
+  @if (activeModal() === 'register') {
+    <div class="fixed inset-0 z-[400] flex items-center justify-center p-4" (click)="closeModal()">
+      <div class="absolute inset-0 bg-black/40"></div>
+      <div class="relative bg-white rounded-xl shadow-lg max-w-lg w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
+        <div class="flex items-center justify-between mb-5">
+          <h3 class="text-[15px] font-bold text-ink">Register new agent</h3>
+          <button (click)="closeModal()" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div>
+            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">First name</label>
+            <input type="text" [(ngModel)]="regForm.firstName" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Last name</label>
+            <input type="text" [(ngModel)]="regForm.lastName" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div>
+            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Email</label>
+            <input type="email" [(ngModel)]="regForm.email" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Phone</label>
+            <input type="tel" [(ngModel)]="regForm.phone" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div>
+            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">License number</label>
+            <input type="text" [(ngModel)]="regForm.licenseNumber" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Agency name</label>
+            <input type="text" [(ngModel)]="regForm.agencyName" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-5">
+          <div>
+            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Aadhaar number</label>
+            <input type="text" [(ngModel)]="regForm.aadhaarNumber" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">PAN number</label>
+            <input type="text" [(ngModel)]="regForm.panNumber" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          </div>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button (click)="closeModal()" class="h-9 px-4 bg-white border-[1.5px] border-line text-[13px] font-medium text-body rounded-[7px] cursor-pointer">Cancel</button>
+          <button (click)="registerAgent()" class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-[7px] border-none cursor-pointer">Register</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ══════ Assign Branch Modal ══════ -->
+  @if (activeModal() === 'assignBranch') {
+    <div class="fixed inset-0 z-[400] flex items-center justify-center p-4" (click)="closeModal()">
+      <div class="absolute inset-0 bg-black/40"></div>
+      <div class="relative bg-white rounded-xl shadow-lg max-w-md w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-[15px] font-bold text-ink">Assign branch for {{ selectedAgent()?.fullName }}</h3>
+          <button (click)="closeModal()" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="max-h-[320px] overflow-y-auto mb-5">
+          @for (br of branches(); track br.id) {
+            <button (click)="selectedBranchId.set(br.id)" class="w-full flex items-center gap-3 p-3 rounded-lg border-[1.5px] cursor-pointer text-left mb-2 bg-transparent" [style.background]="selectedBranchId() === br.id ? '#E6F4F8' : '#fff'" [style.border-color]="selectedBranchId() === br.id ? '#0F6E8C' : '#E2E6EB'">
+              <div class="flex-1">
+                <div class="text-[13px] font-semibold" [style.color]="selectedBranchId() === br.id ? '#0F6E8C' : '#1A2230'">{{ br.name }}</div>
+                <div class="text-[11px] text-muted">{{ br.city }}, {{ br.state }}</div>
+              </div>
+              @if (selectedBranchId() === br.id) {
+                <svg class="shrink-0 text-primary" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              }
+            </button>
+          }
+        </div>
+        <div class="flex justify-end gap-2">
+          <button (click)="closeModal()" class="h-9 px-4 bg-white border-[1.5px] border-line text-[13px] font-medium text-body rounded-[7px] cursor-pointer">Cancel</button>
+          <button (click)="assignBranch()" class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-[7px] border-none cursor-pointer">Assign</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ══════ Update License Modal ══════ -->
+  @if (activeModal() === 'updateLicense') {
+    <div class="fixed inset-0 z-[400] flex items-center justify-center p-4" (click)="closeModal()">
+      <div class="absolute inset-0 bg-black/40"></div>
+      <div class="relative bg-white rounded-xl shadow-lg max-w-md w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
+        <div class="flex items-center justify-between mb-5">
+          <h3 class="text-[15px] font-bold text-ink">Update license for {{ selectedAgent()?.fullName }}</h3>
+          <button (click)="closeModal()" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="mb-4">
+          <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">License number</label>
+          <input type="text" [(ngModel)]="licForm.licenseNumber" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+        </div>
+        <div class="mb-5">
+          <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">License expiry</label>
+          <input type="date" [(ngModel)]="licForm.licenseExpiry" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+        </div>
+        <div class="flex justify-end gap-2">
+          <button (click)="closeModal()" class="h-9 px-4 bg-white border-[1.5px] border-line text-[13px] font-medium text-body rounded-[7px] cursor-pointer">Cancel</button>
+          <button (click)="updateLicense()" class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-[7px] border-none cursor-pointer">Save</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ══════ Edit Branch Modal ══════ -->
+  @if (activeModal() === 'editBranch') {
+    <div class="fixed inset-0 z-[400] flex items-center justify-center p-4" (click)="closeModal()">
+      <div class="absolute inset-0 bg-black/40"></div>
+      <div class="relative bg-white rounded-xl shadow-lg max-w-md w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
+        <div class="flex items-center justify-between mb-5">
+          <h3 class="text-[15px] font-bold text-ink">Edit branch: {{ selectedBranch()?.name }}</h3>
+          <button (click)="closeModal()" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div>
+            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Name</label>
+            <input type="text" [(ngModel)]="branchForm.name" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">City</label>
+            <input type="text" [(ngModel)]="branchForm.city" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div>
+            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">State</label>
+            <input type="text" [(ngModel)]="branchForm.state" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Phone</label>
+            <input type="tel" [(ngModel)]="branchForm.phone" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Address</label>
+          <input type="text" [(ngModel)]="branchForm.address" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+        </div>
+        <div class="mb-5">
+          <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Email</label>
+          <input type="email" [(ngModel)]="branchForm.email" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+        </div>
+        <div class="flex justify-end gap-2">
+          <button (click)="closeModal()" class="h-9 px-4 bg-white border-[1.5px] border-line text-[13px] font-medium text-body rounded-[7px] cursor-pointer">Cancel</button>
+          <button (click)="saveBranch()" class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-[7px] border-none cursor-pointer">Save</button>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

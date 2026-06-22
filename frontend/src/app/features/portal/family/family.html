@@ -1,0 +1,83 @@
+<div class="animate-sc-fade max-w-[720px]">
+  <div class="flex justify-between items-end flex-wrap gap-3 mb-5">
+    <div>
+      <h1 class="text-xl font-semibold text-ink">Family members</h1>
+      <p class="text-sm text-muted mt-0.5">Dependents you can add to family floater policies.</p>
+    </div>
+    <button
+      class="h-10 px-4 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover transition-colors"
+      (click)="showForm.set(!showForm())"
+    >{{ showForm() ? 'Cancel' : '+ Add member' }}</button>
+  </div>
+
+  @if (showForm()) {
+    <div class="bg-white border border-line rounded-card shadow-sm p-6 mb-5 space-y-3.5" [formGroup]="memberForm">
+      <div class="grid grid-cols-2 gap-3.5">
+        <div>
+          <label class="block text-xs text-muted mb-1.5">Full name</label>
+          <input formControlName="name" class="h-[42px]" placeholder="e.g., Priya Sharma" />
+        </div>
+        <div>
+          <label class="block text-xs text-muted mb-1.5">Date of birth</label>
+          <input type="date" formControlName="dateOfBirth" class="h-[42px]" />
+        </div>
+        <div>
+          <label class="block text-xs text-muted mb-1.5">Relationship</label>
+          <select formControlName="relationship" class="h-[42px]">
+            <option value="Spouse">Spouse</option>
+            <option value="Son">Son</option>
+            <option value="Daughter">Daughter</option>
+            <option value="Father">Father</option>
+            <option value="Mother">Mother</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-muted mb-1.5">Gender</label>
+          <select formControlName="gender" class="h-[42px]">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+      <button
+        class="h-10 px-5 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover disabled:opacity-40"
+        [disabled]="memberForm.invalid"
+        (click)="addMember()"
+      >Add member</button>
+    </div>
+  }
+
+  <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
+    @for (m of members(); track m.id) {
+      <div class="flex items-center gap-3.5 px-[18px] py-4 border-b border-line last:border-0">
+        <div class="w-10 h-10 rounded-full bg-primary-light text-primary flex items-center justify-center text-[13px] font-bold shrink-0">
+          {{ m.name.charAt(0) }}
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="text-sm font-semibold text-ink">{{ m.name }}</div>
+          <div class="text-xs text-muted sc-numeric">{{ m.relationship }} · {{ m.dateOfBirth | dateFormat }} · {{ m.gender }}</div>
+        </div>
+        <span
+          class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border"
+          [style.background]="badgeColor(m.relationship).bg"
+          [style.color]="badgeColor(m.relationship).fg"
+          [style.border-color]="badgeColor(m.relationship).border"
+        >{{ m.relationship }}</span>
+        <button class="text-xs text-danger hover:underline shrink-0" (click)="deleteTarget.set(m.id)">Remove</button>
+      </div>
+    }
+    @if (members().length === 0 && !showForm()) {
+      <div class="px-[18px] py-14 text-center">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#C5CBD3" stroke-width="1.2" class="mx-auto mb-3"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        <p class="text-[15px] font-semibold text-ink mb-1">No family members yet</p>
+        <p class="text-sm text-muted">Add dependents to include them in family floater policies.</p>
+      </div>
+    }
+  </div>
+</div>
+
+@if (deleteTarget()) {
+  <app-confirm-dialog title="Remove member" message="Are you sure you want to remove this family member?" variant="danger" (confirmed)="confirmDelete()" (cancelled)="deleteTarget.set(null)" />
+}

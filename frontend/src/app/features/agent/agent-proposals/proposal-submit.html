@@ -1,0 +1,195 @@
+<div class="animate-sc-fade max-w-[720px]">
+  <div class="flex flex-wrap gap-3 items-end justify-between mb-5">
+    <div>
+      <h1 class="text-xl font-semibold text-ink">Submit a proposal</h1>
+      <p class="text-sm text-muted mt-0.5">On behalf of a customer · {{ selectedType ?? 'Select product' }}</p>
+    </div>
+    <a routerLink="/agent/proposals"
+       class="h-9 px-3.5 border border-line bg-white rounded-control text-[13px] font-medium text-body inline-flex items-center hover:bg-surface-alt transition-colors">
+      View my proposals
+    </a>
+  </div>
+
+  <!-- Stepper -->
+  <div class="flex items-start mb-6">
+    @for (st of steps(); track st.n) {
+      <div class="flex items-center flex-1">
+        <div class="flex flex-col items-center gap-1.5 shrink-0">
+          <div class="w-[30px] h-[30px] rounded-full flex items-center justify-center text-xs font-bold border-2"
+               [class]="st.done ? 'bg-primary border-primary text-white' : st.active ? 'border-primary bg-white text-primary' : 'border-line bg-white text-muted'">
+            {{ st.done ? '✓' : st.n }}
+          </div>
+          <span class="text-[11px] whitespace-nowrap"
+                [class]="st.active || st.done ? 'font-semibold text-ink' : 'text-muted'">
+            {{ st.label }}
+          </span>
+        </div>
+        @if (st.showLine) {
+          <div class="flex-1 h-0.5 mx-1.5 mb-5"
+               [class]="st.done ? 'bg-primary' : 'bg-line'"></div>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="bg-white border border-line rounded-card shadow-sm p-6">
+
+    <!-- Step 1: Customer & Product -->
+    @if (currentStep === 0) {
+      <div class="text-[15px] font-semibold text-ink mb-4">Select customer & product</div>
+      <div class="mb-5">
+        <label class="block text-[13px] font-medium mb-1.5">Customer</label>
+        <select [(ngModel)]="selectedCustomerId" class="h-[42px]">
+          <option [ngValue]="null" disabled>Select a customer...</option>
+          @for (c of customers(); track c.id) {
+            <option [ngValue]="c.id">{{ c.fullName }} · ID {{ c.id }}</option>
+          }
+        </select>
+      </div>
+      <div class="text-[13px] font-medium text-body mb-2.5">Product type</div>
+      <div class="grid grid-cols-3 gap-2.5">
+        @for (type of productTypes; track type) {
+          <div (click)="selectedType = type"
+               class="border-[1.5px] rounded-[10px] p-4 text-center cursor-pointer transition-colors"
+               [class]="selectedType === type ? 'border-primary bg-primary-light' : 'border-line bg-white hover:border-primary-muted'">
+            <div class="w-9 h-9 rounded-[9px] flex items-center justify-center mx-auto mb-2"
+                 [class]="selectedType === type ? 'bg-primary text-white' : 'bg-surface text-muted'">
+              <span [innerHTML]="typeIcon(type)"></span>
+            </div>
+            <div class="text-[13px] font-semibold text-ink">{{ type }}</div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Step 2: Quote Details -->
+    @if (currentStep === 1) {
+      <div class="text-[15px] font-semibold text-ink mb-4">Quote details · {{ selectedType }}</div>
+
+      @if (selectedType === 'Health') {
+        <div class="grid grid-cols-2 gap-3.5 mb-4">
+          <div><label class="block text-[13px] font-medium mb-1.5">Cover type</label><input type="text" [(ngModel)]="healthForm.coverType" /></div>
+          <div><label class="block text-[13px] font-medium mb-1.5">Members covered</label><input type="number" [(ngModel)]="healthForm.members" class="sc-numeric" /></div>
+          <div><label class="block text-[13px] font-medium mb-1.5">Sum assured</label><input type="text" [(ngModel)]="healthForm.sumAssured" class="sc-numeric" /></div>
+          <div><label class="block text-[13px] font-medium mb-1.5">Eldest member age</label><input type="number" [(ngModel)]="healthForm.eldestAge" class="sc-numeric" /></div>
+          <div><label class="block text-[13px] font-medium mb-1.5">Agent discount %</label><input type="number" [(ngModel)]="healthForm.discount" /></div>
+        </div>
+      }
+
+      @if (selectedType === 'Motor') {
+        <div class="grid grid-cols-2 gap-3.5 mb-4">
+          <div><label class="block text-[13px] font-medium mb-1.5">Vehicle make & model</label><input type="text" [(ngModel)]="motorForm.vehicleMakeModel" /></div>
+          <div><label class="block text-[13px] font-medium mb-1.5">Registration year</label><input type="number" [(ngModel)]="motorForm.regYear" class="sc-numeric" /></div>
+          <div><label class="block text-[13px] font-medium mb-1.5">Insured declared value (IDV)</label><input type="text" [(ngModel)]="motorForm.idv" class="sc-numeric" /></div>
+          <div><label class="block text-[13px] font-medium mb-1.5">No-Claim Bonus (NCB)</label><input type="text" [(ngModel)]="motorForm.ncb" /></div>
+          <div><label class="block text-[13px] font-medium mb-1.5">Agent discount %</label><input type="number" [(ngModel)]="motorForm.discount" /></div>
+        </div>
+      }
+
+      @if (selectedType === 'Life') {
+        <div class="grid grid-cols-2 gap-3.5 mb-4">
+          <div><label class="block text-[13px] font-medium mb-1.5">Sum assured</label><input type="text" [(ngModel)]="lifeForm.sumAssured" class="sc-numeric" /></div>
+          <div><label class="block text-[13px] font-medium mb-1.5">Policy term</label><input type="text" [(ngModel)]="lifeForm.term" /></div>
+          <div><label class="block text-[13px] font-medium mb-1.5">Customer age</label><input type="number" [(ngModel)]="lifeForm.age" class="sc-numeric" /></div>
+          <div><label class="block text-[13px] font-medium mb-1.5">Tobacco user</label><input type="text" [(ngModel)]="lifeForm.tobaccoUser" /></div>
+          <div><label class="block text-[13px] font-medium mb-1.5">Agent discount %</label><input type="number" [(ngModel)]="lifeForm.discount" /></div>
+        </div>
+      }
+
+      <button (click)="calculateQuote()"
+              class="w-full h-11 border-none rounded-control bg-primary text-white text-sm font-semibold cursor-pointer mb-4">
+        Calculate premium
+      </button>
+
+      @if (quoteResult()) {
+        <div class="bg-primary-light border border-primary-muted rounded-card p-5 flex flex-wrap justify-between items-center gap-4 animate-sc-fade">
+          <div>
+            <div class="text-[13px] font-medium mb-1" style="color: var(--color-primary-dark);">Estimated premium</div>
+            <div class="text-[32px] font-bold sc-numeric leading-none" style="color: var(--color-primary-dark);">
+              {{ quoteResult()!.totalPremium | money }}<span class="text-sm font-medium">/yr</span>
+            </div>
+            <div class="text-xs mt-1.5" style="color: var(--color-primary-dark);">
+              Inclusive of 18% GST · {{ quoteResult()!.sumAssured | money }} cover
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-xs text-muted mb-1">Agent discount applied</div>
+            <div class="text-[13px] font-semibold text-ink">Commission estimate: {{ quoteResult()!.basePremium * 0.05 | money }}</div>
+          </div>
+        </div>
+      }
+    }
+
+    <!-- Step 3: Proposer Details -->
+    @if (currentStep === 2) {
+      <div class="text-[15px] font-semibold text-ink mb-4">Proposer details</div>
+      <div class="grid grid-cols-2 gap-3.5">
+        <div><label class="block text-[13px] font-medium mb-1.5">Full name</label><input type="text" [(ngModel)]="proposerForm.fullName" /></div>
+        <div><label class="block text-[13px] font-medium mb-1.5">Date of birth</label><input type="date" [(ngModel)]="proposerForm.dob" class="sc-numeric" /></div>
+        <div><label class="block text-[13px] font-medium mb-1.5">Annual income</label><input type="text" [(ngModel)]="proposerForm.annualIncome" class="sc-numeric" /></div>
+        <div><label class="block text-[13px] font-medium mb-1.5">Occupation</label><input type="text" [(ngModel)]="proposerForm.occupation" /></div>
+        <div><label class="block text-[13px] font-medium mb-1.5">PAN</label><input type="text" [(ngModel)]="proposerForm.pan" class="sc-numeric" /></div>
+        <div><label class="block text-[13px] font-medium mb-1.5">Aadhaar (last 4 digits)</label><input type="text" [(ngModel)]="proposerForm.aadhaarLast4" class="sc-numeric" maxlength="4" /></div>
+      </div>
+    }
+
+    <!-- Step 4: Documents -->
+    @if (currentStep === 3) {
+      <div class="text-[15px] font-semibold text-ink mb-1">Upload documents</div>
+      <p class="text-[13px] text-muted mb-5">As an agent, you can upload KYC documents on behalf of this customer.</p>
+
+      <div class="text-[11px] font-semibold uppercase tracking-widest text-muted mb-2.5">KYC documents</div>
+      @for (doc of kycDocs; track doc.label) {
+        <div class="border-[1.5px] border-dashed border-line rounded-[10px] p-4 mb-2.5 flex items-center gap-3.5">
+          <span class="w-[38px] h-[38px] rounded-[9px] bg-primary-light flex items-center justify-center shrink-0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </span>
+          <div class="flex-1">
+            <div class="text-sm font-semibold text-ink">{{ doc.label }}</div>
+            <div class="text-xs text-muted mt-0.5">{{ doc.hint }}</div>
+          </div>
+          <button class="h-[34px] inline-flex items-center px-3.5 border border-line rounded-control text-[13px] font-semibold text-body cursor-pointer bg-white shrink-0">
+            Choose file
+          </button>
+        </div>
+      }
+
+      <div class="text-[11px] font-semibold uppercase tracking-widest text-muted mt-5 mb-2.5">Proposal documents</div>
+      @for (doc of proposalDocs; track doc.label) {
+        <div class="border-[1.5px] border-dashed border-line rounded-[10px] p-4 mb-2.5 flex items-center gap-3.5">
+          <span class="w-[38px] h-[38px] rounded-[9px] bg-surface flex items-center justify-center shrink-0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </span>
+          <div class="flex-1">
+            <div class="text-sm font-semibold text-ink">{{ doc.label }}</div>
+            <div class="text-xs text-muted mt-0.5">{{ doc.hint }}</div>
+          </div>
+          <button class="h-[34px] inline-flex items-center px-3.5 border border-line rounded-control text-[13px] font-semibold text-body cursor-pointer bg-white shrink-0">
+            Choose file
+          </button>
+        </div>
+      }
+
+      <label class="flex gap-2.5 items-start text-[13px] text-body leading-relaxed mt-5 cursor-pointer">
+        <input type="checkbox" [(ngModel)]="confirmReady" class="mt-0.5" />
+        <span>I confirm all documents are accurate and this proposal is ready for underwriting review.</span>
+      </label>
+    }
+
+    <!-- Navigation -->
+    <div class="flex justify-between gap-3 mt-6 pt-5 border-t border-line">
+      @if (currentStep > 0) {
+        <button (click)="prevStep()"
+                class="h-11 px-5 border border-line bg-white rounded-control text-sm font-semibold text-body cursor-pointer">
+          Back
+        </button>
+      }
+      <div class="flex-1"></div>
+      <button (click)="nextStep()"
+              class="h-11 px-6 border-none rounded-control text-sm font-semibold text-white cursor-pointer"
+              [class]="currentStep === 3 ? 'bg-accent hover:bg-accent-dark' : 'bg-primary hover:bg-primary-dark'">
+        {{ currentStep === 3 ? 'Submit proposal' : 'Next' }}
+      </button>
+    </div>
+  </div>
+</div>

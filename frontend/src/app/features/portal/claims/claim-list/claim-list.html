@@ -1,0 +1,49 @@
+<div class="animate-sc-fade">
+  <div class="flex justify-between items-end flex-wrap gap-3 mb-5">
+    <div>
+      <div class="text-xl font-semibold text-ink">My claims</div>
+      <div class="text-sm text-muted mt-0.5">Track every claim from intimation to settlement.</div>
+    </div>
+    <button class="h-10 px-4 bg-accent border-none rounded-control text-[13px] font-semibold text-white cursor-pointer hover:bg-accent-dark transition-colors"
+            (click)="router.navigate(['/claims/new'])">
+      File a claim
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
+      @for (i of [1,2,3]; track i) {
+        <div class="flex items-center gap-3.5 px-[18px] py-4 border-b border-line animate-pulse">
+          <div class="w-10 h-10 rounded-[10px] bg-surface-alt"></div>
+          <div class="flex-1"><div class="h-4 bg-surface-alt rounded w-1/3 mb-2"></div><div class="h-3 bg-surface-alt rounded w-1/2"></div></div>
+        </div>
+      }
+    </div>
+  } @else if (claims().length === 0) {
+    <div class="bg-white border border-line rounded-card p-[52px] text-center">
+      <div class="w-[60px] h-[60px] rounded-2xl bg-surface flex items-center justify-center mx-auto mb-[18px]">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      </div>
+      <div class="text-base font-semibold text-ink mb-1.5">No claims yet</div>
+      <div class="text-sm text-muted mb-5 leading-relaxed">When you file a claim it will appear here with real-time status updates.</div>
+      <button class="h-10 px-5 bg-accent border-none rounded-control text-[13px] font-semibold text-white cursor-pointer" (click)="router.navigate(['/claims/new'])">File a claim</button>
+    </div>
+  } @else {
+    <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
+      @for (c of claims(); track c.id) {
+        <div class="flex items-center gap-3.5 px-[18px] py-4 border-b border-line cursor-pointer hover:bg-surface transition-colors"
+             (click)="router.navigate(['/claims', c.id])">
+          <div class="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0"
+               [class]="domainBgClass(c.claimType)">
+            <span class="text-[11px] font-bold" [class]="domainFgClass(c.claimType)">{{ claimTypeAbbr(c.claimType) }}</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-semibold text-ink truncate">{{ c.claimType }} Claim</div>
+            <div class="text-xs text-muted sc-numeric">{{ c.claimNumber }} · {{ c.claimAmountRequested | money }} · {{ c.intimationDate | dateFormat }}</div>
+          </div>
+          <app-status-badge [status]="c.status" />
+        </div>
+      }
+    </div>
+  }
+</div>

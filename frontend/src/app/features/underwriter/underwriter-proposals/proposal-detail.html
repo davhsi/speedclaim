@@ -1,0 +1,165 @@
+<div class="animate-[sc-fade_.25s_ease-out]">
+  <button (click)="goBack()" class="inline-flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-primary text-[13px] font-medium p-0 mb-4">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Back to queue
+  </button>
+
+  @if (proposal(); as p) {
+    <!-- Header -->
+    <div class="flex items-start justify-between flex-wrap gap-3 mb-5">
+      <div>
+        <div class="flex items-center gap-2.5 flex-wrap mb-1">
+          <span class="text-xl font-semibold text-ink">{{ p.proposalNumber }}</span>
+          <app-status-badge [status]="p.status" />
+        </div>
+        <div class="text-[13px] text-muted sc-numeric">{{ p.productName }} · Submitted {{ p.createdAt | dateFormat }}</div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_296px] gap-5 items-start">
+      <!-- Left column -->
+      <div>
+        <!-- Risk facts -->
+        <div class="bg-white border border-line rounded-xl shadow-sm p-5 mb-4">
+          <div class="text-sm font-semibold text-ink mb-3.5 flex items-center gap-2">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Risk facts
+          </div>
+          <div class="grid grid-cols-2 border border-line rounded-lg overflow-hidden">
+            <div class="p-[11px_14px] border-b border-r border-line">
+              <div class="text-[11px] font-semibold text-muted uppercase tracking-wide mb-1">Sum assured</div>
+              <div class="text-sm font-medium text-ink">{{ p.sumAssured | money }}</div>
+            </div>
+            <div class="p-[11px_14px] border-b border-line">
+              <div class="text-[11px] font-semibold text-muted uppercase tracking-wide mb-1">Premium</div>
+              <div class="text-sm font-medium text-ink">{{ p.premiumAmount | money }}/{{ p.paymentFrequency }}</div>
+            </div>
+            <div class="p-[11px_14px] border-b border-r border-line">
+              <div class="text-[11px] font-semibold text-muted uppercase tracking-wide mb-1">Tenure</div>
+              <div class="text-sm font-medium text-ink">{{ p.tenureYears }} years</div>
+            </div>
+            <div class="p-[11px_14px] border-b border-line">
+              <div class="text-[11px] font-semibold text-muted uppercase tracking-wide mb-1">Domain</div>
+              <div class="text-sm font-medium text-ink">{{ p.domain }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Documents -->
+        @if (p.documents && p.documents.length > 0) {
+          <div class="bg-white border border-line rounded-xl shadow-sm p-5 mb-4">
+            <div class="text-sm font-semibold text-ink mb-3.5">Supporting documents</div>
+            @for (doc of p.documents; track doc.id) {
+              <div class="flex items-center gap-3 py-2.5 border-b border-line last:border-b-0">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <span class="flex-1 text-[13px] text-body">{{ doc.documentName }}</span>
+                <span class="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-success-bg text-success border border-success-border">Uploaded</span>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Members -->
+        @if (p.members && p.members.length > 0) {
+          <div class="bg-white border border-line rounded-xl shadow-sm p-5 mb-4">
+            <div class="text-sm font-semibold text-ink mb-3.5">Members to be covered</div>
+            <table class="w-full border-collapse text-[13px]">
+              <thead>
+                <tr class="border-b border-line bg-surface">
+                  <th class="px-3 py-2 text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Relationship</th>
+                  <th class="px-3 py-2 text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Name</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (m of p.members; track m.id) {
+                  <tr class="border-b border-line">
+                    <td class="px-3 py-2.5 text-body">{{ m.relationship }}</td>
+                    <td class="px-3 py-2.5 font-medium text-ink">{{ m.name }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <!-- Right column -->
+      <div class="lg:sticky lg:top-20">
+        <!-- Review decision -->
+        <div class="bg-white border border-line rounded-xl shadow-sm p-5 mb-4">
+          <div class="text-sm font-semibold text-ink mb-3.5">Review decision</div>
+          @if (isPending()) {
+            <div class="flex flex-col gap-2.5">
+              <button (click)="showDialog.set('approve')" class="w-full h-[42px] rounded-lg border-none text-sm font-semibold text-white cursor-pointer bg-success hover:bg-success-dark transition-colors">
+                Approve proposal
+              </button>
+              <button (click)="showDialog.set('reject')" class="w-full h-[42px] rounded-lg border-none text-sm font-semibold text-white cursor-pointer bg-danger hover:bg-danger-dark transition-colors">
+                Reject proposal
+              </button>
+              <button (click)="showDialog.set('docs')" class="w-full h-[42px] rounded-lg border border-line bg-white text-sm font-semibold text-body cursor-pointer hover:bg-surface transition-colors">
+                Request documents
+              </button>
+            </div>
+          } @else {
+            <div class="text-[13px] text-muted py-2">Decision recorded — <span class="font-semibold">{{ p.status }}</span></div>
+          }
+        </div>
+
+        <!-- Underwriter notes -->
+        <div class="bg-white border border-line rounded-xl shadow-sm p-5">
+          <div class="text-sm font-semibold text-ink mb-3.5">Underwriter notes</div>
+          <textarea
+            [(ngModel)]="notes"
+            rows="4"
+            class="w-full p-3 border border-line rounded-lg text-sm outline-none resize-y"
+            placeholder="Add internal notes..."
+          ></textarea>
+          <button (click)="saveNotes()" class="mt-2.5 h-9 px-4 rounded-lg border border-line bg-white text-[13px] font-semibold text-body cursor-pointer hover:bg-surface transition-colors">
+            Save note
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Approve dialog -->
+  @if (showDialog() === 'approve') {
+    <app-confirm-dialog
+      title="Approve proposal"
+      message="This will approve the submission and trigger policy issuance. Please confirm this is your final decision."
+      confirmLabel="Approve"
+      (confirmed)="onApprove()"
+      (cancelled)="showDialog.set(null)"
+    />
+  }
+
+  <!-- Reject dialog -->
+  @if (showDialog() === 'reject') {
+    <div class="fixed inset-0 z-[400] flex items-center justify-center p-4" (click)="showDialog.set(null)">
+      <div class="absolute inset-0 bg-black/40"></div>
+      <div class="relative bg-white rounded-xl shadow-lg max-w-md w-full p-6" (click)="$event.stopPropagation()">
+        <h3 class="text-lg font-semibold text-ink mb-2">Reject proposal</h3>
+        <textarea [(ngModel)]="rejectReason" rows="3" placeholder="Rejection reason *" class="w-full p-3 border border-line rounded-lg text-sm outline-none resize-y mb-4"></textarea>
+        <div class="flex justify-end gap-3">
+          <button (click)="showDialog.set(null)" class="px-4 py-2 text-sm font-medium text-body bg-white border border-line rounded-lg hover:bg-surface-alt transition-colors">Cancel</button>
+          <button (click)="onReject()" class="px-4 py-2 text-sm font-medium text-white bg-danger rounded-lg hover:bg-red-700 transition-colors">Reject</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Request docs dialog -->
+  @if (showDialog() === 'docs') {
+    <div class="fixed inset-0 z-[400] flex items-center justify-center p-4" (click)="showDialog.set(null)">
+      <div class="absolute inset-0 bg-black/40"></div>
+      <div class="relative bg-white rounded-xl shadow-lg max-w-md w-full p-6" (click)="$event.stopPropagation()">
+        <h3 class="text-lg font-semibold text-ink mb-2">Request additional documents</h3>
+        <textarea [(ngModel)]="docsRequest" rows="3" placeholder="Documents required" class="w-full p-3 border border-line rounded-lg text-sm outline-none resize-y mb-4"></textarea>
+        <div class="flex justify-end gap-3">
+          <button (click)="showDialog.set(null)" class="px-4 py-2 text-sm font-medium text-body bg-white border border-line rounded-lg hover:bg-surface-alt transition-colors">Cancel</button>
+          <button (click)="onRequestDocs()" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors">Send request</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

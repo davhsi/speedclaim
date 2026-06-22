@@ -1,0 +1,64 @@
+<div class="animate-[sc-fade_.25s_ease-out]">
+  <div class="flex items-end justify-between flex-wrap gap-3 mb-5">
+    <div>
+      <h1 class="text-xl font-semibold text-ink">Claim payouts</h1>
+      <p class="text-sm text-muted mt-1">{{ filteredClaims().length }} claims — process Stripe payouts for approved claims, then mark settled.</p>
+    </div>
+    <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()" class="h-[38px] px-2.5 border border-line rounded-lg text-[13px] bg-white text-body cursor-pointer">
+      <option value="All">All statuses</option>
+      <option value="Approved">Approved</option>
+      <option value="PayoutProcessed">Payout processed</option>
+      <option value="Settled">Settled</option>
+    </select>
+  </div>
+
+  <div class="bg-white border border-line rounded-xl shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-sm">
+        <thead>
+          <tr class="border-b-2 border-line bg-surface">
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide whitespace-nowrap">Claim ID</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Customer</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Policy</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Type</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide whitespace-nowrap">Approved amount</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Status</th>
+            <th class="px-4 py-3 text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of filteredClaims(); track c.id) {
+            <tr class="border-b border-line hover:bg-surface transition-colors">
+              <td class="px-4 py-3.5 text-xs font-semibold text-primary sc-numeric whitespace-nowrap">{{ c.claimNumber }}</td>
+              <td class="px-4 py-3.5 text-sm font-medium text-ink">Claim #{{ c.id }}</td>
+              <td class="px-4 py-3.5 text-xs text-muted sc-numeric">{{ c.policyNumber }}</td>
+              <td class="px-4 py-3.5">
+                <span class="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full" [class]="typeBadge(c.claimType)">{{ c.claimType }}</span>
+              </td>
+              <td class="px-4 py-3.5 font-bold text-ink sc-numeric whitespace-nowrap">{{ (c.claimAmountApproved ?? c.claimAmountRequested) | money }}</td>
+              <td class="px-4 py-3.5"><app-status-badge [status]="c.status" /></td>
+              <td class="px-4 py-3.5">
+                <div class="flex gap-1.5">
+                  @if (c.status === 'Approved') {
+                    <button (click)="processPayout(c)" [disabled]="processing().has(c.id)" class="h-[30px] px-3 border-none bg-primary text-white rounded-md text-xs font-semibold cursor-pointer whitespace-nowrap hover:bg-primary-dark transition-colors disabled:opacity-50">Process payout</button>
+                  }
+                  @if (c.status === 'PayoutProcessed') {
+                    <button (click)="markSettled(c)" [disabled]="processing().has(c.id)" class="h-[30px] px-3 border border-success bg-white text-success rounded-md text-xs font-semibold cursor-pointer whitespace-nowrap hover:bg-success-bg transition-colors disabled:opacity-50">Mark settled</button>
+                  }
+                  @if (c.status === 'Settled') {
+                    <span class="inline-flex items-center gap-1 text-xs font-semibold text-success">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      Settled
+                    </span>
+                  }
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="7" class="px-4 py-12 text-center text-sm text-muted">No claims found</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
