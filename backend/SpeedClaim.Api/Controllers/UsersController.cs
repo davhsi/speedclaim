@@ -36,8 +36,8 @@ public class UsersController : BaseApiController
         return Ok(result);
     }
 
-    /// <summary>Update the authenticated customer's profile (name, phone, marital status, salutation)</summary>
-    [Authorize(Roles = "Customer")]
+    /// <summary>Update the authenticated user's profile (name, phone, marital status, salutation)</summary>
+    [Authorize]
     [HttpPut("profile")]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
@@ -229,6 +229,20 @@ public class UsersController : BaseApiController
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)) return Unauthorized();
         await _notificationService.MarkAllAsReadAsync(userId);
         return Ok(new { message = "All notifications marked as read." });
+    }
+
+    #endregion
+
+    #region Surveyors
+
+    /// <summary>Get all active surveyors for assignment</summary>
+    [Authorize(Roles = "ClaimsOfficer,Admin")]
+    [HttpGet("surveyors")]
+    [ProducesResponseType(typeof(IEnumerable<SurveyorDto>), 200)]
+    public async Task<IActionResult> GetSurveyors()
+    {
+        var result = await _userService.GetSurveyorsAsync();
+        return Ok(result);
     }
 
     #endregion

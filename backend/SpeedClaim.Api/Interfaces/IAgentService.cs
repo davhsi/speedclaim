@@ -14,11 +14,12 @@ public interface IAgentService
     Task<AgentProfileDto> GetAgentProfileAsync(string agentId);
     Task UpdateAgentProfileAsync(string agentId, UpdateAgentProfileRequest request);
     Task<IEnumerable<RenewalReminderDto>> GetRenewalRemindersAsync(string agentId);
-    
+
     // Admin - Branch & Agent Management
     Task<BranchDto> CreateBranchAsync(CreateBranchRequest request, string adminId);
     Task<IEnumerable<BranchDto>> GetBranchesAsync();
     Task AssignAgentToBranchAsync(string agentId, string branchId, string adminId);
     Task UpdateAgentLicenseAsync(string agentId, UpdateAgentLicenseRequest request, string adminId);
     Task ActivateDeactivateAgentAsync(string agentId, bool isActive, string adminId);
+    Task<IEnumerable<AgentProfileDto>> GetAllAgentsAsync();
 }

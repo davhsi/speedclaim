@@ -65,6 +65,15 @@ public class SystemController : BaseApiController
 
     #region Templates
 
+    /// <summary>Get all email templates</summary>
+    [HttpGet("email-templates")]
+    [ProducesResponseType(typeof(IEnumerable<EmailTemplateDto>), 200)]
+    public async Task<IActionResult> GetEmailTemplates()
+    {
+        var result = await _systemService.GetEmailTemplatesAsync();
+        return Ok(result);
+    }
+
     /// <summary>Create or update an email template by key</summary>
     [HttpPut("email-templates")]
     [ProducesResponseType(200)]

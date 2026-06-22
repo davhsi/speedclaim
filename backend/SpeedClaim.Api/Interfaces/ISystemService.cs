@@ -12,4 +12,5 @@ public interface ISystemService
     Task<IEnumerable<AuditLogDto>> GetAuditLogsAsync();
     Task<IEnumerable<NotificationDto>> GetNotificationsAndEmailLogsAsync();
     Task ManageEmailTemplatesAsync(ManageEmailTemplateRequest request, Guid adminId);
+    Task<IEnumerable<EmailTemplateDto>> GetEmailTemplatesAsync();
 }

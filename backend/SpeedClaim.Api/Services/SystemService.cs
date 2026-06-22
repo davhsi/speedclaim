@@ -110,4 +110,18 @@ public class SystemService : ISystemService
 
         await _unitOfWork.CompleteAsync();
     }
+
+    public async Task<IEnumerable<EmailTemplateDto>> GetEmailTemplatesAsync()
+    {
+        var templates = await _unitOfWork.EmailTemplates.GetAllAsync();
+        return templates.Select(t => new EmailTemplateDto(
+            t.Id,
+            t.TemplateKey,
+            t.Subject,
+            t.BodyHtml,
+            t.IsActive,
+            t.CreatedAt,
+            t.UpdatedAt
+        ));
+    }
 }

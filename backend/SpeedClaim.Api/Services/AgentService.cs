@@ -221,6 +221,39 @@ public class AgentService : IAgentService
         await _unitOfWork.CompleteAsync();
     }
 
+    public async Task<IEnumerable<AgentProfileDto>> GetAllAgentsAsync()
+    {
+        var agents = await _unitOfWork.Agents.GetAllAsync();
+        var result = new List<AgentProfileDto>();
+
+        foreach (var agent in agents)
+        {
+            var user = await _unitOfWork.Users.GetByIdAsync(agent.UserId);
+            if (user == null) continue;
+
+            Branch? branch = null;
+            if (agent.BranchId.HasValue)
+                branch = await _unitOfWork.Branches.GetByIdAsync(agent.BranchId.Value);
+
+            result.Add(new AgentProfileDto(
+                agent.Id,
+                agent.UserId,
+                user.Email,
+                user.FullName,
+                agent.AgentCode,
+                agent.AgentType.ToString(),
+                agent.LicenseNumber,
+                agent.LicenseExpiry,
+                agent.CommissionRate,
+                agent.IsActive,
+                branch?.Name,
+                branch?.City
+            ));
+        }
+
+        return result;
+    }
+
     public async Task UpdateAgentProfileAsync(string agentId, UpdateAgentProfileRequest request)
     {
         var aId = Guid.Parse(agentId);

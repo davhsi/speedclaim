@@ -72,3 +72,10 @@ public record SingleAddressRequest(
     string Country,
     bool IsSameAsPermanent
 );
+
+public record SurveyorDto(
+    Guid Id,
+    string FirstName,
+    string LastName,
+    string FullName
+);

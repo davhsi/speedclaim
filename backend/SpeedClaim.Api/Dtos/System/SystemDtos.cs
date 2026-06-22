@@ -41,3 +41,13 @@ public record ManageEmailTemplateRequest(
     string Subject,
     string BodyHtml
 );
+
+public record EmailTemplateDto(
+    Guid Id,
+    string TemplateKey,
+    string Subject,
+    string BodyHtml,
+    bool IsActive,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? UpdatedAt
+);

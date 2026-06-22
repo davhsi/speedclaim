@@ -159,6 +159,14 @@ public class UserService : IUserService
     public async Task UploadAadhaarAsync(string customerId, AadhaarUploadRequest request)
     {
         var uid = Guid.Parse(customerId);
+
+        var existingRecords = await _unitOfWork.KycRecords.FindAsync(k => k.AadhaarNumber != null && k.UserId != uid);
+        foreach (var existing in existingRecords)
+        {
+            if (_encryptionService.Decrypt(existing.AadhaarNumber!) == request.AadhaarNumber)
+                throw new ConflictException("Aadhaar number is already registered to another user");
+        }
+
         var record = await GetOrCreateKycRecordAsync(uid);
 
         record.AadhaarNumber = _encryptionService.Encrypt(request.AadhaarNumber);
@@ -184,6 +192,14 @@ public class UserService : IUserService
     public async Task UploadPanAsync(string customerId, PanUploadRequest request)
     {
         var uid = Guid.Parse(customerId);
+
+        var existingRecords = await _unitOfWork.KycRecords.FindAsync(k => k.PanNumber != null && k.UserId != uid);
+        foreach (var existing in existingRecords)
+        {
+            if (_encryptionService.Decrypt(existing.PanNumber!) == request.PanNumber)
+                throw new ConflictException("PAN number is already registered to another user");
+        }
+
         var record = await GetOrCreateKycRecordAsync(uid);
 
         record.PanNumber = _encryptionService.Encrypt(request.PanNumber);
@@ -396,6 +412,27 @@ public class UserService : IUserService
                 s.ExpiresAt,
                 s.IsRevoked,
                 s.CreatedAt
+            ));
+        }
+
+        return result;
+    }
+
+    public async Task<IEnumerable<SurveyorDto>> GetSurveyorsAsync()
+    {
+        var surveyors = await _unitOfWork.Surveyors.FindAsync(s => s.IsActive);
+        var result = new List<SurveyorDto>();
+
+        foreach (var s in surveyors)
+        {
+            var user = await _unitOfWork.Users.GetByIdAsync(s.UserId);
+            if (user == null) continue;
+
+            result.Add(new SurveyorDto(
+                s.Id,
+                user.FirstName,
+                user.LastName,
+                user.FullName
             ));
         }
 
