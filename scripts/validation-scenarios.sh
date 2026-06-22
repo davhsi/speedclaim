@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================================
-# SpeedClaim — Comprehensive Validation Scenario Test Runner (300+ scenarios)
+# SpeedClaim — Comprehensive Validation Scenario Test Runner (312 scenarios)
 # ============================================================================
 # Fires every known error path in the API and records responses.
 # Output: scripts/validation-report.json
@@ -49,6 +49,11 @@ FAKE_GUID="00000000-0000-0000-0000-000000000000"
 NONEXISTENT="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 TARGET_USER_ID="$(penv targetUserId)"
 AGENT_USER_ID="$(penv agentUserId)"
+
+# Tiny valid PDF for scenarios that must pass validation and reach the service layer
+DUMMY_PDF=$(mktemp /tmp/speedclaim-dummy-XXXXXX.pdf)
+printf '%%PDF-1.0\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n%%%%EOF\n' > "$DUMMY_PDF"
+trap 'rm -f "$DUMMY_PDF"' EXIT
 
 # Long strings for boundary tests
 LONG_101=$(python3 -c "print('A'*101)")
@@ -230,6 +235,8 @@ UNDERWRITER_TOKEN=$(login "$UNDERWRITER_EMAIL")
 CLAIMS_TOKEN=$(login "$CLAIMS_OFFICER_EMAIL")
 FINANCE_TOKEN=$(login "$FINANCE_EMAIL")
 SURVEYOR_TOKEN=$(login "$SURVEYOR_EMAIL")
+CUSTOMER2_EMAIL="priya.patel@example.com"
+CUSTOMER2_TOKEN=$(login "$CUSTOMER2_EMAIL")
 
 if [ -z "$ADMIN_TOKEN" ]; then
   echo "❌ Failed to get admin token. Is the API running at $BASE_URL?"
@@ -694,6 +701,16 @@ fire_form "PAN Upload: all digits (no alpha)" \
   "KYC/Upload" 400 POST "$API/users/kyc/pan" "$CUSTOMER_TOKEN" \
   -F "panNumber=1234567890" \
   -F "frontDocument=@/dev/null;filename=empty.pdf;type=application/pdf"
+
+fire_form "Aadhaar Upload: duplicate (already registered to another user)" \
+  "KYC/Upload" 409 POST "$API/users/kyc/aadhaar" "$CUSTOMER2_TOKEN" \
+  -F "aadhaarNumber=777788889999" \
+  -F "frontDocument=@$DUMMY_PDF;type=application/pdf"
+
+fire_form "PAN Upload: duplicate (already registered to another user)" \
+  "KYC/Upload" 409 POST "$API/users/kyc/pan" "$CUSTOMER2_TOKEN" \
+  -F "panNumber=RAHUL1234A" \
+  -F "frontDocument=@$DUMMY_PDF;type=application/pdf"
 
 echo ""
 

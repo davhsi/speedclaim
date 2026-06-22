@@ -1,7 +1,7 @@
 {
   "summary": {
-    "total": 307,
-    "passed": 307,
+    "total": 309,
+    "passed": 309,
     "failed": 0,
     "passRate": "100.0%"
   },
@@ -62,8 +62,8 @@
       "failed": 0
     },
     "KYC/Upload": {
-      "total": 4,
-      "passed": 4,
+      "total": 6,
+      "passed": 6,
       "failed": 0
     },
     "Product": {
@@ -252,7 +252,7 @@
             "Permanent Address is required."
           ]
         },
-        "traceId": "00-ef95e8aab76cc9d5a87a28cb34635cbb-de40792e0fb64108-00"
+        "traceId": "00-1fa447e1f45448ff12c2cb7394be3627-b842306f4ad9e725-00"
       }
     },
     {
@@ -294,7 +294,7 @@
             "A valid email is required."
           ]
         },
-        "traceId": "00-d2dd231b6175d278adbe21cf81f56cd6-2ab1e7be00b14f65-00"
+        "traceId": "00-688f37f215291feb9494d1e0e5381ab8-1f20538b1326251d-00"
       }
     },
     {
@@ -336,7 +336,7 @@
             "Password must contain at least one uppercase letter."
           ]
         },
-        "traceId": "00-a04caa1854ab17956522162dce5bf425-6d60a898d73e1de9-00"
+        "traceId": "00-7d23239b25a19a96076f59d8b559a378-8e1285d10d2b6df3-00"
       }
     },
     {
@@ -378,7 +378,7 @@
             "Password must be at least 8 characters."
           ]
         },
-        "traceId": "00-6d84734c9dad53c237924200248fc1b5-2190ae9f5e9e0915-00"
+        "traceId": "00-6ce58f16779d7204bfd67c6424ef92d4-8a963e31a995fd18-00"
       }
     },
     {
@@ -420,7 +420,7 @@
             "Password must contain at least one special character."
           ]
         },
-        "traceId": "00-2d96667fc3e624e7dcb067d4b504255d-a323a7a7d8d6155d-00"
+        "traceId": "00-251db0d5a64e5da36e59e29a2f3dedf1-4282d62993c4b8fb-00"
       }
     },
     {
@@ -462,7 +462,7 @@
             "Password must contain at least one number."
           ]
         },
-        "traceId": "00-0176ea05e50578131dff565bf611e7a0-eddcbc7edcc2a919-00"
+        "traceId": "00-3e2919a02a4d1caf4f0ec48ead168019-9951cbb54246890d-00"
       }
     },
     {
@@ -504,7 +504,7 @@
             "Password must contain at least one lowercase letter."
           ]
         },
-        "traceId": "00-ebbafc2f844ad810111327e435a55b03-f3dd89bb1d89742b-00"
+        "traceId": "00-91eae243339ffe0167f0a978884710a5-4a2be8203de17160-00"
       }
     },
     {
@@ -546,7 +546,7 @@
             "You must be at least 18 years old to register."
           ]
         },
-        "traceId": "00-c94f5fec303792c1a61e00f326bbfab1-7427b34502cffbf7-00"
+        "traceId": "00-2bbb95a9ac5e4f1057cc5cbccfbff7ad-716ffd8621fcb19f-00"
       }
     },
     {
@@ -588,7 +588,7 @@
             "Aadhaar Number must be exactly 12 digits."
           ]
         },
-        "traceId": "00-a0f9fd8731155342b687eefab5eb054c-509faeecd5284916-00"
+        "traceId": "00-3936750126974ad8580aef59ef3269cf-3fbf404aa908c18c-00"
       }
     },
     {
@@ -630,7 +630,7 @@
             "Invalid PAN Number format."
           ]
         },
-        "traceId": "00-e7f6561ce7679143df463ec999a8bd82-1e4b1477bb40dd7e-00"
+        "traceId": "00-06d4c04fc20ce0412bc2a5aff9b493aa-cc47ef607cc387c4-00"
       }
     },
     {
@@ -707,7 +707,7 @@
             "Invalid salutation provided."
           ]
         },
-        "traceId": "00-5b630bfa623eb87b4a824ae054c91ae0-273455af97529d84-00"
+        "traceId": "00-de1f148986057e31bbc930c986beeeec-253d76a7c93577ef-00"
       }
     },
     {
@@ -752,7 +752,7 @@
             "Salutation does not match the selected gender."
           ]
         },
-        "traceId": "00-6894a6fe95a95fe61db363ef1596451d-ec67ca7723b475b8-00"
+        "traceId": "00-093bf72513343715245da9528484c2ef-5a4395bbe78d9b8a-00"
       }
     },
     {
@@ -794,7 +794,7 @@
             "Salutation does not match the selected gender."
           ]
         },
-        "traceId": "00-bbba6565676c3cda73f8b73f4ede3f9e-d7147fc452cbf59c-00"
+        "traceId": "00-26be2273031987a530c35ceecbf73752-1b79a2d4c3007995-00"
       }
     },
     {
@@ -836,7 +836,7 @@
             "If Salutation is Mrs., Marital Status must strictly be Married."
           ]
         },
-        "traceId": "00-44cbf1124fe013a14996f94bb9e3fbe6-2119c432ff475fb3-00"
+        "traceId": "00-c7e2cb0adcef25481b7ad64f374582d2-5a25cb96f1b7ee61-00"
       }
     },
     {
@@ -878,7 +878,7 @@
             "Current Address is required when not same as permanent."
           ]
         },
-        "traceId": "00-c3ea24fce34d046d3eb792a70573ad97-4f6b132d062ae8fe-00"
+        "traceId": "00-5c14cc3ccd269fd43e32c6eb5382101e-b8d0ac408ebfc265-00"
       }
     },
     {
@@ -920,7 +920,7 @@
             "Postal code must be exactly 6 digits."
           ]
         },
-        "traceId": "00-80f5d0ab31f97b3807944bb10e5b6e06-2e022d672af58336-00"
+        "traceId": "00-606788d9ad46433e520c40c069c162f3-cde36e33533bf130-00"
       }
     },
     {
@@ -958,7 +958,7 @@
         "title": "ConflictException",
         "status": 409,
         "detail": "Email already registered",
-        "traceId": "0HNMDN4JE335H:00000001"
+        "traceId": "0HNMDSIHO2R74:00000001"
       }
     },
     {
@@ -1003,7 +1003,7 @@
             "The JSON value could not be converted to SpeedClaim.Api.Dtos.Auth.RegisterUserRequest. Path: $.gender | LineNumber: 0 | BytePositionInLine: 226."
           ]
         },
-        "traceId": "00-785deb603fcdb9ca552ea7ad3c289ce6-9563fa437f89dd37-00"
+        "traceId": "00-eb3960bd4bc9606384f81ef44ae5398f-12612373269ab5f2-00"
       }
     },
     {
@@ -1045,7 +1045,7 @@
             "First Name is required."
           ]
         },
-        "traceId": "00-192ad854964c565ffdc0e5fdfd7b5455-ba98306233cf543a-00"
+        "traceId": "00-6e072c470e1f10e02f4ec8d853d401a9-16f93f63550f48a6-00"
       }
     },
     {
@@ -1087,7 +1087,7 @@
             "Last Name is required."
           ]
         },
-        "traceId": "00-da8888c6b63b835276499b07e4fa3f67-981a7f105f2dad8c-00"
+        "traceId": "00-dddf59ff68be7fbd5c31694e0ff2e099-ae1724f0f01517bb-00"
       }
     },
     {
@@ -1129,7 +1129,7 @@
             "First Name cannot exceed 100 characters."
           ]
         },
-        "traceId": "00-d46cb05da44b0cfa29afc5b8f315f88e-489a51e343e414be-00"
+        "traceId": "00-4aeea8bbdd480799190af70a066f22a9-5d6b55d699a411fd-00"
       }
     },
     {
@@ -1171,7 +1171,7 @@
             "Last Name cannot exceed 100 characters."
           ]
         },
-        "traceId": "00-6677a43ad69b5972ad94edd277f0950c-c81cbf1fff6d6ff5-00"
+        "traceId": "00-0721e8b2a280a4535a7b116de54b1021-267b5a0dd4fa7e65-00"
       }
     },
     {
@@ -1213,7 +1213,7 @@
             "Phone number is required."
           ]
         },
-        "traceId": "00-dc094e0727095d1d012c8ce3a164fd71-87d69d70eff6b613-00"
+        "traceId": "00-ef0beaa4b876146d3ae0636941e6e84a-fcf27c7791f16af0-00"
       }
     },
     {
@@ -1255,7 +1255,7 @@
             "Aadhaar Number must be exactly 12 digits."
           ]
         },
-        "traceId": "00-4f6c0f16adb82b6b58e152e352023a56-16f487d982b879b4-00"
+        "traceId": "00-2aad9b53685ba01f2cb618ff9861e94f-4cba6b785bf97f80-00"
       }
     },
     {
@@ -1297,7 +1297,7 @@
             "Invalid PAN Number format."
           ]
         },
-        "traceId": "00-04b014160ec8db78bc57485877734c6e-7a33dc226f219ca7-00"
+        "traceId": "00-9dc03af0a1db484d7e67394b8bacd4de-d2f06f9cfef2f345-00"
       }
     },
     {
@@ -1342,7 +1342,7 @@
             "The JSON value could not be converted to SpeedClaim.Api.Dtos.Auth.RegisterUserRequest. Path: $.maritalStatus | LineNumber: 0 | BytePositionInLine: 255."
           ]
         },
-        "traceId": "00-b4eeb068715a1ee160fd6b6d0aa999cc-161dc620262248f8-00"
+        "traceId": "00-fcf54c477782e1befcd46614331ced2e-cbb3e2780b702a52-00"
       }
     },
     {
@@ -1369,7 +1369,7 @@
             "Password is required."
           ]
         },
-        "traceId": "00-aaff469edd7117b03822ca3874c652f5-1446659e5ef7b743-00"
+        "traceId": "00-a81c252c0fd0cc19e541574413a3fba8-8a964c4000cad725-00"
       }
     },
     {
@@ -1394,7 +1394,7 @@
             "A valid email address is required."
           ]
         },
-        "traceId": "00-a89dfe8a056a3ddd7af23b3d1f04fb71-0b0c59e51fd2d018-00"
+        "traceId": "00-03bef1f5f2636fe8fc52e0887ec56bd8-1c14749d0b5c35e3-00"
       }
     },
     {
@@ -1419,7 +1419,7 @@
             "Password is required."
           ]
         },
-        "traceId": "00-27aa8bfa3227899ef9fac36e50747999-94df9d631588721d-00"
+        "traceId": "00-dc2150d9e441e1c6e2739216d005025c-037c67def747c986-00"
       }
     },
     {
@@ -1440,7 +1440,7 @@
         "title": "ValidationException",
         "status": 400,
         "detail": "Invalid credentials",
-        "traceId": "0HNMDN4JE335U:00000001"
+        "traceId": "0HNMDSIHO2R7H:00000001"
       }
     },
     {
@@ -1461,7 +1461,7 @@
         "title": "ValidationException",
         "status": 400,
         "detail": "Invalid credentials",
-        "traceId": "0HNMDN4JE335V:00000001"
+        "traceId": "0HNMDSIHO2R7I:00000001"
       }
     },
     {
@@ -1485,7 +1485,7 @@
             "Verification token is required."
           ]
         },
-        "traceId": "00-70491d3b37c259ce9d745ccc75e12346-697b5bcb587f8dd5-00"
+        "traceId": "00-c3eab71653e67bb25157c1f41b5ae696-5e545ea6542fe9d5-00"
       }
     },
     {
@@ -1505,7 +1505,7 @@
         "title": "ValidationException",
         "status": 400,
         "detail": "Invalid or expired token",
-        "traceId": "0HNMDN4JE3361:00000001"
+        "traceId": "0HNMDSIHO2R7K:00000001"
       }
     },
     {
@@ -1529,7 +1529,7 @@
             "Refresh token is required."
           ]
         },
-        "traceId": "00-687f015240d0283e57954c85ecb0ee0e-993cd591f1d9d6ce-00"
+        "traceId": "00-d60cf9c9730603e741740ac0e288d048-ae0fac764d7f2af7-00"
       }
     },
     {
@@ -1549,7 +1549,7 @@
         "title": "ValidationException",
         "status": 400,
         "detail": "Invalid refresh token format",
-        "traceId": "0HNMDN4JE3363:00000001"
+        "traceId": "0HNMDSIHO2R7M:00000001"
       }
     },
     {
@@ -1574,7 +1574,7 @@
             "A valid email address is required."
           ]
         },
-        "traceId": "00-2eed9eebd9942d3ce38c83101c153860-e2fc5d1701f2ebfd-00"
+        "traceId": "00-3db28bb1021b3df3819a5a26043cd07c-ab5d32c656f25c93-00"
       }
     },
     {
@@ -1598,7 +1598,7 @@
             "A valid email address is required."
           ]
         },
-        "traceId": "00-62d1849b97109b327fed8c4cff2d80e6-775a9884864d672e-00"
+        "traceId": "00-ef7cb423f5da281b5113c8034e5a1d1a-345d003ebba836ef-00"
       }
     },
     {
@@ -1623,7 +1623,7 @@
             "Reset token is required."
           ]
         },
-        "traceId": "00-7b92083242477f025a96423610674460-77cab4d1b691dd4c-00"
+        "traceId": "00-ec83fe325ffd6384c3a1d6a34f5aa6e1-a154a4b05b89a4b2-00"
       }
     },
     {
@@ -1651,7 +1651,7 @@
             "Password must contain at least one special character."
           ]
         },
-        "traceId": "00-d677fe3766a52d8566b067eda1fdad52-d4f718cc20f31ea8-00"
+        "traceId": "00-099ec97120ae6d1805668987a92db791-e4c9458ee2133ce7-00"
       }
     },
     {
@@ -1672,7 +1672,7 @@
         "title": "ValidationException",
         "status": 400,
         "detail": "Invalid or expired token",
-        "traceId": "0HNMDN4JE3368:00000001"
+        "traceId": "0HNMDSIHO2R7R:00000001"
       }
     },
     {
@@ -1685,7 +1685,9 @@
       "actualStatus": 401,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Authentication required. Please provide a valid JWT token."
+      }
     },
     {
       "id": 43,
@@ -1697,7 +1699,9 @@
       "actualStatus": 401,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Authentication required. Please provide a valid JWT token."
+      }
     },
     {
       "id": 44,
@@ -1709,7 +1713,9 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
       "id": 45,
@@ -1721,7 +1727,9 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
       "id": 46,
@@ -1733,7 +1741,9 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
       "id": 47,
@@ -1745,7 +1755,9 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
       "id": 48,
@@ -1757,7 +1769,9 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
       "id": 49,
@@ -1769,21 +1783,25 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
       "id": 50,
       "scenario": "Agent accesses admin reset password",
       "category": "Auth/AuthZ",
       "method": "POST",
-      "url": "http://localhost:5062/api/v1/auth/admin/reset-password/019edb71-f12c-70cd-abaf-6c7463dc1382",
+      "url": "http://localhost:5062/api/v1/auth/admin/reset-password/019ede54-ab50-716e-ac50-a8f359a4e27a",
       "expectedStatus": 403,
       "actualStatus": 403,
       "passed": true,
       "request": {
         "newPassword": "NewPass@123"
       },
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
       "id": 51,
@@ -1815,7 +1833,9 @@
         },
         "isSameAsPermanent": true
       },
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
       "id": 52,
@@ -1827,7 +1847,9 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
       "id": 53,
@@ -1839,7 +1861,9 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
       "id": 54,
@@ -1864,7 +1888,9 @@
         "waitingPeriodDays": 30,
         "allowsFamilyFloater": false
       },
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
       "id": 55,
@@ -1876,7 +1902,9 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
       "id": 56,
@@ -1888,19 +1916,23 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
       "id": 57,
       "scenario": "Agent accesses ClaimsOfficer claim assign",
       "category": "Auth/AuthZ",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/claims/576cbb22-8f78-4482-8af0-3e68a4261c60/assign",
+      "url": "http://localhost:5062/api/v1/claims/7d6d145b-f0bc-4cb7-b4a7-f247418429c9/assign",
       "expectedStatus": 403,
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
       "id": 58,
@@ -1912,7 +1944,9 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
       "id": 59,
@@ -1924,7 +1958,9 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
       "id": 60,
@@ -1943,7 +1979,7 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "User not found",
-        "traceId": "0HNMDN4JE336R:00000001"
+        "traceId": "0HNMDSIHO2R8E:00000001"
       }
     },
     {
@@ -1951,7 +1987,7 @@
       "scenario": "Admin Reset Password: weak password",
       "category": "Auth/Admin",
       "method": "POST",
-      "url": "http://localhost:5062/api/v1/auth/admin/reset-password/019edb71-f12c-70cd-abaf-6c7463dc1382",
+      "url": "http://localhost:5062/api/v1/auth/admin/reset-password/019ede54-ab50-716e-ac50-a8f359a4e27a",
       "expectedStatus": 400,
       "actualStatus": 400,
       "passed": true,
@@ -1970,7 +2006,7 @@
             "Password must contain at least one special character."
           ]
         },
-        "traceId": "00-dee944b45f95c75669bdd72741b8ddb7-7f2e2ae231ac3cfd-00"
+        "traceId": "00-e5402e70ea5114a2043d6ee07713db73-6b0b04d6a7f546e9-00"
       }
     },
     {
@@ -2008,7 +2044,7 @@
         "title": "ConflictException",
         "status": 409,
         "detail": "Email already registered",
-        "traceId": "0HNMDN4JE336T:00000001"
+        "traceId": "0HNMDSIHO2R8G:00000001"
       }
     },
     {
@@ -2075,7 +2111,7 @@
             "Permanent address is required."
           ]
         },
-        "traceId": "00-3cd6122a3adb369960334393bde69269-47a1be061bd8ec2d-00"
+        "traceId": "00-0fd2c28fa3c56105d2bce22c90f0032e-1c0ac51d886e1767-00"
       }
     },
     {
@@ -2117,7 +2153,7 @@
             "Phone number must be exactly 10 digits."
           ]
         },
-        "traceId": "00-345504d2c25ec8abccec52f015a34615-231b5fd2011b204c-00"
+        "traceId": "00-dcaf7ff4e4b1c0642c47e097e2de019e-443bcfc85bb96871-00"
       }
     },
     {
@@ -2160,7 +2196,7 @@
             "Aadhaar number must be exactly 12 digits."
           ]
         },
-        "traceId": "00-0c128ee43affef33becfe61f517c2eec-32a869ae464b7e0e-00"
+        "traceId": "00-f4ff32bc18c249d59120c8f3dccb8d20-61acdc8a7d572e65-00"
       }
     },
     {
@@ -2202,7 +2238,7 @@
             "Aadhaar number must be exactly 12 digits."
           ]
         },
-        "traceId": "00-47ecfbde7ab427de3eaa5dc632537286-edef542139aa9f63-00"
+        "traceId": "00-1e15d612cf8f9170232d00d957fbaaf0-d42d4187667e4523-00"
       }
     },
     {
@@ -2244,7 +2280,7 @@
             "License number is required."
           ]
         },
-        "traceId": "00-30fb84177703211d506389e2672f33d3-5d8d214fbae7b22e-00"
+        "traceId": "00-9eb3d5a9a04a94df43c8dacbfe760bc0-f006dad1216926f5-00"
       }
     },
     {
@@ -2286,7 +2322,7 @@
             "Agency name is required."
           ]
         },
-        "traceId": "00-881ac4095642a2568ca4c9b44dc5b062-879cbc079377327e-00"
+        "traceId": "00-9e59a502fa7e7e6cfbd602022b597cf4-76c84bf4fd669184-00"
       }
     },
     {
@@ -2328,7 +2364,7 @@
             "Postal code must be exactly 6 digits."
           ]
         },
-        "traceId": "00-6b8e2d6de27ee8b0b28b5bec69025d0e-89b84512b8a1ced9-00"
+        "traceId": "00-ad1aad6fda59c2a46f61bb1566d0ae42-17cac134db34ceca-00"
       }
     },
     {
@@ -2341,7 +2377,9 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
       "id": 71,
@@ -2358,7 +2396,7 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "KYC Record not found",
-        "traceId": "0HNMDN4JE3376:00000001"
+        "traceId": "0HNMDSIHO2R8P:00000001"
       }
     },
     {
@@ -2366,7 +2404,7 @@
       "scenario": "Change Role: invalid role",
       "category": "User/Admin",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/users/019edb70-e33c-75be-a75c-aae04ab9ca15/role",
+      "url": "http://localhost:5062/api/v1/users/019ede53-a096-7f04-8d75-29c480449cd4/role",
       "expectedStatus": 400,
       "actualStatus": 400,
       "passed": true,
@@ -2376,7 +2414,7 @@
         "title": "ValidationException",
         "status": 400,
         "detail": "Invalid role",
-        "traceId": "0HNMDN4JE3377:00000001"
+        "traceId": "0HNMDSIHO2R8Q:00000001"
       }
     },
     {
@@ -2394,7 +2432,7 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "User not found",
-        "traceId": "0HNMDN4JE3378:00000001"
+        "traceId": "0HNMDSIHO2R8R:00000001"
       }
     },
     {
@@ -2412,7 +2450,7 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "User not found",
-        "traceId": "0HNMDN4JE3379:00000001"
+        "traceId": "0HNMDSIHO2R8S:00000001"
       }
     },
     {
@@ -2442,7 +2480,7 @@
             "Date of birth is required."
           ]
         },
-        "traceId": "00-c2cb34ba67826604554b3f5525dab8c1-6d1fcbcd69c7c60e-00"
+        "traceId": "00-b0c3c10019eb1a75fe5889ee96c4da9a-6bb7318adfd59d8c-00"
       }
     },
     {
@@ -2474,7 +2512,7 @@
             "The JSON value could not be converted to SpeedClaim.Api.Dtos.User.AddFamilyMemberRequest. Path: $.gender | LineNumber: 0 | BytePositionInLine: 74."
           ]
         },
-        "traceId": "00-edcbb8f35ecfe859eb275aa5274f1d8c-fd3e110385a87185-00"
+        "traceId": "00-60d195b71cbe92e0af42da977a1dfe26-b4ea0b8e2a470252-00"
       }
     },
     {
@@ -2503,7 +2541,7 @@
             "Date of birth must be in the past."
           ]
         },
-        "traceId": "00-e8e88b63f5723c5c837fa1126c2e0176-8fad8e77700247e2-00"
+        "traceId": "00-0bd72e15778c6d2cbf7b4bc8cb20aa7a-5316399137fd85cf-00"
       }
     },
     {
@@ -2532,7 +2570,7 @@
             "First name is required."
           ]
         },
-        "traceId": "00-6d3166a3b22c1125df1ac217ce774c4e-66feb776aec60d03-00"
+        "traceId": "00-739c4ed2120d0257c3a6a58ca1c695d6-f97b03635c9fab2c-00"
       }
     },
     {
@@ -2561,7 +2599,7 @@
             "Last name is required."
           ]
         },
-        "traceId": "00-17fee5a28fae23903c1b7ffa9b265239-f9be78fe2368afec-00"
+        "traceId": "00-b1ec404f6fc736c556f3ba5bf6d84099-014f515ceaab605c-00"
       }
     },
     {
@@ -2593,7 +2631,7 @@
             "The JSON value could not be converted to SpeedClaim.Api.Dtos.User.AddFamilyMemberRequest. Path: $.relationship | LineNumber: 0 | BytePositionInLine: 97."
           ]
         },
-        "traceId": "00-fa308d2d593585064bb244a18a803f4c-025283ab235f8337-00"
+        "traceId": "00-5c6d11daa77aeeb36c81cdee45636b59-e1e83759242cf98e-00"
       }
     },
     {
@@ -2625,7 +2663,7 @@
             "The JSON value could not be converted to SpeedClaim.Api.Dtos.User.AddFamilyMemberRequest. Path: $.salutation | LineNumber: 0 | BytePositionInLine: 59."
           ]
         },
-        "traceId": "00-c9f78ba3ff855c98293d6545dc01172e-dad32f6982c11940-00"
+        "traceId": "00-b9e6949112eab931a98ac0b5da9902c0-e45dbae4c9ab146c-00"
       }
     },
     {
@@ -2654,7 +2692,7 @@
             "First name cannot exceed 100 characters."
           ]
         },
-        "traceId": "00-30dab63099b73c10fff9104d52207738-35864c98ed1462e2-00"
+        "traceId": "00-688b99763555a927d27a61da3f297da9-0340fcd3c5cc86e9-00"
       }
     },
     {
@@ -2679,7 +2717,7 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Family member not found",
-        "traceId": "0HNMDN4JE337I:00000001"
+        "traceId": "0HNMDSIHO2R95:00000001"
       }
     },
     {
@@ -2697,7 +2735,7 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Family member not found.",
-        "traceId": "0HNMDN4JE337J:00000001"
+        "traceId": "0HNMDSIHO2R96:00000001"
       }
     },
     {
@@ -2736,7 +2774,7 @@
             "Address Line 1 is required."
           ]
         },
-        "traceId": "00-c9e32cfeda1657f34850e9d6585044b9-c4a26765dc1843f0-00"
+        "traceId": "00-e29d4c2d37be53b8351932600c2e83cb-01e7cfd9b290b2c9-00"
       }
     },
     {
@@ -2765,7 +2803,7 @@
             "Postal code must be exactly 6 digits."
           ]
         },
-        "traceId": "00-253697cfd8d099eb3917628f52fec181-607e398142d2fe92-00"
+        "traceId": "00-177db77403898d99c5e394580f526961-0da5790416b63c83-00"
       }
     },
     {
@@ -2807,7 +2845,7 @@
             "Address Line 1 is required."
           ]
         },
-        "traceId": "00-7b4e3a5cfbc3217077a023871df6e7f3-5311561131ec4d76-00"
+        "traceId": "00-fa759e3f546aed63500ff39cda3f96b1-9b7a9dfa1c2cdbaf-00"
       }
     },
     {
@@ -2836,7 +2874,7 @@
             "Address Line 1 is required."
           ]
         },
-        "traceId": "00-79db8679549f6ba8aaa7fc3f8a8b6491-f627e2ed305ae8b7-00"
+        "traceId": "00-6c413492423d6110e669e5b9d795916a-861ac6818dccf2a7-00"
       }
     },
     {
@@ -2865,7 +2903,7 @@
             "City is required."
           ]
         },
-        "traceId": "00-165a0f1d983ff5eb0e4a69ab176f8a09-d2ec019f9c126c51-00"
+        "traceId": "00-0e4774107fc84ccf39c743510d8f9b27-529ea877f6303454-00"
       }
     },
     {
@@ -2894,7 +2932,7 @@
             "State is required."
           ]
         },
-        "traceId": "00-b616dc5c2dfe4273faea19ae464beeed-5596183330fb08c7-00"
+        "traceId": "00-065f2061a9ff55cbae84d638b5527310-494dca8e3a54d4d8-00"
       }
     },
     {
@@ -2923,7 +2961,7 @@
             "Country is required."
           ]
         },
-        "traceId": "00-2a8b8b57a40b42594b37e51780408f6b-b6995758d3940e74-00"
+        "traceId": "00-20ae0c2ab5db17b6c968e7b137521e03-446dd41bcbfd1621-00"
       }
     },
     {
@@ -2952,7 +2990,7 @@
             "Address Line 1 cannot exceed 200 characters."
           ]
         },
-        "traceId": "00-f5d8d02882e45d72f76394a82d5a7712-5dbf57bbcb8e69e6-00"
+        "traceId": "00-985dc1090a63f325391bbe490a90fa1f-46f19c1464594d6b-00"
       }
     },
     {
@@ -2977,7 +3015,7 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Address not found",
-        "traceId": "0HNMDN4JE337S:00000001"
+        "traceId": "0HNMDSIHO2R9F:00000001"
       }
     },
     {
@@ -2995,7 +3033,7 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Address not found.",
-        "traceId": "0HNMDN4JE337T:00000001"
+        "traceId": "0HNMDSIHO2R9G:00000001"
       }
     },
     {
@@ -3020,7 +3058,7 @@
             "Front document cannot be empty."
           ]
         },
-        "traceId": "00-ba62af7ef07b21fba341849d5695fc2f-f8268adfa7224008-00"
+        "traceId": "00-d329b2000bb0edf286a08d40e72a1ba6-3ab34d1ef084c861-00"
       }
     },
     {
@@ -3045,7 +3083,7 @@
             "Front document cannot be empty."
           ]
         },
-        "traceId": "00-8020dfc069e0b92b6202475c89bf261d-aa5a9283d7e7d506-00"
+        "traceId": "00-8c137f0dad587a0cfe8cc190b893b398-6a272a28c305fd70-00"
       }
     },
     {
@@ -3070,7 +3108,7 @@
             "Front document cannot be empty."
           ]
         },
-        "traceId": "00-b6507b5e31e9863586af63776dc0a40b-e2b3dd2bfbc8d5fc-00"
+        "traceId": "00-48285b1bbc0924e776c50041df5eef3d-eb7af3c4ba0b661a-00"
       }
     },
     {
@@ -3095,11 +3133,47 @@
             "Front document cannot be empty."
           ]
         },
-        "traceId": "00-41cf49a563fe0ec7e39b1d0029a73046-256ed340a267f7d1-00"
+        "traceId": "00-6b26b4133a2f7881be63543d832ffeaf-5ecc38ee2857a339-00"
       }
     },
     {
       "id": 99,
+      "scenario": "Aadhaar Upload: duplicate (already registered to another user)",
+      "category": "KYC/Upload",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/users/kyc/aadhaar",
+      "expectedStatus": 409,
+      "actualStatus": 409,
+      "passed": true,
+      "request": {},
+      "response": {
+        "type": "https://httpstatuses.com/409",
+        "title": "ConflictException",
+        "status": 409,
+        "detail": "Aadhaar number is already registered to another user",
+        "traceId": "0HNMDSIHO2R9L:00000001"
+      }
+    },
+    {
+      "id": 100,
+      "scenario": "PAN Upload: duplicate (already registered to another user)",
+      "category": "KYC/Upload",
+      "method": "POST",
+      "url": "http://localhost:5062/api/v1/users/kyc/pan",
+      "expectedStatus": 409,
+      "actualStatus": 409,
+      "passed": true,
+      "request": {},
+      "response": {
+        "type": "https://httpstatuses.com/409",
+        "title": "ConflictException",
+        "status": 409,
+        "detail": "PAN number is already registered to another user",
+        "traceId": "0HNMDSIHO2R9M:00000001"
+      }
+    },
+    {
+      "id": 101,
       "scenario": "Get Product: not found",
       "category": "Product",
       "method": "GET",
@@ -3113,11 +3187,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Product not found.",
-        "traceId": "0HNMDN4JE3382:00000001"
+        "traceId": "0HNMDSIHO2R9N:00000001"
       }
     },
     {
-      "id": 100,
+      "id": 102,
       "scenario": "Create Product: empty body",
       "category": "Product",
       "method": "POST",
@@ -3164,11 +3238,11 @@
             "Minimum tenure must be at least 1 year."
           ]
         },
-        "traceId": "00-ebb0accfcd1e20ef0bc2575cb6da812a-7e56c6318a2d454d-00"
+        "traceId": "00-000acf56e269e9acc7a6c4e8d39b80d4-6bdf902cf8ebca90-00"
       }
     },
     {
-      "id": 101,
+      "id": 103,
       "scenario": "Create Product: invalid domain",
       "category": "Product",
       "method": "POST",
@@ -3199,11 +3273,11 @@
             "Domain must be one of: Health, Life, Motor."
           ]
         },
-        "traceId": "00-90b04aec3efc9701d707f657d5f9e9e9-eb50e106f11dc381-00"
+        "traceId": "00-7487130cca619b3499d99e639f7932bb-80fb56f1e9aedf5f-00"
       }
     },
     {
-      "id": 102,
+      "id": 104,
       "scenario": "Create Product: maxAge < minAge",
       "category": "Product",
       "method": "POST",
@@ -3234,11 +3308,11 @@
             "Maximum age must be greater than minimum age."
           ]
         },
-        "traceId": "00-15327a76781eb57205c4fa9730ebb823-1751efbdd5f1edad-00"
+        "traceId": "00-d7c986e40160f4c84d2b8fa5a24fe233-da428c15d523955a-00"
       }
     },
     {
-      "id": 103,
+      "id": 105,
       "scenario": "Create Product: maxSumAssured < minSumAssured",
       "category": "Product",
       "method": "POST",
@@ -3269,11 +3343,11 @@
             "Maximum sum assured must be greater than minimum sum assured."
           ]
         },
-        "traceId": "00-f0990718bc7819b1f6cdda38f633336c-e8fb372ffa5c0280-00"
+        "traceId": "00-91674f08b8cbae4dc95f3ffa0f22b3f6-75b35924fe74062a-00"
       }
     },
     {
-      "id": 104,
+      "id": 106,
       "scenario": "Create Product: family floater but maxFamilyMembers < 2",
       "category": "Product",
       "method": "POST",
@@ -3305,11 +3379,11 @@
             "Maximum family members must be at least 2 when family floater is allowed."
           ]
         },
-        "traceId": "00-5b14d853c5a00dbe840c7cfc14ca4bb5-be435f2ab4c09e40-00"
+        "traceId": "00-29c798ad219649db37f203c3831f6653-aabad1986f09e29a-00"
       }
     },
     {
-      "id": 105,
+      "id": 107,
       "scenario": "Create Product: missing product name",
       "category": "Product",
       "method": "POST",
@@ -3340,11 +3414,11 @@
             "Product name is required."
           ]
         },
-        "traceId": "00-9637e82e8448256e5e66462f953aaabb-c1187bf8554e5cfe-00"
+        "traceId": "00-95e171f8f8f559bc9cef34bb4a9b6030-9accef923a3dd32b-00"
       }
     },
     {
-      "id": 106,
+      "id": 108,
       "scenario": "Create Product: missing UIN",
       "category": "Product",
       "method": "POST",
@@ -3375,11 +3449,11 @@
             "UIN (Unique Identification Number) is required."
           ]
         },
-        "traceId": "00-0843d323679302dcb1449f2974069599-49a574f8f051e1af-00"
+        "traceId": "00-35ca4c6f5455244e683edfd92689e032-fc2c303a77ea28c0-00"
       }
     },
     {
-      "id": 107,
+      "id": 109,
       "scenario": "Create Product: missing description",
       "category": "Product",
       "method": "POST",
@@ -3410,11 +3484,11 @@
             "Description is required."
           ]
         },
-        "traceId": "00-cd58bc0edb7eec17ad8dd287ca742804-76ac5ad77e9e43d5-00"
+        "traceId": "00-4d86ce9a316aef00e13f2ffa5c3ddae4-88c54a1653b1a864-00"
       }
     },
     {
-      "id": 108,
+      "id": 110,
       "scenario": "Create Product: min age 0",
       "category": "Product",
       "method": "POST",
@@ -3445,11 +3519,11 @@
             "Minimum age must be at least 1."
           ]
         },
-        "traceId": "00-d844848390c4d0b097b78285391568ee-155df12528748c1c-00"
+        "traceId": "00-8b08408de16103edba6e30e63004f4bb-d3cd12a4d4b44743-00"
       }
     },
     {
-      "id": 109,
+      "id": 111,
       "scenario": "Create Product: negative min sum assured",
       "category": "Product",
       "method": "POST",
@@ -3480,11 +3554,11 @@
             "Minimum sum assured must be greater than zero."
           ]
         },
-        "traceId": "00-1bf39a88ff8343ee85e08ae84e6eb83d-e22319b4ce030f74-00"
+        "traceId": "00-f2329a87ff6548eaa03c31f59e615b2a-f0e50a810d60d7d6-00"
       }
     },
     {
-      "id": 110,
+      "id": 112,
       "scenario": "Create Product: negative waiting period",
       "category": "Product",
       "method": "POST",
@@ -3515,11 +3589,11 @@
             "Waiting period cannot be negative."
           ]
         },
-        "traceId": "00-0be4dc50165176a6f8197b9faa326e1b-a24fab087b424e21-00"
+        "traceId": "00-9fe3f89ce06b85954f0c0993224c673f-56d7151583d8b55d-00"
       }
     },
     {
-      "id": 111,
+      "id": 113,
       "scenario": "Create Product: max age > 100",
       "category": "Product",
       "method": "POST",
@@ -3550,11 +3624,11 @@
             "Maximum age cannot exceed 100."
           ]
         },
-        "traceId": "00-3b5e71d71a78e6cbd4c4902a5a31dab9-cc20b11f7366579f-00"
+        "traceId": "00-980efa6bc4ce4f8624f1212c172beb29-c0dfdb29eba902e3-00"
       }
     },
     {
-      "id": 112,
+      "id": 114,
       "scenario": "Update Rates: product not found",
       "category": "Product",
       "method": "PUT",
@@ -3570,11 +3644,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Product not found",
-        "traceId": "0HNMDN4JE338F:00000001"
+        "traceId": "0HNMDSIHO2RA4:00000001"
       }
     },
     {
-      "id": 113,
+      "id": 115,
       "scenario": "Toggle Status: product not found",
       "category": "Product",
       "method": "PUT",
@@ -3588,11 +3662,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Product not found",
-        "traceId": "0HNMDN4JE338G:00000001"
+        "traceId": "0HNMDSIHO2RA5:00000001"
       }
     },
     {
-      "id": 114,
+      "id": 116,
       "scenario": "Customer creating product (forbidden)",
       "category": "Product",
       "method": "POST",
@@ -3614,10 +3688,12 @@
         "waitingPeriodDays": 30,
         "allowsFamilyFloater": false
       },
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
-      "id": 115,
+      "id": 117,
       "scenario": "Generate Quote: empty body",
       "category": "Proposal/Quote",
       "method": "POST",
@@ -3645,11 +3721,11 @@
             "Tenure must be at least 1 year."
           ]
         },
-        "traceId": "00-2bf15cf375ccf4e89578091fce91903a-1f96841c11d024be-00"
+        "traceId": "00-557db1eb5a2db0f5e09b753b6874da78-1ac293a053e2e09e-00"
       }
     },
     {
-      "id": 116,
+      "id": 118,
       "scenario": "Generate Quote: age out of range",
       "category": "Proposal/Quote",
       "method": "POST",
@@ -3672,11 +3748,11 @@
             "Age must be between 1 and 100."
           ]
         },
-        "traceId": "00-ef50361203c09723efba5a75a7a48bf7-ddee614f4ab019bf-00"
+        "traceId": "00-a4f97b4b0fb226773f781868a1051ffb-a09d14f8d62e4363-00"
       }
     },
     {
-      "id": 117,
+      "id": 119,
       "scenario": "Generate Quote: zero sum assured",
       "category": "Proposal/Quote",
       "method": "POST",
@@ -3699,11 +3775,11 @@
             "Sum assured must be greater than zero."
           ]
         },
-        "traceId": "00-4d34080b8cd64e5a28a335629a8939f3-546c55670100b6bf-00"
+        "traceId": "00-74525bb7c84a153f6cde7e3d69a680da-176d6af96cc4e390-00"
       }
     },
     {
-      "id": 118,
+      "id": 120,
       "scenario": "Generate Quote: product not found",
       "category": "Proposal/Quote",
       "method": "POST",
@@ -3722,11 +3798,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Product not found",
-        "traceId": "0HNMDN4JE338L:00000001"
+        "traceId": "0HNMDSIHO2RAA:00000001"
       }
     },
     {
-      "id": 119,
+      "id": 121,
       "scenario": "Generate Quote: zero tenure",
       "category": "Proposal/Quote",
       "method": "POST",
@@ -3749,11 +3825,11 @@
             "Tenure must be at least 1 year."
           ]
         },
-        "traceId": "00-b26a29c760be81799c2868ab08dadf32-c5d95cc3ede35baa-00"
+        "traceId": "00-d25caeab6cb26a5815110f051a1f7bae-1dec702486248871-00"
       }
     },
     {
-      "id": 120,
+      "id": 122,
       "scenario": "Submit Proposal: empty body",
       "category": "Proposal/Submit",
       "method": "POST",
@@ -3798,11 +3874,11 @@
             "The CustomerMemberIds field is required."
           ]
         },
-        "traceId": "00-3713def21ac87b1983889bf9065187b1-6e08a089530e3dda-00"
+        "traceId": "00-1ea7c5cef92a4d0f53bfcc44b88b4d74-5084e47f477fa8e7-00"
       }
     },
     {
-      "id": 121,
+      "id": 123,
       "scenario": "Submit Proposal: invalid customer ID format",
       "category": "Proposal/Submit",
       "method": "POST",
@@ -3836,11 +3912,11 @@
             "The CustomerMemberIds field is required."
           ]
         },
-        "traceId": "00-3dd05b591a27739338ef53677594da5a-e63c1ca8fb1563b6-00"
+        "traceId": "00-37db680c81bf94566756fe63452bd98d-0576e8cfbaefbd2b-00"
       }
     },
     {
-      "id": 122,
+      "id": 124,
       "scenario": "Submit Proposal: invalid payment frequency",
       "category": "Proposal/Submit",
       "method": "POST",
@@ -3849,7 +3925,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "70000000-0000-0000-0000-000000000001",
         "sumAssured": 500000,
         "tenureYears": 10,
@@ -3871,11 +3947,11 @@
             "The CustomerMemberIds field is required."
           ]
         },
-        "traceId": "00-5ee3b4623d17e4a584a8c0af61c735bd-a29c23eaa5372267-00"
+        "traceId": "00-9347fde53ce5e73f793a4edff217448b-65e45a306b31a08b-00"
       }
     },
     {
-      "id": 123,
+      "id": 125,
       "scenario": "Submit Proposal: nominee shares don't add to 100%",
       "category": "Proposal/Submit",
       "method": "POST",
@@ -3884,7 +3960,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "70000000-0000-0000-0000-000000000001",
         "sumAssured": 500000,
         "tenureYears": 10,
@@ -3920,11 +3996,11 @@
             "The CustomerMemberIds field is required."
           ]
         },
-        "traceId": "00-fb3ec02696831ff1110127c200c08afe-c03f4c87fdd20dcc-00"
+        "traceId": "00-c2b0bb3f607e7a7ba56b877053e00bab-5ec7eebd903a619b-00"
       }
     },
     {
-      "id": 124,
+      "id": 126,
       "scenario": "Submit Proposal: minor nominee without appointee",
       "category": "Proposal/Submit",
       "method": "POST",
@@ -3933,7 +4009,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "70000000-0000-0000-0000-000000000001",
         "sumAssured": 500000,
         "tenureYears": 10,
@@ -3961,11 +4037,11 @@
             "Appointee name is required for a minor nominee."
           ]
         },
-        "traceId": "00-7681db77c50abd58350d9de58ee8e993-e9bd97890e385e17-00"
+        "traceId": "00-18bcf88c156f1617dd31bc0a333b977e-300cbb861ba08cb8-00"
       }
     },
     {
-      "id": 125,
+      "id": 127,
       "scenario": "Submit Proposal: missing product ID",
       "category": "Proposal/Submit",
       "method": "POST",
@@ -3974,7 +4050,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "",
         "sumAssured": 500000,
         "tenureYears": 10,
@@ -3997,11 +4073,11 @@
             "The CustomerMemberIds field is required."
           ]
         },
-        "traceId": "00-accce136280e765b36c65bc4cc66b159-79180a52604581b8-00"
+        "traceId": "00-89d5c791ef1f86d88fd0dbf79018aec8-a38a717d52a039c8-00"
       }
     },
     {
-      "id": 126,
+      "id": 128,
       "scenario": "Submit Proposal: zero tenure",
       "category": "Proposal/Submit",
       "method": "POST",
@@ -4010,7 +4086,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "70000000-0000-0000-0000-000000000001",
         "sumAssured": 500000,
         "tenureYears": 0,
@@ -4032,11 +4108,11 @@
             "The CustomerMemberIds field is required."
           ]
         },
-        "traceId": "00-4d52800dd473e23e28bab18fbf60cd27-6a29aa6e838bd52a-00"
+        "traceId": "00-5682d6cb1d1236b5d0c2d31da0d06add-11d0fd91572cfac9-00"
       }
     },
     {
-      "id": 127,
+      "id": 129,
       "scenario": "Submit Proposal: nominee future DOB",
       "category": "Proposal/Submit",
       "method": "POST",
@@ -4045,7 +4121,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "70000000-0000-0000-0000-000000000001",
         "sumAssured": 500000,
         "tenureYears": 10,
@@ -4073,11 +4149,11 @@
             "Nominee date of birth must be in the past."
           ]
         },
-        "traceId": "00-a2edf565dd17a72177fcbf21afe65d7a-8dde8be63112f5d9-00"
+        "traceId": "00-29b835dba63fd34978c0fdbe903e7826-bf7833fecf2ba945-00"
       }
     },
     {
-      "id": 128,
+      "id": 130,
       "scenario": "Submit Proposal: nominee missing full name",
       "category": "Proposal/Submit",
       "method": "POST",
@@ -4086,7 +4162,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "70000000-0000-0000-0000-000000000001",
         "sumAssured": 500000,
         "tenureYears": 10,
@@ -4114,11 +4190,11 @@
             "Nominee full name is required."
           ]
         },
-        "traceId": "00-3f825cc32a29111a0d488a8707919d3c-c36f78718a2ba40b-00"
+        "traceId": "00-0b139c7e531367f065de418dc21b2d57-84fae6d45b57fbe1-00"
       }
     },
     {
-      "id": 129,
+      "id": 131,
       "scenario": "Submit Proposal: nominee share > 100%",
       "category": "Proposal/Submit",
       "method": "POST",
@@ -4127,7 +4203,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "70000000-0000-0000-0000-000000000001",
         "sumAssured": 500000,
         "tenureYears": 10,
@@ -4158,11 +4234,11 @@
             "Nominee share percentage must be between 0.01 and 100."
           ]
         },
-        "traceId": "00-56bd7cf87db4c98b4e1dd63504dfb7e0-f4584af5be804214-00"
+        "traceId": "00-3d4942b9ea73ca3eb48e541aa5ca23c6-56046fbeb8d938e4-00"
       }
     },
     {
-      "id": 130,
+      "id": 132,
       "scenario": "Submit Proposal: motor detail missing vehicle number",
       "category": "Proposal/Submit",
       "method": "POST",
@@ -4171,7 +4247,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "70000000-0000-0000-0000-000000000001",
         "sumAssured": 500000,
         "tenureYears": 10,
@@ -4208,11 +4284,11 @@
             "Vehicle number is required."
           ]
         },
-        "traceId": "00-a5fc6ceb228120de302853a3ffae8e60-a7112ddc6914abc5-00"
+        "traceId": "00-b9234fe52ba32b3031f72b0c7f304be8-6c42b031d14c6496-00"
       }
     },
     {
-      "id": 131,
+      "id": 133,
       "scenario": "Submit Proposal: motor detail IDV zero",
       "category": "Proposal/Submit",
       "method": "POST",
@@ -4221,7 +4297,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "70000000-0000-0000-0000-000000000001",
         "sumAssured": 500000,
         "tenureYears": 10,
@@ -4258,11 +4334,11 @@
             "The VehicleType field is required."
           ]
         },
-        "traceId": "00-e8459d003e7898c0295dd74a998e2fa9-4b9ae7ddc2ba0c77-00"
+        "traceId": "00-c0542e8b3d0285054382df650ea164d6-5d780b39e39e5698-00"
       }
     },
     {
-      "id": 132,
+      "id": 134,
       "scenario": "Submit Proposal: motor detail future manufacture year",
       "category": "Proposal/Submit",
       "method": "POST",
@@ -4271,7 +4347,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "70000000-0000-0000-0000-000000000001",
         "sumAssured": 500000,
         "tenureYears": 10,
@@ -4308,11 +4384,11 @@
             "Manufacture year must be between 1900 and 2026."
           ]
         },
-        "traceId": "00-0b3528ac6f37acd035c74dcaf1efc583-dec9c04f1b802159-00"
+        "traceId": "00-c8b4ade3f96c94b20957f9ba297035a7-9803f8a22103d639-00"
       }
     },
     {
-      "id": 133,
+      "id": 135,
       "scenario": "Submit Proposal: motor detail missing engine number",
       "category": "Proposal/Submit",
       "method": "POST",
@@ -4321,7 +4397,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "70000000-0000-0000-0000-000000000001",
         "sumAssured": 500000,
         "tenureYears": 10,
@@ -4358,11 +4434,11 @@
             "Engine number is required."
           ]
         },
-        "traceId": "00-9897d2545c1ef9a4aacf107c8540a9fc-255fba25a242fb4a-00"
+        "traceId": "00-ca723d5c5ace0384fe0364077b5e304d-c8e2a6e25e6a4448-00"
       }
     },
     {
-      "id": 134,
+      "id": 136,
       "scenario": "Submit Proposal: motor detail missing chassis number",
       "category": "Proposal/Submit",
       "method": "POST",
@@ -4371,7 +4447,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "70000000-0000-0000-0000-000000000001",
         "sumAssured": 500000,
         "tenureYears": 10,
@@ -4408,11 +4484,11 @@
             "Chassis number is required."
           ]
         },
-        "traceId": "00-fc7dcd2a182628015d80c2e2dac444d3-22238f5b1a9b6d01-00"
+        "traceId": "00-fb86c1b47843136cc6b6a84801e8f808-b8fd155094677e6e-00"
       }
     },
     {
-      "id": 135,
+      "id": 137,
       "scenario": "Get Proposal: not found",
       "category": "Proposal",
       "method": "GET",
@@ -4426,23 +4502,25 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Proposal not found.",
-        "traceId": "0HNMDN4JE3396:00000001"
+        "traceId": "0HNMDSIHO2RAR:00000001"
       }
     },
     {
-      "id": 136,
+      "id": 138,
       "scenario": "Customer accessing other's proposal (forbidden)",
       "category": "Proposal",
       "method": "GET",
-      "url": "http://localhost:5062/api/v1/proposals/019edb72-09f2-7ae4-8038-4af964c09a34",
+      "url": "http://localhost:5062/api/v1/proposals/019ede54-c442-77a4-aa63-cc3da64a61bf",
       "expectedStatus": 403,
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
-      "id": 137,
+      "id": 139,
       "scenario": "Get Policy: not found",
       "category": "Policy",
       "method": "GET",
@@ -4456,11 +4534,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Policy not found.",
-        "traceId": "0HNMDN4JE3398:00000001"
+        "traceId": "0HNMDSIHO2RAT:00000001"
       }
     },
     {
-      "id": 138,
+      "id": 140,
       "scenario": "Cancel Policy: not found",
       "category": "Policy",
       "method": "PUT",
@@ -4474,15 +4552,15 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Policy not found.",
-        "traceId": "0HNMDN4JE3399:00000001"
+        "traceId": "0HNMDSIHO2RAU:00000001"
       }
     },
     {
-      "id": 139,
+      "id": 141,
       "scenario": "Request Endorsement: empty body",
       "category": "Policy/Endorsement",
       "method": "POST",
-      "url": "http://localhost:5062/api/v1/policies/8cef8a86-935b-4f44-94ea-649b46006f2e/endorsements",
+      "url": "http://localhost:5062/api/v1/policies/6cb1db74-612e-4a18-a985-e516a260cea9/endorsements",
       "expectedStatus": 400,
       "actualStatus": 400,
       "passed": true,
@@ -4497,15 +4575,15 @@
             "Description is required."
           ]
         },
-        "traceId": "00-9d6d721ff6aa10865cd2df2b9f5a8cd1-cf64173659777145-00"
+        "traceId": "00-d706a6e464ce217587a9d8125a86edd1-ffe6cce42d2bffc4-00"
       }
     },
     {
-      "id": 140,
+      "id": 142,
       "scenario": "Request Endorsement: description too short",
       "category": "Policy/Endorsement",
       "method": "POST",
-      "url": "http://localhost:5062/api/v1/policies/8cef8a86-935b-4f44-94ea-649b46006f2e/endorsements",
+      "url": "http://localhost:5062/api/v1/policies/6cb1db74-612e-4a18-a985-e516a260cea9/endorsements",
       "expectedStatus": 400,
       "actualStatus": 400,
       "passed": true,
@@ -4522,11 +4600,11 @@
             "Description must be at least 10 characters."
           ]
         },
-        "traceId": "00-eac895230063b4f58117dfa8695b3baa-05c740e5cf99fb12-00"
+        "traceId": "00-cd50c75e2485542250f388072c6edce4-09d5237a9748c038-00"
       }
     },
     {
-      "id": 141,
+      "id": 143,
       "scenario": "Request Endorsement: policy not found",
       "category": "Policy/Endorsement",
       "method": "POST",
@@ -4543,15 +4621,15 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Policy not found.",
-        "traceId": "0HNMDN4JE339C:00000001"
+        "traceId": "0HNMDSIHO2RB1:00000001"
       }
     },
     {
-      "id": 142,
+      "id": 144,
       "scenario": "Request Endorsement: invalid type enum",
       "category": "Policy/Endorsement",
       "method": "POST",
-      "url": "http://localhost:5062/api/v1/policies/8cef8a86-935b-4f44-94ea-649b46006f2e/endorsements",
+      "url": "http://localhost:5062/api/v1/policies/6cb1db74-612e-4a18-a985-e516a260cea9/endorsements",
       "expectedStatus": 400,
       "actualStatus": 400,
       "passed": true,
@@ -4571,15 +4649,15 @@
             "The JSON value could not be converted to SpeedClaim.Api.Dtos.Policies.RequestEndorsementRequest. Path: $.endorsementType | LineNumber: 0 | BytePositionInLine: 32."
           ]
         },
-        "traceId": "00-515fd8f56730ae4f0dbf5fa138b2fad1-a1ec635c35093010-00"
+        "traceId": "00-0512d9bb3876c12f8778cbaecc581414-f007f577cc74abaa-00"
       }
     },
     {
-      "id": 143,
+      "id": 145,
       "scenario": "Request Endorsement: description too long (>1000 chars)",
       "category": "Policy/Endorsement",
       "method": "POST",
-      "url": "http://localhost:5062/api/v1/policies/8cef8a86-935b-4f44-94ea-649b46006f2e/endorsements",
+      "url": "http://localhost:5062/api/v1/policies/6cb1db74-612e-4a18-a985-e516a260cea9/endorsements",
       "expectedStatus": 400,
       "actualStatus": 400,
       "passed": true,
@@ -4596,11 +4674,11 @@
             "Description cannot exceed 1000 characters."
           ]
         },
-        "traceId": "00-e79d960fd96a0284c2e5834f0ace6dbc-ece1ee126f7abe59-00"
+        "traceId": "00-5ebab85e49dd73bec1faf9db7e61b678-36b19c8b24388a3e-00"
       }
     },
     {
-      "id": 144,
+      "id": 146,
       "scenario": "Approve Endorsement: reject without reason",
       "category": "Policy/Endorsement",
       "method": "PUT",
@@ -4621,11 +4699,11 @@
             "Reason is required when rejecting an endorsement."
           ]
         },
-        "traceId": "00-c715019ef26e2c5fc40564f3176d99d2-065f8822d2d1af0b-00"
+        "traceId": "00-0df2b4264813f2166d4165ffacebdd9b-c70917f3e7876342-00"
       }
     },
     {
-      "id": 145,
+      "id": 147,
       "scenario": "Get Policy Endorsements: access denied (not owner)",
       "category": "Policy/Endorsement",
       "method": "GET",
@@ -4639,11 +4717,11 @@
         "title": "ForbiddenException",
         "status": 403,
         "detail": "Access denied or policy not found",
-        "traceId": "0HNMDN4JE339G:00000001"
+        "traceId": "0HNMDSIHO2RB5:00000001"
       }
     },
     {
-      "id": 146,
+      "id": 148,
       "scenario": "Get Nominees: access denied (not owner)",
       "category": "Policy/Nominee",
       "method": "GET",
@@ -4657,11 +4735,11 @@
         "title": "ForbiddenException",
         "status": 403,
         "detail": "Access denied or policy not found.",
-        "traceId": "0HNMDN4JE339H:00000001"
+        "traceId": "0HNMDSIHO2RB6:00000001"
       }
     },
     {
-      "id": 147,
+      "id": 149,
       "scenario": "Update Nominee: not found",
       "category": "Policy/Nominee",
       "method": "PUT",
@@ -4681,11 +4759,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Nominee not found.",
-        "traceId": "0HNMDN4JE339I:00000001"
+        "traceId": "0HNMDSIHO2RB7:00000001"
       }
     },
     {
-      "id": 148,
+      "id": 150,
       "scenario": "Update Nominee: share out of range",
       "category": "Policy/Nominee",
       "method": "PUT",
@@ -4709,11 +4787,11 @@
             "Share percentage must be between 0.01 and 100."
           ]
         },
-        "traceId": "00-502f80140654c294a93aed0eec1761e6-27e83688e7489bf0-00"
+        "traceId": "00-7e490d87b3cafe586275f5d2c7dae961-5f7d103e82d2b079-00"
       }
     },
     {
-      "id": 149,
+      "id": 151,
       "scenario": "Update Nominee: minor without appointee",
       "category": "Policy/Nominee",
       "method": "PUT",
@@ -4737,11 +4815,11 @@
             "Appointee name is required for a minor nominee."
           ]
         },
-        "traceId": "00-ee27c6e056ba0cadf90084010af9c640-6a8dc52720b625b4-00"
+        "traceId": "00-c5e8ddda0a3a18766200eba276cab948-c1c1b66eb327a431-00"
       }
     },
     {
-      "id": 150,
+      "id": 152,
       "scenario": "Update Nominee: future DOB",
       "category": "Policy/Nominee",
       "method": "PUT",
@@ -4765,11 +4843,11 @@
             "Date of birth must be in the past."
           ]
         },
-        "traceId": "00-fd9b4115d56cc007b3fcfe4de80b5ca4-9b29159baa643638-00"
+        "traceId": "00-37e25d8ec852c15da17382b349fa964e-053f56eb19146757-00"
       }
     },
     {
-      "id": 151,
+      "id": 153,
       "scenario": "Update Nominee: missing full name",
       "category": "Policy/Nominee",
       "method": "PUT",
@@ -4793,11 +4871,11 @@
             "Full name is required."
           ]
         },
-        "traceId": "00-fe1c272e6e9cdae138c85bc63c3c4d23-30a161fa83c4b29e-00"
+        "traceId": "00-000888201147c75786babebe8eba953b-5e6f9aacfbd07c27-00"
       }
     },
     {
-      "id": 152,
+      "id": 154,
       "scenario": "Update Nominee: missing relationship",
       "category": "Policy/Nominee",
       "method": "PUT",
@@ -4821,11 +4899,11 @@
             "Relationship is required."
           ]
         },
-        "traceId": "00-248245347ff3af1aea10b92dac3ebe32-2a04caf1395fe4b4-00"
+        "traceId": "00-d1b38f72048df63e1e2a32a79cbbbe8f-bc32bb34fcec413e-00"
       }
     },
     {
-      "id": 153,
+      "id": 155,
       "scenario": "Download Policy: not found",
       "category": "Policy",
       "method": "GET",
@@ -4839,11 +4917,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Policy not found.",
-        "traceId": "0HNMDN4JE339O:00000001"
+        "traceId": "0HNMDSIHO2RBD:00000001"
       }
     },
     {
-      "id": 154,
+      "id": 156,
       "scenario": "Approve Endorsement: not found",
       "category": "Policy/Endorsement",
       "method": "PUT",
@@ -4860,11 +4938,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Endorsement not found.",
-        "traceId": "0HNMDN4JE339P:00000001"
+        "traceId": "0HNMDSIHO2RBE:00000001"
       }
     },
     {
-      "id": 155,
+      "id": 157,
       "scenario": "Policy History: access denied (not owner)",
       "category": "Policy",
       "method": "GET",
@@ -4878,11 +4956,11 @@
         "title": "ForbiddenException",
         "status": 403,
         "detail": "Access denied to this policy.",
-        "traceId": "0HNMDN4JE339Q:00000001"
+        "traceId": "0HNMDSIHO2RBF:00000001"
       }
     },
     {
-      "id": 156,
+      "id": 158,
       "scenario": "Intimate Claim: empty body",
       "category": "Claim/Intimate",
       "method": "POST",
@@ -4910,11 +4988,11 @@
             "Claim amount must be greater than zero."
           ]
         },
-        "traceId": "00-c5e3aef110f2e2241a308fbff37247b1-89cef132dce08167-00"
+        "traceId": "00-76704d480ba19a4b9b2e005fc8018d12-d250acaf5627ccb3-00"
       }
     },
     {
-      "id": 157,
+      "id": 159,
       "scenario": "Intimate Claim: zero amount",
       "category": "Claim/Intimate",
       "method": "POST",
@@ -4923,7 +5001,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "policyId": "8cef8a86-935b-4f44-94ea-649b46006f2e",
+        "policyId": "6cb1db74-612e-4a18-a985-e516a260cea9",
         "claimType": 2,
         "claimAmountRequested": 0,
         "incidentDate": "2025-01-01T10:00:00Z",
@@ -4938,11 +5016,11 @@
             "Claim amount must be greater than zero."
           ]
         },
-        "traceId": "00-1e2214e7923012685c639a3e509910c3-9fa7d83d6d4efb77-00"
+        "traceId": "00-089108489b8cc2d1aba1b9d3641c7129-f99c742523df653c-00"
       }
     },
     {
-      "id": 158,
+      "id": 160,
       "scenario": "Intimate Claim: future incident date",
       "category": "Claim/Intimate",
       "method": "POST",
@@ -4951,7 +5029,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "policyId": "8cef8a86-935b-4f44-94ea-649b46006f2e",
+        "policyId": "6cb1db74-612e-4a18-a985-e516a260cea9",
         "claimType": 2,
         "claimAmountRequested": 50000,
         "incidentDate": "2030-01-01T10:00:00Z",
@@ -4966,11 +5044,11 @@
             "Incident date cannot be in the future."
           ]
         },
-        "traceId": "00-81f5d184cbe63afb7e5b298ea7f9ab61-d49b744dc7a35ef6-00"
+        "traceId": "00-e587de945386eb7b398733c43b036598-732f54671790021f-00"
       }
     },
     {
-      "id": 159,
+      "id": 161,
       "scenario": "Intimate Claim: description too short",
       "category": "Claim/Intimate",
       "method": "POST",
@@ -4979,7 +5057,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "policyId": "8cef8a86-935b-4f44-94ea-649b46006f2e",
+        "policyId": "6cb1db74-612e-4a18-a985-e516a260cea9",
         "claimType": 2,
         "claimAmountRequested": 50000,
         "incidentDate": "2025-01-01T10:00:00Z",
@@ -4994,11 +5072,11 @@
             "Incident description must be at least 10 characters."
           ]
         },
-        "traceId": "00-e9890779d610d47fdcea28858b181f66-4978042943511767-00"
+        "traceId": "00-962298525ed11c23dc64c3f030154bfe-ede4e5fde7b5e2e6-00"
       }
     },
     {
-      "id": 160,
+      "id": 162,
       "scenario": "Intimate Claim: description exactly 9 chars (under min 10)",
       "category": "Claim/Intimate",
       "method": "POST",
@@ -5007,7 +5085,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "policyId": "8cef8a86-935b-4f44-94ea-649b46006f2e",
+        "policyId": "6cb1db74-612e-4a18-a985-e516a260cea9",
         "claimType": 2,
         "claimAmountRequested": 50000,
         "incidentDate": "2025-01-01T10:00:00Z",
@@ -5022,11 +5100,11 @@
             "Incident description must be at least 10 characters."
           ]
         },
-        "traceId": "00-56972ae7e5e176d49960343e0826d9ea-5d3a9b2f4c3870d4-00"
+        "traceId": "00-6a2297d08b40ed1da8100ebe6cb71698-69a3c38e1557630b-00"
       }
     },
     {
-      "id": 161,
+      "id": 163,
       "scenario": "Intimate Claim: description >2000 chars",
       "category": "Claim/Intimate",
       "method": "POST",
@@ -5035,7 +5113,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "policyId": "8cef8a86-935b-4f44-94ea-649b46006f2e",
+        "policyId": "6cb1db74-612e-4a18-a985-e516a260cea9",
         "claimType": 2,
         "claimAmountRequested": 50000,
         "incidentDate": "2025-01-01T10:00:00Z",
@@ -5050,11 +5128,11 @@
             "Incident description cannot exceed 2000 characters."
           ]
         },
-        "traceId": "00-7a9c96b4501a2d8cdb7d869582e4a2bb-be8cfe4771c18d7f-00"
+        "traceId": "00-30fc0385614637679411facc14eb14cc-346ff70e95de3205-00"
       }
     },
     {
-      "id": 162,
+      "id": 164,
       "scenario": "Intimate Claim: policy not found (non-existent GUID)",
       "category": "Claim/Intimate",
       "method": "POST",
@@ -5074,11 +5152,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Policy not found or does not belong to the customer.",
-        "traceId": "0HNMDN4JE33A1:00000001"
+        "traceId": "0HNMDSIHO2RBM:00000001"
       }
     },
     {
-      "id": 163,
+      "id": 165,
       "scenario": "Intimate Claim: invalid claim type",
       "category": "Claim/Intimate",
       "method": "POST",
@@ -5087,7 +5165,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "policyId": "8cef8a86-935b-4f44-94ea-649b46006f2e",
+        "policyId": "6cb1db74-612e-4a18-a985-e516a260cea9",
         "claimType": "InvalidType",
         "claimAmountRequested": 50000,
         "incidentDate": "2025-01-01T10:00:00Z",
@@ -5105,11 +5183,11 @@
             "The JSON value could not be converted to SpeedClaim.Api.Dtos.Claims.IntimateClaimRequest. Path: $.claimType | LineNumber: 0 | BytePositionInLine: 76."
           ]
         },
-        "traceId": "00-0366ba0e69ad1d7f70f9241bc08f8743-f4748416e5d54f0e-00"
+        "traceId": "00-4b8056bc6e1f81f94b57be45c1af713b-8f3515ed4754badf-00"
       }
     },
     {
-      "id": 164,
+      "id": 166,
       "scenario": "Get Claim: not found",
       "category": "Claim",
       "method": "GET",
@@ -5123,11 +5201,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Claim not found.",
-        "traceId": "0HNMDN4JE33A3:00000001"
+        "traceId": "0HNMDSIHO2RBO:00000001"
       }
     },
     {
-      "id": 165,
+      "id": 167,
       "scenario": "Get Claim History: not found",
       "category": "Claim",
       "method": "GET",
@@ -5141,15 +5219,15 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Claim not found.",
-        "traceId": "0HNMDN4JE33A4:00000001"
+        "traceId": "0HNMDSIHO2RBP:00000001"
       }
     },
     {
-      "id": 166,
+      "id": 168,
       "scenario": "Update Claim Status: invalid status value",
       "category": "Claim/Status",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/claims/576cbb22-8f78-4482-8af0-3e68a4261c60/status",
+      "url": "http://localhost:5062/api/v1/claims/7d6d145b-f0bc-4cb7-b4a7-f247418429c9/status",
       "expectedStatus": 400,
       "actualStatus": 400,
       "passed": true,
@@ -5166,15 +5244,15 @@
             "Invalid claim status. Valid values: Intimated, DocumentsPending, PreAuthRequested, PreAuthApproved, UnderReview, Approved, Rejected, Settled, Withdrawn."
           ]
         },
-        "traceId": "00-f48e2f71cdaf0f3999b4bc6b612e350e-27c3f0714f27eaa5-00"
+        "traceId": "00-a384bf63f6af0ecba6d4f565efe8dcd1-3bd1a2db4db968e3-00"
       }
     },
     {
-      "id": 167,
+      "id": 169,
       "scenario": "Update Claim Status: empty remarks",
       "category": "Claim/Status",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/claims/576cbb22-8f78-4482-8af0-3e68a4261c60/status",
+      "url": "http://localhost:5062/api/v1/claims/7d6d145b-f0bc-4cb7-b4a7-f247418429c9/status",
       "expectedStatus": 400,
       "actualStatus": 400,
       "passed": true,
@@ -5191,11 +5269,11 @@
             "Remarks are required when updating claim status."
           ]
         },
-        "traceId": "00-7e655ad39b8f6a79e2ecefa840b2590d-8fa9ab02e87ed4db-00"
+        "traceId": "00-ed84bd8675f0081daef35b58afa1cd6c-9cda7866d6099bea-00"
       }
     },
     {
-      "id": 168,
+      "id": 170,
       "scenario": "Update Claim Status: claim not found",
       "category": "Claim/Status",
       "method": "PUT",
@@ -5212,15 +5290,15 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Claim not found.",
-        "traceId": "0HNMDN4JE33A7:00000001"
+        "traceId": "0HNMDSIHO2RBS:00000001"
       }
     },
     {
-      "id": 169,
+      "id": 171,
       "scenario": "Update Claim Status: remarks too long (>1000 chars)",
       "category": "Claim/Status",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/claims/576cbb22-8f78-4482-8af0-3e68a4261c60/status",
+      "url": "http://localhost:5062/api/v1/claims/7d6d145b-f0bc-4cb7-b4a7-f247418429c9/status",
       "expectedStatus": 400,
       "actualStatus": 400,
       "passed": true,
@@ -5237,15 +5315,15 @@
             "Remarks cannot exceed 1000 characters."
           ]
         },
-        "traceId": "00-071ce03bc7e5d275e0770620c829ed3b-8ff2d24ea4754e51-00"
+        "traceId": "00-0c29d3c675ca68ed7550a1add052a3d5-7c8c2109c9820370-00"
       }
     },
     {
-      "id": 170,
+      "id": 172,
       "scenario": "Approve Claim: reject without reason",
       "category": "Claim/Approve",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/claims/576cbb22-8f78-4482-8af0-3e68a4261c60/approve",
+      "url": "http://localhost:5062/api/v1/claims/7d6d145b-f0bc-4cb7-b4a7-f247418429c9/approve",
       "expectedStatus": 400,
       "actualStatus": 400,
       "passed": true,
@@ -5264,15 +5342,15 @@
             "Rejection reason must be at least 10 characters."
           ]
         },
-        "traceId": "00-5440ca5e528f702e7a93c0ff3d8e9872-7139fd6d4bb47943-00"
+        "traceId": "00-1d1f8b04e0a3729e9da7ce2f98befd38-5cdee078f01c288d-00"
       }
     },
     {
-      "id": 171,
+      "id": 173,
       "scenario": "Approve Claim: reject reason too short",
       "category": "Claim/Approve",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/claims/576cbb22-8f78-4482-8af0-3e68a4261c60/approve",
+      "url": "http://localhost:5062/api/v1/claims/7d6d145b-f0bc-4cb7-b4a7-f247418429c9/approve",
       "expectedStatus": 400,
       "actualStatus": 400,
       "passed": true,
@@ -5290,15 +5368,15 @@
             "Rejection reason must be at least 10 characters."
           ]
         },
-        "traceId": "00-859458bb6f14bb5272795d2ba0284782-6953e088ad280325-00"
+        "traceId": "00-27817a7d3ce65a9b86d6dad3d14a0c68-f2a908d1029dd398-00"
       }
     },
     {
-      "id": 172,
+      "id": 174,
       "scenario": "Approve Claim: reject reason too long (>1000 chars)",
       "category": "Claim/Approve",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/claims/576cbb22-8f78-4482-8af0-3e68a4261c60/approve",
+      "url": "http://localhost:5062/api/v1/claims/7d6d145b-f0bc-4cb7-b4a7-f247418429c9/approve",
       "expectedStatus": 400,
       "actualStatus": 400,
       "passed": true,
@@ -5316,15 +5394,15 @@
             "Rejection reason cannot exceed 1000 characters."
           ]
         },
-        "traceId": "00-00d93a8f0195854b12b6a4b90f1ab254-7c049d0a0c3b9b5c-00"
+        "traceId": "00-925062925cae5b78a7ac7562889a7ed6-9ab570246660edab-00"
       }
     },
     {
-      "id": 173,
+      "id": 175,
       "scenario": "Approve Claim: approve without amount",
       "category": "Claim/Approve",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/claims/576cbb22-8f78-4482-8af0-3e68a4261c60/approve",
+      "url": "http://localhost:5062/api/v1/claims/7d6d145b-f0bc-4cb7-b4a7-f247418429c9/approve",
       "expectedStatus": 400,
       "actualStatus": 400,
       "passed": true,
@@ -5342,15 +5420,15 @@
             "Approved amount is required when approving a claim."
           ]
         },
-        "traceId": "00-782dafb30607240792a6d945f1ada5d5-5779afdbef0d0d5c-00"
+        "traceId": "00-6dc855cab679eee4c2d2c556ffd095cb-53401a52f51a0f98-00"
       }
     },
     {
-      "id": 174,
+      "id": 176,
       "scenario": "Approve Claim: approve with zero amount",
       "category": "Claim/Approve",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/claims/576cbb22-8f78-4482-8af0-3e68a4261c60/approve",
+      "url": "http://localhost:5062/api/v1/claims/7d6d145b-f0bc-4cb7-b4a7-f247418429c9/approve",
       "expectedStatus": 400,
       "actualStatus": 400,
       "passed": true,
@@ -5368,15 +5446,15 @@
             "Approved amount must be greater than zero."
           ]
         },
-        "traceId": "00-39033b69254b9a4adc49aae203daa7e3-db3878e6c7bfb912-00"
+        "traceId": "00-863ab9a59f62f6aa84371b38bd2a4009-c60b11f0a6834713-00"
       }
     },
     {
-      "id": 175,
+      "id": 177,
       "scenario": "Approve Claim: approve with negative amount",
       "category": "Claim/Approve",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/claims/576cbb22-8f78-4482-8af0-3e68a4261c60/approve",
+      "url": "http://localhost:5062/api/v1/claims/7d6d145b-f0bc-4cb7-b4a7-f247418429c9/approve",
       "expectedStatus": 400,
       "actualStatus": 400,
       "passed": true,
@@ -5394,11 +5472,11 @@
             "Approved amount must be greater than zero."
           ]
         },
-        "traceId": "00-6047895ce186998cce0397cb7e2fa8d4-b88ff64a90f5ee0c-00"
+        "traceId": "00-553a4a2e176a3fef6bbc22fbc50d9282-7f278b6a6778d712-00"
       }
     },
     {
-      "id": 176,
+      "id": 178,
       "scenario": "Approve Claim: claim not found",
       "category": "Claim/Approve",
       "method": "PUT",
@@ -5416,15 +5494,15 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Claim not found.",
-        "traceId": "0HNMDN4JE33AF:00000001"
+        "traceId": "0HNMDSIHO2RC4:00000001"
       }
     },
     {
-      "id": 177,
+      "id": 179,
       "scenario": "Assign Surveyor: empty notes",
       "category": "Claim/Surveyor",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/claims/c3ef109d-533d-418f-9ea9-9b7306e7bf61/assign-surveyor",
+      "url": "http://localhost:5062/api/v1/claims/473dc488-7858-4312-9785-eac94b6ff59b/assign-surveyor",
       "expectedStatus": 400,
       "actualStatus": 400,
       "passed": true,
@@ -5441,15 +5519,15 @@
             "Notes are required when assigning a surveyor."
           ]
         },
-        "traceId": "00-f99d7e9f39a6378ce9d2d79f20fef86c-94a917ed42526c28-00"
+        "traceId": "00-42fd26a2be820f37c265e42e2a2e0ae5-49c25738c36c05fd-00"
       }
     },
     {
-      "id": 178,
+      "id": 180,
       "scenario": "Assign Surveyor: notes too long (>500 chars)",
       "category": "Claim/Surveyor",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/claims/c3ef109d-533d-418f-9ea9-9b7306e7bf61/assign-surveyor",
+      "url": "http://localhost:5062/api/v1/claims/473dc488-7858-4312-9785-eac94b6ff59b/assign-surveyor",
       "expectedStatus": 400,
       "actualStatus": 400,
       "passed": true,
@@ -5466,11 +5544,11 @@
             "Notes cannot exceed 500 characters."
           ]
         },
-        "traceId": "00-66c0eb9e9325902d69c27b26ca08c5bd-f522cf3bc6d52079-00"
+        "traceId": "00-7ba78c5a4d5262c9828b94d44ff63679-5b8d73dc873f66ed-00"
       }
     },
     {
-      "id": 179,
+      "id": 181,
       "scenario": "Assign Surveyor: claim not found",
       "category": "Claim/Surveyor",
       "method": "PUT",
@@ -5487,11 +5565,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Claim not found.",
-        "traceId": "0HNMDN4JE33AI:00000001"
+        "traceId": "0HNMDSIHO2RC7:00000001"
       }
     },
     {
-      "id": 180,
+      "id": 182,
       "scenario": "Settle Claim: not found",
       "category": "Claim/Settle",
       "method": "PUT",
@@ -5505,11 +5583,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Claim not found.",
-        "traceId": "0HNMDN4JE33AJ:00000001"
+        "traceId": "0HNMDSIHO2RC8:00000001"
       }
     },
     {
-      "id": 181,
+      "id": 183,
       "scenario": "Assign Claim: not found",
       "category": "Claim",
       "method": "PUT",
@@ -5523,11 +5601,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Claim not found.",
-        "traceId": "0HNMDN4JE33AK:00000001"
+        "traceId": "0HNMDSIHO2RC9:00000001"
       }
     },
     {
-      "id": 182,
+      "id": 184,
       "scenario": "Request Docs: claim not found",
       "category": "Claim",
       "method": "POST",
@@ -5541,11 +5619,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Claim not found.",
-        "traceId": "0HNMDN4JE33AL:00000001"
+        "traceId": "0HNMDSIHO2RCA:00000001"
       }
     },
     {
-      "id": 183,
+      "id": 185,
       "scenario": "Approve Pre-Auth: claim not found",
       "category": "Claim",
       "method": "PUT",
@@ -5559,11 +5637,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Claim not found.",
-        "traceId": "0HNMDN4JE33AM:00000001"
+        "traceId": "0HNMDSIHO2RCB:00000001"
       }
     },
     {
-      "id": 184,
+      "id": 186,
       "scenario": "Raise Grievance: empty body",
       "category": "Grievance",
       "method": "POST",
@@ -5582,11 +5660,11 @@
             "Grievance description is required."
           ]
         },
-        "traceId": "00-8bc56fb1ec2bb4c4ca3925afee83c986-ade5481a19b6a66f-00"
+        "traceId": "00-489b66b7cea6d4b04785428a37792885-687bfac937f7b411-00"
       }
     },
     {
-      "id": 185,
+      "id": 187,
       "scenario": "Raise Grievance: description too short",
       "category": "Grievance",
       "method": "POST",
@@ -5607,11 +5685,11 @@
             "Description must be at least 10 characters."
           ]
         },
-        "traceId": "00-eb0f57af4d5c1acedcaaf87d8064024a-e9ff5da2ecd37d80-00"
+        "traceId": "00-93896031ba7af6041d41ceb9232e05e7-af33140b491d28cd-00"
       }
     },
     {
-      "id": 186,
+      "id": 188,
       "scenario": "Raise Grievance: description exactly 9 chars",
       "category": "Grievance",
       "method": "POST",
@@ -5632,11 +5710,11 @@
             "Description must be at least 10 characters."
           ]
         },
-        "traceId": "00-6246e89d02da5f6797231c3f198e0a69-426cbe478f8cf8b3-00"
+        "traceId": "00-1b56231d676b9092142e04006aecbe04-b5bdfeb98963b809-00"
       }
     },
     {
-      "id": 187,
+      "id": 189,
       "scenario": "Raise Grievance: description too long (>2000 chars)",
       "category": "Grievance",
       "method": "POST",
@@ -5657,11 +5735,11 @@
             "Description cannot exceed 2000 characters."
           ]
         },
-        "traceId": "00-522f2f386677a4fb1ddf818ceed89dc6-4d9dbe6a5d527d19-00"
+        "traceId": "00-e60b329a431efa37fee4ad9b6db41294-29e5aefdc1d676e1-00"
       }
     },
     {
-      "id": 188,
+      "id": 190,
       "scenario": "Raise Grievance: invalid category",
       "category": "Grievance",
       "method": "POST",
@@ -5685,11 +5763,11 @@
             "The JSON value could not be converted to SpeedClaim.Api.Dtos.Grievances.RaiseGrievanceRequest. Path: $.category | LineNumber: 0 | BytePositionInLine: 29."
           ]
         },
-        "traceId": "00-6386bb2a1973aed4f4c2cdaa6935536c-baddc1a370d4c686-00"
+        "traceId": "00-4bae12c463c2fe90ddd614fbba6e6404-7a5745b94879c229-00"
       }
     },
     {
-      "id": 189,
+      "id": 191,
       "scenario": "Get Grievance: not found",
       "category": "Grievance",
       "method": "GET",
@@ -5703,11 +5781,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Grievance not found.",
-        "traceId": "0HNMDN4JE33AS:00000001"
+        "traceId": "0HNMDSIHO2RCH:00000001"
       }
     },
     {
-      "id": 190,
+      "id": 192,
       "scenario": "Update Grievance Status: not found",
       "category": "Grievance",
       "method": "PUT",
@@ -5723,15 +5801,15 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Grievance not found.",
-        "traceId": "0HNMDN4JE33AT:00000001"
+        "traceId": "0HNMDSIHO2RCI:00000001"
       }
     },
     {
-      "id": 191,
+      "id": 193,
       "scenario": "Update Grievance Status: resolve without notes",
       "category": "Grievance",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/grievances/16019b2d-4f2a-49f5-9f81-7f0e7bafb95a/status",
+      "url": "http://localhost:5062/api/v1/grievances/e11ec0ed-e689-4043-a9e4-9516aed14c0e/status",
       "expectedStatus": 400,
       "actualStatus": 400,
       "passed": true,
@@ -5748,15 +5826,15 @@
             "Resolution notes are required when resolving or closing a grievance."
           ]
         },
-        "traceId": "00-6927f2d4884d13b05d694fcfc58af232-10fa5d75584a6583-00"
+        "traceId": "00-36dd59137887d48c9aca572ebf6ab4d0-8758ef7f01cea931-00"
       }
     },
     {
-      "id": 192,
+      "id": 194,
       "scenario": "Update Grievance Status: close without notes",
       "category": "Grievance",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/grievances/16019b2d-4f2a-49f5-9f81-7f0e7bafb95a/status",
+      "url": "http://localhost:5062/api/v1/grievances/e11ec0ed-e689-4043-a9e4-9516aed14c0e/status",
       "expectedStatus": 400,
       "actualStatus": 400,
       "passed": true,
@@ -5773,15 +5851,15 @@
             "Resolution notes are required when resolving or closing a grievance."
           ]
         },
-        "traceId": "00-398906a45a27d7f5eac2dad47da3f260-82f7263f7a578c2d-00"
+        "traceId": "00-6be330fc74f6f6d3bea1057ab00046c4-5cbe5e7a25d06d6a-00"
       }
     },
     {
-      "id": 193,
+      "id": 195,
       "scenario": "Update Grievance Status: invalid status enum",
       "category": "Grievance",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/grievances/16019b2d-4f2a-49f5-9f81-7f0e7bafb95a/status",
+      "url": "http://localhost:5062/api/v1/grievances/e11ec0ed-e689-4043-a9e4-9516aed14c0e/status",
       "expectedStatus": 400,
       "actualStatus": 400,
       "passed": true,
@@ -5800,11 +5878,11 @@
             "The JSON value could not be converted to SpeedClaim.Api.Dtos.Grievances.UpdateGrievanceStatusRequest. Path: $.status | LineNumber: 0 | BytePositionInLine: 25."
           ]
         },
-        "traceId": "00-b37f0af15cd0aeea32f863a0b89790e9-6e4404a3910e1a81-00"
+        "traceId": "00-9519799a3d50e0d759e2d7195659a6f2-3f499accedecbaa7-00"
       }
     },
     {
-      "id": 194,
+      "id": 196,
       "scenario": "Assign Grievance: not found",
       "category": "Grievance",
       "method": "PUT",
@@ -5820,11 +5898,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Grievance not found.",
-        "traceId": "0HNMDN4JE33B1:00000001"
+        "traceId": "0HNMDSIHO2RCM:00000001"
       }
     },
     {
-      "id": 195,
+      "id": 197,
       "scenario": "Pay Premium: schedule not found",
       "category": "Payment",
       "method": "POST",
@@ -5840,11 +5918,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Schedule not found.",
-        "traceId": "0HNMDN4JE33B2:00000001"
+        "traceId": "0HNMDSIHO2RCN:00000001"
       }
     },
     {
-      "id": 196,
+      "id": 198,
       "scenario": "Get Schedule: invalid policy ID",
       "category": "Payment",
       "method": "GET",
@@ -5858,11 +5936,11 @@
         "title": "ValidationException",
         "status": 400,
         "detail": "Invalid Policy ID",
-        "traceId": "0HNMDN4JE33B3:00000001"
+        "traceId": "0HNMDSIHO2RCO:00000001"
       }
     },
     {
-      "id": 197,
+      "id": 199,
       "scenario": "Download Receipt: not found",
       "category": "Payment",
       "method": "GET",
@@ -5876,11 +5954,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Payment not found or access denied.",
-        "traceId": "0HNMDN4JE33B4:00000001"
+        "traceId": "0HNMDSIHO2RCP:00000001"
       }
     },
     {
-      "id": 198,
+      "id": 200,
       "scenario": "Reconcile Payment: not found",
       "category": "Payment",
       "method": "PUT",
@@ -5894,11 +5972,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Payment not found",
-        "traceId": "0HNMDN4JE33B5:00000001"
+        "traceId": "0HNMDSIHO2RCQ:00000001"
       }
     },
     {
-      "id": 199,
+      "id": 201,
       "scenario": "Refund Payment: not found",
       "category": "Payment",
       "method": "POST",
@@ -5912,11 +5990,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Payment not found",
-        "traceId": "0HNMDN4JE33B6:00000001"
+        "traceId": "0HNMDSIHO2RCR:00000001"
       }
     },
     {
-      "id": 200,
+      "id": 202,
       "scenario": "Process Payout: claim not found",
       "category": "Payment",
       "method": "POST",
@@ -5930,11 +6008,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Claim not found.",
-        "traceId": "0HNMDN4JE33B7:00000001"
+        "traceId": "0HNMDSIHO2RCS:00000001"
       }
     },
     {
-      "id": 201,
+      "id": 203,
       "scenario": "Mark Claim Settled: not found",
       "category": "Payment",
       "method": "PUT",
@@ -5948,11 +6026,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Claim not found.",
-        "traceId": "0HNMDN4JE33B8:00000001"
+        "traceId": "0HNMDSIHO2RCT:00000001"
       }
     },
     {
-      "id": 202,
+      "id": 204,
       "scenario": "Approve Commission: not found",
       "category": "Payment",
       "method": "POST",
@@ -5966,11 +6044,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Commission not found",
-        "traceId": "0HNMDN4JE33B9:00000001"
+        "traceId": "0HNMDSIHO2RCU:00000001"
       }
     },
     {
-      "id": 203,
+      "id": 205,
       "scenario": "Customer accessing finance reports (forbidden)",
       "category": "Payment",
       "method": "GET",
@@ -5979,22 +6057,26 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
-      "id": 204,
+      "id": 206,
       "scenario": "Customer accessing reconcile (forbidden)",
       "category": "Payment",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/payments/8f0b0b29-c59c-48a8-a70c-c51418739712/reconcile",
+      "url": "http://localhost:5062/api/v1/payments/e97217a0-e328-48d5-98a8-93b5e05d41cb/reconcile",
       "expectedStatus": 403,
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
-      "id": 205,
+      "id": 207,
       "scenario": "Get Schedule: invalid ID format (not-a-guid)",
       "category": "Payment",
       "method": "GET",
@@ -6008,11 +6090,11 @@
         "title": "ValidationException",
         "status": 400,
         "detail": "Invalid Policy ID",
-        "traceId": "0HNMDN4JE33BC:00000001"
+        "traceId": "0HNMDSIHO2RD1:00000001"
       }
     },
     {
-      "id": 206,
+      "id": 208,
       "scenario": "Download Receipt: invalid payment ID format",
       "category": "Payment",
       "method": "GET",
@@ -6026,11 +6108,11 @@
         "title": "ValidationException",
         "status": 400,
         "detail": "Invalid Payment ID",
-        "traceId": "0HNMDN4JE33BD:00000001"
+        "traceId": "0HNMDSIHO2RD2:00000001"
       }
     },
     {
-      "id": 207,
+      "id": 209,
       "scenario": "Process Payout: invalid claim ID",
       "category": "Payment",
       "method": "POST",
@@ -6044,11 +6126,11 @@
         "title": "ValidationException",
         "status": 400,
         "detail": "Invalid Claim ID",
-        "traceId": "0HNMDN4JE33BE:00000001"
+        "traceId": "0HNMDSIHO2RD3:00000001"
       }
     },
     {
-      "id": 208,
+      "id": 210,
       "scenario": "Approve Commission: invalid ID",
       "category": "Payment",
       "method": "POST",
@@ -6062,11 +6144,11 @@
         "title": "ValidationException",
         "status": 400,
         "detail": "Invalid Commission ID",
-        "traceId": "0HNMDN4JE33BF:00000001"
+        "traceId": "0HNMDSIHO2RD4:00000001"
       }
     },
     {
-      "id": 209,
+      "id": 211,
       "scenario": "Agent accessing finance reports (forbidden)",
       "category": "Payment",
       "method": "GET",
@@ -6075,22 +6157,26 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
-      "id": 210,
+      "id": 212,
       "scenario": "Underwriter accessing reconcile (forbidden)",
       "category": "Payment",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/payments/8f0b0b29-c59c-48a8-a70c-c51418739712/reconcile",
+      "url": "http://localhost:5062/api/v1/payments/e97217a0-e328-48d5-98a8-93b5e05d41cb/reconcile",
       "expectedStatus": 403,
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
-      "id": 211,
+      "id": 213,
       "scenario": "Agent Profile Update: empty body",
       "category": "Agent",
       "method": "PUT",
@@ -6122,11 +6208,11 @@
             "Salutation must be one of: Mr, Mrs, Ms, Dr, Prof."
           ]
         },
-        "traceId": "00-c89af1fd71c381c17d47f6ff991ad8e2-843b14b482ced68d-00"
+        "traceId": "00-5fd05817403edead2fbc3cb16d913b37-3bd6c09166a46283-00"
       }
     },
     {
-      "id": 212,
+      "id": 214,
       "scenario": "Agent Profile Update: invalid phone",
       "category": "Agent",
       "method": "PUT",
@@ -6149,11 +6235,11 @@
             "Phone number must be exactly 10 digits."
           ]
         },
-        "traceId": "00-df4d7975f133c9dfd818030afcce0ede-2c084e81fd811160-00"
+        "traceId": "00-31766f4ec498b1e9048ca01bd5997e09-80f99f4bf91e5a5a-00"
       }
     },
     {
-      "id": 213,
+      "id": 215,
       "scenario": "Agent Profile Update: missing firstName",
       "category": "Agent",
       "method": "PUT",
@@ -6176,11 +6262,11 @@
             "First name is required."
           ]
         },
-        "traceId": "00-f5b9271890fb97a22f66650aadc7ae52-db186979c7b24d90-00"
+        "traceId": "00-96e50929518625e26ec79fef45c8eef9-f95d5619584b38e6-00"
       }
     },
     {
-      "id": 214,
+      "id": 216,
       "scenario": "Agent Profile Update: missing lastName",
       "category": "Agent",
       "method": "PUT",
@@ -6203,11 +6289,11 @@
             "Last name is required."
           ]
         },
-        "traceId": "00-efebb95f3fdb37bc5585321070977a96-c7ef97a75ef18943-00"
+        "traceId": "00-42158354c2ae82ee54dd8b8a0f9c85e8-f70fcd719cf7e839-00"
       }
     },
     {
-      "id": 215,
+      "id": 217,
       "scenario": "Agent Profile Update: invalid salutation",
       "category": "Agent",
       "method": "PUT",
@@ -6230,11 +6316,11 @@
             "Salutation must be one of: Mr, Mrs, Ms, Dr, Prof."
           ]
         },
-        "traceId": "00-bdf200f3e502ce412d913628ca343bb0-7df66d0f1a6b0692-00"
+        "traceId": "00-54bf204f90db0b4b76b123311aafcb0e-7a082e6949af2c2c-00"
       }
     },
     {
-      "id": 216,
+      "id": 218,
       "scenario": "Create Branch: empty body",
       "category": "Agent/Branch",
       "method": "POST",
@@ -6273,11 +6359,11 @@
             "Address is required."
           ]
         },
-        "traceId": "00-99bbf80ba37914a9bab8a979c088d828-d459fcc035576aa1-00"
+        "traceId": "00-b040b364d3b377be539b98d4e57ceecb-61bc8338c03f1083-00"
       }
     },
     {
-      "id": 217,
+      "id": 219,
       "scenario": "Create Branch: invalid email",
       "category": "Agent/Branch",
       "method": "POST",
@@ -6302,11 +6388,11 @@
             "A valid email address is required."
           ]
         },
-        "traceId": "00-a8e1f8b248e9ca30ee6e4b9d345bcd3c-ee2c813b7f165000-00"
+        "traceId": "00-9f7793e7849817aac62570d4edebdd49-0ee5b6551aa091c4-00"
       }
     },
     {
-      "id": 218,
+      "id": 220,
       "scenario": "Create Branch: missing city",
       "category": "Agent/Branch",
       "method": "POST",
@@ -6331,11 +6417,11 @@
             "City is required."
           ]
         },
-        "traceId": "00-7344fcf5e782aa4f68b86d6c7d40db4e-efbd5472f733748b-00"
+        "traceId": "00-44083c5fe3c4cdda7c4f3d3d9b67e896-14ac51aea51685cc-00"
       }
     },
     {
-      "id": 219,
+      "id": 221,
       "scenario": "Create Branch: phone not 10 digits",
       "category": "Agent/Branch",
       "method": "POST",
@@ -6360,11 +6446,11 @@
             "Phone number must be exactly 10 digits."
           ]
         },
-        "traceId": "00-bf7d03e796678ff72fd8cdd7cadfd351-4071ef9d80d4c4d6-00"
+        "traceId": "00-bc9aadb80c3e4f4d8bbee88f6b3fbfe7-e5116a13ab835307-00"
       }
     },
     {
-      "id": 220,
+      "id": 222,
       "scenario": "Create Branch: missing name",
       "category": "Agent/Branch",
       "method": "POST",
@@ -6389,11 +6475,11 @@
             "Branch name is required."
           ]
         },
-        "traceId": "00-d3c0a1e6a399e4954ea8910d14dcd238-994d7f1954e2d8d6-00"
+        "traceId": "00-e1a1e36cfca1bf550767eecf12a0e192-1cbbf1cf17e14d22-00"
       }
     },
     {
-      "id": 221,
+      "id": 223,
       "scenario": "Assign Agent to Branch: agent not found",
       "category": "Agent/Branch",
       "method": "PUT",
@@ -6407,11 +6493,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Agent not found",
-        "traceId": "0HNMDN4JE33BS:00000001"
+        "traceId": "0HNMDSIHO2RDH:00000001"
       }
     },
     {
-      "id": 222,
+      "id": 224,
       "scenario": "Update Agent License: agent not found",
       "category": "Agent/License",
       "method": "PUT",
@@ -6428,15 +6514,15 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Agent not found",
-        "traceId": "0HNMDN4JE33BT:00000001"
+        "traceId": "0HNMDSIHO2RDI:00000001"
       }
     },
     {
-      "id": 223,
+      "id": 225,
       "scenario": "Update Agent License: expiry in the past",
       "category": "Agent/License",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/agents/019edb70-e129-767c-8807-ad4c9ee791fa/license",
+      "url": "http://localhost:5062/api/v1/agents/019ede53-9ce6-7955-97ed-57a55fa47a8c/license",
       "expectedStatus": 400,
       "actualStatus": 400,
       "passed": true,
@@ -6453,15 +6539,15 @@
             "License expiry date must be in the future."
           ]
         },
-        "traceId": "00-d724ceadc1db6cccb2ceb4aef43d89a3-50bd0dbb6833e42c-00"
+        "traceId": "00-771a88be159c603a1a517c851fb28280-2845244634ff1cad-00"
       }
     },
     {
-      "id": 224,
+      "id": 226,
       "scenario": "Update Agent License: missing license number",
       "category": "Agent/License",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/agents/019edb70-e129-767c-8807-ad4c9ee791fa/license",
+      "url": "http://localhost:5062/api/v1/agents/019ede53-9ce6-7955-97ed-57a55fa47a8c/license",
       "expectedStatus": 400,
       "actualStatus": 400,
       "passed": true,
@@ -6478,11 +6564,11 @@
             "License number is required."
           ]
         },
-        "traceId": "00-beea419abb8b2a447820c54009320c77-96f69d554f7ee937-00"
+        "traceId": "00-97a2eb143c5793c535e526fd2f7f0ad3-78249ec33fae5d69-00"
       }
     },
     {
-      "id": 225,
+      "id": 227,
       "scenario": "Activate Agent: not found",
       "category": "Agent",
       "method": "PUT",
@@ -6496,11 +6582,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Agent not found",
-        "traceId": "0HNMDN4JE33C0:00000001"
+        "traceId": "0HNMDSIHO2RDL:00000001"
       }
     },
     {
-      "id": 226,
+      "id": 228,
       "scenario": "Update Config: empty body",
       "category": "System",
       "method": "PUT",
@@ -6523,11 +6609,11 @@
             "Config value is required."
           ]
         },
-        "traceId": "00-c4e86574e3cd4c5bdd49e6cd8798fd65-f58491d890cce539-00"
+        "traceId": "00-d2822ebe4c7f5a3f0a36abd760678631-d6dbc8bc7da76a3c-00"
       }
     },
     {
-      "id": 227,
+      "id": 229,
       "scenario": "Update Config: key too long (> 100 chars)",
       "category": "System",
       "method": "PUT",
@@ -6548,11 +6634,11 @@
             "Config key cannot exceed 100 characters."
           ]
         },
-        "traceId": "00-df7b88a95443a024cf146303673c0220-ca7879b934d9b091-00"
+        "traceId": "00-a6f6c12d330743255da71b7566ed6468-9fc680ccd30341c9-00"
       }
     },
     {
-      "id": 228,
+      "id": 230,
       "scenario": "Update Config: missing key",
       "category": "System",
       "method": "PUT",
@@ -6573,11 +6659,11 @@
             "Config key is required."
           ]
         },
-        "traceId": "00-e4c318aa65a6ccfb3fbe34c8baa1b884-52266205fd7a15d5-00"
+        "traceId": "00-cbe8541071213a127d2163430ac1a0a9-aa9eea27b8763a62-00"
       }
     },
     {
-      "id": 229,
+      "id": 231,
       "scenario": "Update Config: missing value",
       "category": "System",
       "method": "PUT",
@@ -6598,11 +6684,11 @@
             "Config value is required."
           ]
         },
-        "traceId": "00-8918cf57cf7fcc8a7a2c7ae7495569ff-a402f5eb317a992d-00"
+        "traceId": "00-e4bf1a5e0bef6232b48d358fe0bc705f-f4c47a9ec5bf5101-00"
       }
     },
     {
-      "id": 230,
+      "id": 232,
       "scenario": "Email Template: empty body",
       "category": "System",
       "method": "PUT",
@@ -6629,11 +6715,11 @@
             "Template key is required."
           ]
         },
-        "traceId": "00-31cda1eb9c636c7af967e3dfb4f74935-1ca1537ac3655cef-00"
+        "traceId": "00-e5968d11db2f5dffe039747915fcc9b0-1780db7944179fae-00"
       }
     },
     {
-      "id": 231,
+      "id": 233,
       "scenario": "Email Template: missing subject",
       "category": "System",
       "method": "PUT",
@@ -6655,11 +6741,11 @@
             "Email subject is required."
           ]
         },
-        "traceId": "00-a36e95b53921303f00720d4591104e46-1c8d9705edf37f52-00"
+        "traceId": "00-c03576762fd573e5dd492c5bbb45ecc6-67ca208a7caeaa56-00"
       }
     },
     {
-      "id": 232,
+      "id": 234,
       "scenario": "Email Template: missing bodyHtml",
       "category": "System",
       "method": "PUT",
@@ -6681,11 +6767,11 @@
             "Email body is required."
           ]
         },
-        "traceId": "00-119914a9e0b9242ef73b979e6f2fcb40-56a7ce82ac69b5ae-00"
+        "traceId": "00-25f34ade11e82afcb2f62cdb59be554c-86ed3c4a62876709-00"
       }
     },
     {
-      "id": 233,
+      "id": 235,
       "scenario": "Email Template: key too long (>100 chars)",
       "category": "System",
       "method": "PUT",
@@ -6707,11 +6793,11 @@
             "Template key cannot exceed 100 characters."
           ]
         },
-        "traceId": "00-192043e3b8c8fa76dd371ca262a1fb4b-6260f3fbcea219f0-00"
+        "traceId": "00-090b1618f5c90fe20c58fa36826f7496-4a69a7632b996526-00"
       }
     },
     {
-      "id": 234,
+      "id": 236,
       "scenario": "Mark Notification Read: not found",
       "category": "Notification",
       "method": "PATCH",
@@ -6725,11 +6811,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Notification not found.",
-        "traceId": "0HNMDN4JE33C9:00000001"
+        "traceId": "0HNMDSIHO2RDU:00000001"
       }
     },
     {
-      "id": 235,
+      "id": 237,
       "scenario": "Stripe Webhook: invalid signature",
       "category": "Webhook",
       "method": "POST",
@@ -6745,11 +6831,11 @@
       }
     },
     {
-      "id": 236,
+      "id": 238,
       "scenario": "Settle unapproved claim (must be approved first)",
       "category": "BizLogic",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/claims/576cbb22-8f78-4482-8af0-3e68a4261c60/settle",
+      "url": "http://localhost:5062/api/v1/claims/7d6d145b-f0bc-4cb7-b4a7-f247418429c9/settle",
       "expectedStatus": 422,
       "actualStatus": 422,
       "passed": true,
@@ -6759,15 +6845,15 @@
         "title": "UnprocessableException",
         "status": 422,
         "detail": "Claim must be approved before settlement.",
-        "traceId": "0HNMDN4JE33CB:00000001"
+        "traceId": "0HNMDSIHO2RE0:00000001"
       }
     },
     {
-      "id": 237,
+      "id": 239,
       "scenario": "Pre-auth on non-cashless claim",
       "category": "BizLogic",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/claims/576cbb22-8f78-4482-8af0-3e68a4261c60/approve-preauth",
+      "url": "http://localhost:5062/api/v1/claims/7d6d145b-f0bc-4cb7-b4a7-f247418429c9/approve-preauth",
       "expectedStatus": 422,
       "actualStatus": 422,
       "passed": true,
@@ -6777,15 +6863,15 @@
         "title": "UnprocessableException",
         "status": 422,
         "detail": "Claim is not a cashless claim.",
-        "traceId": "0HNMDN4JE33CC:00000001"
+        "traceId": "0HNMDSIHO2RE1:00000001"
       }
     },
     {
-      "id": 238,
+      "id": 240,
       "scenario": "Process payout on unapproved claim",
       "category": "BizLogic",
       "method": "POST",
-      "url": "http://localhost:5062/api/v1/payments/payout/claim/576cbb22-8f78-4482-8af0-3e68a4261c60",
+      "url": "http://localhost:5062/api/v1/payments/payout/claim/7d6d145b-f0bc-4cb7-b4a7-f247418429c9",
       "expectedStatus": 422,
       "actualStatus": 422,
       "passed": true,
@@ -6795,15 +6881,15 @@
         "title": "UnprocessableException",
         "status": 422,
         "detail": "Claim must be approved before payout.",
-        "traceId": "0HNMDN4JE33CD:00000001"
+        "traceId": "0HNMDSIHO2RE2:00000001"
       }
     },
     {
-      "id": 239,
+      "id": 241,
       "scenario": "Pay already-paid schedule (conflict)",
       "category": "BizLogic",
       "method": "POST",
-      "url": "http://localhost:5062/api/v1/payments/pay/071d253e-0aaf-4bd6-b94c-59a0fd52611e",
+      "url": "http://localhost:5062/api/v1/payments/pay/3e9ccc50-4100-44d6-be19-4685dfad8ce4",
       "expectedStatus": 409,
       "actualStatus": 409,
       "passed": true,
@@ -6815,15 +6901,15 @@
         "title": "ConflictException",
         "status": 409,
         "detail": "Schedule is already paid.",
-        "traceId": "0HNMDN4JE33CE:00000001"
+        "traceId": "0HNMDSIHO2RE3:00000001"
       }
     },
     {
-      "id": 240,
+      "id": 242,
       "scenario": "Assign surveyor to health claim (not motor)",
       "category": "BizLogic",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/claims/576cbb22-8f78-4482-8af0-3e68a4261c60/assign-surveyor",
+      "url": "http://localhost:5062/api/v1/claims/7d6d145b-f0bc-4cb7-b4a7-f247418429c9/assign-surveyor",
       "expectedStatus": 422,
       "actualStatus": 422,
       "passed": true,
@@ -6836,11 +6922,11 @@
         "title": "UnprocessableException",
         "status": 422,
         "detail": "Surveyor can only be assigned to Motor or Property related claims.",
-        "traceId": "0HNMDN4JE33CF:00000001"
+        "traceId": "0HNMDSIHO2RE4:00000001"
       }
     },
     {
-      "id": 241,
+      "id": 243,
       "scenario": "Claim on inactive/cancelled policy",
       "category": "BizLogic",
       "method": "POST",
@@ -6849,7 +6935,7 @@
       "actualStatus": 422,
       "passed": true,
       "request": {
-        "policyId": "7a46febe-ffef-46e4-9225-b78a546d1fb8",
+        "policyId": "281b23ac-ada3-4f87-af03-337f53b00cb3",
         "claimType": 2,
         "claimAmountRequested": 50000,
         "incidentDate": "2025-06-01T10:00:00Z",
@@ -6860,11 +6946,11 @@
         "title": "UnprocessableException",
         "status": 422,
         "detail": "Claim can only be intimated for an active policy.",
-        "traceId": "0HNMDN4JE33CG:00000001"
+        "traceId": "0HNMDSIHO2RE5:00000001"
       }
     },
     {
-      "id": 242,
+      "id": 244,
       "scenario": "Get Policy Endorsements: access denied (underwriter, not customer)",
       "category": "BizLogic",
       "method": "GET",
@@ -6873,10 +6959,12 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
-      "id": 243,
+      "id": 245,
       "scenario": "Get Policy: not found (GUID is all zeros)",
       "category": "BizLogic",
       "method": "GET",
@@ -6890,11 +6978,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Policy not found.",
-        "traceId": "0HNMDN4JE33CI:00000001"
+        "traceId": "0HNMDSIHO2RE7:00000001"
       }
     },
     {
-      "id": 244,
+      "id": 246,
       "scenario": "Download Policy: not found (GUID is all zeros)",
       "category": "BizLogic",
       "method": "GET",
@@ -6908,11 +6996,11 @@
         "title": "NotFoundException",
         "status": 404,
         "detail": "Policy not found.",
-        "traceId": "0HNMDN4JE33CJ:00000001"
+        "traceId": "0HNMDSIHO2RE8:00000001"
       }
     },
     {
-      "id": 245,
+      "id": 247,
       "scenario": "Underwriter accessing Agent dashboard",
       "category": "CrossRole",
       "method": "GET",
@@ -6921,10 +7009,12 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
-      "id": 246,
+      "id": 248,
       "scenario": "Surveyor accessing Customer family members",
       "category": "CrossRole",
       "method": "GET",
@@ -6933,10 +7023,12 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
-      "id": 247,
+      "id": 249,
       "scenario": "FinanceOfficer accessing Customer profile",
       "category": "CrossRole",
       "method": "GET",
@@ -6945,10 +7037,12 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
-      "id": 248,
+      "id": 250,
       "scenario": "ClaimsOfficer accessing Agent profile",
       "category": "CrossRole",
       "method": "GET",
@@ -6957,10 +7051,12 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
-      "id": 249,
+      "id": 251,
       "scenario": "Surveyor accessing Admin user list",
       "category": "CrossRole",
       "method": "GET",
@@ -6969,10 +7065,12 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
-      "id": 250,
+      "id": 252,
       "scenario": "Agent accessing Admin audit logs",
       "category": "CrossRole",
       "method": "GET",
@@ -6981,10 +7079,12 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
-      "id": 251,
+      "id": 253,
       "scenario": "Customer accessing Underwriter KYC pending",
       "category": "CrossRole",
       "method": "GET",
@@ -6993,10 +7093,12 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
-      "id": 252,
+      "id": 254,
       "scenario": "Agent accessing Finance payment records",
       "category": "CrossRole",
       "method": "GET",
@@ -7005,10 +7107,12 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
-      "id": 253,
+      "id": 255,
       "scenario": "Surveyor accessing Finance reports",
       "category": "CrossRole",
       "method": "GET",
@@ -7017,10 +7121,12 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
-      "id": 254,
+      "id": 256,
       "scenario": "Customer accessing Agent renewals",
       "category": "CrossRole",
       "method": "GET",
@@ -7029,10 +7135,12 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
-      "id": 255,
+      "id": 257,
       "scenario": "FinanceOfficer accessing Admin email templates",
       "category": "CrossRole",
       "method": "PUT",
@@ -7045,22 +7153,26 @@
         "subject": "Hack",
         "bodyHtml": "<p>hack</p>"
       },
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
-      "id": 256,
+      "id": 258,
       "scenario": "ClaimsOfficer accessing Admin user status",
       "category": "CrossRole",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/users/019edb70-e33c-75be-a75c-aae04ab9ca15/status?isActive=false",
+      "url": "http://localhost:5062/api/v1/users/019ede53-a096-7f04-8d75-29c480449cd4/status?isActive=false",
       "expectedStatus": 403,
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
-      "id": 257,
+      "id": 259,
       "scenario": "Surveyor accessing Admin branches",
       "category": "CrossRole",
       "method": "GET",
@@ -7069,14 +7181,16 @@
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
-      "id": 258,
+      "id": 260,
       "scenario": "Agent accessing Underwriter proposal review",
       "category": "CrossRole",
       "method": "POST",
-      "url": "http://localhost:5062/api/v1/proposals/019edb72-09f2-7ae4-8038-4af964c09a34/review",
+      "url": "http://localhost:5062/api/v1/proposals/019ede54-c442-77a4-aa63-cc3da64a61bf/review",
       "expectedStatus": 403,
       "actualStatus": 403,
       "passed": true,
@@ -7084,14 +7198,16 @@
         "isApproved": true,
         "notes": "Approved"
       },
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
-      "id": 259,
+      "id": 261,
       "scenario": "Customer accessing ClaimsOfficer claim status update",
       "category": "CrossRole",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/claims/576cbb22-8f78-4482-8af0-3e68a4261c60/status",
+      "url": "http://localhost:5062/api/v1/claims/7d6d145b-f0bc-4cb7-b4a7-f247418429c9/status",
       "expectedStatus": 403,
       "actualStatus": 403,
       "passed": true,
@@ -7099,34 +7215,40 @@
         "status": "UnderReview",
         "remarks": "Customer trying to update"
       },
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
-      "id": 260,
+      "id": 262,
       "scenario": "Customer accessing Admin user role change",
       "category": "CrossRole",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/users/019edb70-e33c-75be-a75c-aae04ab9ca15/role",
+      "url": "http://localhost:5062/api/v1/users/019ede53-a096-7f04-8d75-29c480449cd4/role",
       "expectedStatus": 403,
       "actualStatus": 403,
       "passed": true,
       "request": "Admin",
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
-      "id": 261,
+      "id": 263,
       "scenario": "FinanceOfficer accessing Agent branch assign",
       "category": "CrossRole",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/agents/019edb70-e129-767c-8807-ad4c9ee791fa/branch/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "url": "http://localhost:5062/api/v1/agents/019ede53-9ce6-7955-97ed-57a55fa47a8c/branch/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
       "expectedStatus": 403,
       "actualStatus": 403,
       "passed": true,
       "request": {},
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
-      "id": 262,
+      "id": 264,
       "scenario": "Surveyor accessing Admin product create",
       "category": "CrossRole",
       "method": "POST",
@@ -7148,14 +7270,16 @@
         "waitingPeriodDays": 30,
         "allowsFamilyFloater": false
       },
-      "response": {}
+      "response": {
+        "error": "Access denied. You do not have permission to access this resource."
+      }
     },
     {
-      "id": 263,
+      "id": 265,
       "scenario": "Grievance: resolve notes too long (>2000 chars)",
       "category": "FieldEdge",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/grievances/16019b2d-4f2a-49f5-9f81-7f0e7bafb95a/status",
+      "url": "http://localhost:5062/api/v1/grievances/e11ec0ed-e689-4043-a9e4-9516aed14c0e/status",
       "expectedStatus": 400,
       "actualStatus": 400,
       "passed": true,
@@ -7172,11 +7296,11 @@
             "Resolution notes cannot exceed 2000 characters."
           ]
         },
-        "traceId": "00-a0577526bc8e1674988126c70a7a67c5-7df4ac16527618e2-00"
+        "traceId": "00-698bfabc72310ca7294acb114152153c-b42dae74429fa18f-00"
       }
     },
     {
-      "id": 264,
+      "id": 266,
       "scenario": "Product: description too long (>2000 chars)",
       "category": "FieldEdge",
       "method": "POST",
@@ -7207,11 +7331,11 @@
             "Description cannot exceed 2000 characters."
           ]
         },
-        "traceId": "00-fddcf80ba1a00b1c9c5df2b59ec5ce61-c43540171e68108c-00"
+        "traceId": "00-3b7960ac6639aa3cb8510a015be59f5f-42c566aaa366e9e4-00"
       }
     },
     {
-      "id": 265,
+      "id": 267,
       "scenario": "Product: UIN too long (>50 chars)",
       "category": "FieldEdge",
       "method": "POST",
@@ -7242,11 +7366,11 @@
             "UIN cannot exceed 50 characters."
           ]
         },
-        "traceId": "00-f109ea2affa4aaa61b4b38b66ea5d62d-fc4e64742f825ce8-00"
+        "traceId": "00-3d4e02c4c5b9f71bfe039ac7633f6380-d288548c7a8951bd-00"
       }
     },
     {
-      "id": 266,
+      "id": 268,
       "scenario": "Branch: address too long (>300 chars)",
       "category": "FieldEdge",
       "method": "POST",
@@ -7271,11 +7395,11 @@
             "Address cannot exceed 300 characters."
           ]
         },
-        "traceId": "00-2075b68be27a5c6bb61a2053f6059a50-518569465e176628-00"
+        "traceId": "00-01eec3a376c1f3120a8624aaac526bf0-2d672bfde317d737-00"
       }
     },
     {
-      "id": 267,
+      "id": 269,
       "scenario": "Branch: state too long (>100 chars)",
       "category": "FieldEdge",
       "method": "POST",
@@ -7300,11 +7424,11 @@
             "State cannot exceed 100 characters."
           ]
         },
-        "traceId": "00-c59fa2bcc4bff7f456893c697b7bd197-2aed2c5f3296bdaf-00"
+        "traceId": "00-353796c9696bd3755c8e3531434db350-5262aa237bafb47b-00"
       }
     },
     {
-      "id": 268,
+      "id": 270,
       "scenario": "Branch: city too long (>100 chars)",
       "category": "FieldEdge",
       "method": "POST",
@@ -7329,11 +7453,11 @@
             "City cannot exceed 100 characters."
           ]
         },
-        "traceId": "00-e5bda457c6cf5be70230af5e97a0ca8b-66297a9c14431068-00"
+        "traceId": "00-9dcd43d1b2b177e72afe3f91361bca60-dd10a6c77c93cb54-00"
       }
     },
     {
-      "id": 269,
+      "id": 271,
       "scenario": "Branch: name too long (>200 chars)",
       "category": "FieldEdge",
       "method": "POST",
@@ -7358,11 +7482,11 @@
             "Branch name cannot exceed 200 characters."
           ]
         },
-        "traceId": "00-97a47c290043a0aac065b4b0d9385d3c-0cc4ad7b960ee3d2-00"
+        "traceId": "00-315581cdc7d27eb567a0128671e13177-6aaaf72ccb20e6ae-00"
       }
     },
     {
-      "id": 270,
+      "id": 272,
       "scenario": "Config: value too long (>2000 chars)",
       "category": "FieldEdge",
       "method": "PUT",
@@ -7383,11 +7507,11 @@
             "Config value cannot exceed 2000 characters."
           ]
         },
-        "traceId": "00-46e4bb5970ba12f63d16e927d29d653d-fc29082072338f1c-00"
+        "traceId": "00-1ae13334de1fa0e46c9e1b4a77995855-5bc62aadf9a3c51e-00"
       }
     },
     {
-      "id": 271,
+      "id": 273,
       "scenario": "Email Template: subject too long (>200 chars)",
       "category": "FieldEdge",
       "method": "PUT",
@@ -7409,11 +7533,11 @@
             "Email subject cannot exceed 200 characters."
           ]
         },
-        "traceId": "00-890597b87581b45aca91c52efc950aea-4d1cf168fbf45799-00"
+        "traceId": "00-0dea7962061dd92b4901b9fd595cb415-9e3c970fd2435058-00"
       }
     },
     {
-      "id": 272,
+      "id": 274,
       "scenario": "Agent Profile: firstName too long (>100 chars)",
       "category": "FieldEdge",
       "method": "PUT",
@@ -7436,11 +7560,11 @@
             "First name cannot exceed 100 characters."
           ]
         },
-        "traceId": "00-2eef0a5f7f56537587607c022d4964c2-6ac3bccb8d47d20f-00"
+        "traceId": "00-11ff0b76396fc904c844e5290f32151b-60e8a00f0af4b278-00"
       }
     },
     {
-      "id": 273,
+      "id": 275,
       "scenario": "Agent Profile: lastName too long (>100 chars)",
       "category": "FieldEdge",
       "method": "PUT",
@@ -7463,11 +7587,11 @@
             "Last name cannot exceed 100 characters."
           ]
         },
-        "traceId": "00-0c82c37750cf98ac1df58f00000be154-835845a57e962e02-00"
+        "traceId": "00-1a9eada50e38295d47688c5113b32227-3d1f7abff6282ffd-00"
       }
     },
     {
-      "id": 274,
+      "id": 276,
       "scenario": "Address: city too long (>100 chars)",
       "category": "FieldEdge",
       "method": "POST",
@@ -7492,11 +7616,11 @@
             "City cannot exceed 100 characters."
           ]
         },
-        "traceId": "00-91ad03d4335944733ceafd129121a252-8ecb46a1d43d535f-00"
+        "traceId": "00-7cfa6a2b020f73016bbca50d6f320533-5eaae6fe4a3eeb13-00"
       }
     },
     {
-      "id": 275,
+      "id": 277,
       "scenario": "Address: state too long (>100 chars)",
       "category": "FieldEdge",
       "method": "POST",
@@ -7521,11 +7645,11 @@
             "State cannot exceed 100 characters."
           ]
         },
-        "traceId": "00-20c1c3b4ef5839830fe3f800e7236fb0-02b041470a21beac-00"
+        "traceId": "00-ff63579ae1939ee81d3f3096ec1edfb9-316da1ae14e012d8-00"
       }
     },
     {
-      "id": 276,
+      "id": 278,
       "scenario": "Address: country too long (>100 chars)",
       "category": "FieldEdge",
       "method": "POST",
@@ -7550,11 +7674,11 @@
             "Country cannot exceed 100 characters."
           ]
         },
-        "traceId": "00-0de8d8d164ae14951e8dfdcc35a94db3-80fdc74d33699466-00"
+        "traceId": "00-5d30ff31bc84183337d0d54e47d7525e-ec5b4ceae7413333-00"
       }
     },
     {
-      "id": 277,
+      "id": 279,
       "scenario": "Family Member: lastName too long (>100 chars)",
       "category": "FieldEdge",
       "method": "POST",
@@ -7579,11 +7703,11 @@
             "Last name cannot exceed 100 characters."
           ]
         },
-        "traceId": "00-482a33a12a0042f761218e310e8b552c-7cd901c8ba9a059a-00"
+        "traceId": "00-8a290f4fdc4efd620390aee81479cad8-cf6ed12045b178e5-00"
       }
     },
     {
-      "id": 278,
+      "id": 280,
       "scenario": "Nominee: fullName too long (>100 chars)",
       "category": "FieldEdge",
       "method": "PUT",
@@ -7607,11 +7731,11 @@
             "Full name cannot exceed 100 characters."
           ]
         },
-        "traceId": "00-3e8330433d6a73ddef0a93ffb50433f7-a21310a14928c677-00"
+        "traceId": "00-d1553e8352b9fa617904a300584142e9-cb5325e5d9014a79-00"
       }
     },
     {
-      "id": 279,
+      "id": 281,
       "scenario": "Motor detail: vehicle number too long (>20 chars)",
       "category": "FieldEdge",
       "method": "POST",
@@ -7620,7 +7744,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "70000000-0000-0000-0000-000000000001",
         "sumAssured": 500000,
         "tenureYears": 10,
@@ -7657,11 +7781,11 @@
             "Vehicle number cannot exceed 20 characters."
           ]
         },
-        "traceId": "00-58def195a7079144d6c86c1123f7834c-178e3b0934808d5f-00"
+        "traceId": "00-869704ef3e6277289d0def2850e198ee-e582a45f547292cd-00"
       }
     },
     {
-      "id": 280,
+      "id": 282,
       "scenario": "Motor detail: missing vehicleMake",
       "category": "FieldEdge",
       "method": "POST",
@@ -7670,7 +7794,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "70000000-0000-0000-0000-000000000001",
         "sumAssured": 500000,
         "tenureYears": 10,
@@ -7707,11 +7831,11 @@
             "The VehicleType field is required."
           ]
         },
-        "traceId": "00-837f254283d54e9c28cdd5c7da69c52e-1397d7cd36bca2f3-00"
+        "traceId": "00-9abe9d46cfe363fd47c5d3b1fbb152a6-c0b34e15cce8c5eb-00"
       }
     },
     {
-      "id": 281,
+      "id": 283,
       "scenario": "Motor detail: missing vehicleModel",
       "category": "FieldEdge",
       "method": "POST",
@@ -7720,7 +7844,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "70000000-0000-0000-0000-000000000001",
         "sumAssured": 500000,
         "tenureYears": 10,
@@ -7757,11 +7881,11 @@
             "Vehicle model is required."
           ]
         },
-        "traceId": "00-aad0b6cb136cde60a05a3f2ec542b17b-7c1ea438493c13ae-00"
+        "traceId": "00-3f3daa1ff8d3a3e589eac7d1d63348ac-f760e7a1263995a6-00"
       }
     },
     {
-      "id": 282,
+      "id": 284,
       "scenario": "Submit Proposal: negative premium amount",
       "category": "FieldEdge",
       "method": "POST",
@@ -7770,7 +7894,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "70000000-0000-0000-0000-000000000001",
         "sumAssured": 500000,
         "tenureYears": 10,
@@ -7792,11 +7916,11 @@
             "The CustomerMemberIds field is required."
           ]
         },
-        "traceId": "00-7b486cc0df4ff4b942b5951da76e2a68-6486c660ed22f1c9-00"
+        "traceId": "00-e0081cea2e67f4958f19712e26c55520-b3c8767d39e23b77-00"
       }
     },
     {
-      "id": 283,
+      "id": 285,
       "scenario": "Submit Proposal: zero sum assured",
       "category": "FieldEdge",
       "method": "POST",
@@ -7805,7 +7929,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "70000000-0000-0000-0000-000000000001",
         "sumAssured": 0,
         "tenureYears": 10,
@@ -7827,15 +7951,15 @@
             "The CustomerMemberIds field is required."
           ]
         },
-        "traceId": "00-77865166be0c3321cbfe1e29d823fa82-59f2c24c6b802313-00"
+        "traceId": "00-41cea73583ebc26b5beac341240a4350-45d901f088514efc-00"
       }
     },
     {
-      "id": 284,
+      "id": 286,
       "scenario": "Agent License: license number too long (>50 chars)",
       "category": "FieldEdge",
       "method": "PUT",
-      "url": "http://localhost:5062/api/v1/agents/019edb70-e129-767c-8807-ad4c9ee791fa/license",
+      "url": "http://localhost:5062/api/v1/agents/019ede53-9ce6-7955-97ed-57a55fa47a8c/license",
       "expectedStatus": 400,
       "actualStatus": 400,
       "passed": true,
@@ -7852,11 +7976,11 @@
             "License number cannot exceed 50 characters."
           ]
         },
-        "traceId": "00-41a5f99a49f7637a51efdb8c3d867302-c12b76cc35fee36e-00"
+        "traceId": "00-02dd6ced6b4ee52e8588038b01003777-bdb804a6498bcc0d-00"
       }
     },
     {
-      "id": 285,
+      "id": 287,
       "scenario": "Intimate Claim: negative amount",
       "category": "FieldEdge",
       "method": "POST",
@@ -7865,7 +7989,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "policyId": "8cef8a86-935b-4f44-94ea-649b46006f2e",
+        "policyId": "6cb1db74-612e-4a18-a985-e516a260cea9",
         "claimType": 2,
         "claimAmountRequested": -1000,
         "incidentDate": "2025-01-01T10:00:00Z",
@@ -7880,15 +8004,15 @@
             "Claim amount must be greater than zero."
           ]
         },
-        "traceId": "00-b94c1ce90c189fef2dd87c67dfa616bf-5f0954c3935fbf8a-00"
+        "traceId": "00-2ce951e31541e993b25d69c8bbe8f2e1-96bfbcf359882d6e-00"
       }
     },
     {
-      "id": 286,
+      "id": 288,
       "scenario": "Endorsement: description min boundary (9 chars)",
       "category": "FieldEdge",
       "method": "POST",
-      "url": "http://localhost:5062/api/v1/policies/8cef8a86-935b-4f44-94ea-649b46006f2e/endorsements",
+      "url": "http://localhost:5062/api/v1/policies/6cb1db74-612e-4a18-a985-e516a260cea9/endorsements",
       "expectedStatus": 400,
       "actualStatus": 400,
       "passed": true,
@@ -7905,11 +8029,11 @@
             "Description must be at least 10 characters."
           ]
         },
-        "traceId": "00-fd44eab228d5dddbef9d408fa660a4ab-e99ca88adab6cc74-00"
+        "traceId": "00-bbb258eb2196254c27f34ba754e8e60c-6d9af4266c869a6b-00"
       }
     },
     {
-      "id": 287,
+      "id": 289,
       "scenario": "Grievance: description min boundary (9 chars)",
       "category": "FieldEdge",
       "method": "POST",
@@ -7930,11 +8054,11 @@
             "Description must be at least 10 characters."
           ]
         },
-        "traceId": "00-85d6afdd968398f963a5cd45af467f10-9a8ce6f55a10a7ff-00"
+        "traceId": "00-aa63f32be3c62c2892b557929fbd1df9-91ddaeb9e39e4318-00"
       }
     },
     {
-      "id": 288,
+      "id": 290,
       "scenario": "Nominee: share percentage zero",
       "category": "FieldEdge",
       "method": "PUT",
@@ -7958,11 +8082,11 @@
             "Share percentage must be between 0.01 and 100."
           ]
         },
-        "traceId": "00-a0842a707704a7b2b62c641f598582e4-dd73931d373852ae-00"
+        "traceId": "00-d39944a0e7c1b204bead91182419c765-3eaffb87ca22f8a1-00"
       }
     },
     {
-      "id": 289,
+      "id": 291,
       "scenario": "Register Agent: salutation not in allowed list",
       "category": "FieldEdge",
       "method": "POST",
@@ -8000,11 +8124,11 @@
             "Salutation must be one of: Mr, Mrs, Ms, Dr, Prof."
           ]
         },
-        "traceId": "00-47248b5bd3cbe0f513743b69129254b5-df434374a0219da6-00"
+        "traceId": "00-c47ad1ae541fd4ef4e4d643be06ff748-8363af7b1717deb8-00"
       }
     },
     {
-      "id": 290,
+      "id": 292,
       "scenario": "Motor detail: engine number too long (>50 chars)",
       "category": "FieldEdge",
       "method": "POST",
@@ -8013,7 +8137,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "70000000-0000-0000-0000-000000000001",
         "sumAssured": 500000,
         "tenureYears": 10,
@@ -8050,11 +8174,11 @@
             "Engine number cannot exceed 50 characters."
           ]
         },
-        "traceId": "00-8eb7ded3fda10b31ee2afea17c4e712a-4722f606ee29f641-00"
+        "traceId": "00-74971e01aa0c529fecc548b97483596a-fb0acaf5f83b7168-00"
       }
     },
     {
-      "id": 291,
+      "id": 293,
       "scenario": "Motor detail: chassis number too long (>50 chars)",
       "category": "FieldEdge",
       "method": "POST",
@@ -8063,7 +8187,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "70000000-0000-0000-0000-000000000001",
         "sumAssured": 500000,
         "tenureYears": 10,
@@ -8100,11 +8224,11 @@
             "Chassis number cannot exceed 50 characters."
           ]
         },
-        "traceId": "00-d3a5ae5dc12377c82fd39d23fed90237-11c8af4914040449-00"
+        "traceId": "00-22ab1d36d1648ef6efc6378a01f832f0-5265030176483893-00"
       }
     },
     {
-      "id": 292,
+      "id": 294,
       "scenario": "Motor detail: vehicleMake too long (>100 chars)",
       "category": "FieldEdge",
       "method": "POST",
@@ -8113,7 +8237,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "70000000-0000-0000-0000-000000000001",
         "sumAssured": 500000,
         "tenureYears": 10,
@@ -8150,11 +8274,11 @@
             "The VehicleType field is required."
           ]
         },
-        "traceId": "00-e0ea57c02a9632d6146a3769e411a061-bbd8d8bcfb4b1171-00"
+        "traceId": "00-e8b79b425471f2240e7b9a42675ffdc4-fca4d8d7bce565d9-00"
       }
     },
     {
-      "id": 293,
+      "id": 295,
       "scenario": "Motor detail: vehicleModel too long (>100 chars)",
       "category": "FieldEdge",
       "method": "POST",
@@ -8163,7 +8287,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "70000000-0000-0000-0000-000000000001",
         "sumAssured": 500000,
         "tenureYears": 10,
@@ -8200,11 +8324,11 @@
             "Vehicle model cannot exceed 100 characters."
           ]
         },
-        "traceId": "00-bc79f6076347459c48e35cff7b1466d9-08aac7e4f42a5a87-00"
+        "traceId": "00-865f202086bb2d56df257c7256791d22-8fdae5da5035fa03-00"
       }
     },
     {
-      "id": 294,
+      "id": 296,
       "scenario": "Motor detail: negative IDV",
       "category": "FieldEdge",
       "method": "POST",
@@ -8213,7 +8337,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "70000000-0000-0000-0000-000000000001",
         "sumAssured": 500000,
         "tenureYears": 10,
@@ -8250,11 +8374,11 @@
             "The VehicleType field is required."
           ]
         },
-        "traceId": "00-9d20ac20061a0446a256d88f9fad4032-11233a3ac1e13d43-00"
+        "traceId": "00-3bc4f77ceb5881c76cc89570ea5ca196-4ac67578fae51359-00"
       }
     },
     {
-      "id": 295,
+      "id": 297,
       "scenario": "Proposal: nominee share percentage negative",
       "category": "FieldEdge",
       "method": "POST",
@@ -8263,7 +8387,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "70000000-0000-0000-0000-000000000001",
         "sumAssured": 500000,
         "tenureYears": 10,
@@ -8294,11 +8418,11 @@
             "Nominee share percentage must be between 0.01 and 100."
           ]
         },
-        "traceId": "00-6833313e1755bd4e3c7a8ab585dab0ee-c5d0fcf371c48b24-00"
+        "traceId": "00-c802d4b102ccbc5598fbfcbe45b0005d-13419a956be14905-00"
       }
     },
     {
-      "id": 296,
+      "id": 298,
       "scenario": "Register Agent: agency name too long (>200 chars)",
       "category": "FieldEdge",
       "method": "POST",
@@ -8336,11 +8460,11 @@
             "Agency name cannot exceed 200 characters."
           ]
         },
-        "traceId": "00-4623cb75772e75735a5a15adbd965983-a9a66718eaeed953-00"
+        "traceId": "00-056778050205f24bdb584098576e0d3e-0b25c30f5d3518c1-00"
       }
     },
     {
-      "id": 297,
+      "id": 299,
       "scenario": "Submit Proposal: zero premium amount",
       "category": "FieldEdge",
       "method": "POST",
@@ -8349,7 +8473,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "70000000-0000-0000-0000-000000000001",
         "sumAssured": 500000,
         "tenureYears": 10,
@@ -8371,11 +8495,11 @@
             "The CustomerMemberIds field is required."
           ]
         },
-        "traceId": "00-07a39be009cf59571b8a920ab6d54516-ccac4bb45b4fdedf-00"
+        "traceId": "00-71d8fd181329cc95fcc143af56b7f01d-1a3f1e06bab2477b-00"
       }
     },
     {
-      "id": 298,
+      "id": 300,
       "scenario": "Product: min tenure 0",
       "category": "FieldEdge",
       "method": "POST",
@@ -8406,11 +8530,11 @@
             "Minimum tenure must be at least 1 year."
           ]
         },
-        "traceId": "00-4823d190b0199028f3ad0ec0b8815d56-22515c237b3c3e1f-00"
+        "traceId": "00-fc15248d37372f0940df6a5308174055-9ef62239862a6509-00"
       }
     },
     {
-      "id": 299,
+      "id": 301,
       "scenario": "Product: product name too long (>200 chars)",
       "category": "FieldEdge",
       "method": "POST",
@@ -8441,11 +8565,11 @@
             "Product name cannot exceed 200 characters."
           ]
         },
-        "traceId": "00-d68ca000f1d20ffb05dc5cb4908f791d-13a145641bdc3d27-00"
+        "traceId": "00-2b6e34a73664ae07e2be43d682d68c13-6f2b2b31a30dba88-00"
       }
     },
     {
-      "id": 300,
+      "id": 302,
       "scenario": "Intimate Claim: negative claim amount",
       "category": "FieldEdge",
       "method": "POST",
@@ -8454,7 +8578,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "policyId": "8cef8a86-935b-4f44-94ea-649b46006f2e",
+        "policyId": "6cb1db74-612e-4a18-a985-e516a260cea9",
         "claimType": 2,
         "claimAmountRequested": -5000,
         "incidentDate": "2025-01-01T10:00:00Z",
@@ -8469,11 +8593,11 @@
             "Claim amount must be greater than zero."
           ]
         },
-        "traceId": "00-953b003a0401be709dae59529da568b0-9a4d8596019f6a6f-00"
+        "traceId": "00-0a8f0ae40b2f09856c6d510da2c65938-fbb9805a9c78f7d6-00"
       }
     },
     {
-      "id": 301,
+      "id": 303,
       "scenario": "Proposal: nominee name too long (>100 chars)",
       "category": "FieldEdge",
       "method": "POST",
@@ -8482,7 +8606,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "70000000-0000-0000-0000-000000000001",
         "sumAssured": 500000,
         "tenureYears": 10,
@@ -8510,11 +8634,11 @@
             "Nominee full name cannot exceed 100 characters."
           ]
         },
-        "traceId": "00-8950d8b20f517fc8182a94c2d77706d8-50c29ef3b31d42e5-00"
+        "traceId": "00-20ec9e04bba2be35f0290fc73f69bd6d-fadc200f52a6aaac-00"
       }
     },
     {
-      "id": 302,
+      "id": 304,
       "scenario": "Idempotency: invalid key (not a UUID) on proposal submit",
       "category": "Idempotency",
       "method": "POST",
@@ -8523,7 +8647,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "customerId": "019edb70-e33c-75be-a75c-aae04ab9ca15",
+        "customerId": "019ede53-a096-7f04-8d75-29c480449cd4",
         "productId": "70000000-0000-0000-0000-000000000001",
         "sumAssured": 200000,
         "tenureYears": 2,
@@ -8542,11 +8666,11 @@
             "The CustomerMemberIds field is required."
           ]
         },
-        "traceId": "00-49343e412dc971877126e3aa902bb6f6-eea2d72ac0f16636-00"
+        "traceId": "00-6767482ae9f4dcb8a283b4058e6b0b99-b6b74b6ca965de24-00"
       }
     },
     {
-      "id": 303,
+      "id": 305,
       "scenario": "Idempotency: invalid key (not a UUID) on claim intimate",
       "category": "Idempotency",
       "method": "POST",
@@ -8555,7 +8679,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "policyId": "8cef8a86-935b-4f44-94ea-649b46006f2e",
+        "policyId": "6cb1db74-612e-4a18-a985-e516a260cea9",
         "claimType": "Health",
         "claimAmountRequested": 10000,
         "incidentDate": "2025-01-01T10:00:00Z",
@@ -8570,11 +8694,11 @@
             "Incident description must be at least 10 characters."
           ]
         },
-        "traceId": "00-c9b7e6b338184f6ca38ca73c837f33c4-31d09742d8520572-00"
+        "traceId": "00-43efccb3bfcb6a97a8ffeafe930272fe-991315852a7903c4-00"
       }
     },
     {
-      "id": 304,
+      "id": 306,
       "scenario": "Idempotency: invalid key (not a UUID) on grievance",
       "category": "Idempotency",
       "method": "POST",
@@ -8583,7 +8707,7 @@
       "actualStatus": 400,
       "passed": true,
       "request": {
-        "policyId": "8cef8a86-935b-4f44-94ea-649b46006f2e",
+        "policyId": "6cb1db74-612e-4a18-a985-e516a260cea9",
         "category": "ClaimDelay",
         "description": "Test grievance"
       },
@@ -8592,7 +8716,7 @@
       }
     },
     {
-      "id": 305,
+      "id": 307,
       "scenario": "Idempotency: empty key \u2014 passes through to normal validation",
       "category": "Idempotency",
       "method": "POST",
@@ -8637,11 +8761,11 @@
             "The CustomerMemberIds field is required."
           ]
         },
-        "traceId": "00-27abe10492783b7be0f33edd07b2108b-0e12d0fea2ee2ce6-00"
+        "traceId": "00-32d32e80812c3db70429fabae93b4976-423f0e70d8d2fd03-00"
       }
     },
     {
-      "id": 306,
+      "id": 308,
       "scenario": "Idempotency: no header on proposal submit \u2014 passes through normally",
       "category": "Idempotency",
       "method": "POST",
@@ -8686,11 +8810,11 @@
             "The CustomerMemberIds field is required."
           ]
         },
-        "traceId": "00-bfbcaa75a016ab3bcd2af3d8f8c36ea0-93df91c975ae6cbd-00"
+        "traceId": "00-e191d96a6d311c9ba625a57038b88c1b-ecb67dc446ff9a1b-00"
       }
     },
     {
-      "id": 307,
+      "id": 309,
       "scenario": "Idempotency: valid key on proposal submit \u2014 validation still runs",
       "category": "Idempotency",
       "method": "POST",
@@ -8735,7 +8859,7 @@
             "The CustomerMemberIds field is required."
           ]
         },
-        "traceId": "00-5a18db205519667e2f8cab5c45bcb363-dc25437f62b7bc53-00"
+        "traceId": "00-437c31dbd5a67f88b7ddcddcd8396b70-b339c9cd2e6eb3fc-00"
       }
     }
   ]
