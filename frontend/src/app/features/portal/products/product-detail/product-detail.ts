@@ -21,7 +21,7 @@ export class ProductDetailComponent implements OnInit {
   documents = signal<DocumentRequirementDto[]>([]);
 
   ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
+    const id = this.route.snapshot.paramMap.get('id') ?? '';
     forkJoin({
       product: this.productService.getById(id),
       docs: this.productService.getDocumentRequirements(id),

@@ -1,9 +1,11 @@
 import { Component, inject } from '@angular/core';
 import { ToastService } from './toast.service';
+import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
 
 @Component({
   selector: 'app-toast-container',
   standalone: true,
+  imports: [SafeHtmlPipe],
   templateUrl: './toast-container.html',
   styles: `
     @keyframes sc-toast {

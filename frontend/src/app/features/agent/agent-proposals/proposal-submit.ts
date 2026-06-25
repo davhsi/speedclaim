@@ -31,7 +31,7 @@ export class AgentProposalSubmitComponent implements OnInit {
   quoteResult = signal<any>(null);
 
   currentStep = 0;
-  selectedCustomerId: number | null = null;
+  selectedCustomerId: string | null = null;
   selectedType: ProductType | null = null;
   confirmReady = false;
 
@@ -96,10 +96,9 @@ export class AgentProposalSubmitComponent implements OnInit {
 
     this.agentService.generateQuote({
       productId: product.id,
+      age: 38,
       sumAssured: product.minSumAssured,
-      tenureYears: product.minTenure,
-      paymentFrequency: 'Annually',
-      dateOfBirth: '1987-09-12',
+      tenureYears: product.minTenureYears,
     }).subscribe({
       next: res => this.quoteResult.set(res),
     });
@@ -111,9 +110,13 @@ export class AgentProposalSubmitComponent implements OnInit {
 
     this.agentService.submitProposal({
       productId: product.id,
+      customerId: this.selectedCustomerId,
       sumAssured: product.minSumAssured,
-      tenureYears: product.minTenure,
+      tenureYears: product.minTenureYears,
+      premiumAmount: this.quoteResult()?.premiumAmount ?? product.minSumAssured * 0.01,
       paymentFrequency: 'Annually',
+      customerMemberIds: [],
+      nominees: [],
     }).subscribe({
       next: () => this.router.navigate(['/agent/proposals']),
     });

@@ -71,7 +71,7 @@ export class ClaimListComponent implements OnInit {
     return map[type] ?? 'bg-surface text-muted';
   }
 
-  openClaim(id: number): void {
+  openClaim(id: string): void {
     this.router.navigate(['/claims-officer/claims', id]);
   }
 }

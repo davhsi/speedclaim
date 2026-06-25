@@ -3,7 +3,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProposalService } from '../services/proposal.service';
 import { ProfileService } from '../../profile/services/profile.service';
-import { FamilyMemberDto, SubmitProposalRequest, DocumentRequirementDto } from '../../../../core/models/api.models';
+import { FamilyMemberDto, SubmitProposalRequest, DocumentRequirementDto, UserDto } from '../../../../core/models/api.models';
 import { FileUploadComponent } from '../../../../shared/components/file-upload/file-upload';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
 import { HttpClient } from '@angular/common/http';
@@ -27,13 +27,15 @@ export class ProposalSubmitComponent implements OnInit {
   submitting = signal(false);
   familyMembers = signal<FamilyMemberDto[]>([]);
   docRequirements = signal<DocumentRequirementDto[]>([]);
+  profile = signal<UserDto | null>(null);
   uploadedFiles = new Map<string, File>();
   stepLabels = ['Details', 'Nominees', 'Documents'];
 
   form = this.fb.group({
-    productId: [0, Validators.required],
+    productId: ['', Validators.required],
     sumAssured: [0, Validators.required],
     tenureYears: [1, Validators.required],
+    premiumAmount: [0, Validators.required],
     paymentFrequency: ['Monthly', Validators.required],
   });
 
@@ -45,6 +47,7 @@ export class ProposalSubmitComponent implements OnInit {
       this.form.patchValue(state);
       this.loadDocRequirements(state.productId);
     }
+    this.profileService.getProfile().subscribe(profile => this.profile.set(profile));
     this.profileService.getFamilyMembers().subscribe(m => this.familyMembers.set(m));
   }
 
@@ -61,16 +64,35 @@ export class ProposalSubmitComponent implements OnInit {
 
   onDocSelected(key: string, file: File): void { this.uploadedFiles.set(key, file); }
 
-  private loadDocRequirements(productId: number): void {
+  private loadDocRequirements(productId: string): void {
     this.http.get<DocumentRequirementDto[]>(`/api/v1/products/${productId}/documents`)
       .subscribe(docs => this.docRequirements.set(docs));
   }
 
   submit(): void {
+    const customerId = this.profile()?.customerId;
+    if (!customerId) {
+      this.toast.error('Customer profile is not ready yet');
+      return;
+    }
+
     this.submitting.set(true);
+    const formValue = this.form.getRawValue();
     const req: SubmitProposalRequest = {
-      ...this.form.getRawValue() as any,
-      nominees: this.nominees.getRawValue(),
+      customerId,
+      productId: formValue.productId!,
+      sumAssured: formValue.sumAssured!,
+      tenureYears: formValue.tenureYears!,
+      premiumAmount: formValue.premiumAmount!,
+      paymentFrequency: formValue.paymentFrequency as any,
+      customerMemberIds: [],
+      nominees: this.nominees.getRawValue().map(n => ({
+        fullName: n.name!,
+        relationship: n.relationship as any,
+        sharePercentage: n.sharePercentage!,
+        dateOfBirth: n.dateOfBirth!,
+        isMinor: this.isMinor(n.dateOfBirth!),
+      })),
     };
     this.proposalService.submit(req).subscribe({
       next: proposal => {
@@ -90,5 +112,16 @@ export class ProposalSubmitComponent implements OnInit {
       },
       error: () => { this.submitting.set(false); this.toast.error('Submission failed'); },
     });
+  }
+
+  private isMinor(dateOfBirth: string): boolean {
+    const dob = new Date(dateOfBirth);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDelta = today.getMonth() - dob.getMonth();
+    if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+    return age < 18;
   }
 }

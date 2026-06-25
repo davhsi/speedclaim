@@ -6,7 +6,7 @@ import { TokenService } from './token.service';
 import {
   AuthResponse, AuthUserDto, LoginRequest, RegisterUserRequest,
   RegistrationResponse, ForgotPasswordRequest, ResetPasswordRequest,
-  VerifyEmailRequest, ApiMessage,
+  VerifyEmailRequest, ResendVerificationRequest, ApiMessage,
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -46,7 +46,7 @@ export class AuthService {
     const refreshToken = this.tokenService.getRefreshToken();
     if (!refreshToken) return of(null);
 
-    return this.http.post<AuthResponse>(`${this.apiUrl}/refresh`, { token: refreshToken }).pipe(
+    return this.http.post<AuthResponse>(`${this.apiUrl}/refresh`, { refreshToken }).pipe(
       tap(res => {
         this.tokenService.setTokens(res.accessToken, res.refreshToken);
         this.currentUser.set(res.user);
@@ -61,6 +61,10 @@ export class AuthService {
 
   verifyEmail(req: VerifyEmailRequest): Observable<ApiMessage> {
     return this.http.post<ApiMessage>(`${this.apiUrl}/verify-email`, req);
+  }
+
+  resendVerificationEmail(req: ResendVerificationRequest): Observable<ApiMessage> {
+    return this.http.post<ApiMessage>(`${this.apiUrl}/resend-verification`, req);
   }
 
   forgotPassword(req: ForgotPasswordRequest): Observable<ApiMessage> {

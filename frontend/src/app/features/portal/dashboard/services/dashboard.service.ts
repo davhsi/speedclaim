@@ -15,7 +15,7 @@ export class DashboardService {
     return this.http.get<ClaimDto[]>('/api/v1/claims/my');
   }
 
-  getSchedule(policyId: number): Observable<PremiumScheduleDto[]> {
+  getSchedule(policyId: string): Observable<PremiumScheduleDto[]> {
     return this.http.get<PremiumScheduleDto[]>(`/api/v1/payments/schedule/${policyId}`);
   }
 }

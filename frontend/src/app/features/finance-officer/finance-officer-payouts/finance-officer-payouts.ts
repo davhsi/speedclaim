@@ -19,7 +19,7 @@ export class FinanceOfficerPayoutsComponent implements OnInit {
 
   allClaims = signal<ClaimDto[]>([]);
   statusFilter = 'All';
-  processing = signal(new Set<number>());
+  processing = signal(new Set<string>());
 
   filteredClaims = computed(() => {
     if (this.statusFilter === 'All') return this.allClaims();

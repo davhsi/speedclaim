@@ -1,182 +1,189 @@
 <h2 class="text-2xl font-semibold text-ink mb-1">Create account</h2>
-<p class="text-sm text-muted mb-7">Fill in your details to register with SpeedClaim.</p>
+<p class="text-sm text-muted mb-5">{{ stepDescriptions[currentStep() - 1] }}</p>
 
-@if (errorMessage()) {
-  <div class="mb-4 p-3 rounded-control bg-danger-bg border border-danger-border text-sm text-danger">
-    {{ errorMessage() }}
+<!-- Progress bar -->
+<div class="mb-6">
+  <div class="flex gap-1.5 mb-2">
+    @for (step of steps; track step.label; let i = $index) {
+      <div class="flex-1 h-1 rounded-full transition-colors duration-300"
+           [class]="i < currentStep() ? 'bg-primary' : 'bg-line'">
+      </div>
+    }
   </div>
-}
+  <p class="text-xs text-muted">Step {{ currentStep() }} of {{ steps.length }}</p>
+</div>
 
-<form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5">
-  <!-- Personal Info -->
-  <fieldset>
-    <legend class="text-sm font-semibold text-ink mb-3 flex items-center gap-2">
-      <span class="w-6 h-6 rounded-full bg-primary text-white text-xs flex items-center justify-center">1</span>
-      Personal Information
-    </legend>
-    <div class="grid grid-cols-2 gap-3 mb-3">
-      <div>
-        <label class="block text-[13px] font-medium text-body mb-1.5">Salutation</label>
-        <select formControlName="salutationTitle">
-          <option value="" disabled>Select</option>
-          @for (s of salutations; track s) { <option [value]="s">{{ s }}</option> }
-        </select>
-      </div>
-      <div>
-        <label class="block text-[13px] font-medium text-body mb-1.5">Gender</label>
-        <select formControlName="gender">
-          <option value="" disabled>Select</option>
-          @for (g of genders; track g) { <option [value]="g">{{ g }}</option> }
-        </select>
-      </div>
-    </div>
-    <div class="grid grid-cols-2 gap-3 mb-3">
-      <div>
-        <label class="block text-[13px] font-medium text-body mb-1.5">First name</label>
-        <input type="text" formControlName="firstName" placeholder="First name">
-      </div>
-      <div>
-        <label class="block text-[13px] font-medium text-body mb-1.5">Last name</label>
-        <input type="text" formControlName="lastName" placeholder="Last name">
-      </div>
-    </div>
-    <div class="mb-3">
-      <label class="block text-[13px] font-medium text-body mb-1.5">Email</label>
-      <input type="email" formControlName="email" placeholder="you@example.com" autocomplete="email">
-    </div>
-    <div class="grid grid-cols-2 gap-3 mb-3">
-      <div>
-        <label class="block text-[13px] font-medium text-body mb-1.5">Phone</label>
-        <input type="tel" formControlName="phone" placeholder="10-digit number">
-        @if (form.controls.phone.touched && form.controls.phone.errors?.['phone']) {
-          <p class="text-xs text-danger mt-0.5">Enter a valid 10-digit phone number.</p>
-        }
-      </div>
-      <div>
-        <label class="block text-[13px] font-medium text-body mb-1.5">Date of birth</label>
-        <input type="date" formControlName="dateOfBirth">
-        @if (form.controls.dateOfBirth.touched && form.controls.dateOfBirth.errors?.['minAge']) {
-          <p class="text-xs text-danger mt-0.5">Must be at least 18 years old.</p>
-        }
-      </div>
-    </div>
-    <div>
-      <label class="block text-[13px] font-medium text-body mb-1.5">Marital status</label>
-      <select formControlName="maritalStatus">
-        <option value="" disabled>Select</option>
-        @for (m of maritalStatuses; track m) { <option [value]="m">{{ m }}</option> }
-      </select>
-    </div>
-  </fieldset>
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
 
-  <!-- Password -->
-  <fieldset>
-    <legend class="text-sm font-semibold text-ink mb-3 flex items-center gap-2">
-      <span class="w-6 h-6 rounded-full bg-primary text-white text-xs flex items-center justify-center">2</span>
-      Password
-    </legend>
-    <div class="mb-3">
-      <label class="block text-[13px] font-medium text-body mb-1.5">Password</label>
-      <input type="password" formControlName="password" placeholder="Min 8 characters" autocomplete="new-password">
-      @if (form.controls.password.touched && form.controls.password.errors?.['passwordStrength']) {
-        <div class="text-xs text-danger mt-0.5 space-y-0.5">
-          @if (form.controls.password.errors?.['passwordStrength']?.['minLength']) { <p>At least 8 characters</p> }
-          @if (form.controls.password.errors?.['passwordStrength']?.['uppercase']) { <p>One uppercase letter</p> }
-          @if (form.controls.password.errors?.['passwordStrength']?.['lowercase']) { <p>One lowercase letter</p> }
-          @if (form.controls.password.errors?.['passwordStrength']?.['digit']) { <p>One digit</p> }
-          @if (form.controls.password.errors?.['passwordStrength']?.['special']) { <p>One special character</p> }
-        </div>
-      }
-    </div>
-    <div>
-      <label class="block text-[13px] font-medium text-body mb-1.5">Confirm password</label>
-      <input type="password" formControlName="confirmPassword" placeholder="Repeat password" autocomplete="new-password">
-      @if (form.controls.confirmPassword.touched && form.controls.confirmPassword.errors?.['passwordMismatch']) {
-        <p class="text-xs text-danger mt-0.5">Passwords do not match.</p>
-      }
-    </div>
-  </fieldset>
-
-  <!-- KYC -->
-  <fieldset>
-    <legend class="text-sm font-semibold text-ink mb-3 flex items-center gap-2">
-      <span class="w-6 h-6 rounded-full bg-primary text-white text-xs flex items-center justify-center">3</span>
-      KYC Details
-    </legend>
-    <div class="grid grid-cols-2 gap-3">
-      <div>
-        <label class="block text-[13px] font-medium text-body mb-1.5">Aadhaar number</label>
-        <input type="text" formControlName="aadhaarNumber" placeholder="12-digit number" maxlength="12">
-        @if (form.controls.aadhaarNumber.touched && form.controls.aadhaarNumber.errors?.['aadhaar']) {
-          <p class="text-xs text-danger mt-0.5">Enter a valid 12-digit Aadhaar number.</p>
-        }
-      </div>
-      <div>
-        <label class="block text-[13px] font-medium text-body mb-1.5">PAN number</label>
-        <input type="text" formControlName="panNumber" placeholder="ABCDE1234F" maxlength="10" class="uppercase">
-        @if (form.controls.panNumber.touched && form.controls.panNumber.errors?.['pan']) {
-          <p class="text-xs text-danger mt-0.5">Enter a valid PAN (e.g. ABCDE1234F).</p>
-        }
-      </div>
-    </div>
-  </fieldset>
-
-  <!-- Permanent Address -->
-  <fieldset formGroupName="permanentAddress">
-    <legend class="text-sm font-semibold text-ink mb-3 flex items-center gap-2">
-      <span class="w-6 h-6 rounded-full bg-primary text-white text-xs flex items-center justify-center">4</span>
-      Permanent Address
-    </legend>
-    <div class="space-y-3">
-      <div>
-        <label class="block text-[13px] font-medium text-body mb-1.5">Address line 1</label>
-        <input type="text" formControlName="line1" placeholder="Street, building, flat number">
-      </div>
-      <div>
-        <label class="block text-[13px] font-medium text-body mb-1.5">Address line 2 (optional)</label>
-        <input type="text" formControlName="line2" placeholder="Landmark, area">
-      </div>
+  <!-- Step 1: Personal Information -->
+  @if (currentStep() === 1) {
+    <div class="step-animate space-y-3">
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-[13px] font-medium text-body mb-1.5">City</label>
-          <input type="text" formControlName="city" placeholder="City">
-        </div>
-        <div>
-          <label class="block text-[13px] font-medium text-body mb-1.5">State</label>
-          <select formControlName="state">
-            <option value="" disabled>Select state</option>
-            @for (state of states; track state) { <option [value]="state">{{ state }}</option> }
+          <label class="block text-[13px] font-medium text-body mb-1.5">Salutation</label>
+          <select formControlName="salutationTitle">
+            <option value="" disabled>Select</option>
+            @for (s of salutations; track s) { <option [value]="s">{{ s }}</option> }
           </select>
+          @if (form.controls.salutationTitle.touched && form.controls.salutationTitle.errors?.['required']) {
+            <p class="text-xs text-danger mt-0.5">Select a salutation.</p>
+          }
+        </div>
+        <div>
+          <label class="block text-[13px] font-medium text-body mb-1.5">Gender</label>
+          <select formControlName="gender">
+            <option value="" disabled>Select</option>
+            @for (g of genders; track g) { <option [value]="g">{{ g }}</option> }
+          </select>
+          @if (form.controls.gender.touched && form.controls.gender.errors?.['required']) {
+            <p class="text-xs text-danger mt-0.5">Select a gender.</p>
+          }
         </div>
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-[13px] font-medium text-body mb-1.5">Postal code</label>
-          <input type="text" formControlName="postalCode" placeholder="6-digit PIN" maxlength="6">
+          <label class="block text-[13px] font-medium text-body mb-1.5">First name</label>
+          <input type="text" formControlName="firstName" placeholder="First name">
+          @if (form.controls.firstName.touched && form.controls.firstName.errors?.['required']) {
+            <p class="text-xs text-danger mt-0.5">First name is required.</p>
+          } @else if (form.controls.firstName.touched && form.controls.firstName.errors?.['minlength']) {
+            <p class="text-xs text-danger mt-0.5">First name must be at least 2 characters.</p>
+          }
         </div>
         <div>
-          <label class="block text-[13px] font-medium text-body mb-1.5">Country</label>
-          <input type="text" formControlName="country" readonly>
+          <label class="block text-[13px] font-medium text-body mb-1.5">Last name</label>
+          <input type="text" formControlName="lastName" placeholder="Last name">
+          @if (form.controls.lastName.touched && form.controls.lastName.errors?.['required']) {
+            <p class="text-xs text-danger mt-0.5">Last name is required.</p>
+          }
+        </div>
+      </div>
+      <div>
+        <label class="block text-[13px] font-medium text-body mb-1.5">Email</label>
+        <input type="email" formControlName="email" placeholder="you@example.com" autocomplete="email">
+        @if (form.controls.email.touched && form.controls.email.errors?.['required']) {
+          <p class="text-xs text-danger mt-0.5">Email is required.</p>
+        } @else if (form.controls.email.touched && form.controls.email.errors?.['email']) {
+          <p class="text-xs text-danger mt-0.5">Enter a valid email address.</p>
+        }
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[13px] font-medium text-body mb-1.5">Phone</label>
+          <input type="tel" formControlName="phone" placeholder="10-digit number">
+          @if (form.controls.phone.touched && form.controls.phone.errors?.['required']) {
+            <p class="text-xs text-danger mt-0.5">Phone number is required.</p>
+          } @else if (form.controls.phone.touched && form.controls.phone.errors?.['phone']) {
+            <p class="text-xs text-danger mt-0.5">Enter a valid 10-digit phone number.</p>
+          }
+        </div>
+        <div>
+          <label class="block text-[13px] font-medium text-body mb-1.5">Date of birth</label>
+          <input type="date" formControlName="dateOfBirth">
+          @if (form.controls.dateOfBirth.touched && form.controls.dateOfBirth.errors?.['required']) {
+            <p class="text-xs text-danger mt-0.5">Date of birth is required.</p>
+          } @else if (form.controls.dateOfBirth.touched && form.controls.dateOfBirth.errors?.['minAge']) {
+            <p class="text-xs text-danger mt-0.5">Must be at least 18 years old.</p>
+          }
+        </div>
+      </div>
+      <div>
+        <label class="block text-[13px] font-medium text-body mb-1.5">Marital status</label>
+          <select formControlName="maritalStatus">
+            <option value="" disabled>Select</option>
+            @for (m of maritalStatuses; track m) { <option [value]="m">{{ m }}</option> }
+          </select>
+          @if (form.controls.maritalStatus.touched && form.controls.maritalStatus.errors?.['required']) {
+            <p class="text-xs text-danger mt-0.5">Select a marital status.</p>
+          }
+      </div>
+    </div>
+  }
+
+  <!-- Step 2: Security & KYC -->
+  @if (currentStep() === 2) {
+    <div class="step-animate space-y-3">
+      <p class="text-xs font-semibold text-muted uppercase tracking-wide">Password</p>
+      <div>
+        <label class="block text-[13px] font-medium text-body mb-1.5">Password</label>
+        <div class="relative">
+          <input [type]="showPassword() ? 'text' : 'password'" formControlName="password" placeholder="Min 8 characters" autocomplete="new-password" class="pr-10">
+          <button type="button" (click)="showPassword.set(!showPassword())" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-body">
+            @if (showPassword()) {
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            } @else {
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            }
+          </button>
+        </div>
+        @if (form.controls.password.touched && form.controls.password.errors?.['required']) {
+          <p class="text-xs text-danger mt-0.5">Password is required.</p>
+        } @else if (form.controls.password.touched && form.controls.password.errors?.['passwordStrength']) {
+          <div class="text-xs text-danger mt-0.5 space-y-0.5">
+            @if (form.controls.password.errors?.['passwordStrength']?.['minLength']) { <p>At least 8 characters</p> }
+            @if (form.controls.password.errors?.['passwordStrength']?.['uppercase']) { <p>One uppercase letter</p> }
+            @if (form.controls.password.errors?.['passwordStrength']?.['lowercase']) { <p>One lowercase letter</p> }
+            @if (form.controls.password.errors?.['passwordStrength']?.['digit']) { <p>One digit</p> }
+            @if (form.controls.password.errors?.['passwordStrength']?.['special']) { <p>One special character</p> }
+          </div>
+        }
+      </div>
+      <div>
+        <label class="block text-[13px] font-medium text-body mb-1.5">Confirm password</label>
+        <div class="relative">
+          <input [type]="showConfirmPassword() ? 'text' : 'password'" formControlName="confirmPassword" placeholder="Repeat password" autocomplete="new-password" class="pr-10">
+          <button type="button" (click)="showConfirmPassword.set(!showConfirmPassword())" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-body">
+            @if (showConfirmPassword()) {
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            } @else {
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            }
+          </button>
+        </div>
+        @if (form.controls.confirmPassword.touched && form.controls.confirmPassword.errors?.['required']) {
+          <p class="text-xs text-danger mt-0.5">Confirm your password.</p>
+        } @else if (form.controls.confirmPassword.touched && form.controls.confirmPassword.errors?.['passwordMismatch']) {
+          <p class="text-xs text-danger mt-0.5">Passwords do not match.</p>
+        }
+      </div>
+
+      <hr class="border-line !my-4">
+
+      <p class="text-xs font-semibold text-muted uppercase tracking-wide">KYC Verification</p>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[13px] font-medium text-body mb-1.5">Aadhaar number</label>
+          <input type="text" formControlName="aadhaarNumber" placeholder="12-digit number" maxlength="12">
+          @if (form.controls.aadhaarNumber.touched && form.controls.aadhaarNumber.errors?.['required']) {
+            <p class="text-xs text-danger mt-0.5">Aadhaar number is required.</p>
+          } @else if (form.controls.aadhaarNumber.touched && form.controls.aadhaarNumber.errors?.['aadhaar']) {
+            <p class="text-xs text-danger mt-0.5">Enter a valid 12-digit Aadhaar number.</p>
+          }
+        </div>
+        <div>
+          <label class="block text-[13px] font-medium text-body mb-1.5">PAN number</label>
+          <input type="text" formControlName="panNumber" placeholder="ABCDE1234F" maxlength="10" class="uppercase">
+          @if (form.controls.panNumber.touched && form.controls.panNumber.errors?.['required']) {
+            <p class="text-xs text-danger mt-0.5">PAN number is required.</p>
+          } @else if (form.controls.panNumber.touched && form.controls.panNumber.errors?.['pan']) {
+            <p class="text-xs text-danger mt-0.5">Enter a valid PAN (e.g. ABCDE1234F).</p>
+          }
         </div>
       </div>
     </div>
-  </fieldset>
+  }
 
-  <!-- Current Address -->
-  <fieldset>
-    <legend class="text-sm font-semibold text-ink mb-3 flex items-center gap-2">
-      <span class="w-6 h-6 rounded-full bg-primary text-white text-xs flex items-center justify-center">5</span>
-      Current Address
-    </legend>
-    <label class="flex items-center gap-2 text-sm text-body mb-3 cursor-pointer">
-      <input type="checkbox" [checked]="sameAsPermanent()" (change)="toggleSameAddress()" class="w-4 h-4 rounded accent-primary">
-      Same as permanent address
-    </label>
-    @if (!sameAsPermanent()) {
-      <div class="space-y-3" formGroupName="currentAddress">
+  <!-- Step 3: Address -->
+  @if (currentStep() === 3) {
+    <div class="step-animate space-y-3">
+      <p class="text-xs font-semibold text-muted uppercase tracking-wide">Permanent Address</p>
+      <div class="space-y-3" formGroupName="permanentAddress">
         <div>
           <label class="block text-[13px] font-medium text-body mb-1.5">Address line 1</label>
           <input type="text" formControlName="line1" placeholder="Street, building, flat number">
+          @if (form.controls.permanentAddress.controls.line1.touched && form.controls.permanentAddress.controls.line1.errors?.['required']) {
+            <p class="text-xs text-danger mt-0.5">Address line 1 is required.</p>
+          }
         </div>
         <div>
           <label class="block text-[13px] font-medium text-body mb-1.5">Address line 2 (optional)</label>
@@ -186,6 +193,9 @@
           <div>
             <label class="block text-[13px] font-medium text-body mb-1.5">City</label>
             <input type="text" formControlName="city" placeholder="City">
+            @if (form.controls.permanentAddress.controls.city.touched && form.controls.permanentAddress.controls.city.errors?.['required']) {
+              <p class="text-xs text-danger mt-0.5">City is required.</p>
+            }
           </div>
           <div>
             <label class="block text-[13px] font-medium text-body mb-1.5">State</label>
@@ -193,12 +203,20 @@
               <option value="" disabled>Select state</option>
               @for (state of states; track state) { <option [value]="state">{{ state }}</option> }
             </select>
+            @if (form.controls.permanentAddress.controls.state.touched && form.controls.permanentAddress.controls.state.errors?.['required']) {
+              <p class="text-xs text-danger mt-0.5">Select a state.</p>
+            }
           </div>
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-[13px] font-medium text-body mb-1.5">Postal code</label>
             <input type="text" formControlName="postalCode" placeholder="6-digit PIN" maxlength="6">
+            @if (form.controls.permanentAddress.controls.postalCode.touched && form.controls.permanentAddress.controls.postalCode.errors?.['required']) {
+              <p class="text-xs text-danger mt-0.5">Postal code is required.</p>
+            } @else if (form.controls.permanentAddress.controls.postalCode.touched && form.controls.permanentAddress.controls.postalCode.errors?.['postalCode']) {
+              <p class="text-xs text-danger mt-0.5">Enter a valid 6-digit postal code.</p>
+            }
           </div>
           <div>
             <label class="block text-[13px] font-medium text-body mb-1.5">Country</label>
@@ -206,50 +224,135 @@
           </div>
         </div>
       </div>
-    }
-  </fieldset>
 
-  <!-- Consent -->
-  <fieldset>
-    <legend class="text-sm font-semibold text-ink mb-3 flex items-center gap-2">
-      <span class="w-6 h-6 rounded-full bg-primary text-white text-xs flex items-center justify-center">6</span>
-      Consent
-    </legend>
-    <div class="space-y-3">
-      <label class="flex items-start gap-2 text-sm text-body cursor-pointer">
-        <input type="checkbox" formControlName="consentDataProcessing" class="w-4 h-4 mt-0.5 rounded accent-primary">
-        <span>I consent to the processing of my personal data as per the Digital Personal Data Protection Act, 2023.</span>
+      <hr class="border-line !my-4">
+
+      <label class="flex items-center gap-2 text-sm text-body cursor-pointer">
+        <input type="checkbox" [checked]="sameAsPermanent()" (change)="toggleSameAddress()" class="w-4 h-4 rounded accent-primary">
+        Same as permanent address
       </label>
-      <label class="flex items-start gap-2 text-sm text-body cursor-pointer">
-        <input type="checkbox" formControlName="consentKycCollection" class="w-4 h-4 mt-0.5 rounded accent-primary">
-        <span>I consent to the collection and verification of my KYC documents (Aadhaar, PAN).</span>
-      </label>
-      @if (form.controls.consentDataProcessing.touched && form.controls.consentDataProcessing.errors) {
-        <p class="text-xs text-danger">Data processing consent is required.</p>
-      }
-      @if (form.controls.consentKycCollection.touched && form.controls.consentKycCollection.errors) {
-        <p class="text-xs text-danger">KYC consent is required.</p>
+
+      @if (!sameAsPermanent()) {
+        <p class="text-xs font-semibold text-muted uppercase tracking-wide mt-3">Current Address</p>
+        <div class="space-y-3" formGroupName="currentAddress">
+          <div>
+            <label class="block text-[13px] font-medium text-body mb-1.5">Address line 1</label>
+            <input type="text" formControlName="line1" placeholder="Street, building, flat number">
+            @if (form.controls.currentAddress.controls.line1.touched && form.controls.currentAddress.controls.line1.errors?.['required']) {
+              <p class="text-xs text-danger mt-0.5">Address line 1 is required.</p>
+            }
+          </div>
+          <div>
+            <label class="block text-[13px] font-medium text-body mb-1.5">Address line 2 (optional)</label>
+            <input type="text" formControlName="line2" placeholder="Landmark, area">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[13px] font-medium text-body mb-1.5">City</label>
+              <input type="text" formControlName="city" placeholder="City">
+              @if (form.controls.currentAddress.controls.city.touched && form.controls.currentAddress.controls.city.errors?.['required']) {
+                <p class="text-xs text-danger mt-0.5">City is required.</p>
+              }
+            </div>
+            <div>
+              <label class="block text-[13px] font-medium text-body mb-1.5">State</label>
+              <select formControlName="state">
+                <option value="" disabled>Select state</option>
+                @for (state of states; track state) { <option [value]="state">{{ state }}</option> }
+              </select>
+              @if (form.controls.currentAddress.controls.state.touched && form.controls.currentAddress.controls.state.errors?.['required']) {
+                <p class="text-xs text-danger mt-0.5">Select a state.</p>
+              }
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[13px] font-medium text-body mb-1.5">Postal code</label>
+              <input type="text" formControlName="postalCode" placeholder="6-digit PIN" maxlength="6">
+              @if (form.controls.currentAddress.controls.postalCode.touched && form.controls.currentAddress.controls.postalCode.errors?.['required']) {
+                <p class="text-xs text-danger mt-0.5">Postal code is required.</p>
+              } @else if (form.controls.currentAddress.controls.postalCode.touched && form.controls.currentAddress.controls.postalCode.errors?.['postalCode']) {
+                <p class="text-xs text-danger mt-0.5">Enter a valid 6-digit postal code.</p>
+              }
+            </div>
+            <div>
+              <label class="block text-[13px] font-medium text-body mb-1.5">Country</label>
+              <input type="text" formControlName="country" readonly>
+            </div>
+          </div>
+        </div>
       }
     </div>
-  </fieldset>
+  }
 
-  <button
-    type="submit"
-    [disabled]="loading()"
-    class="w-full h-11 bg-primary text-white font-semibold text-[14px] rounded-control hover:bg-primary-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-  >
-    @if (loading()) {
-      <span class="inline-flex items-center gap-2">
-        <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-        </svg>
-        Creating account...
-      </span>
-    } @else {
-      Create account
+  <!-- Step 4: Consent -->
+  @if (currentStep() === 4) {
+    <div class="step-animate space-y-4">
+      <div class="space-y-3">
+        <label class="flex items-start gap-2 text-sm text-body cursor-pointer">
+          <input type="checkbox" formControlName="consentDataProcessing" class="w-4 h-4 mt-0.5 rounded accent-primary">
+          <span>I consent to the processing of my personal data as per the Digital Personal Data Protection Act, 2023.</span>
+        </label>
+        @if (form.controls.consentDataProcessing.touched && form.controls.consentDataProcessing.errors) {
+          <p class="text-xs text-danger ml-6">Data processing consent is required.</p>
+        }
+        <label class="flex items-start gap-2 text-sm text-body cursor-pointer">
+          <input type="checkbox" formControlName="consentKycCollection" class="w-4 h-4 mt-0.5 rounded accent-primary">
+          <span>I consent to the collection and verification of my KYC documents (Aadhaar, PAN).</span>
+        </label>
+        @if (form.controls.consentKycCollection.touched && form.controls.consentKycCollection.errors) {
+          <p class="text-xs text-danger ml-6">KYC consent is required.</p>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Error message (always near buttons) -->
+  @if (errorMessage()) {
+    <div class="mt-4 p-3 rounded-control bg-danger-bg border border-danger-border text-sm text-danger">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <!-- Navigation -->
+  <div class="flex gap-3 mt-6">
+    @if (currentStep() > 1) {
+      <button
+        type="button"
+        (click)="prevStep()"
+        class="h-11 px-5 border border-line rounded-control text-sm font-semibold text-body hover:bg-surface-alt transition-colors"
+      >
+        Back
+      </button>
     }
-  </button>
+    @if (currentStep() < steps.length) {
+      <button
+        type="button"
+        (click)="nextStep()"
+        class="flex-1 h-11 bg-primary text-white font-semibold text-[14px] rounded-control hover:bg-primary-hover transition-colors"
+      >
+        Continue
+      </button>
+    } @else {
+      <button
+        type="submit"
+        [disabled]="loading()"
+        class="flex-1 h-11 bg-primary text-white font-semibold text-[14px] rounded-control hover:bg-primary-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        @if (loading()) {
+          <span class="inline-flex items-center gap-2">
+            <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            Creating account...
+          </span>
+        } @else {
+          Create account
+        }
+      </button>
+    }
+  </div>
 </form>
 
 <p class="text-sm text-center text-muted mt-6">

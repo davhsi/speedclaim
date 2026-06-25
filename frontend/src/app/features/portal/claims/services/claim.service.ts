@@ -15,11 +15,11 @@ export class ClaimService {
     return this.http.get<ClaimDto[]>(`${this.api}/my`, { params });
   }
 
-  getById(id: number): Observable<ClaimDto> {
+  getById(id: string): Observable<ClaimDto> {
     return this.http.get<ClaimDto>(`${this.api}/${id}`);
   }
 
-  getHistory(id: number): Observable<ClaimStatusHistoryDto[]> {
+  getHistory(id: string): Observable<ClaimStatusHistoryDto[]> {
     return this.http.get<ClaimStatusHistoryDto[]>(`${this.api}/${id}/history`);
   }
 
@@ -27,7 +27,7 @@ export class ClaimService {
     return this.http.post<ClaimDto>(`${this.api}/intimate`, req);
   }
 
-  uploadDocument(claimId: number, documentKey: string, file: File): Observable<ApiMessage> {
+  uploadDocument(claimId: string, documentKey: string, file: File): Observable<ApiMessage> {
     const fd = new FormData();
     fd.append('file', file);
     return this.http.put<ApiMessage>(`${this.api}/${claimId}/documents/${documentKey}`, fd);

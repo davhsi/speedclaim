@@ -22,8 +22,12 @@ const INDIAN_STATES = [
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './register.html',
   styles: `
-    :host { display: block; max-height: 70vh; overflow-y: auto; }
-    fieldset { border: none; padding: 0; margin: 0; }
+    :host { display: block; }
+    @keyframes stepFadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .step-animate { animation: stepFadeIn 0.2s ease-out; }
   `,
 })
 export class RegisterComponent {
@@ -34,7 +38,31 @@ export class RegisterComponent {
 
   loading = signal(false);
   errorMessage = signal('');
+  currentStep = signal(1);
   sameAsPermanent = signal(false);
+  showPassword = signal(false);
+  showConfirmPassword = signal(false);
+
+  steps = [
+    { label: 'Personal' },
+    { label: 'Security' },
+    { label: 'Address' },
+    { label: 'Consent' },
+  ];
+
+  stepDescriptions = [
+    "Let's start with your personal details.",
+    'Set a password and provide KYC details.',
+    'Where can we reach you?',
+    'Almost done — review and agree.',
+  ];
+
+  private stepControls: string[][] = [
+    ['salutationTitle', 'firstName', 'lastName', 'email', 'phone', 'dateOfBirth', 'gender', 'maritalStatus'],
+    ['password', 'confirmPassword', 'aadhaarNumber', 'panNumber'],
+    ['permanentAddress', 'currentAddress'],
+    ['consentDataProcessing', 'consentKycCollection'],
+  ];
 
   salutations = ['Mr', 'Mrs', 'Ms', 'Dr'];
   genders = ['Male', 'Female', 'NonBinary', 'Other'];
@@ -44,7 +72,7 @@ export class RegisterComponent {
   form = this.fb.nonNullable.group({
     salutationTitle: ['', Validators.required],
     firstName: ['', [Validators.required, Validators.minLength(2)]],
-    lastName: ['', [Validators.required, Validators.minLength(2)]],
+    lastName: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
     phone: ['', [Validators.required, phoneValidator()]],
     dateOfBirth: ['', [Validators.required, minAgeValidator(18)]],
@@ -79,7 +107,50 @@ export class RegisterComponent {
     if (this.sameAsPermanent()) {
       const perm = this.form.controls.permanentAddress.getRawValue();
       this.form.controls.currentAddress.patchValue(perm);
+      this.form.controls.currentAddress.disable();
+    } else {
+      this.form.controls.currentAddress.enable();
     }
+  }
+
+  nextStep(): void {
+    const controls = this.stepControls[this.currentStep() - 1];
+    controls.forEach(name => {
+      const control = this.form.get(name);
+      if (control) control.markAllAsTouched();
+    });
+
+    if (this.isStepValid(this.currentStep())) {
+      this.errorMessage.set('');
+      this.currentStep.update(s => s + 1);
+    }
+  }
+
+  prevStep(): void {
+    this.errorMessage.set('');
+    this.currentStep.update(s => s - 1);
+  }
+
+  isStepValid(step: number): boolean {
+    return this.stepControls[step - 1].every(name => {
+      const control = this.form.get(name);
+      return control ? control.valid || control.disabled : true;
+    });
+  }
+
+  private getErrorMessage(err: any): string {
+    if (err.error?.detail) return err.error.detail;
+    if (err.error?.errors && typeof err.error.errors === 'object') {
+      const messages = Object.values(err.error.errors)
+        .flat()
+        .filter((msg): msg is string => typeof msg === 'string');
+      if (messages.length > 0) return messages.join(' ');
+    }
+    if (err.error?.message) return err.error.message;
+    if (err.status === 409) return 'This information is already registered.';
+    if (err.status === 400) return 'Please check your input and try again.';
+    if (err.status >= 500) return 'Something went wrong. Please try again later.';
+    return 'Registration failed. Please try again.';
   }
 
   onSubmit(): void {
@@ -88,16 +159,35 @@ export class RegisterComponent {
       this.form.controls.currentAddress.patchValue(perm);
     }
 
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      this.errorMessage.set('Please fix the errors above before submitting.');
-      return;
-    }
+    const controls = this.stepControls[this.currentStep() - 1];
+    controls.forEach(name => {
+      const control = this.form.get(name);
+      if (control) control.markAllAsTouched();
+    });
+
+    if (!this.isStepValid(this.currentStep())) return;
 
     this.loading.set(true);
     this.errorMessage.set('');
 
-    const { confirmPassword, ...payload } = this.form.getRawValue();
+    const formData = this.form.getRawValue();
+    const payload = {
+      email: formData.email,
+      password: formData.password,
+      salutation: formData.salutationTitle,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      phone: formData.phone,
+      dateOfBirth: formData.dateOfBirth,
+      gender: formData.gender,
+      maritalStatus: formData.maritalStatus,
+      aadhaarNumber: formData.aadhaarNumber,
+      panNumber: formData.panNumber,
+      permanentAddress: formData.permanentAddress,
+      currentAddress: this.sameAsPermanent() ? formData.permanentAddress : formData.currentAddress,
+      isSameAsPermanent: this.sameAsPermanent(),
+    };
+
     this.authService.register(payload as any).subscribe({
       next: () => {
         this.loading.set(false);
@@ -106,14 +196,7 @@ export class RegisterComponent {
       },
       error: (err) => {
         this.loading.set(false);
-        if (err.status === 409) {
-          this.errorMessage.set('An account with this email already exists.');
-        } else if (err.error?.errors) {
-          const messages = Object.values(err.error.errors).flat().join(' ');
-          this.errorMessage.set(messages);
-        } else {
-          this.errorMessage.set('Registration failed. Please try again.');
-        }
+        this.errorMessage.set(this.getErrorMessage(err));
       },
     });
   }

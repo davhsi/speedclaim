@@ -17,7 +17,7 @@
         </div>
         <div class="flex-1">
           <div class="text-[11px] font-semibold tracking-[.05em] uppercase mb-0.5" [class]="domainFg(p.domain)">{{ p.domain }}</div>
-          <div class="text-[22px] font-bold text-ink mb-1.5">{{ p.name }}</div>
+          <div class="text-[22px] font-bold text-ink mb-1.5">{{ p.productName }}</div>
           <div class="text-sm text-body leading-relaxed">{{ p.description }}</div>
         </div>
       </div>
@@ -34,7 +34,7 @@
         </div>
         <div class="bg-white p-[18px] px-6">
           <div class="text-xs text-muted mb-1">Tenure</div>
-          <div class="text-[15px] font-semibold text-ink">{{ p.minTenure }} – {{ p.maxTenure }} years</div>
+          <div class="text-[15px] font-semibold text-ink">{{ p.minTenureYears }} – {{ p.maxTenureYears }} years</div>
         </div>
       </div>
 
@@ -42,12 +42,12 @@
       <div class="p-6">
         <div class="text-[15px] font-semibold text-ink mb-3.5">Eligibility & Coverage</div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-          @if (p.familyFloaterAllowed) {
+          @if (p.allowsFamilyFloater) {
             <div class="flex gap-2.5 items-start">
               <span class="w-5 h-5 rounded-full bg-success-bg flex items-center justify-center shrink-0 mt-0.5">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1F9D6B" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
               </span>
-              <span class="text-[13px] text-body">Family floater up to {{ p.maxMembers }} members</span>
+              <span class="text-[13px] text-body">Family floater up to {{ p.maxFamilyMembers }} members</span>
             </div>
           }
           <div class="flex gap-2.5 items-start">
@@ -69,7 +69,7 @@
                 </svg>
                 <div>
                   <p class="font-medium text-ink text-sm">
-                    {{ doc.documentName }}
+                    {{ doc.label }}
                     @if (doc.isMandatory) {
                       <span class="text-danger text-xs ml-1">*Required</span>
                     }

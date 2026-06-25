@@ -5,16 +5,15 @@ import { ClaimDto } from '../../../core/models/api.models';
 
 export interface SurveyorProfileDto {
   surveyorId: string;
-  userId: number;
+  userId: string;
   email: string;
   fullName: string;
   phone: string;
-  licenseNumber: string;
-  licenseExpiry: string;
+  licenseNumber?: string | null;
+  licenseExpiry?: string | null;
   specialization: string;
   surveyorType: string;
   isActive: boolean;
-  zone: string;
 }
 
 export interface SubmitSurveyReportForm {
@@ -31,6 +30,10 @@ export class SurveyorService {
 
   getAssignedClaims(): Observable<ClaimDto[]> {
     return this.http.get<ClaimDto[]>('/api/v1/claims/surveyor/assigned');
+  }
+
+  getProfile(): Observable<SurveyorProfileDto> {
+    return this.http.get<SurveyorProfileDto>('/api/v1/users/surveyor/profile');
   }
 
   submitSurveyReport(claimId: string, data: SubmitSurveyReportForm): Observable<{ message: string }> {

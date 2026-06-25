@@ -27,11 +27,11 @@ export class GrievanceDetailComponent implements OnInit {
   selectedStatus: GrievanceStatus = 'Open';
 
   ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
+    const id = this.route.snapshot.paramMap.get('id');
     if (id) this.loadGrievance(id);
   }
 
-  private loadGrievance(id: number): void {
+  private loadGrievance(id: string): void {
     this.claimsService.getGrievanceById(id).subscribe({
       next: (g) => {
         this.grievance.set(g);

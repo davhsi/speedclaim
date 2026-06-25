@@ -4,11 +4,12 @@ import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { SidebarComponent } from '../sidebar/sidebar';
 import { TopbarComponent } from '../topbar/topbar';
 import { NotificationService } from '../../../core/services/notification.service';
+import { SafeHtmlPipe } from '../../../shared/pipes/safe-html.pipe';
 
 @Component({
   selector: 'app-portal-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, SidebarComponent, TopbarComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, SidebarComponent, TopbarComponent, SafeHtmlPipe],
   templateUrl: './portal-layout.html',
 })
 export class PortalLayoutComponent implements OnInit {

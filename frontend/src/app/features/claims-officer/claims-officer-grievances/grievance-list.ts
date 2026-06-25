@@ -49,7 +49,7 @@ export class GrievanceListComponent implements OnInit {
     return map[cat] ?? cat;
   }
 
-  openGrievance(id: number): void {
+  openGrievance(id: string): void {
     this.router.navigate(['/claims-officer/grievances', id]);
   }
 }

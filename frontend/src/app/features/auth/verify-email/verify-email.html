@@ -29,6 +29,24 @@
     </div>
     <h2 class="text-2xl font-semibold text-ink mb-2">Verification failed</h2>
     <p class="text-sm text-muted mb-6">{{ errorMessage() }}</p>
-    <a routerLink="/auth/login" class="text-primary font-semibold hover:text-primary-dark text-sm">Back to sign in</a>
+
+    @if (showResendForm() && !resendSuccess()) {
+      <p class="text-sm text-muted mb-3">Enter your email to receive a new verification link.</p>
+      <form [formGroup]="resendForm" (ngSubmit)="resendVerification()" class="max-w-[260px] mx-auto text-left">
+        <input type="email" formControlName="email" placeholder="you@example.com" autocomplete="email" class="h-11 mb-2">
+        @if (resendForm.controls.email.touched && resendForm.controls.email.errors) {
+          <p class="text-xs text-danger mb-2">Please enter a valid email address.</p>
+        }
+        <button type="submit" [disabled]="resendLoading()"
+          class="w-full h-11 bg-primary text-white font-semibold text-[14px] rounded-control hover:bg-primary-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+          {{ resendLoading() ? 'Sending...' : 'Resend verification email' }}
+        </button>
+      </form>
+    }
+    @if (resendSuccess()) {
+      <p class="text-sm text-success mb-4">Verification email sent! Please check your inbox.</p>
+    }
+
+    <a routerLink="/auth/login" class="text-primary font-semibold hover:text-primary-dark text-sm mt-4 inline-block">Back to sign in</a>
   </div>
 }

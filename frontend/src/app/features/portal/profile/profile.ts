@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProfileService } from './services/profile.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserDto, FamilyMemberDto, KycRecordDto, AddressDto } from '../../../core/models/api.models';
@@ -13,7 +13,7 @@ import { postalCodeValidator, phoneValidator } from '../../../shared/validators/
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [ReactiveFormsModule, StatusBadgeComponent, FileUploadComponent, ConfirmDialogComponent, DateFormatPipe],
+  imports: [FormsModule, ReactiveFormsModule, StatusBadgeComponent, FileUploadComponent, ConfirmDialogComponent, DateFormatPipe],
   templateUrl: './profile.html',
 })
 export class ProfileComponent implements OnInit {
@@ -28,7 +28,7 @@ export class ProfileComponent implements OnInit {
   activeTab = signal(0);
   showAddressForm = signal(false);
   showMemberForm = signal(false);
-  deleteConfirm = signal<{ type: string; id: number } | null>(null);
+  deleteConfirm = signal<{ type: string; id: string } | null>(null);
   tabs = ['Personal Info', 'Family Members', 'KYC'];
 
   aadhaarNum = '';
@@ -96,7 +96,7 @@ export class ProfileComponent implements OnInit {
   }
 
   deleteAddr(addr: AddressDto): void { this.deleteConfirm.set({ type: 'address', id: addr.id }); }
-  deleteMember(id: number): void { this.deleteConfirm.set({ type: 'member', id }); }
+  deleteMember(id: string): void { this.deleteConfirm.set({ type: 'member', id }); }
 
   confirmDelete(): void {
     const d = this.deleteConfirm();

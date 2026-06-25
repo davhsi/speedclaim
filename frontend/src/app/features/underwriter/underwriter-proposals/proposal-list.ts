@@ -4,7 +4,8 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge/st
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 import { UnderwriterService } from '../services/underwriter.service';
-import { ProposalDto } from '../../../core/models/api.models';
+import { ProductDto, ProposalDto } from '../../../core/models/api.models';
+import { ProductService } from '../../portal/products/services/product.service';
 
 @Component({
   selector: 'app-uw-proposal-list',
@@ -14,12 +15,15 @@ import { ProposalDto } from '../../../core/models/api.models';
 })
 export class ProposalListComponent implements OnInit {
   private uwService = inject(UnderwriterService);
+  private productService = inject(ProductService);
   private router = inject(Router);
 
   proposals = signal<ProposalDto[]>([]);
+  products = signal<ProductDto[]>([]);
   pendingCount = signal(0);
 
   ngOnInit(): void {
+    this.productService.getAll().subscribe(products => this.products.set(products));
     this.uwService.getAllProposals().subscribe({
       next: (data) => {
         this.proposals.set(data);
@@ -28,7 +32,13 @@ export class ProposalListComponent implements OnInit {
     });
   }
 
-  openProposal(id: number): void {
+  openProposal(id: string): void {
     this.router.navigate(['/underwriter/proposals', id]);
+  }
+
+  productName(proposal: ProposalDto): string {
+    return this.products().find(p => p.id === proposal.productId)?.productName
+      ?? proposal.productName
+      ?? 'Insurance product';
   }
 }

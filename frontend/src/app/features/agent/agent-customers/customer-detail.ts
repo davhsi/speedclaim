@@ -24,7 +24,7 @@ export class AgentCustomerDetailComponent implements OnInit {
   activeTab: 'policies' | 'proposals' = 'policies';
 
   ngOnInit(): void {
-    const customerId = Number(this.route.snapshot.paramMap.get('id'));
+    const customerId = this.route.snapshot.paramMap.get('id') ?? '';
 
     forkJoin({
       customers: this.agentService.getCustomers(),

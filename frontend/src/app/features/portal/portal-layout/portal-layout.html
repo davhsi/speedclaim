@@ -15,7 +15,7 @@
           [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
           class="flex-1 flex flex-col items-center justify-center gap-[3px] text-muted text-[10px]"
         >
-          <span class="w-[22px] h-[22px] flex items-center justify-center" [innerHTML]="item.icon"></span>
+          <span class="w-[22px] h-[22px] flex items-center justify-center" [innerHTML]="item.icon | safeHtml"></span>
           <span>{{ item.label }}</span>
         </a>
       }

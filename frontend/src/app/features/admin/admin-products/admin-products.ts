@@ -29,7 +29,7 @@ export class AdminProductsComponent implements OnInit {
 
   filteredProducts = computed(() => {
     const q = this.searchQuery().toLowerCase();
-    return !q ? this.products() : this.products().filter(p => p.name.toLowerCase().includes(q) || p.domain.toLowerCase().includes(q));
+    return !q ? this.products() : this.products().filter(p => p.productName.toLowerCase().includes(q) || p.domain.toLowerCase().includes(q));
   });
 
   totalProducts = computed(() => this.products().length);
@@ -103,7 +103,7 @@ export class AdminProductsComponent implements OnInit {
     this.adminService.toggleProductStatus(product.id, next).subscribe({
       next: () => {
         this.products.update(list => list.map(p => p.id === product.id ? { ...p, isActive: next } : p));
-        this.toastService.success(product.name + (next ? ' activated' : ' deactivated'));
+        this.toastService.success(product.productName + (next ? ' activated' : ' deactivated'));
       },
     });
   }

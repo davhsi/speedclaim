@@ -15,7 +15,7 @@ export interface AgentDashboardDto {
 }
 
 export interface AgentCustomerDto {
-  id: number;
+  id: string;
   email: string;
   firstName: string;
   lastName: string;
@@ -27,9 +27,9 @@ export interface AgentCustomerDto {
 }
 
 export interface RenewalReminderDto {
-  policyId: number;
+  policyId: string;
   policyNumber: string;
-  customerId: number;
+  customerId: string;
   customerName: string;
   dueDate: string;
   amountDue: number;
@@ -37,9 +37,9 @@ export interface RenewalReminderDto {
 }
 
 export interface AgentCommissionDto {
-  id: number;
-  agentId: number;
-  policyId: number;
+  id: string;
+  agentId: string;
+  policyId: string;
   commissionAmount: number;
   status: string;
   paidAt?: string;
@@ -47,8 +47,8 @@ export interface AgentCommissionDto {
 }
 
 export interface AgentProfileDto {
-  agentId: number;
-  userId: number;
+  agentId: string;
+  userId: string;
   email: string;
   fullName: string;
   agentCode: string;

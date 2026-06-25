@@ -1,6 +1,6 @@
 <div class="bg-white rounded-card shadow-sm p-6 flex items-start gap-4 border border-line/50">
   <div class="w-12 h-12 rounded-control flex items-center justify-center shrink-0" [class]="iconBgClass()">
-    <span class="text-xl" [innerHTML]="icon()"></span>
+    <span class="text-xl" [innerHTML]="icon() | safeHtml"></span>
   </div>
   <div class="flex-1 min-w-0">
     <p class="text-sm text-muted font-medium">{{ title() }}</p>

@@ -2,6 +2,7 @@ import { Component, input, output, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { SafeHtmlPipe } from '../../../shared/pipes/safe-html.pipe';
 
 interface NavGroup {
   title: string;
@@ -17,7 +18,7 @@ interface NavItem {
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, SafeHtmlPipe],
   templateUrl: './sidebar.html',
   styles: `
     :host { display: contents; }

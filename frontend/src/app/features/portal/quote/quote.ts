@@ -49,18 +49,18 @@ export class QuoteComponent implements OnInit {
 
       const productId = this.route.snapshot.paramMap.get('productId');
       if (productId) {
-        const p = products.find(pr => pr.id === Number(productId));
+        const p = products.find(pr => pr.id === productId);
         if (p) {
           this.preselectedProduct.set(p);
           this.selectedProduct.set(p);
-          this.form.patchValue({ productId: p.id.toString() });
+          this.form.patchValue({ productId: p.id });
         }
       }
     });
   }
 
   onProductChange(): void {
-    const id = Number(this.form.value.productId);
+    const id = this.form.value.productId;
     const p = this.products().find(pr => pr.id === id) ?? null;
     this.selectedProduct.set(p);
   }
@@ -71,28 +71,12 @@ export class QuoteComponent implements OnInit {
     const sp = this.selectedProduct()!;
 
     const req: GenerateQuoteRequest = {
-      productId: Number(v.productId),
+      productId: v.productId!,
+      age: this.calculateAge(v.dateOfBirth!),
       sumAssured: v.sumAssured!,
       tenureYears: v.tenureYears!,
-      paymentFrequency: v.paymentFrequency as any,
-      dateOfBirth: v.dateOfBirth!,
       gender: v.gender as any || undefined,
     };
-
-    if (sp.domain === 'Motor') {
-      req.motorDetail = {
-        vehicleMake: v.vehicleMake!,
-        vehicleModel: v.vehicleModel!,
-        manufactureYear: v.manufactureYear!,
-        insuredDeclaredValue: v.insuredDeclaredValue!,
-      };
-    }
-    if (sp.domain === 'Health') {
-      req.healthDetail = { preExistingConditions: v.preExistingConditions || undefined };
-    }
-    if (sp.domain === 'Life') {
-      req.lifeDetail = { isSmoker: v.isSmoker! };
-    }
 
     this.submitting.set(true);
     this.quoteService.generateQuote(req).subscribe({
@@ -105,11 +89,28 @@ export class QuoteComponent implements OnInit {
   }
 
   applyNow(): void {
+    const quote = this.quoteResult();
+    if (!quote) return;
+
     this.router.navigate(['/proposals/new'], {
       state: {
-        quote: this.quoteResult(),
-        productId: Number(this.form.value.productId),
+        productId: this.form.value.productId,
+        sumAssured: quote.sumAssured,
+        tenureYears: quote.tenureYears,
+        premiumAmount: quote.premiumAmount,
+        paymentFrequency: quote.paymentFrequency,
       },
     });
+  }
+
+  private calculateAge(dateOfBirth: string): number {
+    const dob = new Date(dateOfBirth);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDelta = today.getMonth() - dob.getMonth();
+    if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+    return age;
   }
 }

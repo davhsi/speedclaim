@@ -50,6 +50,10 @@ export interface VerifyEmailRequest {
   token: string;
 }
 
+export interface ResendVerificationRequest {
+  email: string;
+}
+
 export interface RefreshTokenRequest {
   token: string;
 }
@@ -62,11 +66,11 @@ export interface AuthResponse {
 
 export interface RegistrationResponse {
   message: string;
-  userId?: number;
+  userId?: string;
 }
 
 export interface AuthUserDto {
-  id: number;
+  id: string;
   email: string;
   salutationTitle: Salutation;
   firstName: string;
@@ -80,6 +84,7 @@ export interface AuthUserDto {
 export interface UserDto extends AuthUserDto {
   gender: Gender;
   dateOfBirth: string;
+  customerId?: string;
   isEmailVerified: boolean;
   isActive: boolean;
   createdAt: string;
@@ -88,7 +93,7 @@ export interface UserDto extends AuthUserDto {
 }
 
 export interface AddressDto {
-  id: number;
+  id: string;
   line1: string;
   line2?: string;
   city: string;
@@ -109,7 +114,7 @@ export interface SingleAddressRequest {
 }
 
 export interface FamilyMemberDto {
-  id: number;
+  id: string;
   name: string;
   dateOfBirth: string;
   relationship: Relationship;
@@ -139,22 +144,25 @@ export interface UpdateFamilyMemberRequest {
 }
 
 export interface KycRecordDto {
-  id: number;
-  aadhaarNumber: string;
-  panNumber: string;
+  id: string;
+  userId: string;
+  kycStatus: KycStatus;
+  aadhaarUploaded: boolean;
+  aadhaarNumber?: string | null;
+  panUploaded: boolean;
+  panNumber?: string | null;
   aadhaarFrontPath?: string;
   aadhaarBackPath?: string;
   panFrontPath?: string;
   panBackPath?: string;
-  status: KycStatus;
   rejectionReason?: string;
   createdAt: string;
   updatedAt?: string;
 }
 
 export interface ProductDto {
-  id: number;
-  name: string;
+  id: string;
+  productName: string;
   uin: string;
   description: string;
   domain: InsuranceDomain;
@@ -162,32 +170,28 @@ export interface ProductDto {
   maxAge: number;
   minSumAssured: number;
   maxSumAssured: number;
-  minTenure: number;
-  maxTenure: number;
-  familyFloaterAllowed: boolean;
-  maxMembers: number;
+  minTenureYears: number;
+  maxTenureYears: number;
+  waitingPeriodDays: number;
+  allowsFamilyFloater: boolean;
+  maxFamilyMembers: number;
   isActive: boolean;
 }
 
 export interface DocumentRequirementDto {
-  id: number;
+  id: string;
   documentKey: string;
-  documentName: string;
+  label: string;
   description: string;
   isMandatory: boolean;
 }
 
 export interface GenerateQuoteRequest {
-  productId: number;
+  productId: string;
+  age: number;
   sumAssured: number;
   tenureYears: number;
-  paymentFrequency: PaymentFrequency;
-  dateOfBirth: string;
   gender?: Gender;
-  healthDetail?: HealthQuoteDetail;
-  motorDetail?: MotorQuoteDetail;
-  lifeDetail?: LifeQuoteDetail;
-  memberCount?: number;
 }
 
 export interface HealthQuoteDetail {
@@ -207,47 +211,46 @@ export interface LifeQuoteDetail {
 
 export interface GenerateQuoteResponse {
   premiumAmount: number;
-  basePremium: number;
-  gst: number;
-  totalPremium: number;
   paymentFrequency: PaymentFrequency;
   sumAssured: number;
   tenureYears: number;
-  productName: string;
 }
 
 export interface SubmitProposalRequest {
-  productId: number;
+  customerId: string;
+  productId: string;
   sumAssured: number;
   tenureYears: number;
+  premiumAmount: number;
   paymentFrequency: PaymentFrequency;
   healthDetail?: object;
   motorDetail?: object;
   lifeDetail?: object;
-  members?: ProposalMemberRequest[];
+  customerMemberIds?: string[];
   nominees?: NomineeRequest[];
 }
 
 export interface ProposalMemberRequest {
-  familyMemberId: number;
+  familyMemberId: string;
 }
 
 export interface NomineeRequest {
-  name: string;
+  fullName: string;
   relationship: Relationship;
   sharePercentage: number;
   dateOfBirth: string;
+  isMinor: boolean;
   appointeeName?: string;
 }
 
 export interface ProposalDto {
-  id: number;
+  id: string;
   proposalNumber: string;
-  customerId: number;
-  agentId?: number;
-  productId: number;
-  productName: string;
-  domain: InsuranceDomain;
+  customerId: string;
+  agentId?: string;
+  productId: string;
+  productName?: string;
+  domain?: InsuranceDomain;
   status: ProposalStatus;
   sumAssured: number;
   tenureYears: number;
@@ -265,8 +268,8 @@ export interface ProposalDto {
 }
 
 export interface ProposalMemberDto {
-  id: number;
-  familyMemberId: number;
+  id: string;
+  familyMemberId: string;
   name: string;
   relationship: Relationship;
 }
@@ -289,12 +292,12 @@ export interface SubmittedDocumentDto {
 }
 
 export interface PolicyDto {
-  id: number;
+  id: string;
   policyNumber: string;
-  userId: number;
-  productId: number;
+  userId: string;
+  productId: string;
   productName: string;
-  agentId?: number;
+  agentId?: string;
   status: PolicyStatus;
   paymentFrequency: PaymentFrequency;
   premiumAmount: number;
@@ -366,12 +369,12 @@ export interface IntimateClaimRequest {
 }
 
 export interface ClaimDto {
-  id: number;
+  id: string;
   claimNumber: string;
-  policyId: number;
+  policyId: string;
   policyNumber: string;
-  customerId: number;
-  claimantMemberId?: number;
+  customerId: string;
+  claimantMemberId?: string;
   claimType: ClaimType;
   claimAmountRequested: number;
   claimAmountApproved?: number;
@@ -380,8 +383,8 @@ export interface ClaimDto {
   intimationDate: string;
   incidentDate: string;
   incidentDescription: string;
-  assignedOfficerId?: number;
-  surveyorId?: number;
+  assignedOfficerId?: string;
+  surveyorId?: string;
   settlementDate?: string;
   rejectionReason?: string;
   createdAt: string;
@@ -439,14 +442,14 @@ export interface SavedCardDto {
 }
 
 export interface GrievanceDto {
-  id: number;
+  id: string;
   grievanceNumber: string;
   category: GrievanceCategory;
   description: string;
   status: GrievanceStatus;
-  relatedPolicyId?: number;
-  relatedClaimId?: number;
-  assignedToId?: number;
+  relatedPolicyId?: string;
+  relatedClaimId?: string;
+  assignedToId?: string;
   resolutionNotes?: string;
   createdAt: string;
   updatedAt?: string;
@@ -535,8 +538,8 @@ export interface ApiMessage {
 }
 
 export interface SessionDto {
-  id: number;
-  userId: number;
+  id: string;
+  userId: string;
   userEmail: string;
   ipAddress: string;
   userAgent: string;
@@ -553,19 +556,19 @@ export interface SystemConfigDto {
 }
 
 export interface AuditLogDto {
-  id: number;
+  id: string;
   entityType: string;
-  entityId: number;
+  entityId: string;
   action: string;
   oldValue?: string;
   newValue?: string;
-  userId?: number;
+  userId?: string;
   ipAddress?: string;
   createdAt: string;
 }
 
 export interface BranchDto {
-  id: number;
+  id: string;
   name: string;
   city: string;
   state: string;
@@ -590,8 +593,8 @@ export interface UpdateAgentLicenseRequest {
 }
 
 export interface AgentProfileDto {
-  agentId: number;
-  userId: number;
+  agentId: string;
+  userId: string;
   email: string;
   fullName: string;
   agentCode: string;
@@ -600,7 +603,7 @@ export interface AgentProfileDto {
   licenseExpiry: string;
   commissionRate: number;
   isActive: boolean;
-  branchId?: number;
+  branchId?: string;
   branchName?: string;
   branchCity?: string;
 }
@@ -679,15 +682,17 @@ export interface EmailTemplateDto {
 export interface RegisterAgentRequest {
   email: string;
   password: string;
-  salutationTitle: string;
+  salutation: string;
   firstName: string;
   lastName: string;
   phone: string;
   licenseNumber: string;
+  licenseExpiry: string;
   agencyName: string;
   aadhaarNumber: string;
   panNumber: string;
   maritalStatus: string;
   permanentAddress: AddressRequest;
   currentAddress: AddressRequest;
+  isSameAsPermanent: boolean;
 }

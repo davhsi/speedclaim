@@ -19,7 +19,7 @@ export class FamilyComponent implements OnInit {
 
   members = signal<FamilyMemberDto[]>([]);
   showForm = signal(false);
-  deleteTarget = signal<number | null>(null);
+  deleteTarget = signal<string | null>(null);
 
   memberForm = this.fb.group({
     name: ['', Validators.required],

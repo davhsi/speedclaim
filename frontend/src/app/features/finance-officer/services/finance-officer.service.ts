@@ -29,11 +29,11 @@ export class FinanceOfficerService {
     return this.http.get<PagedResponse<ClaimDto>>('/api/v1/claims/all', { params });
   }
 
-  processClaimPayout(claimId: number): Observable<ApiMessage> {
+  processClaimPayout(claimId: string): Observable<ApiMessage> {
     return this.http.post<ApiMessage>(`/api/v1/payments/payout/claim/${claimId}`, {});
   }
 
-  markClaimSettled(claimId: number): Observable<ApiMessage> {
+  markClaimSettled(claimId: string): Observable<ApiMessage> {
     return this.http.put<ApiMessage>(`/api/v1/payments/claims/${claimId}/settle`, {});
   }
 

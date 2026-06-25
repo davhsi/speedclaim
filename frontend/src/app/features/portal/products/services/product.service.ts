@@ -12,11 +12,11 @@ export class ProductService {
     return this.http.get<ProductDto[]>(this.apiUrl);
   }
 
-  getById(id: number): Observable<ProductDto> {
+  getById(id: string): Observable<ProductDto> {
     return this.http.get<ProductDto>(`${this.apiUrl}/${id}`);
   }
 
-  getDocumentRequirements(id: number): Observable<DocumentRequirementDto[]> {
+  getDocumentRequirements(id: string): Observable<DocumentRequirementDto[]> {
     return this.http.get<DocumentRequirementDto[]>(`${this.apiUrl}/${id}/documents`);
   }
 }

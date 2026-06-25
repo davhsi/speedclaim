@@ -1,4 +1,5 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ProfileService } from '../profile/services/profile.service';
 import { KycRecordDto } from '../../../core/models/api.models';
 import { FileUploadComponent } from '../../../shared/components/file-upload/file-upload';
@@ -8,7 +9,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
 @Component({
   selector: 'app-kyc',
   standalone: true,
-  imports: [FileUploadComponent, StatusBadgeComponent],
+  imports: [FormsModule, FileUploadComponent, StatusBadgeComponent],
   templateUrl: './kyc.html',
 })
 export class KycComponent implements OnInit {

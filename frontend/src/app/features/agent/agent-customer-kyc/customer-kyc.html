@@ -25,7 +25,7 @@
       <div class="p-3 bg-info-bg border border-info-border rounded-[10px] flex items-center gap-3">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-info)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
         <div class="text-xs text-body">
-          KYC status: <strong>{{ kyc.status }}</strong>
+          KYC status: <strong>{{ kyc.kycStatus }}</strong>
           @if (kyc.aadhaarNumber) { · Aadhaar: {{ kyc.aadhaarNumber }} }
           @if (kyc.panNumber) { · PAN: {{ kyc.panNumber }} }
         </div>
@@ -60,7 +60,7 @@
       <label class="block text-xs font-medium text-body mb-1.5">{{ idType() === 'aadhaar' ? 'Aadhaar number' : 'PAN number' }}</label>
       <input
         type="text"
-        [(value)]="idNumber"
+        [(ngModel)]="idNumber"
         class="h-[42px] sc-numeric"
         [placeholder]="idType() === 'aadhaar' ? '12 digit Aadhaar number' : 'e.g., ABCDE1234F'"
       />

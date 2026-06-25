@@ -21,6 +21,8 @@ export class ResetPasswordComponent implements OnInit {
   loading = signal(false);
   success = signal(false);
   errorMessage = signal('');
+  showPassword = signal(false);
+  showConfirmPassword = signal(false);
   private token = '';
 
   form = this.fb.nonNullable.group({

@@ -37,11 +37,11 @@ export class ClaimDetailComponent implements OnInit {
   modalSurveyorId = '';
 
   ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
+    const id = this.route.snapshot.paramMap.get('id');
     if (id) this.loadClaim(id);
   }
 
-  private loadClaim(id: number): void {
+  private loadClaim(id: string): void {
     this.claimsService.getClaimById(id).subscribe({
       next: (c) => this.claim.set(c),
     });
@@ -184,7 +184,7 @@ export class ClaimDetailComponent implements OnInit {
         break;
       case 'assignSurveyor':
         this.claimsService.assignSurveyor(c.id, {
-          surveyorId: Number(this.modalSurveyorId),
+          surveyorId: this.modalSurveyorId,
           notes: this.modalNotes || undefined,
         }).subscribe({
           next: () => { this.showToast('Surveyor assigned', 'success'); this.closeModal(); this.loadClaim(c.id); },

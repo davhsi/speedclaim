@@ -14,7 +14,7 @@
             <select formControlName="productId" class="h-[42px] text-sm" (change)="onProductChange()">
               <option value="">Select product...</option>
               @for (p of products(); track p.id) {
-                <option [value]="p.id">{{ p.name }} ({{ p.domain }})</option>
+                <option [value]="p.id">{{ p.productName }} ({{ p.domain }})</option>
               }
             </select>
           </div>
@@ -24,7 +24,7 @@
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="text-primary"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             </div>
             <div>
-              <div class="text-sm font-semibold text-ink">{{ preselectedProduct()!.name }}</div>
+              <div class="text-sm font-semibold text-ink">{{ preselectedProduct()!.productName }}</div>
               <div class="text-xs text-primary font-medium">{{ preselectedProduct()!.domain }}</div>
             </div>
           </div>
@@ -39,8 +39,8 @@
             </div>
             <div>
               <label class="block text-[13px] font-medium mb-1.5">Tenure (years)</label>
-              <input type="number" formControlName="tenureYears" [min]="sp.minTenure" [max]="sp.maxTenure" placeholder="e.g., 5" class="h-[42px]">
-              <p class="text-xs text-muted mt-1">Range: {{ sp.minTenure }} - {{ sp.maxTenure }} years</p>
+              <input type="number" formControlName="tenureYears" [min]="sp.minTenureYears" [max]="sp.maxTenureYears" placeholder="e.g., 5" class="h-[42px]">
+              <p class="text-xs text-muted mt-1">Range: {{ sp.minTenureYears }} - {{ sp.maxTenureYears }} years</p>
             </div>
             <div>
               <label class="block text-[13px] font-medium mb-1.5">Payment frequency</label>
@@ -127,18 +127,16 @@
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1F9D6B" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
         <h2 class="text-xl font-bold text-ink mb-1">Your Premium Quote</h2>
-        <p class="text-sm text-muted">{{ quoteResult()!.productName }}</p>
+        <p class="text-sm text-muted">{{ selectedProduct()?.productName }}</p>
         <div class="mt-5">
-          <div class="text-4xl font-bold text-primary sc-numeric">{{ quoteResult()!.totalPremium | money }}</div>
+          <div class="text-4xl font-bold text-primary sc-numeric">{{ quoteResult()!.premiumAmount | money }}</div>
           <div class="text-sm text-muted mt-1">per {{ quoteResult()!.paymentFrequency | lowercase }}</div>
         </div>
       </div>
       <div class="p-6 space-y-3 text-sm">
         <div class="flex justify-between"><span class="text-muted">Sum Assured</span><span class="font-semibold sc-numeric">{{ quoteResult()!.sumAssured | money }}</span></div>
         <div class="flex justify-between"><span class="text-muted">Tenure</span><span class="font-semibold">{{ quoteResult()!.tenureYears }} years</span></div>
-        <div class="flex justify-between"><span class="text-muted">Base Premium</span><span class="font-semibold sc-numeric">{{ quoteResult()!.basePremium | money }}</span></div>
-        <div class="flex justify-between"><span class="text-muted">GST</span><span class="font-semibold sc-numeric">{{ quoteResult()!.gst | money }}</span></div>
-        <div class="flex justify-between pt-3 border-t border-line font-bold text-ink"><span>Total</span><span class="sc-numeric">{{ quoteResult()!.totalPremium | money }}</span></div>
+        <div class="flex justify-between pt-3 border-t border-line font-bold text-ink"><span>Premium</span><span class="sc-numeric">{{ quoteResult()!.premiumAmount | money }}</span></div>
       </div>
       <div class="px-6 pb-6 flex gap-3">
         <button (click)="quoteResult.set(null)" class="flex-1 h-11 border border-line bg-white rounded-control text-sm font-semibold text-body hover:bg-surface-alt transition-colors">Recalculate</button>

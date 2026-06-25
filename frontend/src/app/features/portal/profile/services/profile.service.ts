@@ -23,11 +23,11 @@ export class ProfileService {
     return this.http.post<ApiMessage>(`${this.api}/addresses`, req);
   }
 
-  updateAddress(id: number, req: SingleAddressRequest): Observable<ApiMessage> {
+  updateAddress(id: string, req: SingleAddressRequest): Observable<ApiMessage> {
     return this.http.put<ApiMessage>(`${this.api}/addresses/${id}`, req);
   }
 
-  deleteAddress(id: number): Observable<ApiMessage> {
+  deleteAddress(id: string): Observable<ApiMessage> {
     return this.http.delete<ApiMessage>(`${this.api}/addresses/${id}`);
   }
 
@@ -39,11 +39,11 @@ export class ProfileService {
     return this.http.post<FamilyMemberDto>(`${this.api}/family`, req);
   }
 
-  updateFamilyMember(id: number, req: UpdateFamilyMemberRequest): Observable<ApiMessage> {
+  updateFamilyMember(id: string, req: UpdateFamilyMemberRequest): Observable<ApiMessage> {
     return this.http.put<ApiMessage>(`${this.api}/family/${id}`, req);
   }
 
-  deleteFamilyMember(id: number): Observable<ApiMessage> {
+  deleteFamilyMember(id: string): Observable<ApiMessage> {
     return this.http.delete<ApiMessage>(`${this.api}/family/${id}`);
   }
 
@@ -53,14 +53,14 @@ export class ProfileService {
 
   uploadAadhaar(file: File, aadhaarNumber: string): Observable<KycRecordDto> {
     const fd = new FormData();
-    fd.append('file', file);
+    fd.append('frontDocument', file);
     fd.append('aadhaarNumber', aadhaarNumber);
     return this.http.post<KycRecordDto>(`${this.api}/kyc/aadhaar`, fd);
   }
 
   uploadPan(file: File, panNumber: string): Observable<KycRecordDto> {
     const fd = new FormData();
-    fd.append('file', file);
+    fd.append('frontDocument', file);
     fd.append('panNumber', panNumber);
     return this.http.post<KycRecordDto>(`${this.api}/kyc/pan`, fd);
   }

@@ -1,4 +1,5 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AgentService, AgentCustomerDto } from '../services/agent.service';
@@ -9,7 +10,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
 @Component({
   selector: 'app-agent-customer-kyc',
   standalone: true,
-  imports: [RouterLink, FileUploadComponent],
+  imports: [FormsModule, RouterLink, FileUploadComponent],
   templateUrl: './customer-kyc.html',
 })
 export class AgentCustomerKycComponent implements OnInit {
@@ -48,12 +49,12 @@ export class AgentCustomerKycComponent implements OnInit {
     this.submitting.set(true);
 
     const fd = new FormData();
-    fd.append('file', this.frontFile);
+    fd.append('frontDocument', this.frontFile);
     fd.append('customerId', this.selectedCustomerId()!.toString());
 
     if (this.idType() === 'aadhaar') {
       fd.append('aadhaarNumber', this.idNumber);
-      if (this.backFile) fd.append('backFile', this.backFile);
+      if (this.backFile) fd.append('backDocument', this.backFile);
       this.http.post<KycRecordDto>('/api/v1/users/kyc/aadhaar', fd).subscribe({
         next: () => {
           this.toast.success('Aadhaar uploaded successfully');

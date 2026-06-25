@@ -53,12 +53,19 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         );
       }
 
+      const isAuthEndpoint = req.url.includes('/auth/');
+
       if (error.status === 429) {
         toast.warning('Too many requests. Please wait a moment.');
+      } else if (isAuthEndpoint) {
+        // Auth pages handle their own errors inline — only 429 gets a toast
       } else if (error.status === 403) {
         toast.error('You do not have permission to perform this action.');
       } else if (error.status >= 500) {
         toast.error('Something went wrong. Please try again later.');
+      } else if (error.status >= 400 && error.status < 500) {
+        const errorMsg = error.error?.detail || error.error?.message || 'An error occurred. Please try again.';
+        toast.error(errorMsg);
       }
 
       return throwError(() => error);

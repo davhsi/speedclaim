@@ -12,7 +12,7 @@
           <span class="text-xl font-semibold text-ink">{{ p.proposalNumber }}</span>
           <app-status-badge [status]="p.status" />
         </div>
-        <div class="text-[13px] text-muted sc-numeric">{{ p.productName }} · Submitted {{ p.createdAt | dateFormat }}</div>
+        <div class="text-[13px] text-muted sc-numeric">{{ productName() }} · Submitted {{ p.createdAt | dateFormat }}</div>
       </div>
     </div>
 
@@ -40,7 +40,7 @@
             </div>
             <div class="p-[11px_14px] border-b border-line">
               <div class="text-[11px] font-semibold text-muted uppercase tracking-wide mb-1">Domain</div>
-              <div class="text-sm font-medium text-ink">{{ p.domain }}</div>
+              <div class="text-sm font-medium text-ink">{{ displayDomain() }}</div>
             </div>
           </div>
         </div>

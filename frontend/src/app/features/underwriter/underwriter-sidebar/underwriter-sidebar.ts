@@ -1,6 +1,7 @@
 import { Component, input, output, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { SafeHtmlPipe } from '../../../shared/pipes/safe-html.pipe';
 
 interface NavItem {
   label: string;
@@ -12,7 +13,7 @@ interface NavItem {
 @Component({
   selector: 'app-underwriter-sidebar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, SafeHtmlPipe],
   templateUrl: './underwriter-sidebar.html',
   styles: `
     :host { display: contents; }

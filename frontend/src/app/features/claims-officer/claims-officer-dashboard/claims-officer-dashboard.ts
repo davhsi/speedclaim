@@ -77,7 +77,7 @@ export class ClaimsOfficerDashboardComponent implements OnInit {
     return map[type] ?? type.substring(0, 3).toUpperCase();
   }
 
-  openClaim(id: number): void {
+  openClaim(id: string): void {
     this.router.navigate(['/claims-officer/claims', id]);
   }
 

@@ -119,7 +119,7 @@ export class AdminUsersComponent implements OnInit {
     return m[role] ?? role;
   }
 
-  userSessionCount(userId: number): number {
+  userSessionCount(userId: string): number {
     return this.sessions().filter(s => s.userId === userId && !s.isRevoked).length;
   }
 

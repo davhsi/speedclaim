@@ -21,13 +21,13 @@ export class AdminService {
     return this.http.get<PagedResponse<UserDto>>('/api/v1/users/all', { params });
   }
 
-  changeUserRole(userId: number, role: string): Observable<ApiMessage> {
+  changeUserRole(userId: string, role: string): Observable<ApiMessage> {
     return this.http.put<ApiMessage>(`/api/v1/users/${userId}/role`, JSON.stringify(role), {
       headers: { 'Content-Type': 'application/json' },
     });
   }
 
-  toggleUserStatus(userId: number, isActive: boolean): Observable<ApiMessage> {
+  toggleUserStatus(userId: string, isActive: boolean): Observable<ApiMessage> {
     const params = new HttpParams().set('isActive', isActive);
     return this.http.put<ApiMessage>(`/api/v1/users/${userId}/status`, {}, { params });
   }
@@ -36,7 +36,7 @@ export class AdminService {
     return this.http.get<SessionDto[]>('/api/v1/users/sessions');
   }
 
-  resetPassword(userId: number, req: AdminResetPasswordRequest): Observable<ApiMessage> {
+  resetPassword(userId: string, req: AdminResetPasswordRequest): Observable<ApiMessage> {
     return this.http.post<ApiMessage>(`/api/v1/auth/admin/reset-password/${userId}`, req);
   }
 
@@ -54,15 +54,15 @@ export class AdminService {
     return this.http.post<BranchDto>('/api/v1/agents/branches', req);
   }
 
-  assignAgentToBranch(agentId: number, branchId: number): Observable<ApiMessage> {
+  assignAgentToBranch(agentId: string, branchId: string): Observable<ApiMessage> {
     return this.http.put<ApiMessage>(`/api/v1/agents/${agentId}/branch/${branchId}`, {});
   }
 
-  updateAgentLicense(agentId: number, req: UpdateAgentLicenseRequest): Observable<ApiMessage> {
+  updateAgentLicense(agentId: string, req: UpdateAgentLicenseRequest): Observable<ApiMessage> {
     return this.http.put<ApiMessage>(`/api/v1/agents/${agentId}/license`, req);
   }
 
-  toggleAgentStatus(agentId: number, isActive: boolean): Observable<ApiMessage> {
+  toggleAgentStatus(agentId: string, isActive: boolean): Observable<ApiMessage> {
     const params = new HttpParams().set('isActive', isActive);
     return this.http.put<ApiMessage>(`/api/v1/agents/${agentId}/status`, {}, { params });
   }
@@ -81,19 +81,19 @@ export class AdminService {
     return this.http.post<ProductDto>('/api/v1/products', req);
   }
 
-  updateProductRates(productId: number, rates: PremiumRateDto[]): Observable<ApiMessage> {
+  updateProductRates(productId: string, rates: PremiumRateDto[]): Observable<ApiMessage> {
     return this.http.put<ApiMessage>(`/api/v1/products/${productId}/rates`, { rates });
   }
 
-  getProductDocuments(productId: number): Observable<DocumentRequirementResponseDto[]> {
+  getProductDocuments(productId: string): Observable<DocumentRequirementResponseDto[]> {
     return this.http.get<DocumentRequirementResponseDto[]>(`/api/v1/products/${productId}/documents`);
   }
 
-  updateProductDocuments(productId: number, requirements: DocumentRequirementUpdateDto[]): Observable<ApiMessage> {
+  updateProductDocuments(productId: string, requirements: DocumentRequirementUpdateDto[]): Observable<ApiMessage> {
     return this.http.put<ApiMessage>(`/api/v1/products/${productId}/documents`, { requirements });
   }
 
-  toggleProductStatus(productId: number, isActive: boolean): Observable<ApiMessage> {
+  toggleProductStatus(productId: string, isActive: boolean): Observable<ApiMessage> {
     return this.http.put<ApiMessage>(`/api/v1/products/${productId}/status`, isActive);
   }
 

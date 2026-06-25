@@ -41,9 +41,10 @@ export class AgentCustomerListComponent implements OnInit {
     return (c.firstName.charAt(0) + c.lastName.charAt(0)).toUpperCase();
   }
 
-  avatarColor(id: number): string {
+  avatarColor(id: string): string {
     const colors = ['#0F6E8C', '#F2784B', '#1F9D6B', '#D9920A', '#2D7FF9', '#7C3AED'];
-    return colors[id % colors.length];
+    const hash = Array.from(id).reduce((sum, char) => sum + char.charCodeAt(0), 0);
+    return colors[hash % colors.length];
   }
 
   formatDate(dateStr: string): string {

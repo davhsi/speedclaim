@@ -18,6 +18,12 @@ export class LoginComponent {
 
   loading = signal(false);
   errorMessage = signal('');
+  showResendVerification = signal(false);
+  showRegisterLink = signal(false);
+  showPassword = signal(false);
+  resendLoading = signal(false);
+  resendSuccess = signal(false);
+  private lastEmail = '';
 
   form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -32,9 +38,13 @@ export class LoginComponent {
 
     this.loading.set(true);
     this.errorMessage.set('');
+    this.showResendVerification.set(false);
+    this.showRegisterLink.set(false);
+    this.resendSuccess.set(false);
 
     this.authService.login(this.form.getRawValue()).subscribe({
       next: (res) => {
+        this.loading.set(false);
         this.toast.success('Welcome back!');
         const roleRoutes: Record<string, string> = {
           Agent: '/agent',
@@ -47,15 +57,32 @@ export class LoginComponent {
       },
       error: (err) => {
         this.loading.set(false);
-        if (err.status === 401) {
-          this.errorMessage.set('Invalid email or password.');
-        } else if (err.status === 403) {
-          this.errorMessage.set('Your account is locked. Please try again after 15 minutes.');
+        if (err.status === 404) {
+          this.errorMessage.set(err.error?.detail || 'No account found with this email address.');
+          this.showRegisterLink.set(true);
         } else if (err.status === 422) {
-          this.errorMessage.set('Please verify your email address before signing in.');
+          this.errorMessage.set(err.error?.detail || 'Please verify your email address before signing in.');
+          this.showResendVerification.set(true);
+          this.lastEmail = this.form.getRawValue().email;
+        } else if (err.status === 0) {
+          this.errorMessage.set('Unable to connect. Please check your internet connection.');
         } else {
-          this.errorMessage.set('Something went wrong. Please try again.');
+          this.errorMessage.set(err.error?.detail || 'Something went wrong. Please try again.');
         }
+      },
+    });
+  }
+
+  resendVerification(): void {
+    if (!this.lastEmail) return;
+    this.resendLoading.set(true);
+    this.authService.resendVerificationEmail({ email: this.lastEmail }).subscribe({
+      next: () => {
+        this.resendLoading.set(false);
+        this.resendSuccess.set(true);
+      },
+      error: () => {
+        this.resendLoading.set(false);
       },
     });
   }

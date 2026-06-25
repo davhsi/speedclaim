@@ -6,8 +6,9 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 import { UnderwriterService } from '../services/underwriter.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
-import { ProposalDto } from '../../../core/models/api.models';
+import { ProductDto, ProposalDto } from '../../../core/models/api.models';
 import { FormsModule } from '@angular/forms';
+import { ProductService } from '../../portal/products/services/product.service';
 
 @Component({
   selector: 'app-uw-proposal-detail',
@@ -19,9 +20,11 @@ export class ProposalDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private uwService = inject(UnderwriterService);
+  private productService = inject(ProductService);
   private toast = inject(ToastService);
 
   proposal = signal<ProposalDto | null>(null);
+  product = signal<ProductDto | null>(null);
   showDialog = signal<'approve' | 'reject' | 'docs' | null>(null);
   notes = '';
   rejectReason = '';
@@ -33,6 +36,10 @@ export class ProposalDetailComponent implements OnInit {
       next: (p) => {
         this.proposal.set(p);
         this.notes = p.underwriterNotes ?? '';
+        this.productService.getById(p.productId).subscribe({
+          next: product => this.product.set(product),
+          error: () => this.product.set(null),
+        });
       },
     });
   }
@@ -85,5 +92,13 @@ export class ProposalDetailComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/underwriter/proposals']);
+  }
+
+  productName(): string {
+    return this.product()?.productName ?? this.proposal()?.productName ?? 'Insurance product';
+  }
+
+  displayDomain(): string {
+    return this.product()?.domain ?? this.proposal()?.domain ?? 'Unknown';
   }
 }

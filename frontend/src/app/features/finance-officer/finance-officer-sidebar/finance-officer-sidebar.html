@@ -31,7 +31,7 @@
         style="color: rgba(255,255,255,.68);"
         (click)="onNavClick()"
       >
-        <span class="w-[18px] h-[18px] shrink-0 flex items-center justify-center" [innerHTML]="item.icon"></span>
+        <span class="w-[18px] h-[18px] shrink-0 flex items-center justify-center" [innerHTML]="item.icon | safeHtml"></span>
         <span class="flex-1">{{ item.label }}</span>
         @if (item.badgeCount && item.badgeCount > 0) {
           <span class="min-w-5 h-[18px] px-[5px] rounded-full bg-warning text-white text-[10px] font-bold flex items-center justify-center sc-numeric">{{ item.badgeCount }}</span>

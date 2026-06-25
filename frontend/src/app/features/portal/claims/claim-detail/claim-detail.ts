@@ -26,7 +26,7 @@ export class ClaimDetailComponent implements OnInit {
   loading = signal(true);
 
   ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
+    const id = this.route.snapshot.paramMap.get('id')!;
     this.claimService.getById(id).subscribe({
       next: c => { this.claim.set(c); this.loading.set(false); },
       error: () => this.loading.set(false),

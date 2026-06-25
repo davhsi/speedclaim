@@ -41,7 +41,7 @@
             class="flex items-center gap-[11px] w-full px-2.5 py-[9px] rounded-control text-[13px] text-body hover:bg-surface-alt transition-colors mb-0.5 relative"
             (click)="onNavClick()"
           >
-            <span class="w-[18px] h-[18px] shrink-0 flex items-center justify-center" [innerHTML]="item.icon"></span>
+            <span class="w-[18px] h-[18px] shrink-0 flex items-center justify-center" [innerHTML]="item.icon | safeHtml"></span>
             <span class="flex-1">{{ item.label }}</span>
             @if (item.route === '/notifications' && notifService.unreadCount() > 0) {
               <span class="bg-danger text-white text-[10px] font-bold rounded-full px-1.5 py-px">

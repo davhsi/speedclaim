@@ -15,6 +15,7 @@ export class ForgotPasswordComponent {
   private router = inject(Router);
 
   loading = signal(false);
+  errorMessage = signal('');
 
   form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -26,11 +27,18 @@ export class ForgotPasswordComponent {
       return;
     }
     this.loading.set(true);
+    this.errorMessage.set('');
     this.authService.forgotPassword(this.form.getRawValue()).subscribe({
       next: () => this.router.navigate(['/auth/reset-sent']),
-      error: () => {
+      error: (err) => {
         this.loading.set(false);
-        this.router.navigate(['/auth/reset-sent']);
+        if (err.status === 0) {
+          this.errorMessage.set('Unable to connect. Please check your internet connection.');
+        } else if (err.status === 429) {
+          this.errorMessage.set('Too many requests. Please wait a moment before trying again.');
+        } else {
+          this.errorMessage.set('Something went wrong. Please try again.');
+        }
       },
     });
   }

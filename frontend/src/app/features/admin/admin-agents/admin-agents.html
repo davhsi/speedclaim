@@ -161,15 +161,21 @@
             <input type="text" [(ngModel)]="regForm.licenseNumber" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
           <div>
-            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Agency name</label>
-            <input type="text" [(ngModel)]="regForm.agencyName" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">License expiry</label>
+            <input type="date" [(ngModel)]="regForm.licenseExpiry" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
         </div>
         <div class="grid grid-cols-2 gap-3 mb-5">
           <div>
+            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Agency name</label>
+            <input type="text" [(ngModel)]="regForm.agencyName" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          </div>
+          <div>
             <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Aadhaar number</label>
             <input type="text" [(ngModel)]="regForm.aadhaarNumber" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-5">
           <div>
             <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">PAN number</label>
             <input type="text" [(ngModel)]="regForm.panNumber" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />

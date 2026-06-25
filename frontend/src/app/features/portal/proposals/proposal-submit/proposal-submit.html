@@ -29,7 +29,7 @@
         <div class="grid grid-cols-2 gap-3.5" [formGroup]="form">
           <div>
             <label class="block text-[13px] font-medium mb-1.5">Product ID</label>
-            <input type="number" formControlName="productId" class="h-[42px]" />
+            <input type="text" formControlName="productId" class="h-[42px]" />
           </div>
           <div>
             <label class="block text-[13px] font-medium mb-1.5">Sum assured (₹)</label>
@@ -47,6 +47,10 @@
               <option value="HalfYearly">Half Yearly</option>
               <option value="Annually">Annually</option>
             </select>
+          </div>
+          <div>
+            <label class="block text-[13px] font-medium mb-1.5">Premium (₹)</label>
+            <input type="number" formControlName="premiumAmount" class="h-[42px] sc-numeric" />
           </div>
         </div>
         <div class="flex justify-end mt-5 pt-5 border-t border-line">
@@ -95,7 +99,7 @@
         <p class="text-sm text-muted mb-4">Upload required documents.</p>
         @for (doc of docRequirements(); track doc.documentKey) {
           <div class="mb-4">
-            <app-file-upload [label]="doc.documentName" [hint]="doc.description" (fileSelected)="onDocSelected(doc.documentKey, $event)" />
+            <app-file-upload [label]="doc.label" [hint]="doc.description" (fileSelected)="onDocSelected(doc.documentKey, $event)" />
           </div>
         }
         @if (docRequirements().length === 0) {

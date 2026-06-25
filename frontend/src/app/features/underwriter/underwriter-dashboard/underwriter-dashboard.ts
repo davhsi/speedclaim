@@ -3,7 +3,8 @@ import { Router } from '@angular/router';
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card';
 import { UnderwriterService } from '../services/underwriter.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { ProposalDto, EndorsementDto } from '../../../core/models/api.models';
+import { ProductDto, ProposalDto, EndorsementDto } from '../../../core/models/api.models';
+import { ProductService } from '../../portal/products/services/product.service';
 
 @Component({
   selector: 'app-underwriter-dashboard',
@@ -14,12 +15,15 @@ import { ProposalDto, EndorsementDto } from '../../../core/models/api.models';
 export class UnderwriterDashboardComponent implements OnInit {
   private uwService = inject(UnderwriterService);
   private authService = inject(AuthService);
+  private productService = inject(ProductService);
   private router = inject(Router);
 
   pendingProposals = signal(0);
   pendingKyc = signal(0);
   pendingEndorsements = signal(0);
   activePolicies = signal(0);
+  allProposals = signal<ProposalDto[]>([]);
+  products = signal<ProductDto[]>([]);
   recentActivity = signal<{ title: string; subtitle: string; time: string; abbr: string; bgClass: string }[]>([]);
 
   iconProposal = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>';
@@ -32,8 +36,16 @@ export class UnderwriterDashboardComponent implements OnInit {
   }
 
   private loadData(): void {
+    this.productService.getAll().subscribe({
+      next: products => {
+        this.products.set(products);
+        this.buildRecentActivity(this.allProposals());
+      },
+    });
+
     this.uwService.getAllProposals().subscribe({
       next: (proposals) => {
+        this.allProposals.set(proposals);
         const pending = proposals.filter(p => p.status === 'Submitted' || p.status === 'UnderReview');
         this.pendingProposals.set(pending.length);
         this.buildRecentActivity(proposals);
@@ -60,11 +72,17 @@ export class UnderwriterDashboardComponent implements OnInit {
 
     this.recentActivity.set(sorted.map(p => ({
       title: `Proposal ${p.proposalNumber}`,
-      subtitle: `${p.productName ?? 'Insurance'} · ${p.status}`,
+      subtitle: `${this.productName(p)} · ${p.status}`,
       time: this.formatRelativeTime(p.createdAt),
       abbr: 'PRP',
       bgClass: p.status === 'Approved' ? 'bg-success-bg text-success' : p.status === 'Rejected' ? 'bg-danger-bg text-danger' : 'bg-warning-bg text-warning',
     })));
+  }
+
+  private productName(proposal: ProposalDto): string {
+    return this.products().find(p => p.id === proposal.productId)?.productName
+      ?? proposal.productName
+      ?? 'Insurance product';
   }
 
   private formatRelativeTime(dateStr: string): string {

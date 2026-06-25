@@ -1,6 +1,6 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
-import { SurveyorService } from '../services/surveyor.service';
+import { SurveyorProfileDto, SurveyorService } from '../services/surveyor.service';
 import { ClaimDto } from '../../../core/models/api.models';
 
 @Component({
@@ -13,6 +13,7 @@ export class SurveyorProfileComponent implements OnInit {
   private surveyorService = inject(SurveyorService);
 
   claims = signal<ClaimDto[]>([]);
+  profile = signal<SurveyorProfileDto | null>(null);
 
   fullName = computed(() => {
     const u = this.authService.currentUser();
@@ -25,10 +26,11 @@ export class SurveyorProfileComponent implements OnInit {
     return (u.firstName.charAt(0) + u.lastName.charAt(0)).toUpperCase();
   });
 
-  email = computed(() => this.authService.currentUser()?.email ?? '');
-  phone = computed(() => this.authService.currentUser()?.phone ?? '');
-  licenseNo = computed(() => 'IRDA/SB/2019/0000');
-  zone = computed(() => 'Zone: Assigned Region');
+  email = computed(() => this.profile()?.email ?? this.authService.currentUser()?.email ?? '');
+  phone = computed(() => this.profile()?.phone ?? this.authService.currentUser()?.phone ?? '');
+  licenseNo = computed(() => this.profile()?.licenseNumber ?? 'Not assigned');
+  specialization = computed(() => this.profile()?.specialization ?? 'Assigned Region');
+  isActive = computed(() => this.profile()?.isActive ?? true);
 
   totalClaims = computed(() => this.claims().length);
   submittedCount = computed(() =>
@@ -46,6 +48,10 @@ export class SurveyorProfileComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.surveyorService.getProfile().subscribe({
+      next: profile => this.profile.set(profile),
+      error: () => {},
+    });
     this.surveyorService.getAssignedClaims().subscribe({
       next: claims => this.claims.set(claims),
       error: () => {},

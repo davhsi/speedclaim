@@ -39,7 +39,7 @@ export class PolicyDetailComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
+    const id = this.route.snapshot.paramMap.get('id') ?? '';
     this.policyService.getById(id).subscribe({
       next: p => { this.policy.set(p); this.loading.set(false); },
       error: () => this.loading.set(false),

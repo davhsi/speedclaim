@@ -26,9 +26,9 @@ export class AdminAgentsComponent implements OnInit {
   activeModal = signal<'register' | 'assignBranch' | 'updateLicense' | 'editBranch' | null>(null);
   selectedAgent = signal<UserDto | null>(null);
   selectedBranch = signal<BranchDto | null>(null);
-  selectedBranchId = signal<number | null>(null);
+  selectedBranchId = signal<string | null>(null);
 
-  regForm = { firstName: '', lastName: '', email: '', phone: '', password: '', licenseNumber: '', agencyName: '', aadhaarNumber: '', panNumber: '' };
+  regForm = { firstName: '', lastName: '', email: '', phone: '', password: '', licenseNumber: '', licenseExpiry: '', agencyName: '', aadhaarNumber: '', panNumber: '' };
   licForm = { licenseNumber: '', licenseExpiry: '' };
   branchForm = { name: '', city: '', state: '', address: '', phone: '', email: '' };
 
@@ -94,11 +94,11 @@ export class AdminAgentsComponent implements OnInit {
     return palettes[h % palettes.length];
   }
 
-  getAgentProfile(userId: number): AgentProfileDto | undefined {
+  getAgentProfile(userId: string): AgentProfileDto | undefined {
     return this.agentProfiles().find(ap => ap.userId === userId);
   }
 
-  getAgentBranch(userId: number): string {
+  getAgentBranch(userId: string): string {
     const ap = this.getAgentProfile(userId);
     return ap?.branchName ?? '—';
   }
@@ -113,7 +113,7 @@ export class AdminAgentsComponent implements OnInit {
   }
 
   openRegisterModal(): void {
-    this.regForm = { firstName: '', lastName: '', email: '', phone: '', password: '', licenseNumber: '', agencyName: '', aadhaarNumber: '', panNumber: '' };
+    this.regForm = { firstName: '', lastName: '', email: '', phone: '', password: '', licenseNumber: '', licenseExpiry: '', agencyName: '', aadhaarNumber: '', panNumber: '' };
     this.activeModal.set('register');
   }
 
@@ -159,17 +159,19 @@ export class AdminAgentsComponent implements OnInit {
     this.adminService.registerAgent({
       email: f.email,
       password: f.password || 'TempPass@123',
-      salutationTitle: 'Mr',
+      salutation: 'Mr',
       firstName: f.firstName,
       lastName: f.lastName,
       phone: f.phone,
       licenseNumber: f.licenseNumber,
+      licenseExpiry: f.licenseExpiry,
       agencyName: f.agencyName,
       aadhaarNumber: f.aadhaarNumber,
       panNumber: f.panNumber,
       maritalStatus: 'Single',
-      permanentAddress: { line1: '', city: '', state: '', postalCode: '', country: 'India' },
-      currentAddress: { line1: '', city: '', state: '', postalCode: '', country: 'India' },
+      permanentAddress: { line1: 'Admin onboarding desk', city: 'Bengaluru', state: 'Karnataka', postalCode: '560001', country: 'India' },
+      currentAddress: { line1: 'Admin onboarding desk', city: 'Bengaluru', state: 'Karnataka', postalCode: '560001', country: 'India' },
+      isSameAsPermanent: true,
     }).subscribe({
       next: () => {
         this.toastService.success('Agent registered successfully');

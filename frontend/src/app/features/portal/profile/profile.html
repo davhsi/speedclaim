@@ -170,7 +170,7 @@
         <div class="text-sm text-muted mt-0.5">Verify your identity to activate policies and claims.</div>
       </div>
 
-      @if (kyc()?.status === 'Approved') {
+      @if (kyc()?.kycStatus === 'Approved') {
         <div class="bg-success-bg border border-success-border rounded-card p-[18px] flex gap-3.5 items-center mb-5">
           <div class="w-11 h-11 rounded-full bg-white flex items-center justify-center shrink-0">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1F9D6B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
@@ -192,7 +192,7 @@
               <div class="text-sm font-semibold text-ink">Aadhaar</div>
               <div class="text-xs text-muted font-mono sc-numeric">{{ kyc()!.aadhaarNumber }}</div>
             </div>
-            <app-status-badge [status]="kyc()!.status" />
+            <app-status-badge [status]="kyc()!.kycStatus" />
           </div>
           <div class="flex items-center gap-3.5 px-[18px] py-4">
             <div class="w-10 h-10 rounded-[10px] bg-primary-light flex items-center justify-center shrink-0">
@@ -213,18 +213,18 @@
         </div>
       }
 
-      @if (!kyc() || kyc()!.status !== 'Approved') {
+      @if (!kyc() || kyc()!.kycStatus !== 'Approved') {
         <div class="bg-white border border-line rounded-card shadow-sm p-6 space-y-5">
           <div class="text-[13px] font-semibold text-ink">Upload KYC documents</div>
           <div>
             <label class="block text-xs text-muted mb-1.5">Aadhaar number</label>
-            <input type="text" [(value)]="aadhaarNum" placeholder="12 digit Aadhaar number" class="h-[42px] sc-numeric mb-2" />
+            <input type="text" [(ngModel)]="aadhaarNum" placeholder="12 digit Aadhaar number" class="h-[42px] sc-numeric mb-2" />
             <app-file-upload label="Aadhaar document" hint="Front page (PDF, JPG, PNG up to 5MB)" (fileSelected)="aadhaarFile = $event" />
             <button class="mt-2 h-9 px-4 bg-primary text-white text-xs font-semibold rounded-control hover:bg-primary-hover disabled:opacity-40" [disabled]="!aadhaarFile" (click)="uploadAadhaar()">Upload Aadhaar</button>
           </div>
           <div>
             <label class="block text-xs text-muted mb-1.5">PAN number</label>
-            <input type="text" [(value)]="panNum" placeholder="e.g., ABCDE1234F" class="h-[42px] mb-2" />
+            <input type="text" [(ngModel)]="panNum" placeholder="e.g., ABCDE1234F" class="h-[42px] mb-2" />
             <app-file-upload label="PAN document" hint="Front page (PDF, JPG, PNG up to 5MB)" (fileSelected)="panFile = $event" />
             <button class="mt-2 h-9 px-4 bg-primary text-white text-xs font-semibold rounded-control hover:bg-primary-hover disabled:opacity-40" [disabled]="!panFile" (click)="uploadPan()">Upload PAN</button>
           </div>

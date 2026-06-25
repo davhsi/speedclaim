@@ -12,7 +12,7 @@ export class ProposalService {
     return this.http.get<ProposalDto[]>(`${this.api}/my`);
   }
 
-  getById(id: number): Observable<ProposalDto> {
+  getById(id: string): Observable<ProposalDto> {
     return this.http.get<ProposalDto>(`${this.api}/${id}`);
   }
 
@@ -24,7 +24,7 @@ export class ProposalService {
     return this.http.post<ProposalDto>(this.api, req);
   }
 
-  uploadDocument(proposalId: number, documentKey: string, file: File): Observable<ApiMessage> {
+  uploadDocument(proposalId: string, documentKey: string, file: File): Observable<ApiMessage> {
     const fd = new FormData();
     fd.append('file', file);
     return this.http.put<ApiMessage>(`${this.api}/${proposalId}/documents/${documentKey}`, fd);

@@ -52,7 +52,7 @@ export class PolicyListComponent implements OnInit {
     this.loadPage(page);
   }
 
-  openPolicy(id: number): void {
+  openPolicy(id: string): void {
     this.router.navigate(['/underwriter/policies', id]);
   }
 }

@@ -1,8 +1,10 @@
 import { Component, input } from '@angular/core';
+import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
 
 @Component({
   selector: 'app-stat-card',
   standalone: true,
+  imports: [SafeHtmlPipe],
   templateUrl: './stat-card.html',
 })
 export class StatCardComponent {

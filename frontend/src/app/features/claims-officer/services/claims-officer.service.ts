@@ -20,12 +20,12 @@ export interface ApproveRejectRequest {
 }
 
 export interface AssignSurveyorRequest {
-  surveyorId: number;
+  surveyorId: string;
   notes?: string;
 }
 
 export interface AssignGrievanceRequest {
-  assignedToId: number;
+  assignedToId: string;
 }
 
 export interface UpdateGrievanceStatusRequest {
@@ -34,7 +34,7 @@ export interface UpdateGrievanceStatusRequest {
 }
 
 export interface SurveyorDto {
-  id: number;
+  id: string;
   firstName: string;
   lastName: string;
   fullName: string;
@@ -53,41 +53,41 @@ export class ClaimsOfficerService {
     return this.http.get<PagedResponse<ClaimDto>>('/api/v1/claims/all', { params });
   }
 
-  getClaimById(id: number): Observable<ClaimDto> {
+  getClaimById(id: string): Observable<ClaimDto> {
     return this.http.get<ClaimDto>(`/api/v1/claims/${id}`);
   }
 
-  getClaimHistory(id: number): Observable<ClaimStatusHistoryDto[]> {
+  getClaimHistory(id: string): Observable<ClaimStatusHistoryDto[]> {
     return this.http.get<ClaimStatusHistoryDto[]>(`/api/v1/claims/${id}/history`);
   }
 
-  assignToSelf(id: number): Observable<ApiMessage> {
+  assignToSelf(id: string): Observable<ApiMessage> {
     return this.http.put<ApiMessage>(`/api/v1/claims/${id}/assign`, {});
   }
 
-  approveReject(id: number, request: ApproveRejectRequest): Observable<ApiMessage> {
+  approveReject(id: string, request: ApproveRejectRequest): Observable<ApiMessage> {
     return this.http.put<ApiMessage>(`/api/v1/claims/${id}/approve`, request);
   }
 
-  settleClaim(id: number): Observable<ApiMessage> {
+  settleClaim(id: string): Observable<ApiMessage> {
     return this.http.put<ApiMessage>(`/api/v1/claims/${id}/settle`, {});
   }
 
-  updateStatus(id: number, request: UpdateClaimStatusRequest): Observable<ApiMessage> {
+  updateStatus(id: string, request: UpdateClaimStatusRequest): Observable<ApiMessage> {
     return this.http.put<ApiMessage>(`/api/v1/claims/${id}/status`, request);
   }
 
-  assignSurveyor(id: number, request: AssignSurveyorRequest): Observable<ApiMessage> {
+  assignSurveyor(id: string, request: AssignSurveyorRequest): Observable<ApiMessage> {
     return this.http.put<ApiMessage>(`/api/v1/claims/${id}/assign-surveyor`, request);
   }
 
-  requestDocs(id: number, details: string): Observable<ApiMessage> {
+  requestDocs(id: string, details: string): Observable<ApiMessage> {
     return this.http.post<ApiMessage>(`/api/v1/claims/${id}/request-docs`, JSON.stringify(details), {
       headers: { 'Content-Type': 'application/json' },
     });
   }
 
-  approvePreAuth(id: number): Observable<ApiMessage> {
+  approvePreAuth(id: string): Observable<ApiMessage> {
     return this.http.put<ApiMessage>(`/api/v1/claims/${id}/approve-preauth`, {});
   }
 
@@ -96,15 +96,15 @@ export class ClaimsOfficerService {
     return this.http.get<PagedResponse<GrievanceDto>>('/api/v1/grievances/all', { params });
   }
 
-  getGrievanceById(id: number): Observable<GrievanceDto> {
+  getGrievanceById(id: string): Observable<GrievanceDto> {
     return this.http.get<GrievanceDto>(`/api/v1/grievances/${id}`);
   }
 
-  assignGrievance(id: number, request: AssignGrievanceRequest): Observable<ApiMessage> {
+  assignGrievance(id: string, request: AssignGrievanceRequest): Observable<ApiMessage> {
     return this.http.put<ApiMessage>(`/api/v1/grievances/${id}/assign`, request);
   }
 
-  updateGrievanceStatus(id: number, request: UpdateGrievanceStatusRequest): Observable<ApiMessage> {
+  updateGrievanceStatus(id: string, request: UpdateGrievanceStatusRequest): Observable<ApiMessage> {
     return this.http.put<ApiMessage>(`/api/v1/grievances/${id}/status`, request);
   }
 

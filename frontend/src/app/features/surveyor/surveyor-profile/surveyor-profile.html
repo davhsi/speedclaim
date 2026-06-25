@@ -20,7 +20,7 @@
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1F9D6B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="20 6 9 17 4 12"/>
             </svg>
-            <span class="text-[11px] text-success font-semibold">Active</span>
+            <span class="text-[11px] text-success font-semibold">{{ isActive() ? 'Active' : 'Inactive' }}</span>
           </div>
         </div>
       </div>
@@ -58,7 +58,7 @@
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
         </svg>
-        <span class="text-[13px] text-ink">{{ zone() }}</span>
+        <span class="text-[13px] text-ink">Specialization: {{ specialization() }}</span>
       </div>
     </div>
 
