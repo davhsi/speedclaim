@@ -54,6 +54,10 @@ public class AgentService : IAgentService
                         user.Phone,
                         user.Role.ToString(),
                         customer.MaritalStatus.ToString(),
+                        customer.Id,
+                        user.IsEmailVerified,
+                        user.IsActive,
+                        user.CreatedAt,
                         null,
                         null
                     ));

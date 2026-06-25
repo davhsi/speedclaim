@@ -79,3 +79,16 @@ public record SurveyorDto(
     string LastName,
     string FullName
 );
+
+public record SurveyorProfileDto(
+    Guid SurveyorId,
+    Guid UserId,
+    string Email,
+    string FullName,
+    string Phone,
+    string? LicenseNumber,
+    DateOnly? LicenseExpiry,
+    string Specialization,
+    string SurveyorType,
+    bool IsActive
+);

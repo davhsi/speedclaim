@@ -75,6 +75,16 @@ public class RefreshTokenRequestValidator : AbstractValidator<RefreshTokenReques
     }
 }
 
+public class ResendVerificationRequestValidator : AbstractValidator<ResendVerificationRequest>
+{
+    public ResendVerificationRequestValidator()
+    {
+        RuleFor(x => x.Email)
+            .NotEmpty().WithMessage("Email is required.")
+            .EmailAddress().WithMessage("A valid email address is required.");
+    }
+}
+
 public class RegisterAgentRequestValidator : AbstractValidator<RegisterAgentRequest>
 {
     public RegisterAgentRequestValidator()
@@ -111,6 +121,9 @@ public class RegisterAgentRequestValidator : AbstractValidator<RegisterAgentRequ
         RuleFor(x => x.LicenseNumber)
             .NotEmpty().WithMessage("License number is required.")
             .MaximumLength(50).WithMessage("License number cannot exceed 50 characters.");
+
+        RuleFor(x => x.LicenseExpiry)
+            .GreaterThan(DateOnly.FromDateTime(DateTime.UtcNow.Date)).WithMessage("License expiry must be a future date.");
 
         RuleFor(x => x.AgencyName)
             .NotEmpty().WithMessage("Agency name is required.")

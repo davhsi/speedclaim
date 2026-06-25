@@ -31,4 +31,5 @@ public interface IUserService
     Task ActivateDeactivateUserAsync(string targetUserId, bool isActive, string adminId);
     Task<IEnumerable<SessionDto>> GetAllSessionsAsync();
     Task<IEnumerable<SurveyorDto>> GetSurveyorsAsync();
+    Task<SurveyorProfileDto> GetSurveyorProfileAsync(string userId);
 }

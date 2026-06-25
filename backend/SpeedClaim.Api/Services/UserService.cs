@@ -40,11 +40,13 @@ public class UserService : IUserService
         var currentAddressDto = current != null ? new AddressDto(current.AddressLine1, current.AddressLine2, current.City, current.State, current.Pincode, current.Country) : new AddressDto("", null, "", "", "", "");
 
         string maritalStatus = "Single";
+        Guid? customerId = null;
         if (user.Role == UserRole.Customer)
         {
             var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == uid);
             if (customer != null)
             {
+                customerId = customer.Id;
                 maritalStatus = customer.MaritalStatus.ToString();
             }
         }
@@ -59,6 +61,10 @@ public class UserService : IUserService
             user.Phone,
             user.Role.ToString(),
             maritalStatus,
+            customerId,
+            user.IsEmailVerified,
+            user.IsActive,
+            user.CreatedAt,
             permanentAddressDto,
             currentAddressDto
         );
@@ -296,11 +302,15 @@ public class UserService : IUserService
             var currentAddressDto = current != null ? new AddressDto(current.AddressLine1, current.AddressLine2, current.City, current.State, current.Pincode, current.Country) : new AddressDto("", null, "", "", "", "");
 
             var maritalStatus = "Single";
+            Guid? customerId = null;
             if (user.Role == UserRole.Customer)
             {
                 var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == user.Id);
                 if (customer != null)
+                {
+                    customerId = customer.Id;
                     maritalStatus = customer.MaritalStatus.ToString();
+                }
             }
 
             dtos.Add(new UserDto(
@@ -313,6 +323,10 @@ public class UserService : IUserService
                 user.Phone,
                 user.Role.ToString(),
                 maritalStatus,
+                customerId,
+                user.IsEmailVerified,
+                user.IsActive,
+                user.CreatedAt,
                 permanentAddressDto,
                 currentAddressDto
             ));
@@ -437,5 +451,28 @@ public class UserService : IUserService
         }
 
         return result;
+    }
+
+    public async Task<SurveyorProfileDto> GetSurveyorProfileAsync(string userId)
+    {
+        var uid = Guid.Parse(userId);
+        var surveyor = await _unitOfWork.Surveyors.FirstOrDefaultAsync(s => s.UserId == uid);
+        if (surveyor == null) throw new NotFoundException("Surveyor profile not found.");
+
+        var user = await _unitOfWork.Users.GetByIdAsync(uid);
+        if (user == null) throw new NotFoundException("User not found.");
+
+        return new SurveyorProfileDto(
+            surveyor.Id,
+            user.Id,
+            user.Email,
+            user.FullName,
+            user.Phone,
+            surveyor.LicenseNumber,
+            surveyor.LicenseExpiry,
+            surveyor.Specialization.ToString(),
+            surveyor.SurveyorType.ToString(),
+            surveyor.IsActive
+        );
     }
 }

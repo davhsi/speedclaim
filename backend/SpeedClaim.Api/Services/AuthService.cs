@@ -57,13 +57,69 @@ public class AuthService : IAuthService
         {
             User = user,
             DateOfBirth = request.DateOfBirth,
-            Gender = request.Gender
+            Gender = request.Gender,
+            MaritalStatus = request.MaritalStatus
         };
 
         var ip = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
 
         await _unitOfWork.Users.AddAsync(user);
         await _unitOfWork.Customers.AddAsync(customer);
+
+        // Create permanent address
+        await _unitOfWork.Addresses.AddAsync(new Address
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.Id,
+            AddressType = AddressType.Permanent,
+            AddressLine1 = request.PermanentAddress.Line1,
+            AddressLine2 = request.PermanentAddress.Line2,
+            City = request.PermanentAddress.City,
+            State = request.PermanentAddress.State,
+            Pincode = request.PermanentAddress.PostalCode,
+            Country = request.PermanentAddress.Country,
+            IsSameAsPermanent = false,
+            CreatedAt = DateTimeOffset.UtcNow
+        });
+
+        // Create current address if different
+        if (!request.IsSameAsPermanent && request.CurrentAddress != null)
+        {
+            await _unitOfWork.Addresses.AddAsync(new Address
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                AddressType = AddressType.Current,
+                AddressLine1 = request.CurrentAddress.Line1,
+                AddressLine2 = request.CurrentAddress.Line2,
+                City = request.CurrentAddress.City,
+                State = request.CurrentAddress.State,
+                Pincode = request.CurrentAddress.PostalCode,
+                Country = request.CurrentAddress.Country,
+                IsSameAsPermanent = request.IsSameAsPermanent,
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+        }
+        else if (request.IsSameAsPermanent)
+        {
+            // Mark permanent address as also being current
+            var permanentAddr = new Address
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                AddressType = AddressType.Current,
+                AddressLine1 = request.PermanentAddress.Line1,
+                AddressLine2 = request.PermanentAddress.Line2,
+                City = request.PermanentAddress.City,
+                State = request.PermanentAddress.State,
+                Pincode = request.PermanentAddress.PostalCode,
+                Country = request.PermanentAddress.Country,
+                IsSameAsPermanent = true,
+                CreatedAt = DateTimeOffset.UtcNow
+            };
+            await _unitOfWork.Addresses.AddAsync(permanentAddr);
+        }
+
         await _unitOfWork.AuditLogs.AddAsync(new AuditLog
         {
             Id = Guid.NewGuid(), UserId = user.Id, EntityType = "User", EntityId = user.Id,
@@ -116,26 +172,35 @@ public class AuthService : IAuthService
             throw new ForbiddenException($"Account is temporarily locked. Try again after {user.LockedUntil:HH:mm} UTC.");
         }
 
-        if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        if (user == null)
         {
-            if (user != null)
+            _logger.LogWarning("Login attempt for non-existent email: {Email}", request.Email);
+            throw new NotFoundException("No account found with this email address.");
+        }
+
+        if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        {
+            user.FailedLoginAttempts++;
+            if (user.FailedLoginAttempts >= maxAttempts)
             {
-                user.FailedLoginAttempts++;
-                if (user.FailedLoginAttempts >= maxAttempts)
-                {
-                    user.LockedUntil = DateTime.UtcNow.AddMinutes(lockoutMinutes);
-                    _logger.LogWarning("Account locked after {Max} failed attempts: {Email}", maxAttempts, request.Email);
-                }
-                await _unitOfWork.CompleteAsync();
+                user.LockedUntil = DateTime.UtcNow.AddMinutes(lockoutMinutes);
+                _logger.LogWarning("Account locked after {Max} failed attempts: {Email}", maxAttempts, request.Email);
             }
+            await _unitOfWork.CompleteAsync();
             _logger.LogWarning("Failed login attempt for email: {Email}", request.Email);
-            throw new ValidationException("Invalid credentials");
+            throw new ValidationException("Incorrect password.");
         }
 
         if (!user.IsActive)
         {
             _logger.LogWarning("Login attempt for inactive account: {Email}", request.Email);
             throw new ForbiddenException("Account is inactive");
+        }
+
+        if (!user.IsEmailVerified)
+        {
+            _logger.LogWarning("Login attempt for unverified email: {Email}", request.Email);
+            throw new UnprocessableException("Please verify your email address before signing in.");
         }
 
         // Successful login — reset lockout state
@@ -151,8 +216,8 @@ public class AuthService : IAuthService
             UserId = user.Id,
             RefreshTokenHash = BCrypt.Net.BCrypt.HashPassword(rawRefreshToken),
             ExpiresAt = DateTime.UtcNow.AddDays(7),
-            IpAddress = "Unknown",
-            UserAgent = "Unknown"
+            IpAddress = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "Unknown",
+            UserAgent = _httpContextAccessor.HttpContext?.Request.Headers.UserAgent.ToString() ?? "Unknown"
         };
 
         await _unitOfWork.Sessions.AddAsync(session);
@@ -228,6 +293,35 @@ public class AuthService : IAuthService
             user.IsEmailVerified = true;
 
         await _unitOfWork.CompleteAsync();
+    }
+
+    public async Task ResendVerificationEmailAsync(string email)
+    {
+        var user = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == email);
+        if (user == null || user.IsEmailVerified)
+            return;
+
+        var existingTokens = await _unitOfWork.UserTokens.FindAsync(
+            t => t.UserId == user.Id && t.TokenType == TokenType.EmailVerification && !t.IsUsed);
+        foreach (var t in existingTokens)
+            t.IsUsed = true;
+
+        var rawToken = _jwtService.GenerateRefreshToken();
+        var userToken = new UserToken
+        {
+            Id = Guid.NewGuid(),
+            User = user,
+            TokenType = TokenType.EmailVerification,
+            TokenHash = BCrypt.Net.BCrypt.HashPassword(rawToken),
+            ExpiresAt = DateTime.UtcNow.AddHours(24)
+        };
+        await _unitOfWork.UserTokens.AddAsync(userToken);
+        await _unitOfWork.CompleteAsync();
+
+        var verificationPayload = $"{userToken.Id}:{rawToken}";
+        await _emailService.SendEmailVerificationAsync(user.Email, verificationPayload);
+
+        _logger.LogInformation("Resent verification email to {Email}", email);
     }
 
     public async Task LogoutAsync(string userId)
@@ -322,6 +416,7 @@ public class AuthService : IAuthService
         {
             User = user,
             LicenseNumber = request.LicenseNumber,
+            LicenseExpiry = request.LicenseExpiry,
             AgentType = AgentType.External,
             IsActive = true,
             CreatedAt = DateTimeOffset.UtcNow

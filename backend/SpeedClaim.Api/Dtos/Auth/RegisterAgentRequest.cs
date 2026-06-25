@@ -13,6 +13,7 @@ public record RegisterAgentRequest(
     AddressDto? CurrentAddress,
     bool IsSameAsPermanent,
     string LicenseNumber,
+    DateOnly LicenseExpiry,
     string AgencyName,
     string AadhaarNumber,
     string PanNumber,

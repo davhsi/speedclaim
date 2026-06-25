@@ -53,6 +53,17 @@ public class AuthController : BaseApiController
         return Ok(new { message = "Email verified successfully. You can now log in." });
     }
 
+    /// <summary>Resend the email verification link</summary>
+    /// <remarks>Always returns 200 regardless of whether the email exists or is already verified, to prevent email enumeration.</remarks>
+    [HttpPost("resend-verification")]
+    [EnableRateLimiting("auth")]
+    [ProducesResponseType(200)]
+    public async Task<IActionResult> ResendVerificationEmail([FromBody] ResendVerificationRequest request)
+    {
+        await _authService.ResendVerificationEmailAsync(request.Email);
+        return Ok(new { message = "If that email is registered and unverified, a new verification link has been sent." });
+    }
+
     /// <summary>Exchange a valid refresh token for a new access token and refresh token pair</summary>
     /// <remarks>The old refresh token is revoked and replaced. Tokens use the format `sessionId:rawToken`.</remarks>
     [HttpPost("refresh")]

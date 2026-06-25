@@ -108,7 +108,7 @@ public class ClaimsController : BaseApiController
     /// <param name="pageSize">Page size (default 20)</param>
     /// <param name="status">Optional filter by claim status (e.g. Intimated, UnderReview, Approved, Rejected, Settled)</param>
     /// <param name="type">Optional filter by claim type (e.g. Health, Accident, Theft, Death, Maturity, NaturalDamage)</param>
-    [Authorize(Roles = "ClaimsOfficer,Admin")]
+    [Authorize(Roles = "ClaimsOfficer,FinanceOfficer,Admin")]
     [HttpGet("all")]
     [ProducesResponseType(typeof(PagedResponse<ClaimDto>), 200)]
     public async Task<IActionResult> GetAllClaims(

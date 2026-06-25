@@ -245,6 +245,18 @@ public class UsersController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>Get the authenticated surveyor's profile and license metadata</summary>
+    [Authorize(Roles = "Surveyor")]
+    [HttpGet("surveyor/profile")]
+    [ProducesResponseType(typeof(SurveyorProfileDto), 200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> GetMySurveyorProfile()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        var result = await _userService.GetSurveyorProfileAsync(userId);
+        return Ok(result);
+    }
+
     #endregion
 
     #region Underwriter / Admin — KYC Review

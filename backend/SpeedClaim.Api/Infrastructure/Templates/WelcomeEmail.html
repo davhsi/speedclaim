@@ -4,23 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome to SpeedClaim</title>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { padding: 20px; max-width: 600px; margin: 0 auto; }
-        .header { background-color: #007bff; color: white; padding: 10px; text-align: center; }
-        .content { padding: 20px; }
-    </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h2>Welcome to SpeedClaim!</h2>
-        </div>
-        <div class="content">
-            <p>Dear {{FullName}},</p>
-            <p>Your account has been created successfully. You can now login to manage your insurance policies and submit claims instantly.</p>
-            <p>Thank you for choosing SpeedClaim.</p>
-        </div>
-    </div>
+<body style="margin:0; padding:0; background-color:#F7F9FA; font-family:Arial, 'Helvetica Neue', Helvetica, sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F7F9FA; padding:32px 16px;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px; width:100%; background-color:#ffffff; border-radius:12px; overflow:hidden;">
+                    <tr>
+                        <td style="background:linear-gradient(160deg, #0F6E8C 0%, #0A3040 100%); padding:28px 32px; text-align:center;">
+                            <span style="font-size:20px; font-weight:700; color:#ffffff; letter-spacing:-0.3px;">SpeedClaim</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:32px;">
+                            <h1 style="margin:0 0 16px; font-size:22px; font-weight:600; color:#1A2230;">Welcome aboard, {{FullName}}!</h1>
+                            <p style="margin:0 0 24px; font-size:15px; line-height:1.6; color:#3C4654;">Your SpeedClaim account has been created successfully. You can now manage your insurance policies, file claims, and track everything in one place.</p>
+                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td align="center">
+                                        <table role="presentation" cellpadding="0" cellspacing="0">
+                                            <tr>
+                                                <td style="background-color:#0F6E8C; border-radius:8px;">
+                                                    <a href="{{LoginUrl}}" target="_blank" style="display:inline-block; padding:14px 36px; font-size:14px; font-weight:600; color:#ffffff; text-decoration:none;">Go to Dashboard</a>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p style="margin:28px 0 0; font-size:13px; line-height:1.5; color:#6B7685;">Thank you for choosing SpeedClaim — insurance that moves at your speed.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:20px 32px; border-top:1px solid #E2E6EB; text-align:center;">
+                            <p style="margin:0; font-size:12px; color:#6B7685;">&copy; 2026 SpeedClaim. All rights reserved.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>

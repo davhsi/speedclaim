@@ -12,6 +12,10 @@ public record UserDto(
     string Phone,
     string Role,
     string MaritalStatus,
+    Guid? CustomerId,
+    bool IsEmailVerified,
+    bool IsActive,
+    DateTimeOffset CreatedAt,
     SpeedClaim.Api.Dtos.Common.AddressDto? PermanentAddress,
     SpeedClaim.Api.Dtos.Common.AddressDto? CurrentAddress
 );

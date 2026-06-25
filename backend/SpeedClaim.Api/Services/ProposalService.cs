@@ -247,9 +247,18 @@ public class ProposalService : IProposalService
         }
 
         return new ProposalDto(
-            proposal.Id, proposal.ProposalNumber, proposal.CustomerId, proposal.AgentId,
-            proposal.ProductId, proposal.Status.ToString(), proposal.SumAssured,
-            proposal.TenureYears, proposal.PremiumAmount, proposal.PaymentFrequency, proposal.CreatedAt);
+            proposal.Id,
+            proposal.ProposalNumber,
+            proposal.CustomerId,
+            proposal.AgentId,
+            proposal.ProductId,
+            proposal.Status.ToString(),
+            proposal.SumAssured,
+            proposal.TenureYears,
+            proposal.PremiumAmount,
+            proposal.PaymentFrequency,
+            proposal.CreatedAt
+        );
     }
 
     public async Task<string> UploadDocumentAsync(string proposalId, string uploaderId, string documentType, IFormFile file)
@@ -418,4 +427,3 @@ public class ProposalService : IProposalService
         await _unitOfWork.CompleteAsync();
     }
 }
-
