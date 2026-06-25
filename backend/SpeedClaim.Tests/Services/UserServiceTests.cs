@@ -79,7 +79,7 @@ public class UserServiceTests
     public void UpdateProfileAsync_UserNotFound_ThrowsException()
     {
         var address = new AddressDto("123 St", null, "City", "State", "12345", "Country");
-        var request = new UserDto(Guid.NewGuid(), "test@test.com", "Mr", "Jane", "Doe", "Jane Doe", "0987654321", "Customer", "Single", address, address);
+        var request = new UserDto(Guid.NewGuid(), "test@test.com", "Mr", "Jane", "Doe", "Jane Doe", "0987654321", "Customer", "Single", null, true, true, DateTimeOffset.UtcNow, address, address);
         
         _mockUserRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((User?)null);
         var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _userService.UpdateProfileAsync(Guid.NewGuid().ToString(), request));
@@ -92,7 +92,7 @@ public class UserServiceTests
         var userId = Guid.NewGuid();
         var user = new User { Id = userId, FirstName = "Old", LastName = "Name" };
         var address = new AddressDto("123 St", null, "City", "State", "12345", "Country");
-        var request = new UserDto(userId, "test@test.com", "Mr", "Jane", "Doe", "Jane Doe", "0987654321", "Customer", "Single", address, address);
+        var request = new UserDto(userId, "test@test.com", "Mr", "Jane", "Doe", "Jane Doe", "0987654321", "Customer", "Single", null, true, true, DateTimeOffset.UtcNow, address, address);
 
         _mockUserRepository.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
         await _userService.UpdateProfileAsync(userId.ToString(), request);
@@ -221,7 +221,7 @@ public class UserServiceTests
         _mockUserRepository.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
         _mockCustomerRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>())).ReturnsAsync(customer);
 
-        var dto = new UserDto(userId, "x@test.com", "Mr", "X", "Y", "X Y", "9999", "Customer", "Married", null, null);
+        var dto = new UserDto(userId, "x@test.com", "Mr", "X", "Y", "X Y", "9999", "Customer", "Married", null, true, true, DateTimeOffset.UtcNow, null, null);
         await _userService.UpdateProfileAsync(userId.ToString(), dto);
 
         Assert.That(customer.MaritalStatus, Is.EqualTo(MaritalStatus.Married));

@@ -31,7 +31,8 @@ public class EmailServiceTests
                 ["SmtpSettings:SenderEmail"] = "test@test.com",
                 ["SmtpSettings:Host"] = "smtp.test.com",
                 ["SmtpSettings:Port"] = "587",
-                ["SmtpSettings:AppPassword"] = "pass"
+                ["SmtpSettings:AppPassword"] = "pass",
+                ["FrontendUrl"] = "http://localhost:4200"
             })
             .Build();
 

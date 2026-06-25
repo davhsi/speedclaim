@@ -45,6 +45,7 @@ public class AuthServiceTests
         _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
         _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
         _mockUnitOfWork.Setup(u => u.UserConsents).Returns(new Mock<IRepository<UserConsent>>().Object);
+        _mockUnitOfWork.Setup(u => u.Addresses).Returns(new Mock<IRepository<Address>>().Object);
 
         var mockHttpContext = new Mock<IHttpContextAccessor>();
         mockHttpContext.Setup(h => h.HttpContext).Returns((HttpContext?)null);
@@ -94,8 +95,8 @@ public class AuthServiceTests
         _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
             .ReturnsAsync((User?)null);
 
-        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() => _authService.LoginAsync(request));
-        Assert.That(ex.Message, Is.EqualTo("Invalid credentials"));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _authService.LoginAsync(request));
+        Assert.That(ex.Message, Is.EqualTo("No account found with this email address."));
     }
 
     [Test]
@@ -103,24 +104,24 @@ public class AuthServiceTests
     {
         var request = new LoginRequest("test@test.com", "wrongpassword");
         var user = new User { PasswordHash = BCrypt.Net.BCrypt.HashPassword("correctpassword") };
-        
+
         _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
             .ReturnsAsync(user);
 
         var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() => _authService.LoginAsync(request));
-        Assert.That(ex.Message, Is.EqualTo("Invalid credentials"));
+        Assert.That(ex.Message, Is.EqualTo("Incorrect password."));
     }
 
     [Test]
     public void LoginAsync_UserInactive_ThrowsException()
     {
         var request = new LoginRequest("test@test.com", "password");
-        var user = new User 
-        { 
+        var user = new User
+        {
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("password"),
             IsActive = false
         };
-        
+
         _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
             .ReturnsAsync(user);
 
@@ -129,15 +130,34 @@ public class AuthServiceTests
     }
 
     [Test]
+    public void LoginAsync_UnverifiedEmail_ThrowsUnprocessableException()
+    {
+        var request = new LoginRequest("test@test.com", "password");
+        var user = new User
+        {
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("password"),
+            IsActive = true,
+            IsEmailVerified = false
+        };
+
+        _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
+            .ReturnsAsync(user);
+
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.UnprocessableException>(() => _authService.LoginAsync(request));
+        Assert.That(ex.Message, Is.EqualTo("Please verify your email address before signing in."));
+    }
+
+    [Test]
     public async Task LoginAsync_ValidCredentials_Success()
     {
         var request = new LoginRequest("test@test.com", "password");
-        var user = new User 
-        { 
+        var user = new User
+        {
             Id = Guid.NewGuid(),
             Email = "test@test.com",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("password"),
             IsActive = true,
+            IsEmailVerified = true,
             Role = UserRole.Customer,
             FirstName = "Jane",
             LastName = "Doe",
@@ -356,7 +376,7 @@ public class AuthServiceTests
         _mockUnitOfWork.Setup(u => u.Agents).Returns(mockAgentRepo.Object);
 
         var addr = new AddressDto("123 Main St", null, "Mumbai", "MH", "400001", "India");
-        var request = new RegisterAgentRequest("agent@test.com", "pass123", "Mr", "Test", "Agent", "9999999999", addr, null, false, "LIC-001", "TestAgency", "123456789012", "ABCDE1234F", MaritalStatus.Single);
+        var request = new RegisterAgentRequest("agent@test.com", "pass123", "Mr", "Test", "Agent", "9999999999", addr, null, false, "LIC-001", DateOnly.FromDateTime(DateTime.UtcNow.AddYears(1)), "TestAgency", "123456789012", "ABCDE1234F", MaritalStatus.Single);
 
         var result = await _authService.RegisterAgentAsync(request, Guid.NewGuid().ToString());
 
@@ -374,7 +394,7 @@ public class AuthServiceTests
         _mockUnitOfWork.Setup(u => u.Agents).Returns(mockAgentRepo.Object);
 
         var addr = new AddressDto("1 St", null, "City", "State", "000001", "India");
-        var request = new RegisterAgentRequest("agent@test.com", "pass", "Mr", "T", "A", "1", addr, null, false, "L", "Agency", "000000000000", "AAAAA0000A", MaritalStatus.Single);
+        var request = new RegisterAgentRequest("agent@test.com", "pass", "Mr", "T", "A", "1", addr, null, false, "L", DateOnly.FromDateTime(DateTime.UtcNow.AddYears(1)), "Agency", "000000000000", "AAAAA0000A", MaritalStatus.Single);
         var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() => _authService.RegisterAgentAsync(request, Guid.NewGuid().ToString()));
         Assert.That(ex.Message, Is.EqualTo("Email already registered"));
     }
@@ -554,5 +574,46 @@ public class AuthServiceTests
         Assert.That(user.FailedLoginAttempts, Is.EqualTo(5));
         Assert.That(user.LockedUntil, Is.Not.Null);
         Assert.That(user.LockedUntil, Is.GreaterThan(DateTime.UtcNow));
+    }
+
+    [Test]
+    public async Task ResendVerificationEmailAsync_UserNotFound_SilentSuccess()
+    {
+        _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
+            .ReturnsAsync((User?)null);
+
+        await _authService.ResendVerificationEmailAsync("none@test.com");
+
+        _mockUserTokenRepository.Verify(r => r.AddAsync(It.IsAny<UserToken>()), Times.Never);
+        _mockEmailService.Verify(e => e.SendEmailVerificationAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Test]
+    public async Task ResendVerificationEmailAsync_AlreadyVerified_SilentSuccess()
+    {
+        _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
+            .ReturnsAsync(new User { IsEmailVerified = true });
+
+        await _authService.ResendVerificationEmailAsync("verified@test.com");
+
+        _mockUserTokenRepository.Verify(r => r.AddAsync(It.IsAny<UserToken>()), Times.Never);
+        _mockEmailService.Verify(e => e.SendEmailVerificationAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Test]
+    public async Task ResendVerificationEmailAsync_ValidUnverifiedUser_SendsEmail()
+    {
+        var user = new User { Id = Guid.NewGuid(), Email = "unverified@test.com", IsEmailVerified = false };
+        _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
+            .ReturnsAsync(user);
+        _mockUserTokenRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<UserToken, bool>>>()))
+            .ReturnsAsync(new List<UserToken>());
+        _mockJwtService.Setup(j => j.GenerateRefreshToken()).Returns("new_verify_token");
+
+        await _authService.ResendVerificationEmailAsync("unverified@test.com");
+
+        _mockUserTokenRepository.Verify(r => r.AddAsync(It.IsAny<UserToken>()), Times.Once);
+        _mockEmailService.Verify(e => e.SendEmailVerificationAsync("unverified@test.com", It.IsAny<string>()), Times.Once);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
 }
