@@ -7,8 +7,15 @@ import { financeOfficerGuard } from './core/guards/finance-officer.guard';
 import { surveyorGuard } from './core/guards/surveyor.guard';
 import { underwriterGuard } from './core/guards/underwriter.guard';
 import { adminGuard } from './core/guards/admin.guard';
+import { landingGuard } from './core/guards/landing.guard';
 
 export const routes: Routes = [
+  {
+    path: '',
+    pathMatch: 'full',
+    canActivate: [landingGuard],
+    loadComponent: () => import('./features/landing/landing').then(m => m.LandingComponent),
+  },
   {
     path: 'auth',
     canActivate: [guestGuard],

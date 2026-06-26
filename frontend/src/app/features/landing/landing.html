@@ -1,0 +1,289 @@
+<div class="min-h-screen bg-white font-sans">
+
+  <!-- ── Navbar ── -->
+  <header class="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-line">
+    <div class="max-w-6xl mx-auto px-5 lg:px-8 h-16 flex items-center justify-between">
+      <a routerLink="/" class="flex items-center gap-2.5 no-underline">
+        <div class="w-8 h-8 rounded-[8px] bg-primary flex items-center justify-center shrink-0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <span class="text-[17px] font-bold text-ink tracking-tight">SpeedClaim</span>
+      </a>
+      <div class="flex items-center gap-2.5">
+        <a routerLink="/auth/login"
+           class="h-9 px-4 text-[13.5px] font-semibold text-body hover:text-ink rounded-[8px] hover:bg-surface transition-colors flex items-center no-underline">
+          Sign in
+        </a>
+        <a routerLink="/auth/register"
+           class="h-9 px-4 text-[13.5px] font-semibold text-white bg-primary hover:bg-primary-hover rounded-[8px] transition-colors flex items-center no-underline shadow-sm">
+          Get started
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Hero ── -->
+  <section class="bg-[#0D1B2A] relative overflow-hidden py-20 lg:py-28">
+    <!-- background radial glow -->
+    <div class="absolute inset-0 pointer-events-none"
+         style="background: radial-gradient(ellipse 900px 500px at 50% -80px, rgba(15,110,140,0.35), transparent);">
+    </div>
+    <!-- dot grid pattern -->
+    <div class="absolute inset-0 opacity-[0.07] pointer-events-none"
+         style="background-image: radial-gradient(circle, #ffffff 1px, transparent 1px); background-size: 28px 28px;">
+    </div>
+
+    <div class="max-w-6xl mx-auto px-5 lg:px-8 relative">
+      <div class="flex flex-col lg:flex-row items-center gap-14 lg:gap-10">
+
+        <!-- left: copy -->
+        <div class="flex-1 text-center lg:text-left">
+          <div class="inline-flex items-center gap-2 bg-white/10 border border-white/15 text-white/75 text-xs font-semibold px-3.5 py-1.5 rounded-full mb-7 tracking-wide">
+            <span class="w-1.5 h-1.5 rounded-full bg-accent shrink-0"></span>
+            Trusted by 4.8L+ policyholders across India
+          </div>
+
+          <h1 class="text-4xl sm:text-5xl lg:text-[3.25rem] font-bold text-white leading-[1.15] tracking-tight mb-5">
+            Insurance that<br class="hidden sm:block">
+            moves at your speed.
+          </h1>
+
+          <p class="text-lg text-white/65 leading-relaxed max-w-xl mx-auto lg:mx-0 mb-9">
+            File claims in minutes, track everything digitally, and get settled faster than ever before. No helpline queues. No paperwork piles.
+          </p>
+
+          <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3">
+            <a routerLink="/auth/register"
+               class="w-full sm:w-auto h-12 px-8 bg-accent hover:bg-accent-hover text-white font-semibold text-[15px] rounded-[10px] flex items-center justify-center transition-colors no-underline"
+               style="box-shadow: 0 4px 16px rgba(242,120,75,0.35);">
+              Get started — it's free
+              <svg class="ml-2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
+            <a routerLink="/auth/login"
+               class="w-full sm:w-auto h-12 px-8 border border-white/20 text-white/85 font-semibold text-[15px] rounded-[10px] flex items-center justify-center hover:bg-white/10 transition-colors no-underline">
+              Sign in to your account
+            </a>
+          </div>
+        </div>
+
+        <!-- right: product preview card -->
+        <div class="flex-shrink-0 w-full max-w-[340px]">
+          <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <!-- card header -->
+            <div class="bg-surface px-5 pt-5 pb-4 border-b border-line">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-[9px] bg-success-bg flex items-center justify-center shrink-0">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1F9D6B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+                </div>
+                <div>
+                  <div class="text-[13px] font-bold text-ink">Claim Approved</div>
+                  <div class="text-[11px] text-muted mt-0.5">CLM-2024-0891 · Health Insurance</div>
+                </div>
+                <span class="ml-auto text-[11px] font-bold text-success bg-success-bg px-2.5 py-1 rounded-full shrink-0">Approved</span>
+              </div>
+            </div>
+            <!-- card body -->
+            <div class="px-5 py-4 space-y-3">
+              <div class="flex justify-between items-center text-[13px]">
+                <span class="text-muted">Claim amount</span>
+                <span class="font-bold text-ink">₹85,000</span>
+              </div>
+              <div class="flex justify-between items-center text-[13px]">
+                <span class="text-muted">Settlement time</span>
+                <span class="font-semibold text-success">2 days 4 hrs</span>
+              </div>
+              <div class="flex justify-between items-center text-[13px]">
+                <span class="text-muted">Policy</span>
+                <span class="font-semibold text-primary text-[12px]">SC-HLT-2024-00134</span>
+              </div>
+              <div class="pt-1">
+                <div class="flex justify-between text-[11px] text-muted mb-1.5">
+                  <span>Processing complete</span>
+                  <span>100%</span>
+                </div>
+                <div class="h-1.5 bg-surface-alt rounded-full overflow-hidden">
+                  <div class="h-full bg-success rounded-full w-full"></div>
+                </div>
+              </div>
+            </div>
+            <!-- card footer -->
+            <div class="px-5 pb-4">
+              <div class="bg-info-bg border border-info-border rounded-[9px] px-3.5 py-2.5 flex items-center gap-2.5">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2D7FF9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                <span class="text-[12px] text-[#2D7FF9] font-medium">Payment initiated · Credit by tomorrow</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- second mini card below -->
+          <div class="bg-white rounded-xl shadow-lg mt-3 px-4 py-3.5 flex items-center gap-3">
+            <div class="w-9 h-9 rounded-[9px] bg-warning-bg flex items-center justify-center shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D9920A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="text-[12.5px] font-semibold text-ink">Motor Claim Submitted</div>
+              <div class="text-[11px] text-muted mt-0.5">Surveyor assigned · ETA 2 hrs</div>
+            </div>
+            <span class="text-[11px] font-bold text-warning bg-warning-bg px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">In Review</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Stats bar ── -->
+  <section class="bg-white border-b border-line">
+    <div class="max-w-6xl mx-auto px-5 lg:px-8">
+      <div class="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-line">
+        @for (stat of stats; track stat.label) {
+          <div class="px-6 py-7 text-center">
+            <div class="text-3xl font-bold text-primary tracking-tight">{{ stat.value }}</div>
+            <div class="text-[13px] text-muted mt-1.5 font-medium">{{ stat.label }}</div>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ── How it works ── -->
+  <section class="bg-surface py-20 lg:py-24">
+    <div class="max-w-6xl mx-auto px-5 lg:px-8">
+      <div class="text-center mb-14">
+        <div class="text-xs font-bold text-primary uppercase tracking-widest mb-3">How it works</div>
+        <h2 class="text-3xl lg:text-4xl font-bold text-ink tracking-tight">Coverage in three simple steps</h2>
+        <p class="text-muted mt-3 text-[15px] max-w-lg mx-auto">Designed for people who value their time. No confusing forms, no branch visits.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+        <!-- connecting line (desktop) -->
+        <div class="hidden md:block absolute top-10 left-[calc(16.66%+1rem)] right-[calc(16.66%+1rem)] h-px bg-line z-0"></div>
+
+        @for (step of steps; track step.number; let i = $index) {
+          <div class="relative z-10 flex flex-col items-center text-center">
+            <div class="w-20 h-20 rounded-full bg-white border-2 border-line flex flex-col items-center justify-center mb-6 shadow-sm">
+              <span class="text-[10px] font-bold text-muted uppercase tracking-widest">Step</span>
+              <span class="text-2xl font-bold text-primary leading-none">{{ step.number }}</span>
+            </div>
+            <h3 class="text-[17px] font-bold text-ink mb-2">{{ step.title }}</h3>
+            <p class="text-[14px] text-muted leading-relaxed max-w-[260px]">{{ step.desc }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Coverage types ── -->
+  <section class="bg-white py-20 lg:py-24">
+    <div class="max-w-6xl mx-auto px-5 lg:px-8">
+      <div class="text-center mb-14">
+        <div class="text-xs font-bold text-primary uppercase tracking-widest mb-3">What we cover</div>
+        <h2 class="text-3xl lg:text-4xl font-bold text-ink tracking-tight">Protection for every stage of life</h2>
+        <p class="text-muted mt-3 text-[15px] max-w-lg mx-auto">Three product categories, fully managed online — from purchase to claim settlement.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        @for (cov of coverageTypes; track cov.title) {
+          <div class="border border-line rounded-[16px] p-7 hover:shadow-md transition-shadow bg-white">
+            <div class="w-12 h-12 rounded-[12px] flex items-center justify-center mb-5 {{ cov.color }}" [innerHTML]="cov.icon | safeHtml"></div>
+            <h3 class="text-[17px] font-bold text-ink mb-2">{{ cov.title }}</h3>
+            <p class="text-[13.5px] text-muted leading-relaxed mb-5">{{ cov.desc }}</p>
+            <ul class="space-y-2">
+              @for (feat of cov.features; track feat) {
+                <li class="flex items-center gap-2 text-[13px] text-body">
+                  <svg class="shrink-0 text-success" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  {{ feat }}
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Testimonials ── -->
+  <section class="bg-surface py-20 lg:py-24">
+    <div class="max-w-6xl mx-auto px-5 lg:px-8">
+      <div class="text-center mb-14">
+        <div class="text-xs font-bold text-primary uppercase tracking-widest mb-3">Customer stories</div>
+        <h2 class="text-3xl lg:text-4xl font-bold text-ink tracking-tight">Real people. Real claims. Real speed.</h2>
+        <p class="text-muted mt-3 text-[15px] max-w-lg mx-auto">Don't take our word for it — here's what our policyholders say.</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        @for (t of testimonials; track t.name) {
+          <div class="bg-white border border-line rounded-[16px] p-7 flex flex-col">
+            <!-- stars -->
+            <div class="flex gap-0.5 mb-4">
+              @for (s of [1,2,3,4,5]; track s) {
+                <svg width="16" height="16" viewBox="0 0 24 24" [attr.fill]="s <= t.stars ? '#F2784B' : 'none'" [attr.stroke]="s <= t.stars ? '#F2784B' : '#D1D5DB'" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              }
+            </div>
+            <!-- quote -->
+            <blockquote class="text-[14.5px] text-body leading-relaxed flex-1 mb-5">
+              "{{ t.quote }}"
+            </blockquote>
+            <!-- author -->
+            <div class="flex items-center gap-3 pt-5 border-t border-line">
+              <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center text-[13px] font-bold shrink-0">
+                {{ t.initials }}
+              </div>
+              <div class="min-w-0">
+                <div class="text-[13.5px] font-bold text-ink">{{ t.name }}</div>
+                <div class="text-[12px] text-muted truncate">{{ t.role }}</div>
+              </div>
+              <div class="ml-auto shrink-0">
+                <span class="text-[11px] font-semibold text-primary bg-primary-light px-2.5 py-1 rounded-full whitespace-nowrap">{{ t.tag }}</span>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Bottom CTA ── -->
+  <section class="bg-[#0D1B2A] py-16 lg:py-20 relative overflow-hidden">
+    <div class="absolute inset-0 pointer-events-none"
+         style="background: radial-gradient(ellipse 700px 400px at 50% 120%, rgba(15,110,140,0.3), transparent);">
+    </div>
+    <div class="max-w-3xl mx-auto px-5 lg:px-8 text-center relative">
+      <h2 class="text-3xl lg:text-4xl font-bold text-white tracking-tight mb-4">
+        Ready to protect what matters most?
+      </h2>
+      <p class="text-white/65 text-[16px] leading-relaxed mb-9 max-w-xl mx-auto">
+        Join lakhs of Indians who manage their insurance entirely online — no agents, no paperwork, no delays.
+      </p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <a routerLink="/auth/register"
+           class="w-full sm:w-auto h-12 px-8 bg-accent hover:bg-accent-hover text-white font-semibold text-[15px] rounded-[10px] flex items-center justify-center transition-colors no-underline"
+           style="box-shadow: 0 4px 16px rgba(242,120,75,0.35);">
+          Start your coverage today
+        </a>
+        <a routerLink="/auth/login"
+           class="w-full sm:w-auto h-12 px-8 border border-white/20 text-white/80 font-semibold text-[15px] rounded-[10px] flex items-center justify-center hover:bg-white/10 transition-colors no-underline">
+          Already have an account?
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Footer ── -->
+  <footer class="bg-white border-t border-line">
+    <div class="max-w-6xl mx-auto px-5 lg:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <a routerLink="/" class="flex items-center gap-2 no-underline">
+        <div class="w-7 h-7 rounded-[7px] bg-primary flex items-center justify-center shrink-0">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <span class="text-[15px] font-bold text-ink">SpeedClaim</span>
+      </a>
+      <p class="text-[12.5px] text-muted text-center order-last sm:order-none">© {{ year }} SpeedClaim. All rights reserved.</p>
+      <div class="flex items-center gap-5">
+        <a routerLink="/auth/login" class="text-[13px] text-muted hover:text-ink transition-colors no-underline">Sign in</a>
+        <a routerLink="/auth/register" class="text-[13px] text-muted hover:text-ink transition-colors no-underline">Register</a>
+      </div>
+    </div>
+  </footer>
+
+</div>
