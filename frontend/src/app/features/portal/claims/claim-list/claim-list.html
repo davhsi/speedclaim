@@ -30,7 +30,7 @@
     </div>
   } @else {
     <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
-      @for (c of claims(); track c.id) {
+      @for (c of pagedClaims(); track c.id) {
         <div class="flex items-center gap-3.5 px-[18px] py-4 border-b border-line cursor-pointer hover:bg-surface transition-colors"
              (click)="router.navigate(['/claims', c.id])">
           <div class="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0"
@@ -45,5 +45,10 @@
         </div>
       }
     </div>
+    @if (totalPages() > 1) {
+      <div class="px-4 border-t border-line">
+        <app-pagination [currentPage]="currentPage()" [totalPages]="totalPages()" (pageChange)="onPageChange($event)" />
+      </div>
+    }
   }
 </div>

@@ -1,15 +1,17 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ClaimService } from '../services/claim.service';
 import { ClaimDto } from '../../../../core/models/api.models';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { DateFormatPipe } from '../../../../shared/pipes/date-format.pipe';
+import { PaginationComponent } from '../../../../shared/components/pagination/pagination';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-claim-list',
   standalone: true,
-  imports: [StatusBadgeComponent, MoneyPipe, DateFormatPipe],
+  imports: [StatusBadgeComponent, MoneyPipe, DateFormatPipe, PaginationComponent, FormsModule],
   templateUrl: './claim-list.html',
 })
 export class ClaimListComponent implements OnInit {
@@ -19,10 +21,21 @@ export class ClaimListComponent implements OnInit {
   loading = signal(true);
   statusFilter = '';
   typeFilter = '';
+  currentPage = signal(1);
+  readonly pageSize = 10;
+
+  totalPages = computed(() => Math.max(1, Math.ceil(this.claims().length / this.pageSize)));
+  pagedClaims = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.claims().slice(start, start + this.pageSize);
+  });
+
+  onPageChange(page: number): void { this.currentPage.set(page); }
 
   ngOnInit(): void { this.load(); }
 
   onFilterChange(): void {
+    this.currentPage.set(1);
     this.loading.set(true);
     this.load();
   }

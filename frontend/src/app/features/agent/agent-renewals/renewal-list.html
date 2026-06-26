@@ -5,12 +5,12 @@
       <p class="text-sm text-muted mt-0.5">{{ filteredRenewals().length }} policies due in the next {{ filterDays() }} days</p>
     </div>
     <div class="flex gap-2">
-      <button (click)="filterDays.set(7)"
+      <button (click)="filterDays.set(7); onFilterChange()"
               class="h-10 px-3.5 border border-line rounded-control text-[13px] font-medium cursor-pointer transition-colors"
               [class]="filterDays() === 7 ? 'bg-primary text-white border-primary' : 'bg-white text-body'">
         Next 7 days
       </button>
-      <button (click)="filterDays.set(30)"
+      <button (click)="filterDays.set(30); onFilterChange()"
               class="h-10 px-3.5 border border-line rounded-control text-[13px] font-medium cursor-pointer transition-colors"
               [class]="filterDays() === 30 ? 'bg-primary text-white border-primary' : 'bg-white text-body'">
         Next 30 days
@@ -26,7 +26,7 @@
     </div>
   } @else {
     <div class="grid gap-3">
-      @for (ren of filteredRenewals(); track ren.policyId) {
+      @for (ren of pagedRenewals(); track ren.policyId) {
         <div class="bg-white border border-line rounded-card shadow-sm p-[18px] flex items-center gap-4 hover:shadow-md transition-shadow">
           <div class="w-12 h-12 rounded-card flex items-center justify-center shrink-0"
                [class]="ren.daysUntilDue <= 7 ? 'bg-danger-bg' : 'bg-warning-bg'">
@@ -63,5 +63,10 @@
         </div>
       }
     </div>
+    @if (totalPages() > 1) {
+      <div class="mt-4">
+        <app-pagination [currentPage]="currentPage()" [totalPages]="totalPages()" (pageChange)="onPageChange($event)" />
+      </div>
+    }
   }
 </div>

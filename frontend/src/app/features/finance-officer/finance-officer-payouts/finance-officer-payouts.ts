@@ -5,11 +5,13 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { FinanceOfficerService } from '../services/finance-officer.service';
 import { ClaimDto } from '../../../core/models/api.models';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination';
+import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader';
 
 @Component({
   selector: 'app-finance-officer-payouts',
   standalone: true,
-  imports: [FormsModule, StatusBadgeComponent, MoneyPipe],
+  imports: [FormsModule, StatusBadgeComponent, MoneyPipe, PaginationComponent, SkeletonLoaderComponent],
   templateUrl: './finance-officer-payouts.html',
 })
 export class FinanceOfficerPayoutsComponent implements OnInit {
@@ -18,12 +20,22 @@ export class FinanceOfficerPayoutsComponent implements OnInit {
   private moneyPipe = new MoneyPipe();
 
   allClaims = signal<ClaimDto[]>([]);
+  loading = signal(true);
   statusFilter = 'All';
   processing = signal(new Set<string>());
+  currentPage = signal(1);
+  readonly pageSize = 10;
 
   filteredClaims = computed(() => {
     if (this.statusFilter === 'All') return this.allClaims();
     return this.allClaims().filter(c => c.status === this.statusFilter);
+  });
+
+  totalPages = computed(() => Math.max(1, Math.ceil(this.filteredClaims().length / this.pageSize)));
+
+  pagedClaims = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.filteredClaims().slice(start, start + this.pageSize);
   });
 
   ngOnInit(): void {
@@ -40,12 +52,15 @@ export class FinanceOfficerPayoutsComponent implements OnInit {
             const newClaims = res.data.filter(c => !existing.has(c.id));
             return [...list, ...newClaims];
           });
+          this.loading.set(false);
         },
+      error: () => this.loading.set(false),
       });
     }
   }
 
-  onFilterChange(): void {}
+  onFilterChange(): void { this.currentPage.set(1); }
+  onPageChange(page: number): void { this.currentPage.set(page); }
 
   typeBadge(type: string): string {
     const map: Record<string, string> = {

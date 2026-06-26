@@ -5,13 +5,14 @@ import { AuthService } from '../../../core/services/auth.service';
 import { SurveyorService } from '../services/surveyor.service';
 import { SurveyorLayoutComponent } from '../surveyor-layout/surveyor-layout';
 import { ClaimDto } from '../../../core/models/api.models';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination';
 
 type Tab = 'all' | 'pending' | 'overdue' | 'submitted';
 
 @Component({
   selector: 'app-surveyor-claims',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, PaginationComponent],
   templateUrl: './surveyor-claims.html',
 })
 export class SurveyorClaimsComponent implements OnInit {
@@ -23,6 +24,8 @@ export class SurveyorClaimsComponent implements OnInit {
   claims = signal<ClaimDto[]>([]);
   loading = signal(true);
   activeTab = signal<Tab>('all');
+  currentPage = signal(1);
+  readonly pageSize = 10;
 
   tabs: { key: Tab; label: string }[] = [
     { key: 'all', label: 'All' },
@@ -47,6 +50,15 @@ export class SurveyorClaimsComponent implements OnInit {
   pendingCount = computed(() => this.claims().filter(c => this.mapSurveyStatus(c) === 'Pending').length);
   overdueCount = computed(() => this.claims().filter(c => this.mapSurveyStatus(c) === 'Overdue').length);
   submittedCount = computed(() => this.claims().filter(c => this.mapSurveyStatus(c) === 'Submitted').length);
+
+  totalPages = computed(() => Math.max(1, Math.ceil(this.filteredClaims().length / this.pageSize)));
+  pagedClaims = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.filteredClaims().slice(start, start + this.pageSize);
+  });
+
+  onTabChange(tab: Tab): void { this.activeTab.set(tab); this.currentPage.set(1); }
+  onPageChange(page: number): void { this.currentPage.set(page); }
 
   ngOnInit(): void {
     this.surveyorService.getAssignedClaims().subscribe({

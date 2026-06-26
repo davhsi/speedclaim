@@ -17,6 +17,15 @@
           </tr>
         </thead>
         <tbody>
+          @if (loading()) {
+            @for (i of [1,2,3,4,5]; track i) {
+              <tr class="border-b border-line">
+                @for (j of [1,2,3,4,5]; track j) {
+                  <td class="px-4 py-[14px]"><div class="h-4 bg-surface-alt rounded animate-pulse" [style.width]="j===1?'140px':j===2?'90px':'70px'"></div></td>
+                }
+              </tr>
+            }
+          }
           @for (k of kycRecords(); track k.id) {
             <tr class="border-b border-line">
               <td class="px-4 py-[14px]">

@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
@@ -6,11 +6,13 @@ import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 import { UnderwriterService } from '../services/underwriter.service';
 import { ProductDto, ProposalDto } from '../../../core/models/api.models';
 import { ProductService } from '../../portal/products/services/product.service';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination';
+import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader';
 
 @Component({
   selector: 'app-uw-proposal-list',
   standalone: true,
-  imports: [StatusBadgeComponent, MoneyPipe, DateFormatPipe],
+  imports: [StatusBadgeComponent, MoneyPipe, DateFormatPipe, PaginationComponent, SkeletonLoaderComponent],
   templateUrl: './proposal-list.html',
 })
 export class ProposalListComponent implements OnInit {
@@ -21,6 +23,17 @@ export class ProposalListComponent implements OnInit {
   proposals = signal<ProposalDto[]>([]);
   products = signal<ProductDto[]>([]);
   pendingCount = signal(0);
+  loading = signal(true);
+  currentPage = signal(1);
+  readonly pageSize = 10;
+
+  totalPages = computed(() => Math.max(1, Math.ceil(this.proposals().length / this.pageSize)));
+  pagedProposals = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.proposals().slice(start, start + this.pageSize);
+  });
+
+  onPageChange(page: number): void { this.currentPage.set(page); }
 
   ngOnInit(): void {
     this.productService.getAll().subscribe(products => this.products.set(products));
@@ -28,7 +41,9 @@ export class ProposalListComponent implements OnInit {
       next: (data) => {
         this.proposals.set(data);
         this.pendingCount.set(data.filter(p => p.status === 'Submitted' || p.status === 'UnderReview').length);
+        this.loading.set(false);
       },
+      error: () => this.loading.set(false),
     });
   }
 

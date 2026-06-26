@@ -23,6 +23,15 @@
           </tr>
         </thead>
         <tbody>
+          @if (loading()) {
+            @for (i of [1,2,3,4,5]; track i) {
+              <tr class="border-b border-line">
+                @for (j of [1,2,3,4,5,6,7,8,9]; track j) {
+                  <td class="px-4 py-3.5"><div class="h-4 bg-surface-alt rounded animate-pulse" [style.width]="j===2?'90px':j===3?'80px':'60px'"></div></td>
+                }
+              </tr>
+            }
+          }
           @for (c of pagedCommissions(); track c.id) {
             <tr class="border-b border-line hover:bg-surface transition-colors">
               <td class="px-4 py-3.5 text-xs font-semibold text-primary sc-numeric whitespace-nowrap">COM-{{ c.id }}</td>
@@ -57,13 +66,8 @@
       </table>
     </div>
 
-    <!-- Pagination -->
-    <div class="px-4 py-3 border-t border-line flex items-center justify-between">
-      <span class="text-[13px] text-muted">{{ pageLabel() }}</span>
-      <div class="flex gap-2">
-        <button (click)="prevPage()" [disabled]="page() === 0" class="h-[34px] px-3.5 border border-line bg-white rounded-lg text-[13px] text-body cursor-pointer disabled:opacity-40">Previous</button>
-        <button (click)="nextPage()" [disabled]="page() >= totalPages() - 1" class="h-[34px] px-3.5 border border-line bg-white rounded-lg text-[13px] text-body cursor-pointer disabled:opacity-40">Next</button>
-      </div>
+    <div class="px-4 border-t border-line">
+      <app-pagination [currentPage]="currentPage()" [totalPages]="totalPages()" (pageChange)="onPageChange($event)" />
     </div>
   </div>
 </div>

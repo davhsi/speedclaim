@@ -5,11 +5,12 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge/st
 import { AdminService } from '../services/admin.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ProductDto, DocumentRequirementResponseDto, PremiumRateDto } from '../../../core/models/api.models';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination';
 
 @Component({
   selector: 'app-admin-products',
   standalone: true,
-  imports: [FormsModule, StatCardComponent, StatusBadgeComponent],
+  imports: [FormsModule, StatCardComponent, StatusBadgeComponent, PaginationComponent],
   templateUrl: './admin-products.html',
 })
 export class AdminProductsComponent implements OnInit {
@@ -27,10 +28,22 @@ export class AdminProductsComponent implements OnInit {
 
   createForm = { productName: '', domain: 'Motor', uin: '', description: '', minAge: 18, maxAge: 65, minSumAssured: 100000, maxSumAssured: 5000000, minTenureYears: 1, maxTenureYears: 30, waitingPeriodDays: 30, allowsFamilyFloater: false, maxFamilyMembers: 1 };
 
+  currentPage = signal(1);
+  readonly pageSize = 10;
+
   filteredProducts = computed(() => {
     const q = this.searchQuery().toLowerCase();
     return !q ? this.products() : this.products().filter(p => p.productName.toLowerCase().includes(q) || p.domain.toLowerCase().includes(q));
   });
+
+  totalPages = computed(() => Math.max(1, Math.ceil(this.filteredProducts().length / this.pageSize)));
+  pagedProducts = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.filteredProducts().slice(start, start + this.pageSize);
+  });
+
+  onSearch(val: string): void { this.searchQuery.set(val); this.currentPage.set(1); }
+  onPageChange(page: number): void { this.currentPage.set(page); }
 
   totalProducts = computed(() => this.products().length);
   activeProducts = computed(() => this.products().filter(p => p.isActive).length);

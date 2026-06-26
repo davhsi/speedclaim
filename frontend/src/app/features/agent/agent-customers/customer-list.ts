@@ -2,11 +2,12 @@ import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AgentService, AgentCustomerDto } from '../services/agent.service';
 import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination';
 
 @Component({
   selector: 'app-agent-customer-list',
   standalone: true,
-  imports: [RouterLink, SkeletonLoaderComponent],
+  imports: [RouterLink, SkeletonLoaderComponent, PaginationComponent],
   templateUrl: './customer-list.html',
 })
 export class AgentCustomerListComponent implements OnInit {
@@ -15,6 +16,8 @@ export class AgentCustomerListComponent implements OnInit {
   loading = signal(true);
   customers = signal<AgentCustomerDto[]>([]);
   searchQuery = signal('');
+  currentPage = signal(1);
+  readonly pageSize = 10;
 
   filteredCustomers = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
@@ -26,6 +29,22 @@ export class AgentCustomerListComponent implements OnInit {
       String(c.id).includes(q),
     );
   });
+
+  totalPages = computed(() => Math.max(1, Math.ceil(this.filteredCustomers().length / this.pageSize)));
+
+  pagedCustomers = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.filteredCustomers().slice(start, start + this.pageSize);
+  });
+
+  onSearch(val: string): void {
+    this.searchQuery.set(val);
+    this.currentPage.set(1);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage.set(page);
+  }
 
   ngOnInit(): void {
     this.agentService.getCustomers().subscribe({

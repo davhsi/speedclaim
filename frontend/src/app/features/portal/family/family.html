@@ -12,7 +12,7 @@
 
   @if (showForm()) {
     <div class="bg-white border border-line rounded-card shadow-sm p-6 mb-5 space-y-3.5" [formGroup]="memberForm">
-      <div class="grid grid-cols-2 gap-3.5">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         <div>
           <label class="block text-xs text-muted mb-1.5">Full name</label>
           <input formControlName="name" class="h-[42px]" placeholder="e.g., Priya Sharma" />

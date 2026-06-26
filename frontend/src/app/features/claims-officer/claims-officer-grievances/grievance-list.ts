@@ -17,6 +17,7 @@ export class GrievanceListComponent implements OnInit {
   private router = inject(Router);
 
   grievances = signal<GrievanceDto[]>([]);
+  loading = signal(true);
   currentPage = signal(1);
   totalPages = signal(1);
   totalRecords = signal(0);
@@ -31,12 +32,15 @@ export class GrievanceListComponent implements OnInit {
   }
 
   private loadGrievances(): void {
+    this.loading.set(true);
     this.claimsService.getAllGrievances(this.currentPage(), 20).subscribe({
       next: (res) => {
         this.grievances.set(res.data);
         this.totalPages.set(res.totalPages);
         this.totalRecords.set(res.totalRecords);
+        this.loading.set(false);
       },
+      error: () => this.loading.set(false),
     });
   }
 

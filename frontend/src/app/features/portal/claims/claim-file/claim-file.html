@@ -54,7 +54,7 @@
       }
       @case (1) {
         <div class="text-[15px] font-semibold text-ink mb-4">Claim details</div>
-        <div class="grid grid-cols-2 gap-3.5" [formGroup]="claimForm">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5" [formGroup]="claimForm">
           <div>
             <label class="block text-[13px] font-medium mb-1.5">Claim type</label>
             <select formControlName="claimType" class="h-[42px]">
@@ -78,7 +78,7 @@
             <input type="checkbox" formControlName="isCashless" id="cashless" class="w-4 h-4 accent-primary" />
             <label for="cashless" class="text-[13px] font-medium text-ink cursor-pointer">Cashless claim</label>
           </div>
-          <div class="col-span-2">
+          <div class="sm:col-span-2">
             <label class="block text-[13px] font-medium mb-1.5">Incident description</label>
             <textarea formControlName="incidentDescription" rows="4" placeholder="Describe what happened..."></textarea>
           </div>

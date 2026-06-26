@@ -7,11 +7,13 @@ import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { FinanceOfficerService } from '../services/finance-officer.service';
 import { FinancePaymentRecordDto } from '../../../core/models/api.models';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination';
+import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader';
 
 @Component({
   selector: 'app-finance-officer-payments',
   standalone: true,
-  imports: [FormsModule, StatusBadgeComponent, ConfirmDialogComponent, MoneyPipe, DateFormatPipe],
+  imports: [FormsModule, StatusBadgeComponent, ConfirmDialogComponent, MoneyPipe, DateFormatPipe, PaginationComponent, SkeletonLoaderComponent],
   templateUrl: './finance-officer-payments.html',
 })
 export class FinanceOfficerPaymentsComponent implements OnInit {
@@ -20,10 +22,11 @@ export class FinanceOfficerPaymentsComponent implements OnInit {
   private moneyPipe = new MoneyPipe();
 
   allRecords = signal<FinancePaymentRecordDto[]>([]);
+  loading = signal(true);
   searchQuery = '';
   statusFilter = 'All';
-  page = signal(0);
-  pageSize = 8;
+  currentPage = signal(1);
+  readonly pageSize = 8;
 
   dialogTarget = signal<FinancePaymentRecordDto | null>(null);
   dialogAction = signal<'reconcile' | 'refund'>('reconcile');
@@ -47,30 +50,19 @@ export class FinanceOfficerPaymentsComponent implements OnInit {
   totalPages = computed(() => Math.max(1, Math.ceil(this.filteredRecords().length / this.pageSize)));
 
   pagedRecords = computed(() => {
-    const start = this.page() * this.pageSize;
+    const start = (this.currentPage() - 1) * this.pageSize;
     return this.filteredRecords().slice(start, start + this.pageSize);
-  });
-
-  pageLabel = computed(() => {
-    const filtered = this.filteredRecords();
-    if (filtered.length === 0) return 'No records found';
-    const start = this.page() * this.pageSize + 1;
-    const end = Math.min(start + this.pageSize - 1, filtered.length);
-    return `Showing ${start}–${end} of ${filtered.length}`;
   });
 
   ngOnInit(): void {
     this.financeService.getAllPaymentRecords().subscribe({
-      next: (records) => this.allRecords.set(records),
+      next: (records) => { this.allRecords.set(records); this.loading.set(false); },
+      error: () => this.loading.set(false),
     });
   }
 
-  onFilterChange(): void {
-    this.page.set(0);
-  }
-
-  prevPage(): void { this.page.update(p => Math.max(0, p - 1)); }
-  nextPage(): void { this.page.update(p => Math.min(this.totalPages() - 1, p + 1)); }
+  onFilterChange(): void { this.currentPage.set(1); }
+  onPageChange(page: number): void { this.currentPage.set(page); }
 
   openReconcile(p: FinancePaymentRecordDto): void {
     this.dialogAction.set('reconcile');

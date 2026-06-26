@@ -19,7 +19,7 @@
         <div class="flex items-center gap-3 py-2">
           <div class="relative">
             <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" placeholder="Search agents…" class="w-48 h-8 pl-8 pr-3 border-[1.5px] border-line rounded-[7px] text-[12.5px] text-ink bg-[#F7F9FA] outline-none" />
+            <input type="text" [ngModel]="searchQuery()" (ngModelChange)="onSearch($event)" placeholder="Search agents…" class="w-48 h-8 pl-8 pr-3 border-[1.5px] border-line rounded-[7px] text-[12.5px] text-ink bg-[#F7F9FA] outline-none" />
           </div>
           <button (click)="openRegisterModal()" class="h-8 px-3.5 bg-primary text-white text-[12.5px] font-semibold rounded-[7px] border-none cursor-pointer flex items-center gap-1.5">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -43,7 +43,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (agent of filteredAgents(); track agent.id) {
+            @for (agent of pagedAgents(); track agent.id) {
               <tr class="border-b border-line hover:bg-surface/50 transition-colors">
                 <td class="px-5 py-3">
                   <div class="flex items-center gap-2.5">
@@ -86,6 +86,9 @@
             }
           </tbody>
         </table>
+        <div class="px-4 border-t border-line">
+          <app-pagination [currentPage]="currentPage()" [totalPages]="totalPages()" (pageChange)="onPageChange($event)" />
+        </div>
       </div>
     }
 

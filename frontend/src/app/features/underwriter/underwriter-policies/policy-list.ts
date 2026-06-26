@@ -22,6 +22,7 @@ export class PolicyListComponent implements OnInit {
 
   allPolicies = signal<PolicyDto[]>([]);
   products = signal<ProductDto[]>([]);
+  loading = signal(true);
   searchTerm = '';
   currentPage = signal(1);
   totalPages = signal(1);
@@ -43,12 +44,15 @@ export class PolicyListComponent implements OnInit {
   }
 
   loadPage(page: number): void {
+    this.loading.set(true);
     this.uwService.getAllPolicies(page, 20).subscribe({
       next: (res) => {
         this.allPolicies.set(res.data);
         this.currentPage.set(res.pageNumber);
         this.totalPages.set(res.totalPages);
+        this.loading.set(false);
       },
+      error: () => this.loading.set(false),
     });
   }
 

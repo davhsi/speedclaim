@@ -19,7 +19,7 @@
     <app-empty-state title="You're all caught up!" message="No notifications at the moment." />
   } @else {
     <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
-      @for (n of notifications(); track n.id) {
+      @for (n of pagedNotifications(); track n.id) {
         <div class="flex gap-[13px] px-[18px] py-4 border-b border-line cursor-pointer hover:bg-surface transition-colors"
              [class.bg-primary-light/20]="!n.isRead"
              (click)="markRead(n)">
@@ -36,6 +36,9 @@
           }
         </div>
       }
+    </div>
+    <div class="px-4 border-t border-line">
+      <app-pagination [currentPage]="currentPage()" [totalPages]="totalPages()" (pageChange)="onPageChange($event)" />
     </div>
   }
 </div>

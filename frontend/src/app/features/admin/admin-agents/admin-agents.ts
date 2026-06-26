@@ -5,11 +5,12 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge/st
 import { AdminService } from '../services/admin.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { UserDto, BranchDto, AgentProfileDto } from '../../../core/models/api.models';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination';
 
 @Component({
   selector: 'app-admin-agents',
   standalone: true,
-  imports: [FormsModule, StatCardComponent, StatusBadgeComponent],
+  imports: [FormsModule, StatCardComponent, StatusBadgeComponent, PaginationComponent],
   templateUrl: './admin-agents.html',
 })
 export class AdminAgentsComponent implements OnInit {
@@ -32,12 +33,24 @@ export class AdminAgentsComponent implements OnInit {
   licForm = { licenseNumber: '', licenseExpiry: '' };
   branchForm = { name: '', city: '', state: '', address: '', phone: '', email: '' };
 
+  currentPage = signal(1);
+  readonly pageSize = 10;
+
   filteredAgents = computed(() => {
     const q = this.searchQuery().toLowerCase();
     const list = this.agents();
     if (!q) return list;
     return list.filter(a => a.fullName.toLowerCase().includes(q) || a.email.toLowerCase().includes(q));
   });
+
+  totalPages = computed(() => Math.max(1, Math.ceil(this.filteredAgents().length / this.pageSize)));
+  pagedAgents = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.filteredAgents().slice(start, start + this.pageSize);
+  });
+
+  onSearch(val: string): void { this.searchQuery.set(val); this.currentPage.set(1); }
+  onPageChange(page: number): void { this.currentPage.set(page); }
 
   totalAgents = computed(() => this.agents().length);
   activeAgents = computed(() => this.agents().filter(a => a.isActive).length);

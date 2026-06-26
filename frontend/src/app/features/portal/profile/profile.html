@@ -36,7 +36,7 @@
       @if (profile()) {
         <div class="bg-white border border-line rounded-card shadow-sm p-6 mb-5">
           <div class="text-[13px] font-semibold text-ink mb-4">Personal details</div>
-          <div class="grid grid-cols-2 gap-3.5" [formGroup]="profileForm">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5" [formGroup]="profileForm">
             <div>
               <label class="block text-xs text-muted mb-1.5">First name</label>
               <input formControlName="firstName" class="h-[42px]" />
@@ -78,7 +78,7 @@
           </div>
           @if (showAddressForm()) {
             <div class="p-4 bg-surface rounded-[10px] mb-4 space-y-3" [formGroup]="addressForm">
-              <div class="grid grid-cols-2 gap-3.5">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div><label class="block text-xs text-muted mb-1.5">Line 1</label><input formControlName="line1" class="h-[42px]" /></div>
                 <div><label class="block text-xs text-muted mb-1.5">Line 2</label><input formControlName="line2" class="h-[42px]" /></div>
                 <div><label class="block text-xs text-muted mb-1.5">City</label><input formControlName="city" class="h-[42px]" /></div>
@@ -124,7 +124,7 @@
 
       @if (showMemberForm()) {
         <div class="bg-white border border-line rounded-card shadow-sm p-6 mb-5 space-y-3.5" [formGroup]="memberForm">
-          <div class="grid grid-cols-2 gap-3.5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div><label class="block text-xs text-muted mb-1.5">Name</label><input formControlName="name" class="h-[42px]" /></div>
             <div><label class="block text-xs text-muted mb-1.5">Date of birth</label><input type="date" formControlName="dateOfBirth" class="h-[42px]" /></div>
             <div><label class="block text-xs text-muted mb-1.5">Relationship</label>

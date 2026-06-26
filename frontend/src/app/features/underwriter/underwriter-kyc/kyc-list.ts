@@ -16,6 +16,7 @@ export class KycListComponent implements OnInit {
   private router = inject(Router);
 
   kycRecords = signal<UnderwriterKycDto[]>([]);
+  loading = signal(true);
   currentPage = signal(1);
   totalPages = signal(1);
   totalRecords = signal(0);
@@ -26,13 +27,16 @@ export class KycListComponent implements OnInit {
   }
 
   loadPage(page: number): void {
+    this.loading.set(true);
     this.uwService.getPendingKyc(page, this.pageSize).subscribe({
       next: (res) => {
         this.kycRecords.set(res.data);
         this.currentPage.set(res.pageNumber);
         this.totalPages.set(res.totalPages);
         this.totalRecords.set(res.totalRecords);
+        this.loading.set(false);
       },
+      error: () => this.loading.set(false),
     });
   }
 

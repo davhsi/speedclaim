@@ -46,7 +46,7 @@
               [class]="activeTab() === t.key
                 ? 'font-semibold text-primary border-b-primary'
                 : 'font-medium text-muted border-b-transparent'"
-              (click)="activeTab.set(t.key)">
+              (click)="onTabChange(t.key)">
         {{ t.label }}
       </button>
     }
@@ -63,7 +63,7 @@
         </div>
       }
     } @else {
-      @for (claim of filteredClaims(); track claim.id) {
+      @for (claim of pagedClaims(); track claim.id) {
         <div class="bg-white border border-line rounded-[14px] mb-2.5 overflow-hidden cursor-pointer shadow-xs hover:shadow-md transition-shadow flex"
              (click)="openClaim(claim)">
           <div class="w-1 shrink-0" [style.background]="barColor(claim.status)"></div>
@@ -72,7 +72,7 @@
             <div class="flex items-start justify-between gap-2 mb-[5px]">
               <div class="min-w-0">
                 <div class="text-[11px] font-bold text-primary sc-numeric tracking-wide mb-0.5">{{ claim.claimNumber }}</div>
-                <div class="text-[15px] font-semibold text-ink truncate">Claim #{{ claim.id }}</div>
+                <div class="text-[15px] font-semibold text-ink truncate">{{ claim.customerName || claim.claimNumber }}</div>
               </div>
               <span class="shrink-0 inline-flex text-[10px] font-bold tracking-wide uppercase px-2 py-[3px] rounded-full whitespace-nowrap mt-0.5 border"
                     [class]="statusClasses(claim.status)">
@@ -116,6 +116,11 @@
           </svg>
           <div class="text-[16px] font-semibold text-ink mb-[5px]">All caught up</div>
           <div class="text-[13px] text-muted leading-relaxed">No claims in this category.</div>
+        </div>
+      }
+      @if (totalPages() > 1) {
+        <div class="px-3 pt-2 pb-4">
+          <app-pagination [currentPage]="currentPage()" [totalPages]="totalPages()" (pageChange)="onPageChange($event)" />
         </div>
       }
     }

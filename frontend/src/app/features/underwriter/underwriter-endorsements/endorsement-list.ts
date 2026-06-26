@@ -1,14 +1,16 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge';
 import { UnderwriterService } from '../services/underwriter.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { EndorsementDto } from '../../../core/models/api.models';
 import { FormsModule } from '@angular/forms';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination';
+import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader';
 
 @Component({
   selector: 'app-uw-endorsement-list',
   standalone: true,
-  imports: [StatusBadgeComponent, FormsModule],
+  imports: [StatusBadgeComponent, FormsModule, PaginationComponent, SkeletonLoaderComponent],
   templateUrl: './endorsement-list.html',
 })
 export class EndorsementListComponent implements OnInit {
@@ -17,8 +19,19 @@ export class EndorsementListComponent implements OnInit {
 
   endorsements = signal<EndorsementDto[]>([]);
   pendingCount = signal(0);
+  loading = signal(true);
   rejectingEndorsement = signal<EndorsementDto | null>(null);
   rejectReason = '';
+  currentPage = signal(1);
+  readonly pageSize = 10;
+
+  totalPages = computed(() => Math.max(1, Math.ceil(this.endorsements().length / this.pageSize)));
+  pagedEndorsements = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.endorsements().slice(start, start + this.pageSize);
+  });
+
+  onPageChange(page: number): void { this.currentPage.set(page); }
 
   ngOnInit(): void {
     this.loadData();
@@ -29,7 +42,9 @@ export class EndorsementListComponent implements OnInit {
       next: (res) => {
         this.endorsements.set(res.data);
         this.pendingCount.set(res.data.filter(e => e.status === 'Pending').length);
+        this.loading.set(false);
       },
+      error: () => this.loading.set(false),
     });
   }
 

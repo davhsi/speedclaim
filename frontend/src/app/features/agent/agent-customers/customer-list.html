@@ -3,13 +3,14 @@
     <div>
       <h1 class="text-xl font-semibold text-ink">My customers</h1>
       <p class="text-sm text-muted mt-0.5">{{ filteredCustomers().length }} assigned customers</p>
+
     </div>
     <div class="flex gap-2">
       <input
         type="text"
         placeholder="Search by name or email..."
         [value]="searchQuery()"
-        (input)="searchQuery.set($any($event.target).value)"
+        (input)="onSearch($any($event.target).value)"
         class="h-10 px-3 border border-line rounded-control text-[13px] bg-white outline-none min-w-[200px]"
       />
     </div>
@@ -36,7 +37,7 @@
               </tr>
             }
           } @else {
-            @for (cust of filteredCustomers(); track cust.id) {
+            @for (cust of pagedCustomers(); track cust.id) {
               <tr class="border-b border-line hover:bg-surface transition-colors">
                 <td class="px-4 py-3.5">
                   <div class="flex items-center gap-2.5">
@@ -77,6 +78,9 @@
           }
         </tbody>
       </table>
+    </div>
+    <div class="px-4 border-t border-line">
+      <app-pagination [currentPage]="currentPage()" [totalPages]="totalPages()" (pageChange)="onPageChange($event)" />
     </div>
   </div>
 </div>

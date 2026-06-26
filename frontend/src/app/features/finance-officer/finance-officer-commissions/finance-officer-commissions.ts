@@ -6,11 +6,13 @@ import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { FinanceOfficerService } from '../services/finance-officer.service';
 import { AgentCommissionDto } from '../../../core/models/api.models';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination';
+import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader';
 
 @Component({
   selector: 'app-finance-officer-commissions',
   standalone: true,
-  imports: [StatusBadgeComponent, ConfirmDialogComponent, MoneyPipe, DateFormatPipe],
+  imports: [StatusBadgeComponent, ConfirmDialogComponent, MoneyPipe, DateFormatPipe, PaginationComponent, SkeletonLoaderComponent],
   templateUrl: './finance-officer-commissions.html',
 })
 export class FinanceOfficerCommissionsComponent implements OnInit {
@@ -19,8 +21,9 @@ export class FinanceOfficerCommissionsComponent implements OnInit {
   private moneyPipe = new MoneyPipe();
 
   allCommissions = signal<AgentCommissionDto[]>([]);
-  page = signal(0);
-  pageSize = 8;
+  loading = signal(true);
+  currentPage = signal(1);
+  readonly pageSize = 8;
 
   dialogTarget = signal<AgentCommissionDto | null>(null);
   dialogMessage = signal('');
@@ -34,26 +37,18 @@ export class FinanceOfficerCommissionsComponent implements OnInit {
   totalPages = computed(() => Math.max(1, Math.ceil(this.allCommissions().length / this.pageSize)));
 
   pagedCommissions = computed(() => {
-    const start = this.page() * this.pageSize;
+    const start = (this.currentPage() - 1) * this.pageSize;
     return this.allCommissions().slice(start, start + this.pageSize);
-  });
-
-  pageLabel = computed(() => {
-    const all = this.allCommissions();
-    if (all.length === 0) return 'No records';
-    const start = this.page() * this.pageSize + 1;
-    const end = Math.min(start + this.pageSize - 1, all.length);
-    return `Showing ${start}–${end} of ${all.length}`;
   });
 
   ngOnInit(): void {
     this.financeService.getPendingCommissions().subscribe({
-      next: (comms) => this.allCommissions.set(comms),
+      next: (comms) => { this.allCommissions.set(comms); this.loading.set(false); },
+      error: () => this.loading.set(false),
     });
   }
 
-  prevPage(): void { this.page.update(p => Math.max(0, p - 1)); }
-  nextPage(): void { this.page.update(p => Math.min(this.totalPages() - 1, p + 1)); }
+  onPageChange(page: number): void { this.currentPage.set(page); }
 
   typeBadge(domain: string): string {
     const map: Record<string, string> = {
