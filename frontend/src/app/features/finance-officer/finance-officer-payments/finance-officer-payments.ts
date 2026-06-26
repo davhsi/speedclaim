@@ -97,7 +97,7 @@ export class FinanceOfficerPaymentsComponent implements OnInit {
     if (this.dialogAction() === 'reconcile') {
       this.financeService.reconcilePayment(target.id).subscribe({
         next: () => {
-          this.allRecords.update(list => list.map(p => p.id === target.id ? { ...p, status: 'Reconciled' } : p));
+          this.allRecords.update(list => list.map(p => p.id === target.id ? { ...p, status: 'Paid', paidAt: new Date().toISOString() } : p));
           this.toast.success(`Payment PAY-${target.id} reconciled successfully`);
         },
         error: () => this.toast.error('Failed to reconcile payment'),

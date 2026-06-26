@@ -21,17 +21,17 @@ export class PayPremiumComponent implements OnInit {
   schedule = signal<PremiumScheduleDto[]>([]);
   loading = signal(true);
   paying = signal(false);
-  payingId = signal<number | null>(null);
+  payingId = signal<string | null>(null);
   paymentSuccess = signal(false);
 
   nextDue = signal<PremiumScheduleDto | null>(null);
 
   ngOnInit(): void {
-    const policyId = Number(this.route.snapshot.paramMap.get('policyId'));
+    const policyId = this.route.snapshot.paramMap.get('policyId') ?? '';
     this.paymentService.getSchedule(policyId).subscribe({
       next: data => {
         this.schedule.set(data);
-        this.nextDue.set(data.find(s => s.status === 'Due' || s.status === 'Overdue') ?? null);
+        this.nextDue.set(data.find(s => this.isPayable(s)) ?? null);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
@@ -52,5 +52,9 @@ export class PayPremiumComponent implements OnInit {
         this.toast.error('Payment failed. Please try again.');
       },
     });
+  }
+
+  isPayable(item: PremiumScheduleDto): boolean {
+    return item.status === 'Upcoming' || item.status === 'Due' || item.status === 'Overdue';
   }
 }

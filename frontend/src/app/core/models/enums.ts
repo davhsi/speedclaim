@@ -22,7 +22,7 @@ export type InsuranceDomain = 'Health' | 'Life' | 'Motor';
 
 export type PaymentFrequency = 'Monthly' | 'Quarterly' | 'HalfYearly' | 'Annually';
 
-export type PaymentStatus = 'Due' | 'Paid' | 'Overdue' | 'Failed' | 'Refunded';
+export type PaymentStatus = 'Upcoming' | 'Due' | 'Paid' | 'Overdue' | 'Failed' | 'Refunded';
 
 export type Gender = 'Male' | 'Female' | 'NonBinary' | 'Other';
 

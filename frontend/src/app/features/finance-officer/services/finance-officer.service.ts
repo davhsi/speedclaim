@@ -15,11 +15,11 @@ export class FinanceOfficerService {
     return this.http.get<FinancePaymentRecordDto[]>('/api/v1/payments/all-records');
   }
 
-  reconcilePayment(paymentId: number): Observable<ApiMessage> {
+  reconcilePayment(paymentId: string): Observable<ApiMessage> {
     return this.http.put<ApiMessage>(`/api/v1/payments/${paymentId}/reconcile`, {});
   }
 
-  refundPayment(paymentId: number): Observable<ApiMessage> {
+  refundPayment(paymentId: string): Observable<ApiMessage> {
     return this.http.post<ApiMessage>(`/api/v1/payments/${paymentId}/refund`, {});
   }
 

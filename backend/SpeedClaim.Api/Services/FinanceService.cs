@@ -148,19 +148,7 @@ public class FinanceService : IFinanceService
 
         var customerRecord = await ResolveCustomerAsync(cid);
         var payments = await _unitOfWork.PremiumPayments.FindAsync(p => p.CustomerId == customerRecord.Id);
-        return payments.Select(p => new PaymentRecordDto
-        {
-            Id = p.Id,
-            PolicyId = p.PolicyId,
-            ProposalId = p.ProposalId,
-            CustomerId = p.CustomerId,
-            Amount = p.Amount,
-            Currency = p.Currency,
-            PaymentType = p.PaymentType.ToString(),
-            Status = p.Status.ToString(),
-            PaidAt = p.PaidAt,
-            ReceiptUrl = p.ReceiptUrl
-        });
+        return await MapPaymentRecordsAsync(payments);
     }
 
     public async Task<PaymentRecordDto> DownloadReceiptAsync(string paymentId, string customerId)
@@ -176,19 +164,7 @@ public class FinanceService : IFinanceService
         if (payment.Status != PaymentStatus.Paid)
             throw new UnprocessableException("Receipt is only available for completed payments.");
 
-        return new PaymentRecordDto
-        {
-            Id = payment.Id,
-            PolicyId = payment.PolicyId,
-            ProposalId = payment.ProposalId,
-            CustomerId = payment.CustomerId,
-            Amount = payment.Amount,
-            Currency = payment.Currency,
-            PaymentType = payment.PaymentType.ToString(),
-            Status = payment.Status.ToString(),
-            PaidAt = payment.PaidAt,
-            ReceiptUrl = payment.ReceiptUrl
-        };
+        return (await MapPaymentRecordsAsync(new[] { payment })).Single();
     }
 
     public async Task<IEnumerable<SavedCardDto>> GetSavedPaymentMethodsAsync(string customerId)
@@ -212,18 +188,56 @@ public class FinanceService : IFinanceService
     public async Task<IEnumerable<PaymentRecordDto>> GetAllPaymentRecordsAsync()
     {
         var payments = await _unitOfWork.PremiumPayments.GetAllAsync();
-        return payments.Select(p => new PaymentRecordDto
+        return await MapPaymentRecordsAsync(payments);
+    }
+
+    private async Task<IEnumerable<PaymentRecordDto>> MapPaymentRecordsAsync(IEnumerable<PremiumPayment> payments)
+    {
+        var paymentList = payments.ToList();
+        var policyIds = paymentList.Where(p => p.PolicyId.HasValue).Select(p => p.PolicyId!.Value).Distinct().ToList();
+        var customerIds = paymentList.Select(p => p.CustomerId).Distinct().ToList();
+
+        var policies = policyIds.Count == 0
+            ? new List<Policy>()
+            : (await _unitOfWork.Policies.FindAsync(p => policyIds.Contains(p.Id))).ToList();
+        var customers = customerIds.Count == 0
+            ? new List<SpeedClaim.Api.Models.Customer>()
+            : (await _unitOfWork.Customers.FindAsync(c => customerIds.Contains(c.Id))).ToList();
+        var userIds = customers.Select(c => c.UserId).Distinct().ToList();
+        var users = userIds.Count == 0
+            ? new List<User>()
+            : (await _unitOfWork.Users.FindAsync(u => userIds.Contains(u.Id))).ToList();
+
+        var policyMap = policies.ToDictionary(p => p.Id);
+        var customerMap = customers.ToDictionary(c => c.Id);
+        var userMap = users.ToDictionary(u => u.Id);
+
+        return paymentList.Select(p =>
         {
-            Id = p.Id,
-            PolicyId = p.PolicyId,
-            ProposalId = p.ProposalId,
-            CustomerId = p.CustomerId,
-            Amount = p.Amount,
-            Currency = p.Currency,
-            PaymentType = p.PaymentType.ToString(),
-            Status = p.Status.ToString(),
-            PaidAt = p.PaidAt,
-            ReceiptUrl = p.ReceiptUrl
+            customerMap.TryGetValue(p.CustomerId, out var customer);
+            var user = customer != null && userMap.TryGetValue(customer.UserId, out var foundUser) ? foundUser : null;
+            var customerName = user == null ? string.Empty : $"{user.FirstName} {user.LastName}".Trim();
+            var policyNumber = p.PolicyId.HasValue && policyMap.TryGetValue(p.PolicyId.Value, out var policy)
+                ? policy.PolicyNumber
+                : string.Empty;
+
+            return new PaymentRecordDto
+            {
+                Id = p.Id,
+                PolicyId = p.PolicyId,
+                ProposalId = p.ProposalId,
+                CustomerId = p.CustomerId,
+                CustomerName = customerName,
+                PolicyNumber = policyNumber,
+                Amount = p.Amount,
+                Currency = p.Currency,
+                PaymentType = p.PaymentType.ToString(),
+                Status = p.Status.ToString(),
+                CreatedAt = p.CreatedAt,
+                PaidAt = p.PaidAt,
+                ReceiptUrl = p.ReceiptUrl,
+                StripePaymentIntentId = p.StripePaymentIntentId
+            };
         });
     }
 

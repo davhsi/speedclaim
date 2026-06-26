@@ -20,12 +20,16 @@ public class PaymentRecordDto
     public Guid? PolicyId { get; set; }
     public Guid? ProposalId { get; set; }
     public Guid CustomerId { get; set; }
+    public string CustomerName { get; set; } = string.Empty;
+    public string PolicyNumber { get; set; } = string.Empty;
     public decimal Amount { get; set; }
     public string Currency { get; set; } = "USD";
     public string PaymentType { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
+    public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? PaidAt { get; set; }
     public string ReceiptUrl { get; set; } = string.Empty;
+    public string StripePaymentIntentId { get; set; } = string.Empty;
 }
 
 public class AgentCommissionDto

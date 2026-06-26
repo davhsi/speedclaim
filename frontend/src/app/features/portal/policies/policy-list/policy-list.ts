@@ -1,9 +1,10 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { PolicyService } from '../services/policy.service';
-import { PolicyDto } from '../../../../core/models/api.models';
+import { PolicyDto, ProductDto } from '../../../../core/models/api.models';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { ProductService } from '../../products/services/product.service';
 
 @Component({
   selector: 'app-policy-list',
@@ -13,12 +14,17 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 })
 export class PolicyListComponent implements OnInit {
   private policyService = inject(PolicyService);
+  private productService = inject(ProductService);
   router = inject(Router);
 
   policies = signal<PolicyDto[]>([]);
+  products = signal<ProductDto[]>([]);
   loading = signal(true);
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void {
+    this.productService.getAll().subscribe(products => this.products.set(products));
+    this.load();
+  }
 
   filterByStatus(event: Event): void {
     const val = (event.target as HTMLSelectElement).value;
@@ -33,17 +39,29 @@ export class PolicyListComponent implements OnInit {
     });
   }
 
-  domainBgClass(domain: string): string {
-    const map: Record<string, string> = { Health: 'bg-success-bg', Motor: 'bg-info-bg', Life: 'bg-[#F3EEFF]' };
-    return map[domain] ?? 'bg-surface-alt';
+  productName(policy: PolicyDto): string {
+    return this.products().find(p => p.id === policy.productId)?.productName
+      ?? policy.productName
+      ?? 'Insurance product';
   }
 
-  domainIcon(domain: string): string {
+  displayDomain(policy: PolicyDto): string {
+    return this.products().find(p => p.id === policy.productId)?.domain
+      ?? policy.domain
+      ?? 'Unknown';
+  }
+
+  domainBgClass(policy: PolicyDto): string {
+    const map: Record<string, string> = { HEALTH: 'bg-success-bg', MOTOR: 'bg-info-bg', LIFE: 'bg-[#F3EEFF]' };
+    return map[this.displayDomain(policy).toUpperCase()] ?? 'bg-surface-alt';
+  }
+
+  domainIcon(policy: PolicyDto): string {
     const map: Record<string, string> = {
-      Health: '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#1F9D6B" stroke-width="1.75"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
-      Motor: '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#2D7FF9" stroke-width="1.75"><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 17H3v-6l2-5h9l4 5h3v6h-2"/></svg>',
-      Life: '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.75"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>',
+      HEALTH: '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#1F9D6B" stroke-width="1.75"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+      MOTOR: '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#2D7FF9" stroke-width="1.75"><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 17H3v-6l2-5h9l4 5h3v6h-2"/></svg>',
+      LIFE: '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.75"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>',
     };
-    return map[domain] ?? '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"/></svg>';
+    return map[this.displayDomain(policy).toUpperCase()] ?? '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"/></svg>';
   }
 }

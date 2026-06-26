@@ -13,7 +13,7 @@
             <span class="text-xl font-semibold text-ink">{{ p.policyNumber }}</span>
             <app-status-badge [status]="p.status" />
           </div>
-          <div class="text-[13px] text-muted sc-numeric">{{ p.productName }} · {{ p.domain }}</div>
+          <div class="text-[13px] text-muted sc-numeric">{{ productName() }} · {{ displayDomain() }}</div>
         </div>
         <div class="text-right">
           <div class="text-[28px] font-bold text-ink sc-numeric leading-none">{{ p.coverageAmount | money }}</div>

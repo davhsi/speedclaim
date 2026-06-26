@@ -4,7 +4,8 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge/st
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 import { UnderwriterService } from '../services/underwriter.service';
-import { PolicyDto, PolicyStatusHistoryDto } from '../../../core/models/api.models';
+import { PolicyDto, PolicyStatusHistoryDto, ProductDto } from '../../../core/models/api.models';
+import { ProductService } from '../../portal/products/services/product.service';
 
 @Component({
   selector: 'app-uw-policy-detail',
@@ -16,14 +17,22 @@ export class PolicyDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private uwService = inject(UnderwriterService);
+  private productService = inject(ProductService);
 
   policy = signal<PolicyDto | null>(null);
+  product = signal<ProductDto | null>(null);
   history = signal<PolicyStatusHistoryDto[]>([]);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
     this.uwService.getPolicyById(id).subscribe({
-      next: (p) => this.policy.set(p),
+      next: (p) => {
+        this.policy.set(p);
+        this.productService.getById(p.productId).subscribe({
+          next: product => this.product.set(product),
+          error: () => this.product.set(null),
+        });
+      },
     });
     this.uwService.getPolicyHistory(id).subscribe({
       next: (h) => this.history.set(h),
@@ -41,5 +50,13 @@ export class PolicyDetailComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/underwriter/policies']);
+  }
+
+  productName(): string {
+    return this.product()?.productName ?? this.policy()?.productName ?? 'Insurance product';
+  }
+
+  displayDomain(): string {
+    return this.product()?.domain ?? this.policy()?.domain ?? 'Unknown';
   }
 }

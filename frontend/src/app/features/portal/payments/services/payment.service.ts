@@ -11,11 +11,11 @@ export class PaymentService {
   private http = inject(HttpClient);
   private readonly api = '/api/v1/payments';
 
-  getSchedule(policyId: number): Observable<PremiumScheduleDto[]> {
+  getSchedule(policyId: string): Observable<PremiumScheduleDto[]> {
     return this.http.get<PremiumScheduleDto[]>(`${this.api}/schedule/${policyId}`);
   }
 
-  createPaymentIntent(scheduleId: number, req: CreatePaymentIntentRequest): Observable<CreatePaymentIntentResponse> {
+  createPaymentIntent(scheduleId: string, req: CreatePaymentIntentRequest): Observable<CreatePaymentIntentResponse> {
     return this.http.post<CreatePaymentIntentResponse>(`${this.api}/pay/${scheduleId}`, req);
   }
 
@@ -23,7 +23,7 @@ export class PaymentService {
     return this.http.get<PaymentRecordDto[]>(`${this.api}/history`);
   }
 
-  getReceipt(paymentId: number): Observable<PaymentRecordDto> {
+  getReceipt(paymentId: string): Observable<PaymentRecordDto> {
     return this.http.get<PaymentRecordDto>(`${this.api}/${paymentId}/receipt`);
   }
 

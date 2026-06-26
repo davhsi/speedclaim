@@ -5,8 +5,9 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination';
 import { UnderwriterService } from '../services/underwriter.service';
-import { PolicyDto } from '../../../core/models/api.models';
+import { PolicyDto, ProductDto } from '../../../core/models/api.models';
 import { FormsModule } from '@angular/forms';
+import { ProductService } from '../../portal/products/services/product.service';
 
 @Component({
   selector: 'app-uw-policy-list',
@@ -16,9 +17,11 @@ import { FormsModule } from '@angular/forms';
 })
 export class PolicyListComponent implements OnInit {
   private uwService = inject(UnderwriterService);
+  private productService = inject(ProductService);
   private router = inject(Router);
 
   allPolicies = signal<PolicyDto[]>([]);
+  products = signal<ProductDto[]>([]);
   searchTerm = '';
   currentPage = signal(1);
   totalPages = signal(1);
@@ -29,12 +32,13 @@ export class PolicyListComponent implements OnInit {
     if (!term) return policies;
     return policies.filter(p =>
       p.policyNumber.toLowerCase().includes(term) ||
-      p.productName.toLowerCase().includes(term) ||
+      this.productName(p).toLowerCase().includes(term) ||
       p.status.toLowerCase().includes(term)
     );
   });
 
   ngOnInit(): void {
+    this.productService.getAll().subscribe(products => this.products.set(products));
     this.loadPage(1);
   }
 
@@ -54,5 +58,11 @@ export class PolicyListComponent implements OnInit {
 
   openPolicy(id: string): void {
     this.router.navigate(['/underwriter/policies', id]);
+  }
+
+  productName(policy: PolicyDto): string {
+    return this.products().find(p => p.id === policy.productId)?.productName
+      ?? policy.productName
+      ?? 'Insurance product';
   }
 }

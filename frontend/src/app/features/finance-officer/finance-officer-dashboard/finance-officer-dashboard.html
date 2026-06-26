@@ -68,12 +68,12 @@
             <span class="text-[13px] font-semibold text-primary sc-numeric">PAY-{{ p.id }}</span>
             <span class="text-[13px] font-medium text-ink">{{ p.customerName }}</span>
           </div>
-          <div class="text-xs text-muted mt-px">{{ p.policyNumber ?? 'N/A' }} · {{ p.paymentType }}</div>
+          <div class="text-xs text-muted mt-px">{{ p.policyNumber || 'N/A' }} · {{ p.paymentType }}</div>
         </div>
         <div class="flex items-center gap-3 shrink-0">
           <span class="text-sm font-semibold text-ink sc-numeric">{{ p.amount | money }}</span>
           <app-status-badge [status]="p.status" />
-          <span class="text-xs text-muted whitespace-nowrap">{{ p.paidAt | dateFormat }}</span>
+          <span class="text-xs text-muted whitespace-nowrap">{{ (p.paidAt ?? p.createdAt) | dateFormat }}</span>
         </div>
       </div>
     } @empty {

@@ -20,7 +20,7 @@
         </div>
         <div class="flex-1 min-w-0">
           <div class="text-xs text-muted sc-numeric mb-0.5">{{ policy()!.policyNumber }}</div>
-          <div class="text-xl font-bold text-ink">{{ policy()!.productName }}</div>
+          <div class="text-xl font-bold text-ink">{{ productName() }}</div>
         </div>
         <div class="flex flex-col items-end gap-2">
           <app-status-badge [status]="policy()!.status" />
@@ -86,9 +86,10 @@
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D9920A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                   <div>
                     <div class="text-[13px] font-semibold text-[#AA7008]">Pending activation</div>
-                    <div class="text-xs text-body">Your policy is being reviewed and will be activated shortly.</div>
+                    <div class="text-xs text-body">Pay the first premium to activate your cover.</div>
                   </div>
                 </div>
+                <button class="h-10 px-4 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover transition-colors" (click)="router.navigate(['/pay', policy()!.id])">Pay first premium</button>
               }
             </div>
           }

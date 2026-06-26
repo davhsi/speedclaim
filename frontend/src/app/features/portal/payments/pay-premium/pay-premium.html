@@ -34,7 +34,7 @@
             </div>
             <div class="flex items-center gap-3">
               <div class="text-sm font-bold text-ink sc-numeric">{{ s.amountDue | money }}</div>
-              @if (s.status === 'Due' || s.status === 'Overdue') {
+              @if (isPayable(s)) {
                 <button
                   class="h-8 px-3.5 bg-accent text-white text-xs font-semibold rounded-control hover:bg-accent-hover transition-colors disabled:opacity-40"
                   [disabled]="paying()"

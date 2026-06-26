@@ -401,30 +401,33 @@ export interface ClaimStatusHistoryDto {
 }
 
 export interface PremiumScheduleDto {
-  id: number;
-  policyId: number;
+  id: string;
+  policyId: string;
   policyNumber?: string;
   installmentNumber: number;
   amountDue: number;
   dueDate: string;
   status: PaymentStatus;
-  paymentId?: number;
+  paymentId?: string;
 }
 
 export interface PaymentRecordDto {
-  id: number;
-  policyId?: number;
+  id: string;
+  policyId?: string;
+  customerId: string;
+  customerName: string;
   policyNumber?: string;
   amount: number;
   currency: string;
-  paymentDate: string;
+  createdAt: string;
+  paidAt?: string;
   paymentType: string;
   status: string;
   stripePaymentIntentId?: string;
 }
 
 export interface CreatePaymentIntentRequest {
-  policyId: number;
+  policyId: string;
 }
 
 export interface CreatePaymentIntentResponse {
@@ -503,16 +506,17 @@ export interface OverduePolicyDto {
 }
 
 export interface FinancePaymentRecordDto {
-  id: number;
-  paymentNumber: string;
-  policyId?: number;
+  id: string;
+  paymentNumber?: string;
+  policyId?: string;
   policyNumber?: string;
-  customerId: number;
+  customerId: string;
   customerName: string;
   amount: number;
   currency: string;
   paymentType: string;
   status: string;
+  createdAt: string;
   paidAt?: string;
   stripePaymentIntentId?: string;
 }

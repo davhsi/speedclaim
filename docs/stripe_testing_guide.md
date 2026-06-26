@@ -9,10 +9,16 @@ brew install stripe/stripe-cli/stripe
 stripe login
 ```
 
-## Step 1: Create the Payment Intent via API
-First, you need to initiate the payment process for an existing `Pending` policy. The backend will securely calculate the required amount based on the policy data.
+## Step 1: Get the Pending Schedule
+First, fetch the premium schedule for the existing `Pending` policy and copy the first payable schedule `id`.
 
-**Request:** `POST {{baseUrl}}/api/v1/Payments/intent`
+**Request:** `GET {{baseUrl}}/api/v1/payments/schedule/{policyId}`
+**Headers:** `Authorization: Bearer <JWT_TOKEN>`
+
+## Step 2: Create the Payment Intent
+Create a PaymentIntent for the copied schedule. The backend calculates the amount from the schedule.
+
+**Request:** `POST {{baseUrl}}/api/v1/payments/pay/{scheduleId}`
 **Headers:** `Authorization: Bearer <JWT_TOKEN>`
 **Payload:**
 ```json
@@ -24,16 +30,18 @@ First, you need to initiate the payment process for an existing `Pending` policy
 **Response Extraction:**
 Extract the `paymentIntentId` from the JSON response (it usually begins with `pi_...`).
 
-## Step 2: Start the Webhook Listener
+## Step 3: Start the Webhook Listener
 Because Stripe needs to send a secure `POST` request to your backend, you must open a tunnel using the CLI.
 
 Open a terminal and run:
 ```bash
-stripe listen --forward-to http://localhost:5062/api/v1/Payments/webhook
+stripe listen --forward-to http://localhost:5062/api/v1/payments/webhook
 ```
 *Keep this terminal window running in the background!*
 
-## Step 3: Simulate the Payment
+Copy the `whsec_...` value from this command into `Stripe:WebhookSecret` in `appsettings.Development.json`, then restart the API if the value changed.
+
+## Step 4: Simulate the Payment
 Instead of typing credit card numbers into a UI, use the Stripe CLI to force the payment to succeed using a test Visa card.
 
 Open a **new terminal window** and run:
@@ -46,8 +54,8 @@ stripe payment_intents confirm <YOUR_PAYMENT_INTENT_ID> \
 > [!NOTE]
 > The `--return-url` flag is mandatory when confirming via CLI to satisfy Stripe's Automatic Payment Methods configuration, even though we aren't actually redirecting a browser.
 
-## Step 4: Verify Activation
+## Step 5: Verify Activation
 1. Check your `stripe listen` terminal. You should see a `payment_intent.succeeded` event printed out.
-2. The backend (`PaymentService.cs`) will catch this webhook and update the database.
-3. Check the policy status via **`GET {{baseUrl}}/api/v1/Policy/user/{userId}`**. The status should now be `Active` instead of `Pending`.
+2. The backend (`FinanceService.cs`) will reconcile the payment and update the database.
+3. Check the policy status via **`GET {{baseUrl}}/api/v1/policies/my`** or the customer policy page. The status should now be `Active` instead of `Pending`.
 4. The system will have also fired an automated "Policy Activated" email.

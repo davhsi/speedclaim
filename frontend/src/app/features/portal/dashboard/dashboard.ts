@@ -4,10 +4,11 @@ import { forkJoin } from 'rxjs';
 import { DashboardService } from './services/dashboard.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { PolicyDto, ClaimDto, PremiumScheduleDto } from '../../../core/models/api.models';
+import { PolicyDto, ClaimDto, PremiumScheduleDto, ProductDto } from '../../../core/models/api.models';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge';
 import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
+import { ProductService } from '../products/services/product.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -18,10 +19,12 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 export class DashboardComponent implements OnInit {
   private dashService = inject(DashboardService);
   private authService = inject(AuthService);
+  private productService = inject(ProductService);
   notifService = inject(NotificationService);
 
   loading = signal(true);
   policies = signal<PolicyDto[]>([]);
+  products = signal<ProductDto[]>([]);
   claims = signal<ClaimDto[]>([]);
   nextDue = signal<PremiumScheduleDto | null>(null);
 
@@ -33,6 +36,7 @@ export class DashboardComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.productService.getAll().subscribe(products => this.products.set(products));
     forkJoin({
       policies: this.dashService.getPolicies(),
       claims: this.dashService.getClaims(),
@@ -68,21 +72,34 @@ export class DashboardComponent implements OnInit {
     return `Due: ${new Date(due.dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`;
   }
 
-  domainBgClass(domain: string): string {
-    const map: Record<string, string> = {
-      Health: 'bg-success-bg',
-      Motor: 'bg-info-bg',
-      Life: 'bg-[#F3EEFF]',
-    };
-    return map[domain] ?? 'bg-surface-alt';
+  productName(policy: PolicyDto): string {
+    return this.products().find(p => p.id === policy.productId)?.productName
+      ?? policy.productName
+      ?? 'Insurance product';
   }
 
-  domainIcon(domain: string): string {
+  displayDomain(policyOrDomain: PolicyDto | string): string {
+    if (typeof policyOrDomain === 'string') return policyOrDomain;
+    return this.products().find(p => p.id === policyOrDomain.productId)?.domain
+      ?? policyOrDomain.domain
+      ?? 'Unknown';
+  }
+
+  domainBgClass(policyOrDomain: PolicyDto | string): string {
     const map: Record<string, string> = {
-      Health: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1F9D6B" stroke-width="1.75"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
-      Motor: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2D7FF9" stroke-width="1.75"><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 17H3v-6l2-5h9l4 5h3v6h-2"/></svg>',
-      Life: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.75"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>',
+      HEALTH: 'bg-success-bg',
+      MOTOR: 'bg-info-bg',
+      LIFE: 'bg-[#F3EEFF]',
     };
-    return map[domain] ?? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"/></svg>';
+    return map[this.displayDomain(policyOrDomain).toUpperCase()] ?? 'bg-surface-alt';
+  }
+
+  domainIcon(policyOrDomain: PolicyDto | string): string {
+    const map: Record<string, string> = {
+      HEALTH: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1F9D6B" stroke-width="1.75"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+      MOTOR: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2D7FF9" stroke-width="1.75"><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 17H3v-6l2-5h9l4 5h3v6h-2"/></svg>',
+      LIFE: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.75"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>',
+    };
+    return map[this.displayDomain(policyOrDomain).toUpperCase()] ?? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"/></svg>';
   }
 }

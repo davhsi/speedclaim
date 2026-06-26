@@ -84,11 +84,11 @@
           <a [routerLink]="['/policies', policy.id]"
              class="flex items-center gap-[13px] px-[18px] py-3.5 border-b border-line cursor-pointer hover:bg-surface transition-colors">
             <div class="w-[38px] h-[38px] rounded-[9px] flex items-center justify-center shrink-0"
-                 [class]="domainBgClass(policy.domain)">
-              <span class="w-5 h-5 flex" [innerHTML]="domainIcon(policy.domain)"></span>
+                 [class]="domainBgClass(policy)">
+              <span class="w-5 h-5 flex" [innerHTML]="domainIcon(policy)"></span>
             </div>
             <div class="flex-1 min-w-0">
-              <div class="text-sm font-semibold text-ink truncate">{{ policy.productName }}</div>
+              <div class="text-sm font-semibold text-ink truncate">{{ productName(policy) }}</div>
               <div class="text-xs text-muted sc-numeric">{{ policy.policyNumber }} · {{ policy.coverageAmount | money }} cover</div>
             </div>
             <app-status-badge [status]="policy.status" />
