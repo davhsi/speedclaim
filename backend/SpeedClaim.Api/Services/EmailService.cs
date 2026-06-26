@@ -30,6 +30,16 @@ public class EmailService : IEmailService
 
     public async Task SendEmailAsync(string to, string subject, string body)
     {
+        await SendEmailCoreAsync(to, subject, body, attachment: null);
+    }
+
+    public async Task SendEmailAsync(string to, string subject, string body, EmailAttachment attachment)
+    {
+        await SendEmailCoreAsync(to, subject, body, attachment);
+    }
+
+    private async Task SendEmailCoreAsync(string to, string subject, string body, EmailAttachment? attachment)
+    {
         try
         {
             var email = new MimeMessage();
@@ -38,7 +48,17 @@ public class EmailService : IEmailService
             email.From.Add(new MailboxAddress(senderName, senderEmail));
             email.To.Add(MailboxAddress.Parse(to));
             email.Subject = subject;
-            email.Body = new TextPart(TextFormat.Html) { Text = body };
+
+            if (attachment is null)
+            {
+                email.Body = new TextPart(TextFormat.Html) { Text = body };
+            }
+            else
+            {
+                var builder = new BodyBuilder { HtmlBody = body };
+                builder.Attachments.Add(attachment.FileName, attachment.Content, ContentType.Parse(attachment.ContentType));
+                email.Body = builder.ToMessageBody();
+            }
 
             using var smtp = _smtpClientFactory.CreateClient();
             var host = _configuration["SmtpSettings:Host"] ?? "smtp.gmail.com";

@@ -75,8 +75,8 @@ public class PolicyServiceTests
         var result = await _policyService.DownloadPolicyDocumentAsync(policyId, customerId);
 
         Assert.That(result, Is.Not.Empty);
-        var text = System.Text.Encoding.UTF8.GetString(result);
-        Assert.That(text, Does.Contain("POLICY DOCUMENT"));
+        var text = System.Text.Encoding.ASCII.GetString(result);
+        Assert.That(text, Does.StartWith("%PDF-1.4"));
         Assert.That(text, Does.Contain("POL-TEST-001"));
     }
 
@@ -405,7 +405,7 @@ public class PolicyServiceTests
 
         var result = await _policyService.DownloadPolicyDocumentAsync(policyId, customerId);
 
-        var text = System.Text.Encoding.UTF8.GetString(result);
+        var text = System.Text.Encoding.ASCII.GetString(result);
         Assert.That(text, Does.Contain("Issued At"));
     }
 

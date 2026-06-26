@@ -70,6 +70,25 @@ public class EmailServiceTests
     }
 
     [Test]
+    public async Task SendEmailAsync_WithAttachment_SendsMultipartMessage()
+    {
+        MimeMessage? sentMessage = null;
+        _mockSmtpClient
+            .Setup(c => c.SendAsync(It.IsAny<MimeMessage>(), It.IsAny<CancellationToken>(), It.IsAny<MailKit.ITransferProgress>()))
+            .Callback<MimeMessage, CancellationToken, MailKit.ITransferProgress?>((message, _, _) => sentMessage = message)
+            .ReturnsAsync("queued");
+
+        var attachment = new EmailAttachment("policy.pdf", "application/pdf", new byte[] { 1, 2, 3 });
+
+        await _emailService.SendEmailAsync("recipient@test.com", "Subject", "<p>Body</p>", attachment);
+
+        Assert.That(sentMessage, Is.Not.Null);
+        Assert.That(sentMessage!.Body, Is.TypeOf<Multipart>());
+        var multipart = (Multipart)sentMessage.Body;
+        Assert.That(multipart.OfType<MimePart>().Any(p => p.FileName == "policy.pdf"), Is.True);
+    }
+
+    [Test]
     public void SendEmailAsync_Failure_LogsFailedStatusAndThrows()
     {
         // Arrange

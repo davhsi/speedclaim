@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using ClosedXML.Excel;
@@ -274,11 +275,21 @@ public class FinanceService : IFinanceService
                                 var user = await _unitOfWork.Users.GetByIdAsync(customer.UserId);
                                 if (user != null)
                                 {
+                                    var productRepo = _unitOfWork.InsuranceProducts;
+                                    var product = productRepo == null ? null : await productRepo.GetByIdAsync(policy.ProductId);
+                                    var productName = product?.ProductName ?? policy.PolicyType.ToString();
+                                    var customerName = $"{user.FirstName} {user.LastName}".Trim();
+                                    var certificate = PolicyDocumentGenerator.GenerateCertificatePdf(policy, customerName, productName);
+                                    var attachment = new EmailAttachment(
+                                        $"{policy.PolicyNumber}-certificate.pdf",
+                                        PolicyDocumentGenerator.ContentType,
+                                        certificate);
+
                                     await _emailService.SendEmailAsync(
                                         user.Email,
-                                        "Policy Activated",
-                                        $"Dear {user.FirstName},<br/>Your policy {policy.PolicyNumber} has been activated successfully!"
-                                    );
+                                        $"Your SpeedClaim policy is active - {policy.PolicyNumber}",
+                                        BuildPolicyActivatedEmail(user, policy, productName),
+                                        attachment);
                                     await _notifications.CreateAsync(
                                         user.Id,
                                         "Policy Activated",
@@ -295,6 +306,83 @@ public class FinanceService : IFinanceService
             _logger.LogInformation("Payment {PaymentId} reconciled as Paid", payment.Id);
             await _unitOfWork.CompleteAsync();
         }
+    }
+
+    private static string BuildPolicyActivatedEmail(User user, Policy policy, string productName)
+    {
+        static string Enc(string value) => WebUtility.HtmlEncode(value);
+        var firstName = Enc(user.FirstName);
+        var policyNumber = Enc(policy.PolicyNumber);
+        var product = Enc(productName);
+        var status = Enc(policy.Status.ToString());
+        var frequency = Enc(policy.PaymentFrequency);
+        var year = DateTime.UtcNow.Year;
+
+        return $@"<!DOCTYPE html>
+<html lang=""en"">
+<head>
+    <meta charset=""UTF-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>Policy Activated</title>
+</head>
+<body style=""margin:0; padding:0; background-color:#F4F7FA; font-family:Arial, Helvetica, sans-serif; color:#1A2230;"">
+    <table role=""presentation"" width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""background-color:#F4F7FA; padding:28px 12px;"">
+        <tr>
+            <td align=""center"">
+                <table role=""presentation"" width=""640"" cellpadding=""0"" cellspacing=""0"" style=""max-width:640px; width:100%; background:#ffffff; border:1px solid #E2E6EB; border-radius:14px; overflow:hidden;"">
+                    <tr>
+                        <td style=""background:#0F6E8C; padding:24px 30px;"">
+                            <div style=""font-size:22px; font-weight:700; color:#ffffff;"">SpeedClaim</div>
+                            <div style=""font-size:13px; color:#D8EEF5; margin-top:4px;"">Insurance policy services</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style=""padding:30px;"">
+                            <p style=""margin:0 0 10px; font-size:14px; color:#1F9D6B; font-weight:700;"">Policy activated</p>
+                            <h1 style=""margin:0 0 14px; font-size:25px; line-height:1.25; color:#1A2230;"">Your cover is now active</h1>
+                            <p style=""margin:0 0 24px; font-size:15px; line-height:1.65; color:#3C4654;"">Dear {firstName}, your policy has been activated successfully. A PDF copy of your policy certificate is attached to this email for your records.</p>
+
+                            <table role=""presentation"" width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""border-collapse:collapse; border:1px solid #E2E6EB; border-radius:10px; overflow:hidden;"">
+                                <tr>
+                                    <td style=""padding:13px 16px; background:#F7F9FA; font-size:12px; color:#6B7685; width:38%;"">Policy number</td>
+                                    <td style=""padding:13px 16px; font-size:14px; font-weight:700; color:#1A2230;"">{policyNumber}</td>
+                                </tr>
+                                <tr>
+                                    <td style=""padding:13px 16px; background:#F7F9FA; font-size:12px; color:#6B7685;"">Product</td>
+                                    <td style=""padding:13px 16px; font-size:14px; color:#1A2230;"">{product}</td>
+                                </tr>
+                                <tr>
+                                    <td style=""padding:13px 16px; background:#F7F9FA; font-size:12px; color:#6B7685;"">Coverage amount</td>
+                                    <td style=""padding:13px 16px; font-size:14px; color:#1A2230;"">{policy.SumAssured:0.00} USD</td>
+                                </tr>
+                                <tr>
+                                    <td style=""padding:13px 16px; background:#F7F9FA; font-size:12px; color:#6B7685;"">Premium</td>
+                                    <td style=""padding:13px 16px; font-size:14px; color:#1A2230;"">{policy.PremiumAmount:0.00} USD / {frequency}</td>
+                                </tr>
+                                <tr>
+                                    <td style=""padding:13px 16px; background:#F7F9FA; font-size:12px; color:#6B7685;"">Policy period</td>
+                                    <td style=""padding:13px 16px; font-size:14px; color:#1A2230;"">{policy.StartDate:dd MMM yyyy} - {policy.EndDate:dd MMM yyyy}</td>
+                                </tr>
+                                <tr>
+                                    <td style=""padding:13px 16px; background:#F7F9FA; font-size:12px; color:#6B7685;"">Status</td>
+                                    <td style=""padding:13px 16px; font-size:14px; font-weight:700; color:#1F9D6B;"">{status}</td>
+                                </tr>
+                            </table>
+
+                            <p style=""margin:24px 0 0; font-size:13px; line-height:1.55; color:#6B7685;"">Please review the attached certificate and keep it with your insurance records. Contact SpeedClaim support if any detail looks incorrect.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style=""padding:18px 30px; background:#F7F9FA; border-top:1px solid #E2E6EB;"">
+                            <p style=""margin:0; font-size:12px; line-height:1.5; color:#6B7685;"">This is a system-generated message from SpeedClaim. © {year} SpeedClaim.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>";
     }
 
     public async Task ReconcileByStripeIntentAsync(string paymentIntentId, string? chargeId = null)

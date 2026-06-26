@@ -29,6 +29,7 @@ export class TopbarComponent {
     '/payments': 'Payment History',
     '/notifications': 'Notifications',
     '/grievances': 'Grievances',
+    '/kyc': 'KYC Verification',
     '/profile': 'My Profile',
   };
 
@@ -50,9 +51,17 @@ export class TopbarComponent {
 
   private deriveTitleFromPath(path: string): string {
     const segments = path.split('/').filter(Boolean);
-    if (segments.length >= 2 && /^\d+$/.test(segments[segments.length - 1])) {
+    const isId = (s: string) =>
+      /^\d+$/.test(s) ||
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+    if (segments.length >= 2 && isId(segments[segments.length - 1])) {
       const base = segments[segments.length - 2];
-      return base.charAt(0).toUpperCase() + base.slice(1).replace(/-/g, ' ') + ' Details';
+      const singularMap: Record<string, string> = {
+        products: 'Product', policies: 'Policy', claims: 'Claim',
+        proposals: 'Proposal', grievances: 'Grievance',
+      };
+      const label = singularMap[base] ?? (base.charAt(0).toUpperCase() + base.slice(1).replace(/-/g, ' '));
+      return label + ' Details';
     }
     if (segments.length >= 1) {
       const base = segments[segments.length - 1];

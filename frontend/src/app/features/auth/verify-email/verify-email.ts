@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -11,6 +11,7 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class VerifyEmailComponent implements OnInit {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private authService = inject(AuthService);
   private fb = inject(FormBuilder);
 
@@ -38,6 +39,7 @@ export class VerifyEmailComponent implements OnInit {
       next: () => {
         this.loading.set(false);
         this.success.set(true);
+        setTimeout(() => this.router.navigate(['/auth/login']), 3000);
       },
       error: () => {
         this.loading.set(false);

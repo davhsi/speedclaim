@@ -278,8 +278,17 @@ public class AuthService : IAuthService
             throw new ValidationException("Invalid or expired token");
 
         var userToken = await _unitOfWork.UserTokens.GetByIdAsync(tokenId);
-        if (userToken == null || userToken.IsUsed || userToken.ExpiresAt <= DateTime.UtcNow)
+        if (userToken == null || userToken.ExpiresAt <= DateTime.UtcNow)
             throw new ValidationException("Invalid or expired token");
+
+        // Idempotent: clicking the link a second time after success should not show an error
+        if (userToken.IsUsed)
+        {
+            var alreadyVerified = await _unitOfWork.Users.GetByIdAsync(userToken.UserId);
+            if (alreadyVerified?.IsEmailVerified == true)
+                return;
+            throw new ValidationException("Invalid or expired token");
+        }
 
         if (userToken.TokenType != TokenType.EmailVerification)
             throw new ValidationException("Invalid token type");

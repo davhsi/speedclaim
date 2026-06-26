@@ -105,23 +105,17 @@ public class PolicyService : IPolicyService
         if (policy == null || policy.CustomerId != customerRecordId)
             throw new NotFoundException("Policy not found.");
 
-        // Generate a text-based policy document on the fly
-        var sb = new System.Text.StringBuilder();
-        sb.AppendLine("========================================");
-        sb.AppendLine("            POLICY DOCUMENT             ");
-        sb.AppendLine("========================================");
-        sb.AppendLine($"Policy Number : {policy.PolicyNumber}");
-        sb.AppendLine($"Status        : {policy.Status}");
-        sb.AppendLine($"Type          : {policy.PolicyType}");
-        sb.AppendLine($"Sum Assured   : {policy.SumAssured}");
-        sb.AppendLine($"Premium       : {policy.PremiumAmount} ({policy.PaymentFrequency})");
-        sb.AppendLine($"Valid From    : {policy.StartDate:yyyy-MM-dd}");
-        sb.AppendLine($"Valid To      : {policy.EndDate:yyyy-MM-dd}");
-        if (policy.IssuedAt.HasValue)
-            sb.AppendLine($"Issued At     : {policy.IssuedAt.Value:yyyy-MM-dd HH:mm:ss}");
-        sb.AppendLine("========================================");
+        var customer = await _unitOfWork.Customers.GetByIdAsync(policy.CustomerId);
+        User? user = null;
+        if (customer != null)
+            user = await _unitOfWork.Users.GetByIdAsync(customer.UserId);
 
-        return System.Text.Encoding.UTF8.GetBytes(sb.ToString());
+        var productRepo = _unitOfWork.InsuranceProducts;
+        var product = productRepo == null ? null : await productRepo.GetByIdAsync(policy.ProductId);
+        var customerName = user == null ? "Policyholder" : $"{user.FirstName} {user.LastName}".Trim();
+        var productName = product?.ProductName ?? policy.PolicyType.ToString();
+
+        return PolicyDocumentGenerator.GenerateCertificatePdf(policy, customerName, productName);
     }
 
     public async Task RequestEndorsementAsync(Guid policyId, Guid customerId, RequestEndorsementRequest request)

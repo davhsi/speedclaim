@@ -108,12 +108,10 @@ public class UsersController : BaseApiController
     [Authorize(Roles = "Customer")]
     [HttpGet("kyc")]
     [ProducesResponseType(typeof(KycRecordDto), 200)]
-    [ProducesResponseType(404)]
     public async Task<IActionResult> GetMyKyc()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         var kycRecord = await _userService.GetMyKycAsync(userId);
-        if (kycRecord == null) return NotFound("No KYC record found.");
         return Ok(kycRecord);
     }
 

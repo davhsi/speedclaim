@@ -7,6 +7,7 @@ using SpeedClaim.Api.Dtos.Policies;
 using SpeedClaim.Api.Filters;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Models.Enums;
+using SpeedClaim.Api.Services;
 using System.Security.Claims;
 
 namespace SpeedClaim.Api.Controllers;
@@ -38,7 +39,7 @@ public class PoliciesController : BaseApiController
         return Ok(result);
     }
 
-    /// <summary>Download a plain-text policy document for a specific policy</summary>
+    /// <summary>Download a PDF policy certificate for a specific policy</summary>
     /// <param name="id">Policy ID</param>
     [Authorize(Roles = "Customer")]
     [HttpGet("{id}/download")]
@@ -48,7 +49,7 @@ public class PoliciesController : BaseApiController
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId)) return Unauthorized();
         var bytes = await _policyService.DownloadPolicyDocumentAsync(id, customerId);
-        return File(bytes, "text/plain", $"Policy_{id}.txt");
+        return File(bytes, PolicyDocumentGenerator.ContentType, $"Policy_{id}.pdf");
     }
 
     /// <summary>Get all endorsement requests raised against a policy</summary>
