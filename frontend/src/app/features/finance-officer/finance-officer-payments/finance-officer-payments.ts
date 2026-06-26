@@ -8,12 +8,11 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
 import { FinanceOfficerService } from '../services/finance-officer.service';
 import { FinancePaymentRecordDto } from '../../../core/models/api.models';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination';
-import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader';
 
 @Component({
   selector: 'app-finance-officer-payments',
   standalone: true,
-  imports: [FormsModule, StatusBadgeComponent, ConfirmDialogComponent, MoneyPipe, DateFormatPipe, PaginationComponent, SkeletonLoaderComponent],
+  imports: [FormsModule, StatusBadgeComponent, ConfirmDialogComponent, MoneyPipe, DateFormatPipe, PaginationComponent],
   templateUrl: './finance-officer-payments.html',
 })
 export class FinanceOfficerPaymentsComponent implements OnInit {
