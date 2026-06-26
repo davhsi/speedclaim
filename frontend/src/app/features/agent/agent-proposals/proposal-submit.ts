@@ -92,7 +92,7 @@ export class AgentProposalSubmitComponent implements OnInit {
   }
 
   calculateQuote(): void {
-    const product = this.products().find(p => p.domain?.toUpperCase() === this.selectedType?.toUpperCase());
+    const product = this.products().find(p => p.domain.toUpperCase() === this.selectedType?.toUpperCase());
     if (!product) return;
 
     this.agentService.generateQuote({
@@ -106,7 +106,7 @@ export class AgentProposalSubmitComponent implements OnInit {
   }
 
   private submitProposal(): void {
-    const product = this.products().find(p => p.domain?.toUpperCase() === this.selectedType?.toUpperCase());
+    const product = this.products().find(p => p.domain.toUpperCase() === this.selectedType?.toUpperCase());
     if (!product || !this.selectedCustomerId) return;
 
     this.agentService.submitProposal({

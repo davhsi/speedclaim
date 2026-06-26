@@ -353,11 +353,11 @@ public class FinanceService : IFinanceService
                                 </tr>
                                 <tr>
                                     <td style=""padding:13px 16px; background:#F7F9FA; font-size:12px; color:#6B7685;"">Coverage amount</td>
-                                    <td style=""padding:13px 16px; font-size:14px; color:#1A2230;"">{policy.SumAssured:0.00} USD</td>
+                                    <td style=""padding:13px 16px; font-size:14px; color:#1A2230;"">{policy.SumAssured:0.00} INR</td>
                                 </tr>
                                 <tr>
                                     <td style=""padding:13px 16px; background:#F7F9FA; font-size:12px; color:#6B7685;"">Premium</td>
-                                    <td style=""padding:13px 16px; font-size:14px; color:#1A2230;"">{policy.PremiumAmount:0.00} USD / {frequency}</td>
+                                    <td style=""padding:13px 16px; font-size:14px; color:#1A2230;"">{policy.PremiumAmount:0.00} INR / {frequency}</td>
                                 </tr>
                                 <tr>
                                     <td style=""padding:13px 16px; background:#F7F9FA; font-size:12px; color:#6B7685;"">Policy period</td>

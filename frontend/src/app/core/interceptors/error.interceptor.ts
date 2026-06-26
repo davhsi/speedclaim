@@ -60,7 +60,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       } else if (isAuthEndpoint) {
         // Auth pages handle their own errors inline — only 429 gets a toast
       } else if (error.status === 403) {
-        toast.error('You do not have permission to perform this action.');
+        const errorMsg = error.error?.detail || error.error?.message || 'You do not have permission to perform this action.';
+        toast.error(errorMsg);
       } else if (error.status >= 500) {
         toast.error('Something went wrong. Please try again later.');
       } else if (error.status >= 400 && error.status < 500) {

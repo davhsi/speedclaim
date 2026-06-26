@@ -359,13 +359,13 @@ export interface RequestEndorsementRequest {
 }
 
 export interface IntimateClaimRequest {
-  policyId: number;
+  policyId: string;
   claimType: ClaimType;
   claimAmountRequested: number;
   incidentDate: string;
   incidentDescription: string;
   isCashless: boolean;
-  claimantMemberId?: number;
+  claimantMemberId?: string | null;
 }
 
 export interface ClaimDto {
@@ -464,8 +464,8 @@ export interface GrievanceDto {
 export interface RaiseGrievanceRequest {
   category: GrievanceCategory;
   description: string;
-  relatedPolicyId?: number;
-  relatedClaimId?: number;
+  relatedPolicyId?: string;
+  relatedClaimId?: string;
 }
 
 export interface NotificationDto {

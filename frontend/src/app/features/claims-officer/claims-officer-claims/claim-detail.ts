@@ -5,7 +5,7 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge/st
 import { TimelineComponent, TimelineItem } from '../../../shared/components/timeline/timeline';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
-import { ClaimsOfficerService } from '../services/claims-officer.service';
+import { ClaimsOfficerService, SurveyorDto } from '../services/claims-officer.service';
 import { ClaimDto, ClaimStatusHistoryDto } from '../../../core/models/api.models';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
@@ -28,6 +28,7 @@ export class ClaimDetailComponent implements OnInit {
 
   claim = signal<ClaimDto | null>(null);
   timelineItems = signal<TimelineItem[]>([]);
+  surveyors = signal<SurveyorDto[]>([]);
   modalType = signal<ModalType>(null);
 
   modalAmount = '';
@@ -39,6 +40,9 @@ export class ClaimDetailComponent implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) this.loadClaim(id);
+    this.claimsService.getSurveyors().subscribe({
+      next: surveyors => this.surveyors.set(surveyors),
+    });
   }
 
   private loadClaim(id: string): void {
@@ -91,7 +95,7 @@ export class ClaimDetailComponent implements OnInit {
 
   canAssignSurveyor(): boolean {
     const c = this.claim();
-    return !c?.surveyorId && !this.isTerminal();
+    return !!c && ['Accident', 'Theft', 'NaturalDamage'].includes(c.claimType) && !c.surveyorId && !this.isTerminal();
   }
 
   canRequestDocs(): boolean {

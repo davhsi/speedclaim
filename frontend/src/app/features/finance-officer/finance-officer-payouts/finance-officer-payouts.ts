@@ -64,8 +64,8 @@ export class FinanceOfficerPayoutsComponent implements OnInit {
     this.processing.update(s => new Set(s).add(claim.id));
     this.financeService.processClaimPayout(claim.id).subscribe({
       next: () => {
-        this.allClaims.update(list => list.map(c => c.id === claim.id ? { ...c, status: 'PayoutProcessed' as any } : c));
-        this.toast.success(`Stripe payout of ${this.moneyPipe.transform(claim.claimAmountApproved ?? claim.claimAmountRequested)} initiated`);
+        this.allClaims.update(list => list.map(c => c.id === claim.id ? { ...c, status: 'Settled' as any } : c));
+        this.toast.success(`Stripe payout of ${this.moneyPipe.transform(claim.claimAmountApproved ?? claim.claimAmountRequested)} initiated and claim settled`);
         this.processing.update(s => { const n = new Set(s); n.delete(claim.id); return n; });
       },
       error: () => {

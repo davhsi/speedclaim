@@ -10,59 +10,109 @@ public static class PolicyDocumentGenerator
 
     public static byte[] GenerateCertificatePdf(Policy policy, string customerName, string productName)
     {
-        var lines = new[]
+        var issuedAt = policy.IssuedAt.HasValue ? policy.IssuedAt.Value.ToString("dd MMM yyyy", CultureInfo.InvariantCulture) : "Pending";
+        var tableRows = new[]
         {
-            "SpeedClaim Insurance",
-            "Policy Certificate",
-            $"Policy Number: {policy.PolicyNumber}",
-            $"Product: {productName}",
-            $"Policyholder: {customerName}",
-            $"Status: {policy.Status}",
-            $"Coverage: {FormatMoney(policy.SumAssured)}",
-            $"Premium: {FormatMoney(policy.PremiumAmount)} / {policy.PaymentFrequency}",
-            $"Valid From: {policy.StartDate:dd MMM yyyy}",
-            $"Valid To: {policy.EndDate:dd MMM yyyy}",
-            policy.IssuedAt.HasValue ? $"Issued At: {policy.IssuedAt.Value:dd MMM yyyy HH:mm 'UTC'}" : "Issued At: Pending",
-            "",
-            "This certificate confirms that the policy listed above is active in SpeedClaim records.",
-            "Please keep this document with your insurance records."
+            ("Policy number", policy.PolicyNumber),
+            ("Product", productName),
+            ("Policyholder", customerName),
+            ("Status", policy.Status.ToString()),
+            ("Coverage amount", FormatMoney(policy.SumAssured)),
+            ("Premium", $"{FormatMoney(policy.PremiumAmount)} / {policy.PaymentFrequency}"),
+            ("Valid from", policy.StartDate.ToString("dd MMM yyyy", CultureInfo.InvariantCulture)),
+            ("Valid to", policy.EndDate.ToString("dd MMM yyyy", CultureInfo.InvariantCulture)),
+            ("Issued At", issuedAt)
         };
 
-        return BuildSimplePdf(lines);
+        var content = new PdfCanvas();
+        DrawHeader(content);
+        DrawIntro(content, policy);
+        DrawTable(content, tableRows);
+        DrawContactPanel(content);
+        DrawFooter(content);
+
+        return BuildPdf(content.ToString());
+    }
+
+    private static void DrawHeader(PdfCanvas c)
+    {
+        c.FillRect(0, 706, 612, 86, 0.06, 0.43, 0.55);
+        c.FillRect(0, 706, 612, 10, 0.12, 0.62, 0.42);
+        c.DrawShieldLogo(56, 746, 28);
+        c.Text("SpeedClaim", 94, 755, 22, "F2", 1, 1, 1);
+        c.Text("Insurance policy services", 96, 736, 10, "F1", 0.82, 0.94, 0.97);
+        c.Text("Policy Certificate", 410, 754, 18, "F2", 1, 1, 1);
+        c.Text("Generated document", 438, 736, 9, "F1", 0.82, 0.94, 0.97);
+    }
+
+    private static void DrawIntro(PdfCanvas c, Policy policy)
+    {
+        c.Text("Your cover is active", 54, 662, 22, "F2", 0.10, 0.13, 0.19);
+        c.Text("This certificate summarizes the active policy issued in SpeedClaim records.", 54, 638, 10.5, "F1", 0.24, 0.27, 0.33);
+        c.Text("Keep it with your records and verify the policy details below.", 54, 622, 10.5, "F1", 0.24, 0.27, 0.33);
+
+        c.FillRoundedRect(444, 626, 98, 30, 6, 0.88, 0.97, 0.93);
+        c.StrokeRoundedRect(444, 626, 98, 30, 6, 0.77, 0.90, 0.84);
+        c.Text(policy.Status.ToString().ToUpperInvariant(), 473, 636, 9.5, "F2", 0.12, 0.49, 0.32);
+    }
+
+    private static void DrawTable(PdfCanvas c, IReadOnlyList<(string Label, string Value)> rows)
+    {
+        const double left = 54;
+        const double top = 584;
+        const double labelWidth = 178;
+        const double valueWidth = 326;
+        const double rowHeight = 32;
+
+        c.Text("Policy summary", left, top + 20, 14, "F2", 0.10, 0.13, 0.19);
+        c.StrokeRoundedRect(left, top - rows.Count * rowHeight, labelWidth + valueWidth, rows.Count * rowHeight, 8, 0.86, 0.89, 0.92);
+
+        for (var i = 0; i < rows.Count; i++)
+        {
+            var y = top - ((i + 1) * rowHeight);
+            var isEven = i % 2 == 0;
+            c.FillRect(left, y, labelWidth, rowHeight, 0.96, 0.98, 0.99);
+            if (isEven)
+                c.FillRect(left + labelWidth, y, valueWidth, rowHeight, 0.99, 0.995, 1);
+
+            if (i > 0)
+                c.Line(left, y + rowHeight, left + labelWidth + valueWidth, y + rowHeight, 0.88, 0.90, 0.93);
+
+            c.Line(left + labelWidth, y, left + labelWidth, y + rowHeight, 0.88, 0.90, 0.93);
+            c.Text(rows[i].Label, left + 14, y + 11, 9.5, "F2", 0.42, 0.46, 0.52);
+            c.Text(rows[i].Value, left + labelWidth + 14, y + 11, 10.5, "F1", 0.10, 0.13, 0.19);
+        }
+    }
+
+    private static void DrawContactPanel(PdfCanvas c)
+    {
+        c.FillRect(54, 132, 504, 72, 0.97, 0.99, 0.98);
+        c.StrokeRoundedRect(54, 132, 504, 72, 0, 0.82, 0.90, 0.88);
+        c.Text("Need help?", 76, 176, 13, "F2", 0.10, 0.13, 0.19);
+        c.Text("For corrections, claim support, or policy servicing, contact SpeedClaim support.", 76, 158, 10, "F1", 0.24, 0.27, 0.33);
+        c.Text("support@speedclaim.local  |  +91 1800 000 000  |  speedclaim.local", 76, 140, 10, "F2", 0.06, 0.43, 0.55);
+    }
+
+    private static void DrawFooter(PdfCanvas c)
+    {
+        c.Line(54, 94, 558, 94, 0.88, 0.90, 0.93);
+        c.Text("This is a system-generated certificate. It is valid only when policy status is Active in SpeedClaim records.", 54, 72, 8.5, "F1", 0.42, 0.46, 0.52);
+        c.Text("SpeedClaim Insurance | Confidential policy document", 54, 54, 8.5, "F1", 0.42, 0.46, 0.52);
+        c.Text("Page 1 of 1", 514, 54, 8.5, "F1", 0.42, 0.46, 0.52);
     }
 
     private static string FormatMoney(decimal value) =>
-        string.Create(CultureInfo.InvariantCulture, $"{value:0.00} USD");
+        string.Create(CultureInfo.InvariantCulture, $"{value:0.00} INR");
 
-    private static byte[] BuildSimplePdf(IEnumerable<string> lines)
+    private static byte[] BuildPdf(string stream)
     {
-        var content = new StringBuilder();
-        content.AppendLine("BT");
-        content.AppendLine("/F1 18 Tf");
-        content.AppendLine("72 760 Td");
-
-        var first = true;
-        foreach (var line in lines)
-        {
-            if (!first)
-            {
-                content.AppendLine("0 -24 Td");
-            }
-
-            var fontSize = line is "SpeedClaim Insurance" or "Policy Certificate" ? 18 : 11;
-            content.AppendLine($"/F1 {fontSize} Tf");
-            content.AppendLine($"({EscapePdfText(line)}) Tj");
-            first = false;
-        }
-
-        content.AppendLine("ET");
-        var stream = content.ToString();
         var objects = new[]
         {
             "<< /Type /Catalog /Pages 2 0 R >>",
             "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>",
             "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+            "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
             $"<< /Length {Encoding.ASCII.GetByteCount(stream)} >>\nstream\n{stream}endstream"
         };
 
@@ -86,9 +136,7 @@ public static class PolicyDocumentGenerator
         writer.WriteLine($"0 {objects.Length + 1}");
         writer.WriteLine("0000000000 65535 f ");
         foreach (var offset in offsets.Skip(1))
-        {
             writer.WriteLine($"{offset:0000000000} 00000 n ");
-        }
 
         writer.WriteLine("trailer");
         writer.WriteLine($"<< /Size {objects.Length + 1} /Root 1 0 R >>");
@@ -100,6 +148,53 @@ public static class PolicyDocumentGenerator
         return output.ToArray();
     }
 
-    private static string EscapePdfText(string value) =>
-        value.Replace("\\", "\\\\").Replace("(", "\\(").Replace(")", "\\)");
+    private sealed class PdfCanvas
+    {
+        private readonly StringBuilder _content = new();
+
+        public void Text(string value, double x, double y, double size, string font, double r, double g, double b)
+        {
+            _content.AppendLine("BT");
+            _content.AppendLine($"/{font} {F(size)} Tf");
+            _content.AppendLine($"{F(r)} {F(g)} {F(b)} rg");
+            _content.AppendLine($"{F(x)} {F(y)} Td");
+            _content.AppendLine($"({Escape(value)}) Tj");
+            _content.AppendLine("ET");
+        }
+
+        public void FillRect(double x, double y, double width, double height, double r, double g, double b)
+        {
+            _content.AppendLine($"q {F(r)} {F(g)} {F(b)} rg {F(x)} {F(y)} {F(width)} {F(height)} re f Q");
+        }
+
+        public void FillRoundedRect(double x, double y, double width, double height, double radius, double r, double g, double b)
+        {
+            FillRect(x, y, width, height, r, g, b);
+        }
+
+        public void StrokeRoundedRect(double x, double y, double width, double height, double radius, double r, double g, double b)
+        {
+            _content.AppendLine($"q {F(r)} {F(g)} {F(b)} RG 1 w {F(x)} {F(y)} {F(width)} {F(height)} re S Q");
+        }
+
+        public void Line(double x1, double y1, double x2, double y2, double r, double g, double b)
+        {
+            _content.AppendLine($"q {F(r)} {F(g)} {F(b)} RG 1 w {F(x1)} {F(y1)} m {F(x2)} {F(y2)} l S Q");
+        }
+
+        public void DrawShieldLogo(double x, double y, double size)
+        {
+            var half = size / 2;
+            _content.AppendLine($"q 1 1 1 rg {F(x)} {F(y)} m {F(x + half)} {F(y + size * .28)} l {F(x + size)} {F(y)} l {F(x + size * .88)} {F(y - size * .56)} l {F(x + half)} {F(y - size * .88)} l {F(x + size * .12)} {F(y - size * .56)} l h f Q");
+            _content.AppendLine($"q 0.06 0.43 0.55 rg {F(x + 3)} {F(y - 2)} m {F(x + half)} {F(y + size * .18)} l {F(x + size - 3)} {F(y - 2)} l {F(x + size * .80)} {F(y - size * .50)} l {F(x + half)} {F(y - size * .75)} l {F(x + size * .20)} {F(y - size * .50)} l h f Q");
+            _content.AppendLine($"q 1 1 1 RG 3 w {F(x + size * .27)} {F(y - size * .29)} m {F(x + size * .43)} {F(y - size * .45)} l {F(x + size * .73)} {F(y - size * .16)} l S Q");
+        }
+
+        public override string ToString() => _content.ToString();
+
+        private static string F(double value) => value.ToString("0.###", CultureInfo.InvariantCulture);
+
+        private static string Escape(string value) =>
+            value.Replace("\\", "\\\\").Replace("(", "\\(").Replace(")", "\\)");
+    }
 }

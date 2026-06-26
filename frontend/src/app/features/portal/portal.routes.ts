@@ -17,6 +17,7 @@ export const portalRoutes: Routes = [
       { path: 'policies', loadComponent: () => import('./policies/policy-list/policy-list').then(m => m.PolicyListComponent) },
       { path: 'policies/:id', loadComponent: () => import('./policies/policy-detail/policy-detail').then(m => m.PolicyDetailComponent) },
       { path: 'claims', loadComponent: () => import('./claims/claim-list/claim-list').then(m => m.ClaimListComponent) },
+      { path: 'claims/file', redirectTo: 'claims/new', pathMatch: 'full' },
       { path: 'claims/new', loadComponent: () => import('./claims/claim-file/claim-file').then(m => m.ClaimFileComponent) },
       { path: 'claims/:id', loadComponent: () => import('./claims/claim-detail/claim-detail').then(m => m.ClaimDetailComponent) },
       { path: 'pay/:policyId', loadComponent: () => import('./payments/pay-premium/pay-premium').then(m => m.PayPremiumComponent) },

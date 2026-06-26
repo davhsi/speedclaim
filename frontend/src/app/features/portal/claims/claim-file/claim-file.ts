@@ -50,7 +50,7 @@ export class ClaimFileComponent implements OnInit {
   submit(): void {
     this.submitting.set(true);
     const req: IntimateClaimRequest = {
-      policyId: Number(this.policyControl.value),
+      policyId: this.policyControl.value ?? '',
       ...this.claimForm.getRawValue() as any,
     };
     this.claimService.intimate(req).subscribe({
@@ -68,7 +68,7 @@ export class ClaimFileComponent implements OnInit {
           });
         }
       },
-      error: () => { this.submitting.set(false); this.toast.error('Failed to file claim'); },
+      error: () => { this.submitting.set(false); },
     });
   }
 }
