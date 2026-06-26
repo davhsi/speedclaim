@@ -4,12 +4,13 @@ import { forkJoin } from 'rxjs';
 import { ProductService } from '../services/product.service';
 import { ProductDto, DocumentRequirementDto } from '../../../../core/models/api.models';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { SafeHtmlPipe } from '../../../../shared/pipes/safe-html.pipe';
 import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader';
 
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [RouterLink, MoneyPipe, SkeletonLoaderComponent],
+  imports: [RouterLink, MoneyPipe, SafeHtmlPipe, SkeletonLoaderComponent],
   templateUrl: './product-detail.html',
 })
 export class ProductDetailComponent implements OnInit {

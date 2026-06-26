@@ -4,12 +4,13 @@ import { PolicyService } from '../services/policy.service';
 import { PolicyDto, ProductDto } from '../../../../core/models/api.models';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { SafeHtmlPipe } from '../../../../shared/pipes/safe-html.pipe';
 import { ProductService } from '../../products/services/product.service';
 
 @Component({
   selector: 'app-policy-list',
   standalone: true,
-  imports: [StatusBadgeComponent, MoneyPipe],
+  imports: [StatusBadgeComponent, MoneyPipe, SafeHtmlPipe],
   templateUrl: './policy-list.html',
 })
 export class PolicyListComponent implements OnInit {

@@ -5,6 +5,7 @@ import { forkJoin } from 'rxjs';
 import { AgentService, AgentCustomerDto } from '../services/agent.service';
 import { ProductDto } from '../../../core/models/api.models';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
+import { SafeHtmlPipe } from '../../../shared/pipes/safe-html.pipe';
 
 type ProductType = 'Health' | 'Motor' | 'Life';
 
@@ -19,7 +20,7 @@ interface StepDef {
 @Component({
   selector: 'app-agent-proposal-submit',
   standalone: true,
-  imports: [RouterLink, FormsModule, MoneyPipe],
+  imports: [RouterLink, FormsModule, MoneyPipe, SafeHtmlPipe],
   templateUrl: './proposal-submit.html',
 })
 export class AgentProposalSubmitComponent implements OnInit {

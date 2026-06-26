@@ -1,25 +1,28 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { DashboardService } from './services/dashboard.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { PolicyDto, ClaimDto, PremiumScheduleDto, ProductDto } from '../../../core/models/api.models';
+import { ProfileService } from '../profile/services/profile.service';
+import { PolicyDto, ClaimDto, PremiumScheduleDto, ProductDto, KycRecordDto } from '../../../core/models/api.models';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge';
 import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { ProductService } from '../products/services/product.service';
+import { SafeHtmlPipe } from '../../../shared/pipes/safe-html.pipe';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, StatusBadgeComponent, SkeletonLoaderComponent, MoneyPipe],
+  imports: [RouterLink, StatusBadgeComponent, SkeletonLoaderComponent, MoneyPipe, SafeHtmlPipe],
   templateUrl: './dashboard.html',
 })
 export class DashboardComponent implements OnInit {
   private dashService = inject(DashboardService);
   private authService = inject(AuthService);
   private productService = inject(ProductService);
+  private profileService = inject(ProfileService);
   notifService = inject(NotificationService);
 
   loading = signal(true);
@@ -27,15 +30,25 @@ export class DashboardComponent implements OnInit {
   products = signal<ProductDto[]>([]);
   claims = signal<ClaimDto[]>([]);
   nextDue = signal<PremiumScheduleDto | null>(null);
+  kyc = signal<KycRecordDto | null>(null);
 
   activePoliciesCount = signal(0);
   openClaimsCount = signal(0);
+
+  kycPending = computed(() => !this.kyc() || this.kyc()?.kycStatus !== 'Approved');
+  isNewUser = computed(() => !this.loading() && this.policies().length === 0);
+  journeyStep = computed(() => {
+    if (this.activePoliciesCount() > 0) return 3;
+    if (this.kyc()?.kycStatus === 'Approved') return 2;
+    return 1;
+  });
 
   firstName(): string {
     return this.authService.currentUser()?.firstName ?? 'there';
   }
 
   ngOnInit(): void {
+    this.profileService.getKyc().subscribe({ next: k => this.kyc.set(k), error: () => {} });
     this.productService.getAll().subscribe(products => this.products.set(products));
     forkJoin({
       policies: this.dashService.getPolicies(),

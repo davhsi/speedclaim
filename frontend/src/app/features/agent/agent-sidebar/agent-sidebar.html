@@ -31,7 +31,7 @@
         style="color: rgba(255,255,255,.7);"
         (click)="onNavClick()"
       >
-        <span class="w-[18px] h-[18px] shrink-0 flex items-center justify-center" [innerHTML]="item.icon"></span>
+        <span class="w-[18px] h-[18px] shrink-0 flex items-center justify-center" [innerHTML]="item.icon | safeHtml"></span>
         <span>{{ item.label }}</span>
       </a>
     }

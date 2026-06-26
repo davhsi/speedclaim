@@ -7,12 +7,13 @@ import { TimelineComponent, TimelineItem } from '../../../../shared/components/t
 import { FileUploadComponent } from '../../../../shared/components/file-upload/file-upload';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { DateFormatPipe } from '../../../../shared/pipes/date-format.pipe';
+import { SafeHtmlPipe } from '../../../../shared/pipes/safe-html.pipe';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
 
 @Component({
   selector: 'app-claim-detail',
   standalone: true,
-  imports: [StatusBadgeComponent, TimelineComponent, FileUploadComponent, MoneyPipe, DateFormatPipe],
+  imports: [StatusBadgeComponent, TimelineComponent, FileUploadComponent, MoneyPipe, DateFormatPipe, SafeHtmlPipe],
   templateUrl: './claim-detail.html',
 })
 export class ClaimDetailComponent implements OnInit {

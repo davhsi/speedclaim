@@ -8,13 +8,14 @@ import { TimelineComponent, TimelineItem } from '../../../../shared/components/t
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { DateFormatPipe } from '../../../../shared/pipes/date-format.pipe';
+import { SafeHtmlPipe } from '../../../../shared/pipes/safe-html.pipe';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
 import { ProductService } from '../../products/services/product.service';
 
 @Component({
   selector: 'app-policy-detail',
   standalone: true,
-  imports: [StatusBadgeComponent, TimelineComponent, ConfirmDialogComponent, MoneyPipe, DateFormatPipe, ReactiveFormsModule],
+  imports: [StatusBadgeComponent, TimelineComponent, ConfirmDialogComponent, MoneyPipe, DateFormatPipe, SafeHtmlPipe, ReactiveFormsModule],
   templateUrl: './policy-detail.html',
 })
 export class PolicyDetailComponent implements OnInit {
@@ -88,7 +89,7 @@ export class PolicyDetailComponent implements OnInit {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${this.policy()!.policyNumber}-certificate.txt`;
+      a.download = `${this.policy()!.policyNumber}-certificate.pdf`;
       a.click();
       URL.revokeObjectURL(url);
     });

@@ -13,7 +13,7 @@
       <div class="p-6 flex gap-[18px] items-start border-b border-line">
         <div class="w-14 h-14 rounded-[13px] flex items-center justify-center shrink-0"
              [class]="domainBg(p.domain)">
-          <span class="w-7 h-7 flex" [innerHTML]="domainIcon(p.domain)"></span>
+          <span class="w-7 h-7 flex" [innerHTML]="domainIcon(p.domain) | safeHtml"></span>
         </div>
         <div class="flex-1">
           <div class="text-[11px] font-semibold tracking-[.05em] uppercase mb-0.5" [class]="domainFg(p.domain)">{{ p.domain }}</div>

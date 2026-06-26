@@ -16,7 +16,7 @@
       <div class="flex gap-4 items-start flex-wrap">
         <div class="w-[50px] h-[50px] rounded-[12px] flex items-center justify-center shrink-0"
              [class]="domainBgClass()">
-          <span class="w-[26px] h-[26px] flex" [innerHTML]="domainIcon()"></span>
+          <span class="w-[26px] h-[26px] flex" [innerHTML]="domainIcon() | safeHtml"></span>
         </div>
         <div class="flex-1 min-w-0">
           <div class="text-xs text-muted sc-numeric mb-0.5">{{ proposal()!.proposalNumber }}</div>

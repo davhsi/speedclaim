@@ -54,7 +54,7 @@
                [class]="selectedType === type ? 'border-primary bg-primary-light' : 'border-line bg-white hover:border-primary-muted'">
             <div class="w-9 h-9 rounded-[9px] flex items-center justify-center mx-auto mb-2"
                  [class]="selectedType === type ? 'bg-primary text-white' : 'bg-surface text-muted'">
-              <span [innerHTML]="typeIcon(type)"></span>
+              <span [innerHTML]="typeIcon(type) | safeHtml"></span>
             </div>
             <div class="text-[13px] font-semibold text-ink">{{ type }}</div>
           </div>

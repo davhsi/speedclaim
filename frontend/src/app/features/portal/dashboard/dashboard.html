@@ -1,4 +1,24 @@
 <div class="animate-sc-fade">
+  <!-- KYC Banner -->
+  @if (!loading() && kycPending()) {
+    <div class="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-card px-4 py-3 mb-5">
+      <span class="shrink-0 w-9 h-9 rounded-[9px] bg-amber-100 flex items-center justify-center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="16" rx="2"/>
+          <circle cx="9" cy="10" r="2"/>
+          <path d="M15 8h2M15 12h2M7 16h10"/>
+        </svg>
+      </span>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-semibold text-amber-900">Identity verification required</p>
+        <p class="text-xs text-amber-700 mt-0.5">Complete KYC to purchase policies, pay premiums, or file claims.</p>
+      </div>
+      <a routerLink="/kyc" class="shrink-0 text-xs font-semibold text-amber-900 border border-amber-300 bg-white hover:bg-amber-100 transition-colors px-3 py-1.5 rounded-control whitespace-nowrap">
+        Verify now →
+      </a>
+    </div>
+  }
+
   <!-- Header -->
   <div class="flex flex-wrap gap-4 items-end justify-between mb-6">
     <div>
@@ -6,11 +26,13 @@
       <p class="text-sm text-muted mt-0.5">Here is everything happening with your cover today.</p>
     </div>
     <div class="flex gap-2.5">
-      <a routerLink="/claims/new"
-         class="flex items-center gap-[7px] h-10 px-4 border border-line bg-white rounded-control text-[13px] font-semibold text-body hover:bg-surface-alt transition-colors">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
-        File a claim
-      </a>
+      @if (activePoliciesCount() > 0) {
+        <a routerLink="/claims/new"
+           class="flex items-center gap-[7px] h-10 px-4 border border-line bg-white rounded-control text-[13px] font-semibold text-body hover:bg-surface-alt transition-colors">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          File a claim
+        </a>
+      }
       <a routerLink="/quote"
          class="flex items-center gap-[7px] h-10 px-4 bg-accent border-none rounded-control text-[13px] font-semibold text-white hover:bg-accent-dark transition-colors">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -19,14 +41,76 @@
     </div>
   </div>
 
-  <!-- Stat Cards -->
+  <!-- Stat Cards / Getting Started -->
   @if (loading()) {
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
       @for (i of [1,2,3,4]; track i) {
         <app-skeleton variant="card" />
       }
     </div>
+  } @else if (isNewUser()) {
+    <!-- Getting started journey card -->
+    <div class="bg-white border border-line rounded-card shadow-sm p-6 mb-7">
+      <p class="text-[11px] font-semibold text-muted uppercase tracking-widest mb-6">Your journey</p>
+      <div class="flex items-start gap-0">
+        <!-- Step 1: Account created -->
+        <div class="flex flex-col items-center flex-1">
+          <div class="w-9 h-9 rounded-full bg-success flex items-center justify-center shrink-0">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <p class="text-xs font-semibold text-ink mt-2.5 text-center">Account created</p>
+          <p class="text-[11px] text-muted mt-0.5 text-center">You're in</p>
+        </div>
+        <!-- Connector 1→2 -->
+        <div class="flex-1 mt-[18px] mx-1 h-px" [class]="journeyStep() >= 2 ? 'bg-success' : 'bg-line'"></div>
+        <!-- Step 2: Verify identity -->
+        <div class="flex flex-col items-center flex-1">
+          @if (journeyStep() >= 2) {
+            <div class="w-9 h-9 rounded-full bg-success flex items-center justify-center shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+          } @else {
+            <a routerLink="/kyc" class="w-9 h-9 rounded-full border-2 border-amber-400 bg-amber-50 flex items-center justify-center shrink-0 hover:bg-amber-100 transition-colors">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M15 8h2M15 12h2"/></svg>
+            </a>
+          }
+          <p class="text-xs font-semibold mt-2.5 text-center" [class]="journeyStep() >= 2 ? 'text-ink' : 'text-amber-800'">Verify identity</p>
+          <p class="text-[11px] mt-0.5 text-center" [class]="journeyStep() >= 2 ? 'text-muted' : 'text-amber-600'">{{ journeyStep() >= 2 ? 'KYC approved' : 'KYC required' }}</p>
+        </div>
+        <!-- Connector 2→3 -->
+        <div class="flex-1 mt-[18px] mx-1 h-px" [class]="journeyStep() >= 3 ? 'bg-success' : 'bg-line'"></div>
+        <!-- Step 3: Get covered -->
+        <div class="flex flex-col items-center flex-1">
+          @if (journeyStep() >= 3) {
+            <div class="w-9 h-9 rounded-full bg-success flex items-center justify-center shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+          } @else {
+            <div class="w-9 h-9 rounded-full border-2 border-line bg-surface flex items-center justify-center shrink-0">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-muted" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+          }
+          <p class="text-xs font-semibold text-muted mt-2.5 text-center">Get covered</p>
+          <p class="text-[11px] text-muted mt-0.5 text-center">Your first policy</p>
+        </div>
+      </div>
+      <!-- Contextual CTA -->
+      <div class="mt-6 pt-5 border-t border-line flex items-center justify-between">
+        @if (journeyStep() === 1) {
+          <p class="text-sm text-muted">Start by verifying your identity — it takes under 2 minutes.</p>
+          <a routerLink="/kyc" class="shrink-0 flex items-center gap-1.5 text-sm font-semibold text-white bg-accent hover:bg-accent-dark px-4 py-2 rounded-control transition-colors">
+            Verify identity →
+          </a>
+        } @else if (journeyStep() === 2) {
+          <p class="text-sm text-muted">Identity verified. Browse products and get your first quote.</p>
+          <a routerLink="/products" class="shrink-0 flex items-center gap-1.5 text-sm font-semibold text-white bg-accent hover:bg-accent-dark px-4 py-2 rounded-control transition-colors">
+            Browse products →
+          </a>
+        }
+      </div>
+    </div>
   } @else {
+    <!-- Normal stat cards (returning user with policies) -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
       <a routerLink="/policies" class="bg-white border border-line rounded-card shadow-sm p-[18px] cursor-pointer hover:shadow-md hover:-translate-y-px transition-all">
         <div class="flex justify-between items-start mb-3.5">
@@ -85,7 +169,7 @@
              class="flex items-center gap-[13px] px-[18px] py-3.5 border-b border-line cursor-pointer hover:bg-surface transition-colors">
             <div class="w-[38px] h-[38px] rounded-[9px] flex items-center justify-center shrink-0"
                  [class]="domainBgClass(policy)">
-              <span class="w-5 h-5 flex" [innerHTML]="domainIcon(policy)"></span>
+              <span class="w-5 h-5 flex" [innerHTML]="domainIcon(policy) | safeHtml"></span>
             </div>
             <div class="flex-1 min-w-0">
               <div class="text-sm font-semibold text-ink truncate">{{ productName(policy) }}</div>
@@ -117,7 +201,7 @@
              class="flex items-center gap-[13px] px-[18px] py-3.5 border-b border-line cursor-pointer hover:bg-surface transition-colors">
             <div class="w-[38px] h-[38px] rounded-[9px] flex items-center justify-center shrink-0"
                  [class]="domainBgClass(claim.claimType)">
-              <span class="w-5 h-5 flex" [innerHTML]="domainIcon(claim.claimType)"></span>
+              <span class="w-5 h-5 flex" [innerHTML]="domainIcon(claim.claimType) | safeHtml"></span>
             </div>
             <div class="flex-1 min-w-0">
               <div class="text-sm font-semibold text-ink truncate">{{ claim.claimType }} Claim</div>

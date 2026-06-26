@@ -31,7 +31,7 @@
           <div class="flex items-center gap-3 mb-4">
             <div class="w-11 h-11 rounded-[11px] flex items-center justify-center shrink-0"
                  [class]="domainBgClass(p)">
-              <span class="w-[23px] h-[23px] flex" [innerHTML]="domainIcon(p)"></span>
+              <span class="w-[23px] h-[23px] flex" [innerHTML]="domainIcon(p) | safeHtml"></span>
             </div>
             <div class="flex-1 min-w-0">
               <div class="text-[15px] font-semibold text-ink truncate">{{ productName(p) }}</div>

@@ -6,13 +6,14 @@ import { ProductService } from '../../products/services/product.service';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { DateFormatPipe } from '../../../../shared/pipes/date-format.pipe';
+import { SafeHtmlPipe } from '../../../../shared/pipes/safe-html.pipe';
 import { FileUploadComponent } from '../../../../shared/components/file-upload/file-upload';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
 
 @Component({
   selector: 'app-proposal-detail',
   standalone: true,
-  imports: [StatusBadgeComponent, MoneyPipe, DateFormatPipe, FileUploadComponent],
+  imports: [StatusBadgeComponent, MoneyPipe, DateFormatPipe, SafeHtmlPipe, FileUploadComponent],
   templateUrl: './proposal-detail.html',
 })
 export class ProposalDetailComponent implements OnInit {
