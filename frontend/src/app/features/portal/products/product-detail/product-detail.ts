@@ -37,29 +37,21 @@ export class ProductDetailComponent implements OnInit {
   }
 
   domainBg(domain: string): string {
-    switch (domain) {
-      case 'Health': return 'bg-success-bg';
-      case 'Motor': return 'bg-info-bg';
-      case 'Life': return 'bg-[#F3EEFF]';
-      default: return 'bg-surface-alt';
-    }
+    const map: Record<string, string> = { HEALTH: 'bg-success-bg', MOTOR: 'bg-info-bg', LIFE: 'bg-[#F3EEFF]' };
+    return map[domain?.toUpperCase()] ?? 'bg-surface-alt';
   }
 
   domainFg(domain: string): string {
-    switch (domain) {
-      case 'Health': return 'text-success';
-      case 'Motor': return 'text-info';
-      case 'Life': return 'text-[#7C3AED]';
-      default: return 'text-muted';
-    }
+    const map: Record<string, string> = { HEALTH: 'text-success', MOTOR: 'text-info', LIFE: 'text-[#7C3AED]' };
+    return map[domain?.toUpperCase()] ?? 'text-muted';
   }
 
   domainIcon(domain: string): string {
     const map: Record<string, string> = {
-      Health: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1F9D6B" stroke-width="1.75"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
-      Motor: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2D7FF9" stroke-width="1.75"><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 17H3v-6l2-5h9l4 5h3v6h-2"/></svg>',
-      Life: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.75"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>',
+      HEALTH: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1F9D6B" stroke-width="1.75"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+      MOTOR: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2D7FF9" stroke-width="1.75"><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 17H3v-6l2-5h9l4 5h3v6h-2"/></svg>',
+      LIFE: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.75"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>',
     };
-    return map[domain] ?? '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"/></svg>';
+    return map[domain?.toUpperCase()] ?? '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"/></svg>';
   }
 }

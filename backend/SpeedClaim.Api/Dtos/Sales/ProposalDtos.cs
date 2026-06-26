@@ -81,7 +81,8 @@ public record ProposalDto(
     int TenureYears,
     decimal PremiumAmount,
     string PaymentFrequency,
-    DateTimeOffset CreatedAt
+    DateTimeOffset CreatedAt,
+    string? ProductName = null
 );
 
 public record ApproveRejectProposalRequest(

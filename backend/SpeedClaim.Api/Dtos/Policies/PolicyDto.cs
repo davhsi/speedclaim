@@ -9,6 +9,7 @@ public record PolicyDto(
     string PolicyNumber,
     Guid UserId,
     Guid ProductId,
+    string ProductName,
     Guid? AgentId,
     PolicyStatus Status,
     string PaymentFrequency,
@@ -18,13 +19,14 @@ public record PolicyDto(
     DateTime StartDate,
     DateTime EndDate,
     string Domain,
-    
+    string Type,
+
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     PolicyHealthDetailDto? HealthDetail,
-    
+
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     PolicyVehicleDetailDto? VehicleDetail,
-    
+
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     PolicyLifeDetailDto? LifeDetail
 );

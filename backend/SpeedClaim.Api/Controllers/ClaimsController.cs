@@ -70,13 +70,18 @@ public class ClaimsController : BaseApiController
 
     /// <summary>Get the status history timeline for a specific claim</summary>
     /// <param name="id">Claim ID</param>
-    [Authorize(Roles = "Customer")]
+    [Authorize(Roles = "Customer,ClaimsOfficer,Admin")]
     [HttpGet("{id}/history")]
     [ProducesResponseType(typeof(IEnumerable<ClaimStatusHistoryDto>), 200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> GetMyClaimHistory(Guid id)
     {
-        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId)) return Unauthorized();
+        Guid? customerId = null;
+        if (User.IsInRole("Customer"))
+        {
+            if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var cid)) return Unauthorized();
+            customerId = cid;
+        }
         var result = await _claimService.GetClaimHistoryAsync(id, customerId);
         return Ok(result);
     }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using SpeedClaim.Api.Dtos.Auth;
 using SpeedClaim.Api.Dtos.Common;
+using SpeedClaim.Api.Dtos.Financial;
 using SpeedClaim.Api.Dtos.User;
 using SpeedClaim.Api.Exceptions;
 using SpeedClaim.Api.Interfaces;
@@ -155,6 +156,23 @@ public class AgentService : IAgentService
         }
 
         return reminders.OrderBy(r => r.DaysUntilDue);
+    }
+
+    public async Task<IEnumerable<AgentCommissionDto>> GetMyCommissionsAsync(string agentId)
+    {
+        var aId = Guid.Parse(agentId);
+        var agent = await ResolveAgentAsync(aId);
+        var commissions = await _unitOfWork.AgentCommissions.FindAsync(c => c.AgentId == agent.Id);
+        return commissions.Select(c => new AgentCommissionDto
+        {
+            Id = c.Id,
+            AgentId = c.AgentId,
+            PolicyId = c.PolicyId,
+            CommissionAmount = c.CommissionAmount,
+            Status = c.Status,
+            PaidAt = c.PaidAt,
+            CreatedAt = c.CreatedAt,
+        });
     }
 
     public async Task<BranchDto> CreateBranchAsync(CreateBranchRequest request, string adminId)

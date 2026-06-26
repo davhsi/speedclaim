@@ -48,6 +48,8 @@ public class ClaimService : IClaimService
 
     private ClaimDto MapToDto(Claim claim)
     {
+        var user = claim.Customer?.User;
+        var customerName = user != null ? $"{user.FirstName} {user.LastName}".Trim() : null;
         return new ClaimDto(
             claim.Id,
             claim.ClaimNumber,
@@ -67,7 +69,9 @@ public class ClaimService : IClaimService
             claim.SettlementDate,
             claim.RejectionReason,
             claim.CreatedAt,
-            claim.UpdatedAt
+            claim.UpdatedAt,
+            customerName,
+            claim.Policy?.PolicyNumber
         );
     }
 

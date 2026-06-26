@@ -48,10 +48,9 @@ export class ClaimDetailComponent implements OnInit {
     this.claimsService.getClaimHistory(id).subscribe({
       next: (history) => {
         this.timelineItems.set(history.map(h => ({
-          status: h.status,
+          status: h.newStatus,
           date: h.changedAt,
-          remarks: h.remarks ?? undefined,
-          changedBy: h.changedBy ?? undefined,
+          remarks: h.notes ?? undefined,
         })));
       },
     });

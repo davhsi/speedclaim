@@ -24,4 +24,14 @@ export class PaymentHistoryComponent implements OnInit {
       error: () => this.loading.set(false),
     });
   }
+
+  formatPaymentType(type: string): string {
+    const map: Record<string, string> = {
+      FirstPremium: 'First Premium',
+      Renewal: 'Renewal Premium',
+      Reinstatement: 'Reinstatement',
+      ClaimPayout: 'Claim Payout',
+    };
+    return map[type] ?? type;
+  }
 }

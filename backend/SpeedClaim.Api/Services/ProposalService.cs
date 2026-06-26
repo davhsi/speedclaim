@@ -175,7 +175,8 @@ public class ProposalService : IProposalService
             proposal.TenureYears,
             proposal.PremiumAmount,
             proposal.PaymentFrequency,
-            proposal.CreatedAt
+            proposal.CreatedAt,
+            product.ProductName
         );
     }
 
@@ -208,7 +209,8 @@ public class ProposalService : IProposalService
             p.TenureYears,
             p.PremiumAmount,
             p.PaymentFrequency,
-            p.CreatedAt
+            p.CreatedAt,
+            p.Product?.ProductName
         ));
     }
 
@@ -226,7 +228,8 @@ public class ProposalService : IProposalService
             p.TenureYears,
             p.PremiumAmount,
             p.PaymentFrequency,
-            p.CreatedAt
+            p.CreatedAt,
+            p.Product?.ProductName
         ));
     }
 
@@ -257,7 +260,8 @@ public class ProposalService : IProposalService
             proposal.TenureYears,
             proposal.PremiumAmount,
             proposal.PaymentFrequency,
-            proposal.CreatedAt
+            proposal.CreatedAt,
+            proposal.Product?.ProductName
         );
     }
 

@@ -35,17 +35,17 @@ export class ClaimListComponent implements OnInit {
   }
 
   domainBgClass(type: string): string {
-    const map: Record<string, string> = { Health: 'bg-success-bg', Motor: 'bg-info-bg', Life: 'bg-[#F3EEFF]', Accident: 'bg-warning-bg', Death: 'bg-danger-bg', Theft: 'bg-info-bg' };
-    return map[type] ?? 'bg-surface-alt';
+    const map: Record<string, string> = { HEALTH: 'bg-success-bg', MOTOR: 'bg-info-bg', LIFE: 'bg-[#F3EEFF]', ACCIDENT: 'bg-warning-bg', DEATH: 'bg-danger-bg', THEFT: 'bg-info-bg' };
+    return map[type?.toUpperCase()] ?? 'bg-surface-alt';
   }
 
   domainFgClass(type: string): string {
-    const map: Record<string, string> = { Health: 'text-success', Motor: 'text-info', Life: 'text-[#7C3AED]', Accident: 'text-warning', Death: 'text-danger', Theft: 'text-info' };
-    return map[type] ?? 'text-muted';
+    const map: Record<string, string> = { HEALTH: 'text-success', MOTOR: 'text-info', LIFE: 'text-[#7C3AED]', ACCIDENT: 'text-warning', DEATH: 'text-danger', THEFT: 'text-info' };
+    return map[type?.toUpperCase()] ?? 'text-muted';
   }
 
   claimTypeAbbr(type: string): string {
-    const map: Record<string, string> = { Health: 'H', Motor: 'M', Life: 'L', Accident: 'A', Death: 'D', Theft: 'T' };
-    return map[type] ?? type.charAt(0);
+    const map: Record<string, string> = { HEALTH: 'H', MOTOR: 'M', LIFE: 'L', ACCIDENT: 'A', DEATH: 'D', THEFT: 'T' };
+    return map[type?.toUpperCase()] ?? type?.charAt(0) ?? '?';
   }
 }

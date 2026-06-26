@@ -84,6 +84,15 @@ public class AgentsController : BaseApiController
         return Ok(result);
     }
 
+    [Authorize(Roles = "Agent")]
+    [HttpGet("commissions")]
+    public async Task<IActionResult> GetMyCommissions()
+    {
+        var agentId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        var result = await _agentService.GetMyCommissionsAsync(agentId);
+        return Ok(result);
+    }
+
     /// <summary>Get a customer's KYC record. The customer must be assigned to the authenticated agent.</summary>
     /// <param name="customerId">Customer user ID</param>
     [Authorize(Roles = "Agent")]

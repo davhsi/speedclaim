@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using SpeedClaim.Api.Context;
@@ -46,5 +47,13 @@ public class PolicyRepository : Repository<Policy>, IPolicyRepository
         return await Context.Policies
             .Include(p => p.Product)
             .SingleOrDefaultAsync(p => p.Id == id);
+    }
+
+    public override async Task<IEnumerable<Policy>> FindAsync(Expression<Func<Policy, bool>> predicate)
+    {
+        return await Context.Policies
+            .Include(p => p.Product)
+            .Where(predicate)
+            .ToListAsync();
     }
 }

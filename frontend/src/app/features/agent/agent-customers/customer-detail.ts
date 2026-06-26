@@ -32,9 +32,11 @@ export class AgentCustomerDetailComponent implements OnInit {
       proposals: this.agentService.getMyProposals(),
     }).subscribe({
       next: ({ customers, policies, proposals }) => {
-        this.customer.set(customers.find(c => c.id === customerId) ?? null);
-        this.customerPolicies.set(policies.filter(p => p.userId === customerId));
-        this.customerProposals.set(proposals.filter(p => p.customerId === customerId));
+        const c = customers.find(c => c.id === customerId) ?? null;
+        this.customer.set(c);
+        const entityId = c?.customerId ?? customerId;
+        this.customerPolicies.set(policies.filter(p => p.userId === entityId));
+        this.customerProposals.set(proposals.filter(p => p.customerId === entityId));
         this.loading.set(false);
       },
       error: () => this.loading.set(false),

@@ -18,7 +18,7 @@
               <span class="inline-flex items-center gap-1 bg-primary-light text-primary border border-primary/30 text-[10px] font-bold tracking-wide px-2.5 py-1 rounded-full">CASHLESS</span>
             }
           </div>
-          <div class="text-[13px] text-muted">Customer #{{ c.customerId }} · Policy {{ c.policyNumber }}</div>
+          <div class="text-[13px] text-muted">{{ c.customerName || 'Customer #' + c.customerId.slice(0,8) }} · Policy {{ c.policyNumber || c.policyId.slice(0,8) }}</div>
         </div>
         <div class="text-right shrink-0">
           <div class="text-[28px] font-bold text-ink sc-numeric leading-none">{{ c.claimAmountRequested | money }}</div>

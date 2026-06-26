@@ -67,7 +67,7 @@
           </div>
 
           <!-- Motor fields -->
-          @if (sp.domain === 'Motor') {
+          @if (sp.domain?.toUpperCase() === 'MOTOR') {
             <div class="border-t border-line pt-5 mb-5">
               <div class="text-[13px] font-semibold text-ink mb-3">Vehicle details</div>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -92,7 +92,7 @@
           }
 
           <!-- Health fields -->
-          @if (sp.domain === 'Health') {
+          @if (sp.domain?.toUpperCase() === 'HEALTH') {
             <div class="border-t border-line pt-5 mb-5">
               <label class="block text-[13px] font-medium mb-1.5">Pre-existing conditions</label>
               <textarea formControlName="preExistingConditions" rows="3" placeholder="List any pre-existing medical conditions..."></textarea>
@@ -100,7 +100,7 @@
           }
 
           <!-- Life fields -->
-          @if (sp.domain === 'Life') {
+          @if (sp.domain?.toUpperCase() === 'LIFE') {
             <div class="border-t border-line pt-5 mb-5">
               <label class="flex items-center gap-2.5 cursor-pointer">
                 <input type="checkbox" formControlName="isSmoker" class="w-4 h-4 rounded accent-primary">

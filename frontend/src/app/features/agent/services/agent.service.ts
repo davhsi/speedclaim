@@ -24,6 +24,7 @@ export interface AgentCustomerDto {
   role: string;
   isActive: boolean;
   createdAt: string;
+  customerId?: string;
 }
 
 export interface RenewalReminderDto {
@@ -106,6 +107,6 @@ export class AgentService {
   }
 
   getCommissions(): Observable<AgentCommissionDto[]> {
-    return this.http.get<AgentCommissionDto[]>('/api/v1/payments/commissions/pending');
+    return this.http.get<AgentCommissionDto[]>('/api/v1/agents/commissions');
   }
 }

@@ -372,8 +372,9 @@ export interface ClaimDto {
   id: string;
   claimNumber: string;
   policyId: string;
-  policyNumber: string;
+  policyNumber?: string;
   customerId: string;
+  customerName?: string;
   claimantMemberId?: string;
   claimType: ClaimType;
   claimAmountRequested: number;
@@ -393,11 +394,13 @@ export interface ClaimDto {
 }
 
 export interface ClaimStatusHistoryDto {
-  id: number;
-  status: ClaimStatus;
+  id: string;
+  claimId: string;
+  oldStatus: string;
+  newStatus: string;
+  changedById?: string;
+  notes?: string;
   changedAt: string;
-  remarks?: string;
-  changedBy?: string;
 }
 
 export interface PremiumScheduleDto {

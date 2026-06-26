@@ -37,7 +37,7 @@
         <!-- Desktop Row -->
         <div class="hidden md:grid grid-cols-5 gap-3 items-center px-[18px] py-3.5 border-b border-line hover:bg-surface transition-colors">
           <div>
-            <div class="text-[13px] font-semibold text-ink">{{ p.paymentType }}</div>
+            <div class="text-[13px] font-semibold text-ink">{{ formatPaymentType(p.paymentType) }}</div>
             <div class="text-xs text-muted sc-numeric">{{ p.policyNumber }}</div>
           </div>
           <div class="text-[13px] text-body sc-numeric">
@@ -59,7 +59,7 @@
         <div class="md:hidden px-[18px] py-4 border-b border-line">
           <div class="flex justify-between items-start mb-2">
             <div>
-              <div class="text-sm font-semibold text-ink">{{ p.paymentType }}</div>
+              <div class="text-sm font-semibold text-ink">{{ formatPaymentType(p.paymentType) }}</div>
               <div class="text-xs text-muted sc-numeric">{{ p.policyNumber }}</div>
             </div>
             <app-status-badge [status]="p.status" />

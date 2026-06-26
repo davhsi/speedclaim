@@ -75,7 +75,7 @@ public class UnitOfWork : IUnitOfWork
         AgentCommissions = new Repository<AgentCommission>(_context);
         InsuranceProducts = new Repository<InsuranceProduct>(_context);
         PremiumRateTables = new Repository<PremiumRateTable>(_context);
-        Proposals = new Repository<Proposal>(_context);
+        Proposals = new ProposalRepository(_context);
         ProposalMembers = new Repository<ProposalMember>(_context);
         PolicyMembers = new Repository<PolicyMember>(_context);
         Nominees = new Repository<Nominee>(_context);

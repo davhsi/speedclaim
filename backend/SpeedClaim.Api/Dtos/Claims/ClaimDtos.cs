@@ -34,7 +34,9 @@ public record ClaimDto(
     DateTime? SettlementDate,
     string? RejectionReason,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? UpdatedAt
+    DateTimeOffset? UpdatedAt,
+    string? CustomerName,
+    string? PolicyNumber
 );
 
 public record ClaimStatusHistoryDto(
