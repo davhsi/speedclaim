@@ -747,6 +747,54 @@ public class FinanceServiceTests
     }
 
     [Test]
+    public async Task ReconcilePaymentAsync_AgentPolicy_CreatesPendingCommission()
+    {
+        var paymentId = Guid.NewGuid();
+        var scheduleId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+        var agentId = Guid.NewGuid();
+
+        var payment = new PremiumPayment { Id = paymentId, Status = PaymentStatus.Pending, ScheduleId = scheduleId, Amount = 10000m };
+        var schedule = new PremiumSchedule { Id = scheduleId, Status = PremiumScheduleStatus.Upcoming, PolicyId = policyId };
+        // Already Active so the certificate/email activation branch is skipped — isolate commission logic.
+        var policy = new Policy { Id = policyId, Status = PolicyStatus.Active, AgentId = agentId, PolicyNumber = "POL-AG-001" };
+        var agent = new Agent { Id = agentId, CommissionRate = 0.10m };
+
+        var mockPaymentRepo = new Mock<IPremiumPaymentRepository>();
+        mockPaymentRepo.Setup(r => r.GetByIdAsync(paymentId)).ReturnsAsync(payment);
+        _mockUnitOfWork.Setup(u => u.PremiumPayments).Returns(mockPaymentRepo.Object);
+
+        var mockScheduleRepo = new Mock<IRepository<PremiumSchedule>>();
+        mockScheduleRepo.Setup(r => r.GetByIdAsync(scheduleId)).ReturnsAsync(schedule);
+        _mockUnitOfWork.Setup(u => u.PremiumSchedules).Returns(mockScheduleRepo.Object);
+
+        var mockPolicyRepo = new Mock<IPolicyRepository>();
+        mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(policy);
+        _mockUnitOfWork.Setup(u => u.Policies).Returns(mockPolicyRepo.Object);
+
+        var mockAgentRepo = new Mock<IRepository<Agent>>();
+        mockAgentRepo.Setup(r => r.GetByIdAsync(agentId)).ReturnsAsync(agent);
+        _mockUnitOfWork.Setup(u => u.Agents).Returns(mockAgentRepo.Object);
+
+        var mockCommissionRepo = new Mock<IRepository<AgentCommission>>();
+        mockCommissionRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<AgentCommission, bool>>>()))
+            .ReturnsAsync((AgentCommission?)null);
+        _mockUnitOfWork.Setup(u => u.AgentCommissions).Returns(mockCommissionRepo.Object);
+
+        _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
+
+        await _financeService.ReconcilePaymentAsync(paymentId.ToString(), Guid.NewGuid().ToString());
+
+        mockCommissionRepo.Verify(r => r.AddAsync(It.Is<AgentCommission>(c =>
+            c.AgentId == agentId &&
+            c.PolicyId == policyId &&
+            c.PremiumPaymentId == paymentId &&
+            c.CommissionRate == 0.10m &&
+            c.CommissionAmount == 1000m &&
+            c.Status == "PENDING")), Times.Once);
+    }
+
+    [Test]
     public void ProcessRefundAsync_NotFound_ThrowsNotFoundException()
     {
         var paymentId = Guid.NewGuid();

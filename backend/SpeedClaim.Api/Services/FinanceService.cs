@@ -265,6 +265,32 @@ public class FinanceService : IFinanceService
                     if (schedule.PolicyId.HasValue)
                     {
                         var policy = await _unitOfWork.Policies.GetByIdAsync(schedule.PolicyId.Value);
+
+                        // When the premium on an agent-sourced policy is paid, the agent earns a
+                        // commission awaiting finance approval. Idempotent: at most one commission
+                        // per premium payment, so a replayed/duplicate reconcile won't double-book.
+                        if (policy != null && policy.AgentId.HasValue)
+                        {
+                            var existingCommission = await _unitOfWork.AgentCommissions
+                                .FirstOrDefaultAsync(c => c.PremiumPaymentId == payment.Id);
+                            if (existingCommission == null)
+                            {
+                                var agent = await _unitOfWork.Agents.GetByIdAsync(policy.AgentId.Value);
+                                var rate = agent != null && agent.CommissionRate > 0 ? agent.CommissionRate : 0.05m;
+                                await _unitOfWork.AgentCommissions.AddAsync(new AgentCommission
+                                {
+                                    Id = Guid.NewGuid(),
+                                    AgentId = policy.AgentId.Value,
+                                    PolicyId = policy.Id,
+                                    PremiumPaymentId = payment.Id,
+                                    CommissionRate = rate,
+                                    CommissionAmount = Math.Round(payment.Amount * rate, 2),
+                                    Status = "PENDING",
+                                    CreatedAt = DateTimeOffset.UtcNow
+                                });
+                            }
+                        }
+
                         if (policy != null && policy.Status == PolicyStatus.Pending)
                         {
                             policy.Status = PolicyStatus.Active;
