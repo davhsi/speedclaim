@@ -103,6 +103,10 @@ export class ProposalDetailComponent implements OnInit {
 
   saveNotes(): void {
     if (this.actionInFlight()) return;
+    if (!this.notes.trim()) {
+      this.toast.warning('Please enter a note before saving.');
+      return;
+    }
     const id = this.proposal()!.id.toString();
     this.actionInFlight.set(true);
     this.uwService.updateNotes(id, this.notes).subscribe({
