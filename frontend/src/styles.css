@@ -3,6 +3,7 @@
 @theme {
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", "Cascadia Code", "Fira Code", "Courier New", monospace;
+  --font-display: "Plus Jakarta Sans", "Inter", sans-serif;
 
   --color-primary: #0F6E8C;
   --color-primary-dark: #0A5469;
@@ -166,4 +167,32 @@
 
 @utility animate-sc-fade {
   animation: sc-fade 0.25s ease-out;
+}
+
+@utility animate-sc-fade-fast {
+  animation: sc-fade 0.18s ease-out;
+}
+
+/* Landing page scroll-reveal animations */
+@utility sc-reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.55s cubic-bezier(0, 0, 0.2, 1), transform 0.55s cubic-bezier(0, 0, 0.2, 1);
+}
+
+@utility sc-reveal-d1 {
+  transition-delay: 100ms;
+}
+
+@utility sc-reveal-d2 {
+  transition-delay: 220ms;
+}
+
+@utility sc-reveal-d3 {
+  transition-delay: 340ms;
+}
+
+.sc-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
 }

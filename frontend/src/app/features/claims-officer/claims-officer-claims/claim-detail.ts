@@ -30,6 +30,7 @@ export class ClaimDetailComponent implements OnInit {
   timelineItems = signal<TimelineItem[]>([]);
   surveyors = signal<SurveyorDto[]>([]);
   modalType = signal<ModalType>(null);
+  actionInFlight = signal(false);
 
   modalAmount = '';
   modalNotes = '';
@@ -109,17 +110,23 @@ export class ClaimDetailComponent implements OnInit {
 
   onAssignSelf(): void {
     const c = this.claim();
-    if (!c) return;
+    if (!c || this.actionInFlight()) return;
+    this.actionInFlight.set(true);
     this.claimsService.assignToSelf(c.id).subscribe({
       next: () => {
         this.showToast('Claim assigned to you', 'success');
         this.loadClaim(c.id);
+        this.actionInFlight.set(false);
       },
-      error: () => this.showToast('Failed to assign claim', 'error'),
+      error: () => {
+        this.actionInFlight.set(false);
+        this.showToast('Failed to assign claim', 'error');
+      },
     });
   }
 
   openModal(type: ModalType): void {
+    if (this.actionInFlight()) return;
     this.modalAmount = '';
     this.modalNotes = '';
     this.modalReason = '';
@@ -129,6 +136,7 @@ export class ClaimDetailComponent implements OnInit {
   }
 
   closeModal(): void {
+    if (this.actionInFlight()) return;
     this.modalType.set(null);
   }
 
@@ -155,9 +163,27 @@ export class ClaimDetailComponent implements OnInit {
     return 'bg-primary';
   }
 
+  modalConfirmDisabled(): boolean {
+    if (this.actionInFlight()) return true;
+
+    switch (this.modalType()) {
+      case 'approve':
+        return !this.hasPositiveAmount(this.modalAmount);
+      case 'reject':
+        return this.modalReason.trim().length === 0;
+      case 'assignSurveyor':
+        return this.modalSurveyorId.trim().length === 0;
+      case 'requestDocs':
+        return this.modalDocs.trim().length === 0;
+      default:
+        return false;
+    }
+  }
+
   onModalConfirm(): void {
     const c = this.claim();
-    if (!c) return;
+    if (!c || this.modalConfirmDisabled()) return;
+    this.actionInFlight.set(true);
 
     switch (this.modalType()) {
       case 'approve':
@@ -166,8 +192,8 @@ export class ClaimDetailComponent implements OnInit {
           approvedAmount: Number(this.modalAmount) || undefined,
           reason: this.modalNotes,
         }).subscribe({
-          next: () => { this.showToast('Claim approved successfully', 'success'); this.closeModal(); this.loadClaim(c.id); },
-          error: () => this.showToast('Failed to approve claim', 'error'),
+          next: () => { this.finishAction('Claim approved successfully', 'success'); this.closeModal(); this.loadClaim(c.id); },
+          error: () => this.finishAction('Failed to approve claim', 'error'),
         });
         break;
       case 'reject':
@@ -175,14 +201,14 @@ export class ClaimDetailComponent implements OnInit {
           isApproved: false,
           reason: this.modalReason,
         }).subscribe({
-          next: () => { this.showToast('Claim rejected', 'success'); this.closeModal(); this.loadClaim(c.id); },
-          error: () => this.showToast('Failed to reject claim', 'error'),
+          next: () => { this.finishAction('Claim rejected', 'success'); this.closeModal(); this.loadClaim(c.id); },
+          error: () => this.finishAction('Failed to reject claim', 'error'),
         });
         break;
       case 'settle':
         this.claimsService.settleClaim(c.id).subscribe({
-          next: () => { this.showToast('Claim marked as settled', 'success'); this.closeModal(); this.loadClaim(c.id); },
-          error: () => this.showToast('Failed to settle claim', 'error'),
+          next: () => { this.finishAction('Claim marked as settled', 'success'); this.closeModal(); this.loadClaim(c.id); },
+          error: () => this.finishAction('Failed to settle claim', 'error'),
         });
         break;
       case 'assignSurveyor':
@@ -190,23 +216,33 @@ export class ClaimDetailComponent implements OnInit {
           surveyorId: this.modalSurveyorId,
           notes: this.modalNotes || undefined,
         }).subscribe({
-          next: () => { this.showToast('Surveyor assigned', 'success'); this.closeModal(); this.loadClaim(c.id); },
-          error: () => this.showToast('Failed to assign surveyor', 'error'),
+          next: () => { this.finishAction('Surveyor assigned', 'success'); this.closeModal(); this.loadClaim(c.id); },
+          error: () => this.finishAction('Failed to assign surveyor', 'error'),
         });
         break;
       case 'requestDocs':
-        this.claimsService.requestDocs(c.id, this.modalDocs).subscribe({
-          next: () => { this.showToast('Document request sent', 'success'); this.closeModal(); },
-          error: () => this.showToast('Failed to send request', 'error'),
+        this.claimsService.requestDocs(c.id, this.modalDocs.trim()).subscribe({
+          next: () => { this.finishAction('Document request sent', 'success'); this.closeModal(); },
+          error: () => this.finishAction('Failed to send request', 'error'),
         });
         break;
       case 'preAuth':
         this.claimsService.approvePreAuth(c.id).subscribe({
-          next: () => { this.showToast('Pre-authorisation approved', 'success'); this.closeModal(); this.loadClaim(c.id); },
-          error: () => this.showToast('Failed to approve pre-auth', 'error'),
+          next: () => { this.finishAction('Pre-authorisation approved', 'success'); this.closeModal(); this.loadClaim(c.id); },
+          error: () => this.finishAction('Failed to approve pre-auth', 'error'),
         });
         break;
     }
+  }
+
+  private finishAction(message: string, type: ToastType): void {
+    this.actionInFlight.set(false);
+    this.showToast(message, type);
+  }
+
+  private hasPositiveAmount(value: string): boolean {
+    const amount = Number(value);
+    return Number.isFinite(amount) && amount > 0;
   }
 
   private showToast(message: string, type: ToastType): void {

@@ -3,11 +3,12 @@ import { DatePipe } from '@angular/common';
 import { SurveyorService } from '../services/surveyor.service';
 import { ClaimDto } from '../../../core/models/api.models';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination';
+import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader';
 
 @Component({
   selector: 'app-surveyor-history',
   standalone: true,
-  imports: [DatePipe, PaginationComponent],
+  imports: [DatePipe, PaginationComponent, SkeletonLoaderComponent],
   templateUrl: './surveyor-history.html',
 })
 export class SurveyorHistoryComponent implements OnInit {

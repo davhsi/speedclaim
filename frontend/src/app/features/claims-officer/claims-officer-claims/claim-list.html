@@ -1,9 +1,16 @@
-<div class="animate-[sc-fade_.25s_ease-out]">
+<div class="animate-sc-fade">
   <!-- Header -->
   <div class="flex items-end justify-between flex-wrap gap-3 mb-5">
     <div>
       <h1 class="text-xl font-semibold text-ink">Claims queue</h1>
-      <p class="text-sm text-muted mt-1">{{ totalRecords() }} claims — click any row to open the detail.</p>
+      <p class="text-sm text-muted mt-1">
+        {{ totalRecords() }} claims
+        @if (statusFilter) {
+          · <span class="font-medium text-primary">filtered by {{ statusFilter }}</span>
+          <button (click)="statusFilter=''; onFilterChange()" class="ml-1.5 text-muted hover:text-danger bg-transparent border-none cursor-pointer text-[13px] p-0">✕ clear</button>
+        }
+        @else { — click any row to open the detail }
+      </p>
     </div>
     <div class="flex gap-2 flex-wrap">
       <select [(ngModel)]="typeFilter" (ngModelChange)="onFilterChange()" class="h-[38px] px-2.5 border border-line rounded-lg text-[13px] bg-white text-body outline-none cursor-pointer">
@@ -35,7 +42,7 @@
   </div>
 
   <!-- Table -->
-  <div class="bg-white border border-line rounded-xl shadow-sm overflow-hidden">
+  <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
       <table class="w-full border-collapse text-sm">
         <thead>

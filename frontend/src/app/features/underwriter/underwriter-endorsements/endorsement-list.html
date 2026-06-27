@@ -1,10 +1,10 @@
-<div class="animate-[sc-fade_.25s_ease-out]">
+<div class="animate-sc-fade">
   <div class="mb-5">
     <h1 class="text-xl font-semibold text-ink">Endorsement review queue</h1>
     <p class="text-sm text-muted mt-1">{{ pendingCount() }} endorsements awaiting approval.</p>
   </div>
 
-  <div class="bg-white border border-line rounded-xl shadow-sm overflow-hidden">
+  <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
       <table class="w-full text-sm border-collapse">
         <thead>
@@ -64,7 +64,7 @@
   @if (rejectingEndorsement()) {
     <div class="fixed inset-0 z-[400] flex items-center justify-center p-4" (click)="rejectingEndorsement.set(null)">
       <div class="absolute inset-0 bg-black/40"></div>
-      <div class="relative bg-white rounded-xl shadow-lg max-w-md w-full p-6" (click)="$event.stopPropagation()">
+      <div class="relative bg-white rounded-card shadow-lg max-w-md w-full p-6" (click)="$event.stopPropagation()">
         <h3 class="text-lg font-semibold text-ink mb-2">Reject endorsement</h3>
         <textarea [(ngModel)]="rejectReason" rows="3" placeholder="Rejection reason *" class="w-full p-3 border border-line rounded-lg text-sm outline-none resize-y mb-4"></textarea>
         <div class="flex justify-end gap-3">

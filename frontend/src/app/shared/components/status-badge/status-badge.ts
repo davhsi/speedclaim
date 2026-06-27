@@ -52,6 +52,7 @@ export class StatusBadgeComponent {
       Intimated: 'bg-warning-bg text-warning border border-warning-border',
       Open: 'bg-warning-bg text-warning border border-warning-border',
 
+      Inactive: 'bg-danger-bg text-danger border border-danger-border',
       Rejected: 'bg-danger-bg text-danger border border-danger-border',
       Cancelled: 'bg-danger-bg text-danger border border-danger-border',
       Failed: 'bg-danger-bg text-danger border border-danger-border',
@@ -78,6 +79,7 @@ export class StatusBadgeComponent {
       Active: 'bg-success', Approved: 'bg-success', Paid: 'bg-success', Settled: 'bg-success', Resolved: 'bg-success',
       Pending: 'bg-warning', UnderReview: 'bg-warning', PreAuthRequested: 'bg-warning', InProgress: 'bg-warning',
       Due: 'bg-warning', Submitted: 'bg-warning', Intimated: 'bg-warning', Open: 'bg-warning',
+      Inactive: 'bg-danger',
       Rejected: 'bg-danger', Cancelled: 'bg-danger', Failed: 'bg-danger', Overdue: 'bg-danger',
       Lapsed: 'bg-danger', Withdrawn: 'bg-danger', Escalated: 'bg-danger',
       Assigned: 'bg-info', PreAuthApproved: 'bg-info', DocumentsPending: 'bg-info',

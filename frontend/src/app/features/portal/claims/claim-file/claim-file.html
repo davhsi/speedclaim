@@ -69,10 +69,16 @@
           <div>
             <label class="block text-[13px] font-medium mb-1.5">Amount requested (₹)</label>
             <input type="number" formControlName="claimAmountRequested" placeholder="0.00" class="h-[42px] sc-numeric" />
+            @if ((claimForm.controls.claimAmountRequested.touched || claimForm.controls.claimAmountRequested.dirty) && claimForm.controls.claimAmountRequested.errors) {
+              <p class="text-xs text-danger mt-1">Enter an amount greater than zero.</p>
+            }
           </div>
           <div>
             <label class="block text-[13px] font-medium mb-1.5">Incident date</label>
-            <input type="date" formControlName="incidentDate" class="h-[42px]" />
+            <input type="date" formControlName="incidentDate" [max]="today" class="h-[42px]" />
+            @if ((claimForm.controls.incidentDate.touched || claimForm.controls.incidentDate.dirty) && claimForm.controls.incidentDate.errors) {
+              <p class="text-xs text-danger mt-1">Incident date cannot be in the future.</p>
+            }
           </div>
           <div class="flex items-center gap-2.5 pt-7">
             <input type="checkbox" formControlName="isCashless" id="cashless" class="w-4 h-4 accent-primary" />
@@ -81,6 +87,9 @@
           <div class="sm:col-span-2">
             <label class="block text-[13px] font-medium mb-1.5">Incident description</label>
             <textarea formControlName="incidentDescription" rows="4" placeholder="Describe what happened..."></textarea>
+            @if ((claimForm.controls.incidentDescription.touched || claimForm.controls.incidentDescription.dirty) && claimForm.controls.incidentDescription.errors) {
+              <p class="text-xs text-danger mt-1">Description must be at least 10 characters.</p>
+            }
           </div>
         </div>
         <div class="flex justify-between mt-5 pt-5 border-t border-line">

@@ -1,4 +1,4 @@
-<div class="animate-[sc-fade_.25s_ease-out]">
+<div class="animate-sc-fade">
   <!-- Back -->
   <button (click)="goBack()" class="inline-flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-primary text-[13px] font-medium p-0 mb-4">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
@@ -7,7 +7,7 @@
 
   @if (grievance(); as g) {
     <!-- Header -->
-    <div class="bg-white border border-line rounded-xl shadow-sm px-6 py-5 mb-5">
+    <div class="bg-white border border-line rounded-card shadow-sm px-6 py-5 mb-5">
       <div class="flex items-start gap-3 flex-wrap">
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2.5 flex-wrap mb-1.5">
@@ -23,13 +23,13 @@
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_296px] gap-5 items-start">
       <div>
         <!-- Description -->
-        <div class="bg-white border border-line rounded-xl shadow-sm p-5 mb-4">
+        <div class="bg-white border border-line rounded-card shadow-sm p-5 mb-4">
           <h3 class="text-sm font-semibold text-ink mb-3">Customer complaint</h3>
           <p class="text-sm text-body leading-relaxed whitespace-pre-wrap">{{ g.description }}</p>
         </div>
 
         <!-- Resolution notes -->
-        <div class="bg-white border border-line rounded-xl shadow-sm p-5">
+        <div class="bg-white border border-line rounded-card shadow-sm p-5">
           <h3 class="text-sm font-semibold text-ink mb-3">Resolution notes</h3>
           @if (g.resolutionNotes) {
             <div class="bg-surface rounded-lg px-3.5 py-3 mb-3 text-[13px] text-body leading-relaxed whitespace-pre-wrap">{{ g.resolutionNotes }}</div>
@@ -42,7 +42,7 @@
       <!-- Right rail -->
       <div class="lg:sticky lg:top-20 flex flex-col gap-3.5">
         <!-- Assignment -->
-        <div class="bg-white border border-line rounded-xl shadow-sm p-[18px]">
+        <div class="bg-white border border-line rounded-card shadow-sm p-[18px]">
           <div class="text-xs font-bold text-muted uppercase tracking-wider mb-3">Assignment</div>
           @if (g.assignedToId) {
             <div class="flex items-center gap-2 bg-surface border border-line rounded-lg px-3 py-2.5 mb-2">
@@ -57,7 +57,7 @@
         </div>
 
         <!-- Status update -->
-        <div class="bg-white border border-line rounded-xl shadow-sm p-[18px]">
+        <div class="bg-white border border-line rounded-card shadow-sm p-[18px]">
           <div class="text-xs font-bold text-muted uppercase tracking-wider mb-3">Update status</div>
           <select [(ngModel)]="selectedStatus" class="w-full h-[38px] px-2.5 border border-line rounded-lg text-[13px] bg-white text-body outline-none mb-2">
             <option value="Open">Open</option>
@@ -70,7 +70,7 @@
         </div>
 
         <!-- Details -->
-        <div class="bg-white border border-line rounded-xl shadow-sm p-[18px]">
+        <div class="bg-white border border-line rounded-card shadow-sm p-[18px]">
           <div class="text-xs font-bold text-muted uppercase tracking-wider mb-3">Details</div>
           <div class="mt-0">
             <div class="text-[11px] font-semibold text-muted uppercase tracking-wide mb-1">Category</div>
@@ -91,7 +91,7 @@
       </div>
     </div>
   } @else {
-    <div class="bg-white border border-line rounded-xl p-12 text-center">
+    <div class="bg-white border border-line rounded-card p-12 text-center">
       <p class="text-sm text-muted">Loading grievance details...</p>
     </div>
   }

@@ -2,13 +2,27 @@
   <div class="flex flex-wrap gap-3 items-end justify-between mb-5">
     <div>
       <h1 class="text-xl font-semibold text-ink">My proposals</h1>
-      <p class="text-sm text-muted mt-0.5">Proposals you have submitted on behalf of your customers.</p>
+      <p class="text-sm text-muted mt-0.5">
+        @if (activeFilter() === 'pending') {
+          Showing <span class="font-medium text-warning">{{ filteredProposals().length }} pending</span> proposals awaiting underwriter approval.
+          <button (click)="clearFilter()" class="ml-1.5 text-muted hover:text-danger bg-transparent border-none cursor-pointer text-[13px] p-0">✕ show all</button>
+        } @else {
+          {{ filteredProposals().length }} proposals submitted on behalf of your customers.
+        }
+      </p>
     </div>
     <a routerLink="/agent/proposals/new"
        class="h-10 px-4 border-none bg-accent rounded-control text-[13px] font-semibold text-white inline-flex items-center cursor-pointer hover:bg-accent-dark transition-colors">
       + New proposal
     </a>
   </div>
+
+  @if (activeFilter() === 'pending') {
+    <div class="flex items-center gap-2 bg-warning-bg border border-warning-border rounded-card px-4 py-2.5 mb-4 text-sm text-warning font-medium">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      These proposals are waiting for underwriter review. Follow up with your customers if they've been pending for more than 3 days.
+    </div>
+  }
 
   <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
@@ -40,13 +54,17 @@
                 <td class="px-4 py-3.5">
                   <app-status-badge [status]="prop.status" />
                 </td>
-                <td class="px-4 py-3.5 text-muted text-xs">{{ formatDate(prop.createdAt) }}</td>
+                <td class="px-4 py-3.5 text-muted text-xs">{{ prop.createdAt | dateFormat }}</td>
               </tr>
             }
-            @if (proposals().length === 0) {
+            @if (filteredProposals().length === 0) {
               <tr>
-                <td colspan="6" class="px-4 py-10 text-center text-sm text-muted">
-                  No proposals submitted yet.
+                <td colspan="6" class="px-4 py-10 text-center">
+                  <div class="w-11 h-11 rounded-[11px] bg-surface flex items-center justify-center mx-auto mb-3">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  </div>
+                  <p class="text-sm font-semibold text-ink mb-1">{{ activeFilter() === 'pending' ? 'No pending proposals' : 'No proposals yet' }}</p>
+                  <p class="text-xs text-muted">{{ activeFilter() === 'pending' ? 'All your proposals have been actioned.' : 'Submit your first proposal to get started.' }}</p>
                 </td>
               </tr>
             }

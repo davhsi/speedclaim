@@ -1,4 +1,4 @@
-<div class="animate-[sc-fade_.25s_ease-out]">
+<div class="animate-sc-fade">
 
   <!-- Stat Cards -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
@@ -9,7 +9,7 @@
   </div>
 
   <!-- Tabs + Content -->
-  <div class="bg-white border border-line rounded-xl shadow-sm overflow-hidden">
+  <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
     <!-- Tab header -->
     <div class="flex items-center gap-0 px-5 border-b border-line">
       <button (click)="activeTab.set('agents')" class="px-4 py-3 text-[13px] border-b-2 -mb-px transition-colors bg-transparent cursor-pointer" [class]="activeTab() === 'agents' ? 'font-semibold text-primary border-primary' : 'font-medium text-body border-transparent'">Agents</button>
@@ -131,7 +131,7 @@
   @if (activeModal() === 'register') {
     <div class="fixed inset-0 z-[400] flex items-center justify-center p-4" (click)="closeModal()">
       <div class="absolute inset-0 bg-black/40"></div>
-      <div class="relative bg-white rounded-xl shadow-lg max-w-lg w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
+      <div class="relative bg-white rounded-card shadow-lg max-w-lg w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
         <div class="flex items-center justify-between mb-5">
           <h3 class="text-[15px] font-bold text-ink">Register new agent</h3>
           <button (click)="closeModal()" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface">
@@ -196,7 +196,7 @@
   @if (activeModal() === 'assignBranch') {
     <div class="fixed inset-0 z-[400] flex items-center justify-center p-4" (click)="closeModal()">
       <div class="absolute inset-0 bg-black/40"></div>
-      <div class="relative bg-white rounded-xl shadow-lg max-w-md w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
+      <div class="relative bg-white rounded-card shadow-lg max-w-md w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-[15px] font-bold text-ink">Assign branch for {{ selectedAgent()?.fullName }}</h3>
           <button (click)="closeModal()" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface">
@@ -228,7 +228,7 @@
   @if (activeModal() === 'updateLicense') {
     <div class="fixed inset-0 z-[400] flex items-center justify-center p-4" (click)="closeModal()">
       <div class="absolute inset-0 bg-black/40"></div>
-      <div class="relative bg-white rounded-xl shadow-lg max-w-md w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
+      <div class="relative bg-white rounded-card shadow-lg max-w-md w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
         <div class="flex items-center justify-between mb-5">
           <h3 class="text-[15px] font-bold text-ink">Update license for {{ selectedAgent()?.fullName }}</h3>
           <button (click)="closeModal()" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface">
@@ -255,7 +255,7 @@
   @if (activeModal() === 'editBranch') {
     <div class="fixed inset-0 z-[400] flex items-center justify-center p-4" (click)="closeModal()">
       <div class="absolute inset-0 bg-black/40"></div>
-      <div class="relative bg-white rounded-xl shadow-lg max-w-md w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
+      <div class="relative bg-white rounded-card shadow-lg max-w-md w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
         <div class="flex items-center justify-between mb-5">
           <h3 class="text-[15px] font-bold text-ink">Edit branch: {{ selectedBranch()?.name }}</h3>
           <button (click)="closeModal()" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface">

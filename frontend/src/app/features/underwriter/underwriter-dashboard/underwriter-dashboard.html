@@ -1,6 +1,6 @@
-<div class="animate-[sc-fade_.25s_ease-out]">
+<div class="animate-sc-fade">
   <div class="mb-6">
-    <h1 class="text-[22px] font-semibold text-ink tracking-tight">Good morning, {{ firstName() }}</h1>
+    <h1 class="text-[22px] font-semibold text-ink tracking-tight">{{ greeting() }}, {{ firstName() }}</h1>
     <p class="text-sm text-muted mt-1">{{ pendingProposals() }} proposals and {{ pendingKyc() }} KYC reviews are awaiting your attention.</p>
   </div>
 
@@ -41,14 +41,14 @@
   </div>
 
   <!-- Recent activity -->
-  <div class="bg-white border border-line rounded-xl shadow-sm overflow-hidden">
+  <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
     <div class="px-5 py-4 border-b border-line">
       <h2 class="text-[15px] font-semibold text-ink">Recent activity</h2>
     </div>
     @for (item of recentActivity(); track $index) {
       <div class="flex items-center gap-3.5 px-5 py-3.5 border-b border-line hover:bg-surface transition-colors">
-        <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 text-[10px] font-bold" [class]="item.bgClass">
-          {{ item.abbr }}
+        <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" [class]="item.bgClass">
+          <span class="w-[18px] h-[18px] flex" [innerHTML]="item.icon | safeHtml"></span>
         </div>
         <div class="flex-1 min-w-0">
           <div class="text-[13px] font-medium text-ink">{{ item.title }}</div>
@@ -57,7 +57,13 @@
         <div class="text-xs text-muted whitespace-nowrap shrink-0">{{ item.time }}</div>
       </div>
     } @empty {
-      <div class="px-5 py-12 text-center text-sm text-muted">No recent activity</div>
+      <div class="px-5 py-10 text-center">
+        <div class="w-11 h-11 rounded-[11px] bg-surface flex items-center justify-center mx-auto mb-3">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <p class="text-sm font-semibold text-ink mb-1">No recent proposals</p>
+        <p class="text-xs text-muted">Submitted proposals will appear here for review.</p>
+      </div>
     }
   </div>
 </div>

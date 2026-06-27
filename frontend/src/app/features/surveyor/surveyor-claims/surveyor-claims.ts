@@ -6,13 +6,14 @@ import { SurveyorService } from '../services/surveyor.service';
 import { SurveyorLayoutComponent } from '../surveyor-layout/surveyor-layout';
 import { ClaimDto } from '../../../core/models/api.models';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination';
+import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader';
 
 type Tab = 'all' | 'pending' | 'overdue' | 'submitted';
 
 @Component({
   selector: 'app-surveyor-claims',
   standalone: true,
-  imports: [DatePipe, PaginationComponent],
+  imports: [DatePipe, PaginationComponent, SkeletonLoaderComponent],
   templateUrl: './surveyor-claims.html',
 })
 export class SurveyorClaimsComponent implements OnInit {

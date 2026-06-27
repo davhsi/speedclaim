@@ -43,6 +43,17 @@ export class DashboardComponent implements OnInit {
     return 1;
   });
 
+  actionClaims = computed(() =>
+    this.claims().filter(c => c.status === 'DocumentsPending')
+  );
+  isPremiumOverdue = computed(() => this.nextDue()?.status === 'Overdue');
+  isPremiumDueSoon = computed(() => {
+    const d = this.nextDue();
+    if (!d || d.status === 'Overdue') return false;
+    const daysLeft = Math.ceil((new Date(d.dueDate).getTime() - Date.now()) / 86400000);
+    return daysLeft <= 7;
+  });
+
   firstName(): string {
     return this.authService.currentUser()?.firstName ?? 'there';
   }
@@ -82,7 +93,11 @@ export class DashboardComponent implements OnInit {
   nextPremiumDate(): string {
     const due = this.nextDue();
     if (!due) return 'No upcoming payments';
-    return `Due: ${new Date(due.dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`;
+    const dateStr = new Date(due.dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    if (due.status === 'Overdue') return `Overdue since ${dateStr} — policy at risk`;
+    const daysLeft = Math.ceil((new Date(due.dueDate).getTime() - Date.now()) / 86400000);
+    if (daysLeft <= 7) return `Due in ${daysLeft} day${daysLeft === 1 ? '' : 's'} — pay before ${dateStr}`;
+    return `Due: ${dateStr}`;
   }
 
   productName(policy: PolicyDto): string {

@@ -1,21 +1,28 @@
-<div class="min-h-screen bg-white font-sans">
+<div class="min-h-screen bg-white" style="font-family: var(--font-sans);">
 
   <!-- ── Navbar ── -->
-  <header class="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-line">
+  <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-line">
     <div class="max-w-6xl mx-auto px-5 lg:px-8 h-16 flex items-center justify-between">
-      <a routerLink="/" class="flex items-center gap-2.5 no-underline">
-        <div class="w-8 h-8 rounded-[8px] bg-primary flex items-center justify-center shrink-0">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <a routerLink="/" class="flex items-center gap-2.5 no-underline group">
+        <div class="w-8 h-8 rounded-[9px] bg-primary flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         </div>
-        <span class="text-[17px] font-bold text-ink tracking-tight">SpeedClaim</span>
+        <span style="font-family: var(--font-display); font-weight: 700;" class="text-[17px] text-ink tracking-tight">SpeedClaim</span>
       </a>
-      <div class="flex items-center gap-2.5">
+
+      <nav class="hidden md:flex items-center gap-6">
+        <a href="#how-it-works" class="text-[13.5px] font-medium text-muted hover:text-ink transition-colors no-underline">How it works</a>
+        <a href="#coverage" class="text-[13.5px] font-medium text-muted hover:text-ink transition-colors no-underline">Coverage</a>
+        <a href="#stories" class="text-[13.5px] font-medium text-muted hover:text-ink transition-colors no-underline">Stories</a>
+      </nav>
+
+      <div class="flex items-center gap-2">
         <a routerLink="/auth/login"
-           class="h-9 px-4 text-[13.5px] font-semibold text-body hover:text-ink rounded-[8px] hover:bg-surface transition-colors flex items-center no-underline">
+           class="hidden sm:flex h-9 px-4 text-[13px] font-semibold text-body hover:text-ink rounded-[8px] hover:bg-surface transition-colors items-center no-underline">
           Sign in
         </a>
         <a routerLink="/auth/register"
-           class="h-9 px-4 text-[13.5px] font-semibold text-white bg-primary hover:bg-primary-hover rounded-[8px] transition-colors flex items-center no-underline shadow-sm">
+           class="h-9 px-5 text-[13px] font-semibold text-white bg-amber-500 hover:bg-amber-600 rounded-full flex items-center transition-colors no-underline shadow-sm">
           Get started
         </a>
       </div>
@@ -23,108 +30,167 @@
   </header>
 
   <!-- ── Hero ── -->
-  <section class="bg-[#0D1B2A] relative overflow-hidden py-20 lg:py-28">
-    <!-- background radial glow -->
-    <div class="absolute inset-0 pointer-events-none"
-         style="background: radial-gradient(ellipse 900px 500px at 50% -80px, rgba(15,110,140,0.35), transparent);">
-    </div>
-    <!-- dot grid pattern -->
-    <div class="absolute inset-0 opacity-[0.07] pointer-events-none"
-         style="background-image: radial-gradient(circle, #ffffff 1px, transparent 1px); background-size: 28px 28px;">
+  <section class="relative overflow-hidden" style="background: linear-gradient(160deg, #EFF9FC 0%, #F5FBFD 55%, #FFFFFF 100%);">
+    <div class="absolute top-0 right-0 w-[700px] h-[700px] pointer-events-none"
+         style="background: radial-gradient(circle at 70% 30%, rgba(15,110,140,0.07), transparent 65%); transform: translate(15%, -20%);">
     </div>
 
-    <div class="max-w-6xl mx-auto px-5 lg:px-8 relative">
-      <div class="flex flex-col lg:flex-row items-center gap-14 lg:gap-10">
+    <div class="max-w-6xl mx-auto px-5 lg:px-8 py-16 lg:py-20">
+      <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
 
-        <!-- left: copy -->
+        <!-- Left: Copy -->
         <div class="flex-1 text-center lg:text-left">
-          <div class="inline-flex items-center gap-2 bg-white/10 border border-white/15 text-white/75 text-xs font-semibold px-3.5 py-1.5 rounded-full mb-7 tracking-wide">
-            <span class="w-1.5 h-1.5 rounded-full bg-accent shrink-0"></span>
-            Trusted by 4.8L+ policyholders across India
-          </div>
-
-          <h1 class="text-4xl sm:text-5xl lg:text-[3.25rem] font-bold text-white leading-[1.15] tracking-tight mb-5">
-            Insurance that<br class="hidden sm:block">
-            moves at your speed.
+          <h1 style="font-family: var(--font-display); font-weight: 800;"
+              class="text-[2.6rem] sm:text-[3rem] lg:text-[3.4rem] text-ink leading-[1.1] tracking-tight mb-5">
+            When the worst happens,<br class="hidden sm:block">
+            you get money —<br class="hidden sm:block">
+            <span class="text-primary">not excuses.</span>
           </h1>
 
-          <p class="text-lg text-white/65 leading-relaxed max-w-xl mx-auto lg:mx-0 mb-9">
-            File claims in minutes, track everything digitally, and get settled faster than ever before. No helpline queues. No paperwork piles.
+          <p class="text-[17px] text-body leading-relaxed max-w-[520px] mx-auto lg:mx-0 mb-8">
+            File a claim from your phone. Track it in real time. Get paid in days —
+            not weeks, not months, not "we'll get back to you."
           </p>
 
           <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3">
             <a routerLink="/auth/register"
-               class="w-full sm:w-auto h-12 px-8 bg-accent hover:bg-accent-hover text-white font-semibold text-[15px] rounded-[10px] flex items-center justify-center transition-colors no-underline"
-               style="box-shadow: 0 4px 16px rgba(242,120,75,0.35);">
-              Get started — it's free
-              <svg class="ml-2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+               class="w-full sm:w-auto h-12 px-8 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[15px] rounded-full flex items-center justify-center transition-colors no-underline"
+               style="box-shadow: 0 4px 20px rgba(245,158,11,0.3);">
+              Protect my family
+              <svg class="ml-2 shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </a>
             <a routerLink="/auth/login"
-               class="w-full sm:w-auto h-12 px-8 border border-white/20 text-white/85 font-semibold text-[15px] rounded-[10px] flex items-center justify-center hover:bg-white/10 transition-colors no-underline">
+               class="w-full sm:w-auto h-12 px-8 border-2 border-primary/25 text-primary font-semibold text-[15px] rounded-full flex items-center justify-center hover:bg-primary/5 transition-colors no-underline">
               Sign in to your account
             </a>
           </div>
         </div>
 
-        <!-- right: product preview card -->
-        <div class="flex-shrink-0 w-full max-w-[340px]">
-          <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
-            <!-- card header -->
-            <div class="bg-surface px-5 pt-5 pb-4 border-b border-line">
-              <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-[9px] bg-success-bg flex items-center justify-center shrink-0">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1F9D6B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
-                </div>
-                <div>
-                  <div class="text-[13px] font-bold text-ink">Claim Approved</div>
-                  <div class="text-[11px] text-muted mt-0.5">CLM-2024-0891 · Health Insurance</div>
-                </div>
-                <span class="ml-auto text-[11px] font-bold text-success bg-success-bg px-2.5 py-1 rounded-full shrink-0">Approved</span>
-              </div>
-            </div>
-            <!-- card body -->
-            <div class="px-5 py-4 space-y-3">
-              <div class="flex justify-between items-center text-[13px]">
-                <span class="text-muted">Claim amount</span>
-                <span class="font-bold text-ink">₹85,000</span>
-              </div>
-              <div class="flex justify-between items-center text-[13px]">
-                <span class="text-muted">Settlement time</span>
-                <span class="font-semibold text-success">2 days 4 hrs</span>
-              </div>
-              <div class="flex justify-between items-center text-[13px]">
-                <span class="text-muted">Policy</span>
-                <span class="font-semibold text-primary text-[12px]">SC-HLT-2024-00134</span>
-              </div>
-              <div class="pt-1">
-                <div class="flex justify-between text-[11px] text-muted mb-1.5">
-                  <span>Processing complete</span>
-                  <span>100%</span>
-                </div>
-                <div class="h-1.5 bg-surface-alt rounded-full overflow-hidden">
-                  <div class="h-full bg-success rounded-full w-full"></div>
-                </div>
-              </div>
-            </div>
-            <!-- card footer -->
-            <div class="px-5 pb-4">
-              <div class="bg-info-bg border border-info-border rounded-[9px] px-3.5 py-2.5 flex items-center gap-2.5">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2D7FF9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                <span class="text-[12px] text-[#2D7FF9] font-medium">Payment initiated · Credit by tomorrow</span>
-              </div>
-            </div>
-          </div>
+        <!-- Right: Phone mockup -->
+        <div class="flex-shrink-0 w-full max-w-[252px] lg:self-center">
+          <div class="relative mx-auto" style="max-width: 236px; background: #18222E; border-radius: 44px; padding: 10px; box-shadow: 0 40px 80px rgba(0,0,0,0.28), 0 10px 30px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.07);">
+            <!-- Volume buttons left -->
+            <div class="absolute" style="left: -3px; top: 100px; width: 3px; height: 26px; background: #0F1820; border-radius: 2px 0 0 2px;"></div>
+            <div class="absolute" style="left: -3px; top: 136px; width: 3px; height: 48px; background: #0F1820; border-radius: 2px 0 0 2px;"></div>
+            <div class="absolute" style="left: -3px; top: 194px; width: 3px; height: 48px; background: #0F1820; border-radius: 2px 0 0 2px;"></div>
+            <!-- Power button right -->
+            <div class="absolute" style="right: -3px; top: 130px; width: 3px; height: 72px; background: #0F1820; border-radius: 0 2px 2px 0;"></div>
 
-          <!-- second mini card below -->
-          <div class="bg-white rounded-xl shadow-lg mt-3 px-4 py-3.5 flex items-center gap-3">
-            <div class="w-9 h-9 rounded-[9px] bg-warning-bg flex items-center justify-center shrink-0">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D9920A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            <!-- Screen -->
+            <div style="background: white; border-radius: 36px; overflow: hidden;">
+              <!-- Status bar -->
+              <div style="background: #18222E; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 12px 18px 8px;">
+                <span style="font-size: 12px; font-weight: 800; color: white; letter-spacing: -0.3px;">9:41</span>
+                <div style="width: 82px; height: 22px; background: #0A0F16; border-radius: 11px;"></div>
+                <div style="display: flex; align-items: center; gap: 4px; justify-content: flex-end;">
+                  <svg width="15" height="11" viewBox="0 0 15 11" fill="white" opacity="0.9">
+                    <rect x="0" y="7" width="2.5" height="4" rx="0.8"/>
+                    <rect x="4" y="4.5" width="2.5" height="6.5" rx="0.8"/>
+                    <rect x="8" y="2" width="2.5" height="9" rx="0.8"/>
+                    <rect x="12" y="0" width="2.5" height="11" rx="0.8"/>
+                  </svg>
+                  <svg width="20" height="11" viewBox="0 0 20 11" fill="none" opacity="0.9">
+                    <rect x="0.5" y="0.5" width="16" height="10" rx="2.5" stroke="white" stroke-opacity="0.55"/>
+                    <rect x="2" y="2" width="11" height="7" rx="1.5" fill="white"/>
+                    <path d="M18 3.8 L18 7.2 Q19.5 6.8 19.5 5.5 Q19.5 4.2 18 3.8Z" fill="white" opacity="0.55"/>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- App header -->
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px 8px; border-bottom: 1px solid #F0F2F4;">
+                <div style="display: flex; align-items: center; gap: 7px;">
+                  <div style="width: 26px; height: 26px; background: #0F6E8C; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  </div>
+                  <span style="font-size: 13px; font-weight: 700; color: #1A2230; font-family: var(--font-display);">SpeedClaim</span>
+                </div>
+                <div style="position: relative; width: 30px; height: 30px; background: #F7F9FA; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                  <div style="position: absolute; top: 5px; right: 5px; width: 6px; height: 6px; background: #D14343; border-radius: 50%; border: 1.5px solid #F7F9FA;"></div>
+                </div>
+              </div>
+
+              <!-- Page title bar -->
+              <div style="padding: 9px 14px 8px; border-bottom: 1px solid #F0F2F4; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                  <div style="font-family: var(--font-display); font-size: 13.5px; font-weight: 700; color: #1A2230;">My Claims</div>
+                  <div style="font-size: 9.5px; color: #6B7685; margin-top: 1px;">2 active · Updated just now</div>
+                </div>
+                <div style="width: 28px; height: 28px; background: #F7F9FA; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                </div>
+              </div>
+
+              <!-- Claim content -->
+              <div style="padding: 10px 12px 4px;">
+                <!-- Approved badge row -->
+                <div style="display: flex; align-items: center; gap: 8px; padding: 9px 10px; background: #E8F7F1; border-radius: 10px; margin-bottom: 8px;">
+                  <div style="width: 30px; height: 30px; background: #1F9D6B; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+                  </div>
+                  <div style="flex: 1; min-width: 0;">
+                    <div style="font-size: 11.5px; font-weight: 700; color: #1A2230; line-height: 1.3;">Claim Approved</div>
+                    <div style="font-size: 9.5px; color: #6B7685; margin-top: 1px;">CLM-2025-0891 · Health</div>
+                  </div>
+                  <span style="font-size: 9.5px; font-weight: 700; color: #1F9D6B; background: white; padding: 2px 7px; border-radius: 999px; flex-shrink: 0;">Settled</span>
+                </div>
+
+                <!-- Amount -->
+                <div style="text-align: center; padding: 10px 0 8px; border-bottom: 1px solid #F0F2F4; margin-bottom: 8px;">
+                  <div style="font-size: 9.5px; font-weight: 700; color: #6B7685; text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 4px;">Amount Credited</div>
+                  <div style="font-family: var(--font-display); font-weight: 800; font-size: 1.65rem; color: #1F9D6B; line-height: 1; letter-spacing: -0.02em;">₹3,20,000</div>
+                  <div style="font-size: 10px; color: #6B7685; margin-top: 4px;">38 hours · <span style="text-decoration: line-through; opacity: 0.7;">Industry avg: 23 days</span></div>
+                </div>
+
+                <!-- Meta row -->
+                <div style="display: flex; justify-content: space-between; margin-bottom: 7px;">
+                  <span style="font-size: 10.5px; color: #6B7685;">HDFC Bank ×4821</span>
+                  <span style="font-size: 10.5px; font-weight: 600; color: #1A2230;">Tue, 11:23 AM</span>
+                </div>
+
+                <!-- Progress bar -->
+                <div style="height: 4px; background: #E2E6EB; border-radius: 2px; margin-bottom: 10px;">
+                  <div style="height: 100%; width: 100%; background: linear-gradient(90deg, #1F9D6B, #2ECC9A); border-radius: 2px;"></div>
+                </div>
+
+                <!-- Second claim item -->
+                <div style="display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #FEF6E6; border-radius: 10px; margin-bottom: 10px;">
+                  <div style="width: 28px; height: 28px; background: #D9920A; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                  </div>
+                  <div style="flex: 1; min-width: 0;">
+                    <div style="font-size: 11px; font-weight: 600; color: #1A2230;">Motor Claim</div>
+                    <div style="font-size: 9.5px; color: #6B7685; margin-top: 1px;">Surveyor arriving in 90 min</div>
+                  </div>
+                  <span style="font-size: 9.5px; font-weight: 700; color: #D9920A; white-space: nowrap; flex-shrink: 0;">In Review</span>
+                </div>
+              </div>
+              <!-- Bottom nav bar -->
+              <div style="border-top: 1px solid #F0F2F4; display: grid; grid-template-columns: repeat(4, 1fr); padding: 8px 4px 12px; background: white;">
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 3px;">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="#0F6E8C" stroke="none"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10" fill="white"/></svg>
+                  <span style="font-size: 8px; font-weight: 700; color: #0F6E8C;">Home</span>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 3px;">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#C0C8D2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                  <span style="font-size: 8px; color: #C0C8D2;">Claims</span>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 3px;">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#C0C8D2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  <span style="font-size: 8px; color: #C0C8D2;">Policy</span>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 3px;">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#C0C8D2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <span style="font-size: 8px; color: #C0C8D2;">Profile</span>
+                </div>
+              </div>
             </div>
-            <div class="flex-1 min-w-0">
-              <div class="text-[12.5px] font-semibold text-ink">Motor Claim Submitted</div>
-              <div class="text-[11px] text-muted mt-0.5">Surveyor assigned · ETA 2 hrs</div>
+
+            <!-- Home indicator -->
+            <div style="height: 20px; display: flex; align-items: center; justify-content: center;">
+              <div style="width: 88px; height: 5px; background: rgba(255,255,255,0.22); border-radius: 3px;"></div>
             </div>
-            <span class="text-[11px] font-bold text-warning bg-warning-bg px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">In Review</span>
           </div>
         </div>
 
@@ -132,14 +198,19 @@
     </div>
   </section>
 
-  <!-- ── Stats bar ── -->
-  <section class="bg-white border-b border-line">
+  <!-- ── Comparative stats bar ── -->
+  <section class="bg-white border-y border-line">
     <div class="max-w-6xl mx-auto px-5 lg:px-8">
       <div class="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-line">
-        @for (stat of stats; track stat.label) {
-          <div class="px-6 py-7 text-center">
-            <div class="text-3xl font-bold text-primary tracking-tight">{{ stat.value }}</div>
-            <div class="text-[13px] text-muted mt-1.5 font-medium">{{ stat.label }}</div>
+        @for (stat of stats; track stat.label; let i = $index) {
+          <div class="sc-reveal px-6 py-7 text-center"
+               [class]="i === 1 ? 'sc-reveal-d1' : i === 2 ? 'sc-reveal-d2' : i === 3 ? 'sc-reveal-d3' : ''">
+            <div style="font-family: var(--font-display); font-weight: 700;"
+                 class="text-[1.9rem] lg:text-[2.15rem] text-primary leading-none tracking-tight">
+              {{ stat.value }}<span class="text-[1.2rem]">{{ stat.unit }}</span>
+            </div>
+            <div class="text-[12.5px] font-semibold text-ink mt-1.5">{{ stat.label }}</div>
+            <div class="text-[11px] text-muted mt-0.5">{{ stat.footnote }}</div>
           </div>
         }
       </div>
@@ -147,55 +218,74 @@
   </section>
 
   <!-- ── How it works ── -->
-  <section class="bg-surface py-20 lg:py-24">
+  <section id="how-it-works" class="bg-white py-20 lg:py-24">
     <div class="max-w-6xl mx-auto px-5 lg:px-8">
-      <div class="text-center mb-14">
-        <div class="text-xs font-bold text-primary uppercase tracking-widest mb-3">How it works</div>
-        <h2 class="text-3xl lg:text-4xl font-bold text-ink tracking-tight">Coverage in three simple steps</h2>
-        <p class="text-muted mt-3 text-[15px] max-w-lg mx-auto">Designed for people who value their time. No confusing forms, no branch visits.</p>
+
+      <div class="text-center mb-16 sc-reveal">
+        <h2 style="font-family: var(--font-display); font-weight: 700;"
+            class="text-3xl lg:text-[2.5rem] text-ink tracking-tight">
+          Three steps. One less<br class="hidden sm:block"> thing to worry about.
+        </h2>
+        <p class="text-muted mt-3 text-[15px] max-w-[380px] mx-auto leading-relaxed">
+          Designed for people who have better things to do than navigate an insurance portal.
+        </p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-        <!-- connecting line (desktop) -->
-        <div class="hidden md:block absolute top-10 left-[calc(16.66%+1rem)] right-[calc(16.66%+1rem)] h-px bg-line z-0"></div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-10 relative">
+        <!-- Connecting dashes (desktop only) -->
+        <div class="hidden md:block absolute top-10 left-[calc(16.66%+3.5rem)] right-[calc(16.66%+3.5rem)] h-px border-t-2 border-dashed border-primary/20 z-0"></div>
 
-        @for (step of steps; track step.number; let i = $index) {
-          <div class="relative z-10 flex flex-col items-center text-center">
-            <div class="w-20 h-20 rounded-full bg-white border-2 border-line flex flex-col items-center justify-center mb-6 shadow-sm">
-              <span class="text-[10px] font-bold text-muted uppercase tracking-widest">Step</span>
-              <span class="text-2xl font-bold text-primary leading-none">{{ step.number }}</span>
-            </div>
-            <h3 class="text-[17px] font-bold text-ink mb-2">{{ step.title }}</h3>
-            <p class="text-[14px] text-muted leading-relaxed max-w-[260px]">{{ step.desc }}</p>
+        @for (step of steps; track step.title; let i = $index) {
+          <div class="sc-reveal relative z-10 flex flex-col items-center text-center"
+               [class]="i === 1 ? 'sc-reveal-d1' : i === 2 ? 'sc-reveal-d2' : ''">
+            <!-- Illustration -->
+            <div class="mb-5" [innerHTML]="step.illustration | safeHtml"></div>
+            <h3 style="font-family: var(--font-display); font-weight: 700;"
+                class="text-[17px] text-ink mb-2">{{ step.title }}</h3>
+            <div class="text-[11.5px] font-bold text-primary/80 mb-3 tracking-wide uppercase">{{ step.callout }}</div>
+            <p class="text-[13.5px] text-muted leading-relaxed max-w-[240px]">{{ step.desc }}</p>
           </div>
         }
       </div>
     </div>
   </section>
 
-  <!-- ── Coverage types ── -->
-  <section class="bg-white py-20 lg:py-24">
+  <!-- ── Coverage ── -->
+  <section id="coverage" class="py-20 lg:py-24" style="background: #F8FAFB;">
     <div class="max-w-6xl mx-auto px-5 lg:px-8">
-      <div class="text-center mb-14">
-        <div class="text-xs font-bold text-primary uppercase tracking-widest mb-3">What we cover</div>
-        <h2 class="text-3xl lg:text-4xl font-bold text-ink tracking-tight">Protection for every stage of life</h2>
-        <p class="text-muted mt-3 text-[15px] max-w-lg mx-auto">Three product categories, fully managed online — from purchase to claim settlement.</p>
+
+      <div class="text-center mb-14 sc-reveal">
+        <h2 style="font-family: var(--font-display); font-weight: 700;"
+            class="text-3xl lg:text-[2.5rem] text-ink tracking-tight">
+          Not features. Outcomes.
+        </h2>
+        <p class="text-muted mt-3 text-[15px] max-w-[400px] mx-auto leading-relaxed">
+          Insurance exists to give you back control when you've lost it.
+          Here's what that looks like in practice.
+        </p>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        @for (cov of coverageTypes; track cov.title) {
-          <div class="border border-line rounded-[16px] p-7 hover:shadow-md transition-shadow bg-white">
-            <div class="w-12 h-12 rounded-[12px] flex items-center justify-center mb-5 {{ cov.color }}" [innerHTML]="cov.icon | safeHtml"></div>
-            <h3 class="text-[17px] font-bold text-ink mb-2">{{ cov.title }}</h3>
-            <p class="text-[13.5px] text-muted leading-relaxed mb-5">{{ cov.desc }}</p>
-            <ul class="space-y-2">
-              @for (feat of cov.features; track feat) {
-                <li class="flex items-center gap-2 text-[13px] text-body">
-                  <svg class="shrink-0 text-success" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                  {{ feat }}
-                </li>
-              }
-            </ul>
+        @for (cov of coverageTypes; track cov.title; let i = $index) {
+          <div class="sc-reveal bg-white rounded-2xl p-7 flex flex-col transition-all duration-200 hover:-translate-y-0.5 cursor-default"
+               [class]="i === 1 ? 'sc-reveal-d1' : i === 2 ? 'sc-reveal-d2' : ''"
+               style="box-shadow: 0 1px 4px rgba(26,34,48,0.06);"
+               onmouseenter="this.style.boxShadow='0 8px 28px rgba(15,110,140,0.10), 0 2px 6px rgba(0,0,0,0.04)'"
+               onmouseleave="this.style.boxShadow='0 1px 4px rgba(26,34,48,0.06)'">
+
+            <!-- Scene illustration -->
+            <div class="mb-5" [innerHTML]="cov.icon | safeHtml"></div>
+
+            <h3 style="font-family: var(--font-display); font-weight: 700;"
+                class="text-[17px] text-ink mb-3">{{ cov.title }}</h3>
+
+            <p class="text-[14px] text-body leading-relaxed mb-5 flex-1 italic border-l-2 border-primary/20 pl-4">
+              "{{ cov.outcome }}"
+            </p>
+
+            <div class="border-t border-line pt-4">
+              <p class="text-[12px] text-muted leading-relaxed">{{ cov.detail }}</p>
+            </div>
           </div>
         }
       </div>
@@ -203,39 +293,51 @@
   </section>
 
   <!-- ── Testimonials ── -->
-  <section class="bg-surface py-20 lg:py-24">
+  <section id="stories" class="bg-white py-20 lg:py-24">
     <div class="max-w-6xl mx-auto px-5 lg:px-8">
-      <div class="text-center mb-14">
-        <div class="text-xs font-bold text-primary uppercase tracking-widest mb-3">Customer stories</div>
-        <h2 class="text-3xl lg:text-4xl font-bold text-ink tracking-tight">Real people. Real claims. Real speed.</h2>
-        <p class="text-muted mt-3 text-[15px] max-w-lg mx-auto">Don't take our word for it — here's what our policyholders say.</p>
+
+      <div class="text-center mb-14 sc-reveal">
+        <h2 style="font-family: var(--font-display); font-weight: 700;"
+            class="text-3xl lg:text-[2.5rem] text-ink tracking-tight">
+          Real people. Real claims.<br class="hidden sm:block"> Real numbers.
+        </h2>
+        <p class="text-muted mt-3 text-[15px] max-w-[360px] mx-auto leading-relaxed">
+          These are the moments our policyholders remember.
+        </p>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        @for (t of testimonials; track t.name) {
-          <div class="bg-white border border-line rounded-[16px] p-7 flex flex-col">
-            <!-- stars -->
+        @for (t of testimonials; track t.name; let i = $index) {
+          <div class="sc-reveal flex flex-col rounded-2xl p-7 border border-line"
+               [class]="i % 2 === 1 ? 'sc-reveal-d1' : ''"
+               style="background: #FAFBFC;">
+
             <div class="flex gap-0.5 mb-4">
               @for (s of [1,2,3,4,5]; track s) {
-                <svg width="16" height="16" viewBox="0 0 24 24" [attr.fill]="s <= t.stars ? '#F2784B' : 'none'" [attr.stroke]="s <= t.stars ? '#F2784B' : '#D1D5DB'" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24"
+                     [attr.fill]="s <= t.stars ? '#F59E0B' : 'none'"
+                     [attr.stroke]="s <= t.stars ? '#F59E0B' : '#D1D5DB'"
+                     stroke-width="1.5">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
               }
             </div>
-            <!-- quote -->
+
             <blockquote class="text-[14.5px] text-body leading-relaxed flex-1 mb-5">
               "{{ t.quote }}"
             </blockquote>
-            <!-- author -->
+
             <div class="flex items-center gap-3 pt-5 border-t border-line">
-              <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center text-[13px] font-bold shrink-0">
-                {{ t.initials }}
-              </div>
-              <div class="min-w-0">
+              <img [src]="t.avatarUrl" [alt]="t.name"
+                   class="w-10 h-10 rounded-full shrink-0 object-cover"
+                   style="background: #F7F9FA;">
+              <div class="min-w-0 flex-1">
                 <div class="text-[13.5px] font-bold text-ink">{{ t.name }}</div>
-                <div class="text-[12px] text-muted truncate">{{ t.role }}</div>
+                <div class="text-[11.5px] text-muted mt-0.5">{{ t.context }}</div>
               </div>
-              <div class="ml-auto shrink-0">
-                <span class="text-[11px] font-semibold text-primary bg-primary-light px-2.5 py-1 rounded-full whitespace-nowrap">{{ t.tag }}</span>
-              </div>
+              <span class="text-[11px] font-semibold text-primary bg-primary-light px-2.5 py-1 rounded-full whitespace-nowrap shrink-0 ml-auto">
+                {{ t.tag }}
+              </span>
             </div>
           </div>
         }
@@ -243,45 +345,185 @@
     </div>
   </section>
 
-  <!-- ── Bottom CTA ── -->
-  <section class="bg-[#0D1B2A] py-16 lg:py-20 relative overflow-hidden">
-    <div class="absolute inset-0 pointer-events-none"
-         style="background: radial-gradient(ellipse 700px 400px at 50% 120%, rgba(15,110,140,0.3), transparent);">
+  <!-- ── Peak moment ── -->
+  <section class="py-20 lg:py-24 relative overflow-hidden" style="background: linear-gradient(135deg, #EFF9FC 0%, #F0F9FF 100%);">
+    <div class="absolute bottom-0 left-0 w-[500px] h-[500px] pointer-events-none"
+         style="background: radial-gradient(circle at 20% 80%, rgba(15,110,140,0.06), transparent 60%); transform: translate(-20%, 20%);">
     </div>
-    <div class="max-w-3xl mx-auto px-5 lg:px-8 text-center relative">
-      <h2 class="text-3xl lg:text-4xl font-bold text-white tracking-tight mb-4">
-        Ready to protect what matters most?
+
+    <div class="max-w-6xl mx-auto px-5 lg:px-8">
+      <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+
+        <!-- Left: Story -->
+        <div class="flex-1 sc-reveal">
+          <div class="text-xs font-bold text-primary uppercase tracking-[0.12em] mb-4">A real claim · February 2025</div>
+
+          <h2 style="font-family: var(--font-display); font-weight: 800;"
+              class="text-[2rem] lg:text-[2.5rem] text-ink leading-[1.15] tracking-tight mb-4">
+            Baba had surgery<br>on Saturday.
+          </h2>
+          <p class="text-[17px] text-body leading-relaxed mb-8 max-w-[420px]">
+            The bill arrived Sunday. The money arrived Tuesday.
+            In full. No questions, no escalations, no helpline holds.
+          </p>
+
+          <div class="space-y-4 mb-8 max-w-[380px]">
+            @for (item of claimTimeline; track item.time) {
+              <div class="flex items-start gap-4">
+                <div class="flex flex-col items-center shrink-0 pt-1">
+                  <div class="w-2.5 h-2.5 rounded-full shrink-0"
+                       [class]="item.final ? 'bg-success' : 'bg-primary/30'">
+                  </div>
+                  @if (!item.final) {
+                    <div class="w-px mt-1 bg-primary/15" style="height: 28px;"></div>
+                  }
+                </div>
+                <div class="pb-2">
+                  <div class="text-[11px] font-bold text-muted uppercase tracking-wide mb-0.5">{{ item.time }}</div>
+                  <div class="text-[13.5px] font-semibold"
+                       [class]="item.final ? 'text-success' : 'text-ink'">
+                    {{ item.event }}
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="inline-flex items-center gap-2.5 bg-white border border-primary/15 px-5 py-3 rounded-full shadow-sm">
+            <span class="text-success font-bold text-[14px]">38 hours total</span>
+            <span class="w-px h-4 bg-line"></span>
+            <span class="text-muted text-[13px]">Industry average: 23 days</span>
+          </div>
+        </div>
+
+        <!-- Right: Phone frame with notification -->
+        <div class="flex-shrink-0 w-full max-w-[252px] sc-reveal sc-reveal-d1">
+          <div class="relative mx-auto" style="max-width: 236px; background: #18222E; border-radius: 44px; padding: 10px; box-shadow: 0 40px 80px rgba(0,0,0,0.28), 0 10px 30px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.07);">
+            <!-- Volume buttons left -->
+            <div class="absolute" style="left: -3px; top: 100px; width: 3px; height: 26px; background: #0F1820; border-radius: 2px 0 0 2px;"></div>
+            <div class="absolute" style="left: -3px; top: 136px; width: 3px; height: 48px; background: #0F1820; border-radius: 2px 0 0 2px;"></div>
+            <div class="absolute" style="left: -3px; top: 194px; width: 3px; height: 48px; background: #0F1820; border-radius: 2px 0 0 2px;"></div>
+            <!-- Power button right -->
+            <div class="absolute" style="right: -3px; top: 130px; width: 3px; height: 72px; background: #0F1820; border-radius: 0 2px 2px 0;"></div>
+
+            <!-- Screen -->
+            <div style="background: white; border-radius: 36px; overflow: hidden;">
+              <!-- Status bar -->
+              <div style="background: #18222E; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 12px 18px 8px;">
+                <span style="font-size: 12px; font-weight: 800; color: white; letter-spacing: -0.3px;">9:41</span>
+                <div style="width: 82px; height: 22px; background: #0A0F16; border-radius: 11px;"></div>
+                <div style="display: flex; align-items: center; gap: 3px; justify-content: flex-end;">
+                  <svg width="13" height="10" viewBox="0 0 13 10" fill="white" opacity="0.9">
+                    <rect x="0" y="6" width="2" height="4" rx="0.7"/>
+                    <rect x="3.5" y="4" width="2" height="6" rx="0.7"/>
+                    <rect x="7" y="1.5" width="2" height="8.5" rx="0.7"/>
+                    <rect x="10.5" y="0" width="2" height="10" rx="0.7"/>
+                  </svg>
+                  <svg width="18" height="10" viewBox="0 0 18 10" fill="none" opacity="0.9">
+                    <rect x="0.5" y="0.5" width="14" height="9" rx="2" stroke="white" stroke-opacity="0.55"/>
+                    <rect x="2" y="2" width="9" height="6" rx="1" fill="white"/>
+                    <path d="M16 3.4 L16 6.6 Q17 6.3 17 5 Q17 3.7 16 3.4Z" fill="white" opacity="0.55"/>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Lock screen — one screen, one story -->
+              <div style="background: #0D1621; padding: 28px 12px 0; text-align: center;">
+                <!-- Date -->
+                <div style="font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.45); letter-spacing: 0.1em; margin-bottom: 6px;">TUE, 11 FEBRUARY</div>
+                <!-- Time — the exact moment the money arrived -->
+                <div style="font-size: 3.2rem; font-weight: 200; color: white; line-height: 1; letter-spacing: -0.03em; margin-bottom: 28px;">11:23</div>
+
+                <!-- Push notification -->
+                <div style="background: rgba(255,255,255,0.10); backdrop-filter: blur(16px); border-radius: 16px; padding: 14px 14px 16px; border: 1px solid rgba(255,255,255,0.09); text-align: left; margin-bottom: 28px;">
+                  <!-- App row -->
+                  <div style="display: flex; align-items: center; gap: 9px; margin-bottom: 10px;">
+                    <div style="width: 26px; height: 26px; background: #0F6E8C; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <span style="font-size: 11.5px; font-weight: 700; color: rgba(255,255,255,0.85); flex: 1;">SpeedClaim</span>
+                    <span style="font-size: 10px; color: rgba(255,255,255,0.3);">now</span>
+                  </div>
+                  <div style="font-size: 13px; font-weight: 700; color: white; margin-bottom: 4px; line-height: 1.3;">Your claim has been settled.</div>
+                  <div style="font-size: 11.5px; color: rgba(255,255,255,0.55); line-height: 1.45;">₹3,20,000 has been credited to your HDFC Bank account ending ×4821.</div>
+                </div>
+
+                <!-- Swipe hint -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding-bottom: 22px; opacity: 0.35;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+                  <span style="font-size: 9.5px; color: white; letter-spacing: 0.06em;">SWIPE TO OPEN</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Home indicator -->
+            <div style="height: 20px; display: flex; align-items: center; justify-content: center;">
+              <div style="width: 88px; height: 5px; background: rgba(255,255,255,0.22); border-radius: 3px;"></div>
+            </div>
+          </div>
+
+          <p class="text-center text-[12px] text-muted mt-4 leading-relaxed px-2">
+            This is what <strong class="text-ink">4.8 lakh families</strong> already know.<br>
+            Insurance that actually pays out.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Bottom CTA ── -->
+  <section class="bg-primary py-16 lg:py-20 relative overflow-hidden">
+    <div class="absolute inset-0 pointer-events-none"
+         style="background: radial-gradient(ellipse 800px 500px at 50% 130%, rgba(255,255,255,0.04), transparent);">
+    </div>
+    <div class="max-w-2xl mx-auto px-5 lg:px-8 text-center relative sc-reveal">
+      <h2 style="font-family: var(--font-display); font-weight: 800;"
+          class="text-3xl lg:text-[2.5rem] text-white leading-tight tracking-tight mb-4">
+        The worst day of your life<br class="hidden sm:block"> is not the day to figure this out.
       </h2>
-      <p class="text-white/65 text-[16px] leading-relaxed mb-9 max-w-xl mx-auto">
-        Join lakhs of Indians who manage their insurance entirely online — no agents, no paperwork, no delays.
+      <p class="text-white/70 text-[16px] leading-relaxed mb-9 max-w-lg mx-auto">
+        Get covered today. File a claim from anywhere tomorrow.
+        Your family's financial future — sorted in under 2 minutes.
       </p>
       <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
         <a routerLink="/auth/register"
-           class="w-full sm:w-auto h-12 px-8 bg-accent hover:bg-accent-hover text-white font-semibold text-[15px] rounded-[10px] flex items-center justify-center transition-colors no-underline"
-           style="box-shadow: 0 4px 16px rgba(242,120,75,0.35);">
-          Start your coverage today
+           class="w-full sm:w-auto h-12 px-8 bg-amber-400 hover:bg-amber-300 text-ink font-bold text-[15px] rounded-full flex items-center justify-center transition-colors no-underline"
+           style="box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+          Protect my family now
+          <svg class="ml-2 shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </a>
         <a routerLink="/auth/login"
-           class="w-full sm:w-auto h-12 px-8 border border-white/20 text-white/80 font-semibold text-[15px] rounded-[10px] flex items-center justify-center hover:bg-white/10 transition-colors no-underline">
-          Already have an account?
+           class="w-full sm:w-auto h-12 px-8 border border-white/25 text-white font-semibold text-[15px] rounded-full flex items-center justify-center hover:bg-white/10 transition-colors no-underline">
+          Already a member? Sign in
         </a>
       </div>
     </div>
   </section>
 
   <!-- ── Footer ── -->
-  <footer class="bg-white border-t border-line">
-    <div class="max-w-6xl mx-auto px-5 lg:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-      <a routerLink="/" class="flex items-center gap-2 no-underline">
-        <div class="w-7 h-7 rounded-[7px] bg-primary flex items-center justify-center shrink-0">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+  <footer style="background: #111827;">
+    <div class="max-w-6xl mx-auto px-5 lg:px-8 py-10">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div>
+          <a routerLink="/" class="flex items-center gap-2 no-underline mb-2">
+            <div class="w-7 h-7 rounded-[7px] bg-primary flex items-center justify-center shrink-0">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <span style="font-family: var(--font-display); font-weight: 700;" class="text-[15px] text-white">SpeedClaim</span>
+          </a>
+          <p class="text-[12px] leading-relaxed" style="color: #6B7280; max-width: 210px;">
+            IRDAI Registered Insurance Platform.<br>Claim settlement ratio: 97.3%
+          </p>
         </div>
-        <span class="text-[15px] font-bold text-ink">SpeedClaim</span>
-      </a>
-      <p class="text-[12.5px] text-muted text-center order-last sm:order-none">© {{ year }} SpeedClaim. All rights reserved.</p>
-      <div class="flex items-center gap-5">
-        <a routerLink="/auth/login" class="text-[13px] text-muted hover:text-ink transition-colors no-underline">Sign in</a>
-        <a routerLink="/auth/register" class="text-[13px] text-muted hover:text-ink transition-colors no-underline">Register</a>
+        <div class="flex items-center gap-6">
+          <a routerLink="/auth/login" class="text-[13px] hover:text-white transition-colors no-underline" style="color: #9CA3AF;">Sign in</a>
+          <a routerLink="/auth/register" class="text-[13px] hover:text-white transition-colors no-underline" style="color: #9CA3AF;">Register</a>
+        </div>
+      </div>
+      <div class="mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2" style="border-top: 1px solid #1F2937;">
+        <p class="text-[12px]" style="color: #4B5563;">© {{ year }} SpeedClaim. All rights reserved.</p>
+        <p class="text-[12px]" style="color: #4B5563;">Registered under IRDAI · Subject to terms and conditions</p>
       </div>
     </div>
   </footer>

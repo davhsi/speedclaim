@@ -1,4 +1,4 @@
-<div class="animate-[sc-fade_.25s_ease-out]">
+<div class="animate-sc-fade">
   <!-- Back -->
   <button (click)="goBack()" class="inline-flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-primary text-[13px] font-medium p-0 mb-4">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
@@ -7,7 +7,7 @@
 
   @if (claim(); as c) {
     <!-- Header card -->
-    <div class="bg-white border border-line rounded-xl shadow-sm px-6 py-5 mb-5">
+    <div class="bg-white border border-line rounded-card shadow-sm px-6 py-5 mb-5">
       <div class="flex items-start justify-between gap-4 flex-wrap mb-4 pb-4 border-b border-line">
         <div>
           <div class="flex items-center gap-2.5 flex-wrap mb-1.5">
@@ -53,13 +53,13 @@
       <!-- LEFT -->
       <div>
         <!-- Incident description -->
-        <div class="bg-white border border-line rounded-xl shadow-sm p-5 mb-4">
+        <div class="bg-white border border-line rounded-card shadow-sm p-5 mb-4">
           <h3 class="text-sm font-semibold text-ink mb-3">Incident description</h3>
           <p class="text-[13px] text-body leading-relaxed">{{ c.incidentDescription }}</p>
         </div>
 
         <!-- Status timeline -->
-        <div class="bg-white border border-line rounded-xl shadow-sm p-5 mb-4">
+        <div class="bg-white border border-line rounded-card shadow-sm p-5 mb-4">
           <h3 class="text-sm font-semibold text-ink mb-5">Status timeline</h3>
           @if (timelineItems().length > 0) {
             <app-timeline [items]="timelineItems()" />
@@ -70,7 +70,7 @@
 
         <!-- Documents -->
         @if (c.documents && c.documents.length > 0) {
-          <div class="bg-white border border-line rounded-xl shadow-sm p-5 mb-4">
+          <div class="bg-white border border-line rounded-card shadow-sm p-5 mb-4">
             <h3 class="text-sm font-semibold text-ink mb-3">Documents</h3>
             @for (doc of c.documents; track doc.id) {
               <div class="flex items-center gap-3 py-2.5 border-b border-surface last:border-0">
@@ -88,7 +88,7 @@
       <!-- RIGHT: Action rail -->
       <div class="lg:sticky lg:top-20 flex flex-col gap-3.5">
         <!-- Assignment -->
-        <div class="bg-white border border-line rounded-xl shadow-sm p-[18px]">
+        <div class="bg-white border border-line rounded-card shadow-sm p-[18px]">
           <div class="text-xs font-bold text-muted uppercase tracking-wider mb-3">Assignment</div>
           @if (isAssignedToSelf()) {
             <div class="flex items-center gap-2 bg-success-bg border border-success-border rounded-lg px-3 py-2.5">
@@ -101,16 +101,16 @@
               <span class="text-[13px] text-body">Officer #{{ c.assignedOfficerId }}</span>
             </div>
           } @else {
-            <button (click)="onAssignSelf()" class="flex items-center justify-center gap-2 w-full h-10 border border-primary bg-primary-light rounded-lg text-[13px] font-semibold text-primary cursor-pointer hover:bg-primary/10 transition-colors">
+            <button (click)="onAssignSelf()" [disabled]="actionInFlight()" class="flex items-center justify-center gap-2 w-full h-10 border border-primary bg-primary-light rounded-lg text-[13px] font-semibold text-primary cursor-pointer hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-wait">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-              Assign to self
+              {{ actionInFlight() ? 'Assigning...' : 'Assign to self' }}
             </button>
           }
         </div>
 
         <!-- Decision -->
         @if (showDecisionCard()) {
-          <div class="bg-white border border-line rounded-xl shadow-sm p-[18px]">
+          <div class="bg-white border border-line rounded-card shadow-sm p-[18px]">
             <div class="text-xs font-bold text-muted uppercase tracking-wider mb-3">Decision</div>
             @if (canApprove()) {
               <button (click)="openModal('approve')" class="flex items-center justify-center gap-2 w-full h-11 border-none bg-success rounded-lg text-sm font-semibold text-white cursor-pointer hover:opacity-90 transition-opacity mb-2">
@@ -140,7 +140,7 @@
         }
 
         <!-- Case actions -->
-        <div class="bg-white border border-line rounded-xl shadow-sm p-[18px]">
+        <div class="bg-white border border-line rounded-card shadow-sm p-[18px]">
           <div class="text-xs font-bold text-muted uppercase tracking-wider mb-3">Case actions</div>
           <div class="flex flex-col gap-2">
             @if (canAssignSurveyor()) {
@@ -172,7 +172,7 @@
       </div>
     </div>
   } @else {
-    <div class="bg-white border border-line rounded-xl p-12 text-center">
+    <div class="bg-white border border-line rounded-card p-12 text-center">
       <p class="text-sm text-muted">Loading claim details...</p>
     </div>
   }
@@ -180,7 +180,7 @@
   <!-- Modal -->
   @if (modalType()) {
     <div (click)="closeModal()" class="fixed inset-0 bg-black/45 z-[400] flex items-center justify-center p-4">
-      <div (click)="$event.stopPropagation()" class="bg-white rounded-2xl shadow-modal w-[480px] max-w-[92vw] p-7 animate-[sc-fade_.2s_ease-out]">
+      <div (click)="$event.stopPropagation()" class="bg-white rounded-modal shadow-modal w-[480px] max-w-[92vw] p-7 animate-sc-fade">
         <div class="flex items-start justify-between mb-5">
           <h3 class="text-[17px] font-semibold text-ink">{{ modalTitle() }}</h3>
           <button (click)="closeModal()" class="bg-transparent border-none cursor-pointer text-muted p-0.5 flex shrink-0 ml-3">
@@ -228,7 +228,7 @@
           }
           @case ('requestDocs') {
             <div class="mb-5">
-              <label class="block text-[13px] font-medium text-ink mb-1.5">Documents required</label>
+              <label class="block text-[13px] font-medium text-ink mb-1.5">Documents required <span class="text-danger">*</span></label>
               <textarea [(ngModel)]="modalDocs" placeholder="List the documents required..." class="w-full h-24 px-3 py-2.5 border border-line rounded-lg text-[13px] text-body resize-y outline-none leading-relaxed"></textarea>
             </div>
           }
@@ -240,13 +240,13 @@
         }
 
         <div class="flex gap-2.5 justify-end">
-          <button (click)="closeModal()" class="h-11 px-5 border border-line bg-white rounded-lg text-sm font-semibold text-body cursor-pointer hover:bg-surface transition-colors">Cancel</button>
+          <button (click)="closeModal()" [disabled]="actionInFlight()" class="h-11 px-5 border border-line bg-white rounded-lg text-sm font-semibold text-body cursor-pointer hover:bg-surface transition-colors disabled:opacity-50 disabled:cursor-wait">Cancel</button>
           <button
             (click)="onModalConfirm()"
-            [disabled]="modalType() === 'assignSurveyor' && !modalSurveyorId"
+            [disabled]="modalConfirmDisabled()"
             class="h-11 px-6 border-none rounded-lg text-sm font-semibold text-white cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             [class]="modalConfirmBg()"
-          >{{ modalConfirmLabel() }}</button>
+          >{{ actionInFlight() ? 'Working...' : modalConfirmLabel() }}</button>
         </div>
       </div>
     </div>

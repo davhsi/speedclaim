@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination';
@@ -19,6 +19,7 @@ import { ClaimStatus, ClaimType } from '../../../core/models/enums';
 export class ClaimListComponent implements OnInit {
   private claimsService = inject(ClaimsOfficerService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   claims = signal<ClaimDto[]>([]);
   currentPage = signal(1);
@@ -31,6 +32,9 @@ export class ClaimListComponent implements OnInit {
   searchQuery = '';
 
   ngOnInit(): void {
+    const params = this.route.snapshot.queryParams;
+    if (params['status']) this.statusFilter = params['status'];
+    if (params['type']) this.typeFilter = params['type'];
     this.loadClaims();
   }
 

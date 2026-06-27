@@ -1,6 +1,6 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ClaimService } from '../services/claim.service';
 import { PolicyService } from '../../policies/services/policy.service';
 import { PolicyDto, IntimateClaimRequest } from '../../../../core/models/api.models';
@@ -27,13 +27,14 @@ export class ClaimFileComponent implements OnInit {
   submitting = signal(false);
   uploadedFiles: File[] = [];
   stepLabels = ['Select Policy', 'Details', 'Documents'];
+  today = new Date().toISOString().slice(0, 10);
 
   policyControl = this.fb.control('', Validators.required);
 
   claimForm = this.fb.group({
     claimType: ['Health', Validators.required],
     claimAmountRequested: [0, [Validators.required, Validators.min(1)]],
-    incidentDate: ['', Validators.required],
+    incidentDate: ['', [Validators.required, this.notFutureDate]],
     incidentDescription: ['', [Validators.required, Validators.minLength(10)]],
     isCashless: [false],
   });
@@ -48,6 +49,7 @@ export class ClaimFileComponent implements OnInit {
   onFileSelected(file: File): void { this.uploadedFiles.push(file); }
 
   submit(): void {
+    if (this.submitting() || !this.policyControl.value || this.claimForm.invalid) return;
     this.submitting.set(true);
     const req: IntimateClaimRequest = {
       policyId: this.policyControl.value ?? '',
@@ -70,5 +72,16 @@ export class ClaimFileComponent implements OnInit {
       },
       error: () => { this.submitting.set(false); },
     });
+  }
+
+  private notFutureDate(control: AbstractControl): { futureDate: true } | null {
+    const value = control.value;
+    if (!value) return null;
+
+    const selected = new Date(`${value}T00:00:00`);
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+
+    return selected > today ? { futureDate: true } : null;
   }
 }

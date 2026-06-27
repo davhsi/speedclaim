@@ -62,6 +62,13 @@ export class ClaimsOfficerDashboardComponent implements OnInit {
     return this.authService.currentUser()?.firstName ?? '';
   }
 
+  greeting(): string {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
+  }
+
   getTypeBgClass(type: string): string {
     const map: Record<string, string> = { Motor: 'bg-info-bg', Health: 'bg-success-bg', Life: 'bg-warning-bg', Accident: 'bg-info-bg', Theft: 'bg-danger-bg', NaturalDamage: 'bg-warning-bg' };
     return map[type] ?? 'bg-surface';
@@ -81,7 +88,7 @@ export class ClaimsOfficerDashboardComponent implements OnInit {
     this.router.navigate(['/claims-officer/claims', id]);
   }
 
-  navigateTo(path: string): void {
-    this.router.navigate([path]);
+  navigateTo(path: string, queryParams?: Record<string, string>): void {
+    this.router.navigate([path], queryParams ? { queryParams } : {});
   }
 }

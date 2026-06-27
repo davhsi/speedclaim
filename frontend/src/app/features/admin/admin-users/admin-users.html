@@ -1,4 +1,4 @@
-<div class="animate-[sc-fade_.25s_ease-out]">
+<div class="animate-sc-fade">
 
   <!-- Stat Cards -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
@@ -13,7 +13,7 @@
   </div>
 
   <!-- Toolbar + Table Card -->
-  <div class="bg-white border border-line rounded-xl shadow-sm overflow-hidden">
+  <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
 
     <!-- Toolbar -->
     <div class="px-5 py-3.5 border-b border-line flex items-center gap-3 flex-wrap">
@@ -166,7 +166,7 @@
   @if (activeModal() === 'changeRole') {
     <div class="fixed inset-0 z-[200] flex items-center justify-center p-4" (click)="closeModal()">
       <div class="absolute inset-0 bg-black/40"></div>
-      <div class="relative bg-white rounded-xl shadow-lg max-w-md w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
+      <div class="relative bg-white rounded-card shadow-lg max-w-md w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
         <h3 class="text-[15px] font-bold text-ink mb-0.5">Change role</h3>
         <p class="text-[12.5px] text-muted mb-5">{{ selectedUser()?.fullName }} &middot; {{ selectedUser()?.email }}</p>
 
@@ -200,7 +200,7 @@
   @if (activeModal() === 'sessions') {
     <div class="fixed inset-0 z-[200] flex items-center justify-center p-4" (click)="closeModal()">
       <div class="absolute inset-0 bg-black/40"></div>
-      <div class="relative bg-white rounded-xl shadow-lg max-w-lg w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
+      <div class="relative bg-white rounded-card shadow-lg max-w-lg w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
         <h3 class="text-[15px] font-bold text-ink mb-0.5">Active sessions</h3>
         <p class="text-[12.5px] text-muted mb-5">Sessions for {{ selectedUser()?.fullName }}</p>
 
@@ -236,7 +236,7 @@
   @if (activeModal() === 'resetPw') {
     <div class="fixed inset-0 z-[200] flex items-center justify-center p-4" (click)="closeModal()">
       <div class="absolute inset-0 bg-black/40"></div>
-      <div class="relative bg-white rounded-xl shadow-lg max-w-sm w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
+      <div class="relative bg-white rounded-card shadow-lg max-w-sm w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
         @if (!resetPwSent()) {
           <div class="flex items-center justify-center w-10 h-10 rounded-full bg-warning-bg mb-4">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D9920A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -265,7 +265,7 @@
   @if (activeModal() === 'invite') {
     <div class="fixed inset-0 z-[200] flex items-center justify-center p-4" (click)="closeModal()">
       <div class="absolute inset-0 bg-black/40"></div>
-      <div class="relative bg-white rounded-xl shadow-lg max-w-md w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
+      <div class="relative bg-white rounded-card shadow-lg max-w-md w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
         <h3 class="text-[15px] font-bold text-ink mb-5">Invite user</h3>
 
         <div class="space-y-4 mb-6">

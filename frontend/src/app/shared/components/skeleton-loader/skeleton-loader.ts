@@ -6,5 +6,5 @@ import { Component, input } from '@angular/core';
   templateUrl: './skeleton-loader.html',
 })
 export class SkeletonLoaderComponent {
-  variant = input<'card' | 'table-row' | 'text'>('text');
+  variant = input<'card' | 'list-card' | 'table-row' | 'text'>('text');
 }

@@ -9,15 +9,11 @@
   <div class="flex-1 overflow-y-auto p-3">
     @if (loading()) {
       @for (i of [1,2]; track i) {
-        <div class="bg-white border border-line rounded-[14px] mb-2.5 p-4 animate-pulse">
-          <div class="h-3 bg-surface-alt rounded w-28 mb-2"></div>
-          <div class="h-4 bg-surface-alt rounded w-40 mb-3"></div>
-          <div class="h-3 bg-surface-alt rounded w-52"></div>
-        </div>
+        <app-skeleton variant="list-card" />
       }
     } @else {
       @for (claim of pagedHistory(); track claim.id) {
-        <div class="bg-white border border-line rounded-[14px] mb-2.5 overflow-hidden shadow-xs flex">
+        <div class="bg-white border border-line rounded-card mb-2.5 overflow-hidden shadow-xs flex">
           <div class="w-1 bg-success shrink-0"></div>
           <div class="flex-1 py-[13px] px-3 min-w-0">
             <!-- ID + status -->

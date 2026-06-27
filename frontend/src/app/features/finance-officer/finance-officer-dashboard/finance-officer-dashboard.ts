@@ -66,6 +66,13 @@ export class FinanceOfficerDashboardComponent implements OnInit {
     return this.authService.currentUser()?.firstName ?? '';
   }
 
+  greeting(): string {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
+  }
+
   navigateTo(path: string): void {
     this.router.navigate([path]);
   }

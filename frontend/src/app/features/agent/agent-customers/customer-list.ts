@@ -3,11 +3,13 @@ import { RouterLink } from '@angular/router';
 import { AgentService, AgentCustomerDto } from '../services/agent.service';
 import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination';
+import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge';
+import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 
 @Component({
   selector: 'app-agent-customer-list',
   standalone: true,
-  imports: [RouterLink, SkeletonLoaderComponent, PaginationComponent],
+  imports: [RouterLink, SkeletonLoaderComponent, PaginationComponent, StatusBadgeComponent, DateFormatPipe],
   templateUrl: './customer-list.html',
 })
 export class AgentCustomerListComponent implements OnInit {
@@ -66,7 +68,4 @@ export class AgentCustomerListComponent implements OnInit {
     return colors[hash % colors.length];
   }
 
-  formatDate(dateStr: string): string {
-    return new Date(dateStr).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-  }
 }

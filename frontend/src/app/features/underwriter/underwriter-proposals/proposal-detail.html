@@ -1,4 +1,4 @@
-<div class="animate-[sc-fade_.25s_ease-out]">
+<div class="animate-sc-fade">
   <button (click)="goBack()" class="inline-flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-primary text-[13px] font-medium p-0 mb-4">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
     Back to queue
@@ -20,7 +20,7 @@
       <!-- Left column -->
       <div>
         <!-- Risk facts -->
-        <div class="bg-white border border-line rounded-xl shadow-sm p-5 mb-4">
+        <div class="bg-white border border-line rounded-card shadow-sm p-5 mb-4">
           <div class="text-sm font-semibold text-ink mb-3.5 flex items-center gap-2">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             Risk facts
@@ -47,7 +47,7 @@
 
         <!-- Documents -->
         @if (p.documents && p.documents.length > 0) {
-          <div class="bg-white border border-line rounded-xl shadow-sm p-5 mb-4">
+          <div class="bg-white border border-line rounded-card shadow-sm p-5 mb-4">
             <div class="text-sm font-semibold text-ink mb-3.5">Supporting documents</div>
             @for (doc of p.documents; track doc.id) {
               <div class="flex items-center gap-3 py-2.5 border-b border-line last:border-b-0">
@@ -61,7 +61,7 @@
 
         <!-- Members -->
         @if (p.members && p.members.length > 0) {
-          <div class="bg-white border border-line rounded-xl shadow-sm p-5 mb-4">
+          <div class="bg-white border border-line rounded-card shadow-sm p-5 mb-4">
             <div class="text-sm font-semibold text-ink mb-3.5">Members to be covered</div>
             <table class="w-full border-collapse text-[13px]">
               <thead>
@@ -86,7 +86,7 @@
       <!-- Right column -->
       <div class="lg:sticky lg:top-20">
         <!-- Review decision -->
-        <div class="bg-white border border-line rounded-xl shadow-sm p-5 mb-4">
+        <div class="bg-white border border-line rounded-card shadow-sm p-5 mb-4">
           <div class="text-sm font-semibold text-ink mb-3.5">Review decision</div>
           @if (isPending()) {
             <div class="flex flex-col gap-2.5">
@@ -106,7 +106,7 @@
         </div>
 
         <!-- Underwriter notes -->
-        <div class="bg-white border border-line rounded-xl shadow-sm p-5">
+        <div class="bg-white border border-line rounded-card shadow-sm p-5">
           <div class="text-sm font-semibold text-ink mb-3.5">Underwriter notes</div>
           <textarea
             [(ngModel)]="notes"
@@ -137,7 +137,7 @@
   @if (showDialog() === 'reject') {
     <div class="fixed inset-0 z-[400] flex items-center justify-center p-4" (click)="showDialog.set(null)">
       <div class="absolute inset-0 bg-black/40"></div>
-      <div class="relative bg-white rounded-xl shadow-lg max-w-md w-full p-6" (click)="$event.stopPropagation()">
+      <div class="relative bg-white rounded-card shadow-lg max-w-md w-full p-6" (click)="$event.stopPropagation()">
         <h3 class="text-lg font-semibold text-ink mb-2">Reject proposal</h3>
         <textarea [(ngModel)]="rejectReason" rows="3" placeholder="Rejection reason *" class="w-full p-3 border border-line rounded-lg text-sm outline-none resize-y mb-4"></textarea>
         <div class="flex justify-end gap-3">
@@ -152,7 +152,7 @@
   @if (showDialog() === 'docs') {
     <div class="fixed inset-0 z-[400] flex items-center justify-center p-4" (click)="showDialog.set(null)">
       <div class="absolute inset-0 bg-black/40"></div>
-      <div class="relative bg-white rounded-xl shadow-lg max-w-md w-full p-6" (click)="$event.stopPropagation()">
+      <div class="relative bg-white rounded-card shadow-lg max-w-md w-full p-6" (click)="$event.stopPropagation()">
         <h3 class="text-lg font-semibold text-ink mb-2">Request additional documents</h3>
         <textarea [(ngModel)]="docsRequest" rows="3" placeholder="Documents required" class="w-full p-3 border border-line rounded-lg text-sm outline-none resize-y mb-4"></textarea>
         <div class="flex justify-end gap-3">
