@@ -6,6 +6,7 @@ import { AgentService, AgentCustomerDto } from '../services/agent.service';
 import { ProductDto } from '../../../core/models/api.models';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { SafeHtmlPipe } from '../../../shared/pipes/safe-html.pipe';
+import { ToastService } from '../../../shared/components/toast/toast.service';
 
 type ProductType = 'Health' | 'Motor' | 'Life';
 
@@ -26,6 +27,7 @@ interface StepDef {
 export class AgentProposalSubmitComponent implements OnInit {
   private agentService = inject(AgentService);
   private router = inject(Router);
+  private toast = inject(ToastService);
 
   customers = signal<AgentCustomerDto[]>([]);
   products = signal<ProductDto[]>([]);
@@ -76,10 +78,31 @@ export class AgentProposalSubmitComponent implements OnInit {
   }
 
   nextStep(): void {
+    if (this.currentStep === 0) {
+      if (!this.selectedCustomerId) {
+        this.toast.warning('Please select a customer before continuing.');
+        return;
+      }
+      if (!this.selectedType) {
+        this.toast.warning('Please select a product type before continuing.');
+        return;
+      }
+    }
+
+    if (this.currentStep === 1 && !this.quoteResult()) {
+      this.toast.warning('Please calculate the premium before continuing.');
+      return;
+    }
+
     if (this.currentStep === 3) {
+      if (!this.confirmReady) {
+        this.toast.warning('Please confirm that all documents are accurate before submitting.');
+        return;
+      }
       this.submitProposal();
       return;
     }
+
     this.currentStep++;
     this.steps.set(this.buildSteps());
   }

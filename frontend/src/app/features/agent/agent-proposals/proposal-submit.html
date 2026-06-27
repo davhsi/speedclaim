@@ -135,38 +135,34 @@
 
     <!-- Step 4: Documents -->
     @if (currentStep === 3) {
-      <div class="text-[15px] font-semibold text-ink mb-1">Upload documents</div>
-      <p class="text-[13px] text-muted mb-5">As an agent, you can upload KYC documents on behalf of this customer.</p>
+      <div class="text-[15px] font-semibold text-ink mb-1">Document checklist</div>
+      <p class="text-[13px] text-muted mb-5">Ensure you have the following documents ready. KYC documents can be uploaded via <a routerLink="/agent/customer-kyc" class="text-primary font-medium hover:underline">Customer KYC</a> after the proposal is approved.</p>
 
       <div class="text-[11px] font-semibold uppercase tracking-widest text-muted mb-2.5">KYC documents</div>
       @for (doc of kycDocs; track doc.label) {
-        <div class="border-[1.5px] border-dashed border-line rounded-[10px] p-4 mb-2.5 flex items-center gap-3.5">
-          <span class="w-[38px] h-[38px] rounded-[9px] bg-primary-light flex items-center justify-center shrink-0">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <div class="border border-line rounded-[10px] p-3.5 mb-2 flex items-center gap-3">
+          <span class="w-[34px] h-[34px] rounded-[9px] bg-primary-light flex items-center justify-center shrink-0">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           </span>
           <div class="flex-1">
-            <div class="text-sm font-semibold text-ink">{{ doc.label }}</div>
+            <div class="text-[13px] font-semibold text-ink">{{ doc.label }}</div>
             <div class="text-xs text-muted mt-0.5">{{ doc.hint }}</div>
           </div>
-          <button class="h-[34px] inline-flex items-center px-3.5 border border-line rounded-control text-[13px] font-semibold text-body cursor-pointer bg-white shrink-0">
-            Choose file
-          </button>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         </div>
       }
 
       <div class="text-[11px] font-semibold uppercase tracking-widest text-muted mt-5 mb-2.5">Proposal documents</div>
       @for (doc of proposalDocs; track doc.label) {
-        <div class="border-[1.5px] border-dashed border-line rounded-[10px] p-4 mb-2.5 flex items-center gap-3.5">
-          <span class="w-[38px] h-[38px] rounded-[9px] bg-surface flex items-center justify-center shrink-0">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <div class="border border-line rounded-[10px] p-3.5 mb-2 flex items-center gap-3">
+          <span class="w-[34px] h-[34px] rounded-[9px] bg-surface flex items-center justify-center shrink-0">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           </span>
           <div class="flex-1">
-            <div class="text-sm font-semibold text-ink">{{ doc.label }}</div>
+            <div class="text-[13px] font-semibold text-ink">{{ doc.label }}</div>
             <div class="text-xs text-muted mt-0.5">{{ doc.hint }}</div>
           </div>
-          <button class="h-[34px] inline-flex items-center px-3.5 border border-line rounded-control text-[13px] font-semibold text-body cursor-pointer bg-white shrink-0">
-            Choose file
-          </button>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         </div>
       }
 

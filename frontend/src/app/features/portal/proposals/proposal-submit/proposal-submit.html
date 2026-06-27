@@ -54,7 +54,9 @@
           </div>
         </div>
         <div class="flex justify-end mt-5 pt-5 border-t border-line">
-          <button class="h-10 px-5 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover transition-colors" (click)="step.set(1)">Continue</button>
+          <button class="h-10 px-5 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover transition-colors disabled:opacity-40"
+                  [disabled]="form.invalid"
+                  (click)="step.set(1)">Continue</button>
         </div>
       }
       @case (1) {
@@ -89,9 +91,17 @@
           </div>
         }
         <button class="text-[13px] text-primary font-semibold hover:underline" (click)="addNominee()">+ Add Nominee</button>
+        @if (nominees.length > 0) {
+          <div class="mt-3 text-[12px] font-semibold"
+               [class]="totalShares === 100 ? 'text-success' : 'text-danger'">
+            Total share: {{ totalShares }}%{{ totalShares !== 100 ? ' — must equal 100%' : '' }}
+          </div>
+        }
         <div class="flex justify-between mt-5 pt-5 border-t border-line">
           <button class="h-10 px-5 border border-line bg-white text-[13px] font-semibold text-body rounded-control hover:bg-surface-alt transition-colors" (click)="step.set(0)">Back</button>
-          <button class="h-10 px-5 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover transition-colors" (click)="step.set(2)">Continue</button>
+          <button class="h-10 px-5 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover transition-colors disabled:opacity-40"
+                  [disabled]="!nomineesValid"
+                  (click)="step.set(2)">Continue</button>
         </div>
       }
       @case (2) {

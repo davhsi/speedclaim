@@ -62,6 +62,14 @@ export class ProposalSubmitComponent implements OnInit {
 
   addNominee(): void { this.nominees.push(this.createNomineeGroup()); }
 
+  get totalShares(): number {
+    return this.nominees.controls.reduce((sum, g) => sum + (Number(g.get('sharePercentage')?.value) || 0), 0);
+  }
+
+  get nomineesValid(): boolean {
+    return this.nominees.valid && this.nominees.length > 0 && this.totalShares === 100;
+  }
+
   onDocSelected(key: string, file: File): void { this.uploadedFiles.set(key, file); }
 
   private loadDocRequirements(productId: string): void {
@@ -73,6 +81,10 @@ export class ProposalSubmitComponent implements OnInit {
     const customerId = this.profile()?.customerId;
     if (!customerId) {
       this.toast.error('Customer profile is not ready yet');
+      return;
+    }
+    if (this.form.invalid || !this.nomineesValid) {
+      this.toast.warning('Please complete all required fields before submitting.');
       return;
     }
 
