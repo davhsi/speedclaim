@@ -327,8 +327,12 @@ public partial class SpeedClaimDbContext : DbContext
         {
             e.HasKey(x => x.Id).HasName("PK_endorsements");
             e.Property(x => x.EndorsementType).HasConversion<string>();
-            e.Property(x => x.OldValue).HasColumnType("jsonb");
-            e.Property(x => x.NewValue).HasColumnType("jsonb");
+            // OldValue/NewValue hold plain scalar values (phone number, address line, sum
+            // assured, etc.), not JSON documents. Mapping them as jsonb made Postgres reject
+            // any bare string with "invalid input syntax for type json", 500-ing every
+            // endorsement request that supplied old/new values. text is the correct type.
+            e.Property(x => x.OldValue).HasColumnType("text");
+            e.Property(x => x.NewValue).HasColumnType("text");
             e.Property(x => x.Status).HasMaxLength(50).HasConversion<string>();
             e.HasOne(x => x.Policy).WithMany(p => p.Endorsements).HasForeignKey(x => x.PolicyId).HasConstraintName("FK_endorsements_policies_policy_id").OnDelete(DeleteBehavior.Cascade);
             e.HasOne(x => x.RequestedBy).WithMany().HasForeignKey(x => x.RequestedById).HasConstraintName("FK_endorsements_users_requested_by").OnDelete(DeleteBehavior.Restrict);

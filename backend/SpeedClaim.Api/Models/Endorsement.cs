@@ -10,8 +10,8 @@ public class Endorsement
     public SpeedClaim.Api.Models.Enums.EndorsementType EndorsementType { get; set; }
     public string Description { get; set; } = string.Empty;
     
-    public string? OldValue { get; set; } // JSONB
-    public string? NewValue { get; set; } // JSONB
+    public string? OldValue { get; set; } // plain text (e.g. previous phone/address/sum assured)
+    public string? NewValue { get; set; } // plain text (e.g. requested phone/address/sum assured)
     
     public SpeedClaim.Api.Models.Enums.EndorsementStatus Status { get; set; } = SpeedClaim.Api.Models.Enums.EndorsementStatus.Requested;
     
