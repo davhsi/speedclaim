@@ -39,11 +39,19 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5" [formGroup]="profileForm">
             <div>
               <label class="block text-xs text-muted mb-1.5">First name</label>
-              <input formControlName="firstName" class="h-[42px]" />
+              <input formControlName="firstName" class="h-[42px]"
+                     [class.border-danger]="profileForm.get('firstName')?.invalid && profileForm.get('firstName')?.touched" />
+              @if (profileForm.get('firstName')?.invalid && profileForm.get('firstName')?.touched) {
+                <div class="text-[11px] text-danger mt-1">First name is required.</div>
+              }
             </div>
             <div>
               <label class="block text-xs text-muted mb-1.5">Last name</label>
-              <input formControlName="lastName" class="h-[42px]" />
+              <input formControlName="lastName" class="h-[42px]"
+                     [class.border-danger]="profileForm.get('lastName')?.invalid && profileForm.get('lastName')?.touched" />
+              @if (profileForm.get('lastName')?.invalid && profileForm.get('lastName')?.touched) {
+                <div class="text-[11px] text-danger mt-1">Last name is required.</div>
+              }
             </div>
             <div>
               <label class="block text-xs text-muted mb-1.5">Email</label>
@@ -51,7 +59,11 @@
             </div>
             <div>
               <label class="block text-xs text-muted mb-1.5">Phone</label>
-              <input formControlName="phone" class="h-[42px] sc-numeric" />
+              <input formControlName="phone" class="h-[42px] sc-numeric"
+                     [class.border-danger]="profileForm.get('phone')?.invalid && profileForm.get('phone')?.touched" />
+              @if (profileForm.get('phone')?.invalid && profileForm.get('phone')?.touched) {
+                <div class="text-[11px] text-danger mt-1">Enter a valid 10-digit phone number.</div>
+              }
             </div>
             <div>
               <label class="block text-xs text-muted mb-1.5">Marital status</label>
@@ -83,7 +95,11 @@
                 <div><label class="block text-xs text-muted mb-1.5">Line 2</label><input formControlName="line2" class="h-[42px]" /></div>
                 <div><label class="block text-xs text-muted mb-1.5">City</label><input formControlName="city" class="h-[42px]" /></div>
                 <div><label class="block text-xs text-muted mb-1.5">State</label><input formControlName="state" class="h-[42px]" /></div>
-                <div><label class="block text-xs text-muted mb-1.5">Postal code</label><input formControlName="postalCode" class="h-[42px] sc-numeric" /></div>
+                <div><label class="block text-xs text-muted mb-1.5">Postal code</label><input formControlName="postalCode" class="h-[42px] sc-numeric" [class.border-danger]="addressForm.get('postalCode')?.invalid && addressForm.get('postalCode')?.touched" />
+                  @if (addressForm.get('postalCode')?.invalid && addressForm.get('postalCode')?.touched) {
+                    <div class="text-[11px] text-danger mt-1">Enter a valid 6-digit postal code.</div>
+                  }
+                </div>
                 <div><label class="block text-xs text-muted mb-1.5">Type</label><select formControlName="type" class="h-[42px]"><option value="Permanent">Permanent</option><option value="Current">Current</option></select></div>
               </div>
               <button class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover" (click)="saveAddress()">Save address</button>
@@ -218,15 +234,25 @@
           <div class="text-[13px] font-semibold text-ink">Upload KYC documents</div>
           <div>
             <label class="block text-xs text-muted mb-1.5">Aadhaar number</label>
-            <input type="text" [(ngModel)]="aadhaarNum" placeholder="12 digit Aadhaar number" class="h-[42px] sc-numeric mb-2" />
+            <input type="text" [ngModel]="aadhaarNum()" (ngModelChange)="aadhaarNum.set($event)" inputmode="numeric" maxlength="12"
+                   placeholder="12 digit Aadhaar number" class="h-[42px] sc-numeric mb-1"
+                   [class]="aadhaarError() ? 'border-[1.5px] border-danger' : ''" />
+            @if (aadhaarError()) {
+              <div class="text-[11px] text-danger mb-1.5">{{ aadhaarError() }}</div>
+            }
             <app-file-upload label="Aadhaar document" hint="Front page (PDF, JPG, PNG up to 5MB)" (fileSelected)="aadhaarFile = $event" />
-            <button class="mt-2 h-9 px-4 bg-primary text-white text-xs font-semibold rounded-control hover:bg-primary-hover disabled:opacity-40" [disabled]="!aadhaarFile" (click)="uploadAadhaar()">Upload Aadhaar</button>
+            <button class="mt-2 h-9 px-4 bg-primary text-white text-xs font-semibold rounded-control hover:bg-primary-hover disabled:opacity-40" [disabled]="!aadhaarFile || !aadhaarValid()" (click)="uploadAadhaar()">Upload Aadhaar</button>
           </div>
           <div>
             <label class="block text-xs text-muted mb-1.5">PAN number</label>
-            <input type="text" [(ngModel)]="panNum" placeholder="e.g., ABCDE1234F" class="h-[42px] mb-2" />
+            <input type="text" [ngModel]="panNum()" (ngModelChange)="panNum.set($event.toUpperCase())" maxlength="10"
+                   placeholder="e.g., ABCDE1234F" class="h-[42px] mb-1"
+                   [class]="panError() ? 'border-[1.5px] border-danger' : ''" />
+            @if (panError()) {
+              <div class="text-[11px] text-danger mb-1.5">{{ panError() }}</div>
+            }
             <app-file-upload label="PAN document" hint="Front page (PDF, JPG, PNG up to 5MB)" (fileSelected)="panFile = $event" />
-            <button class="mt-2 h-9 px-4 bg-primary text-white text-xs font-semibold rounded-control hover:bg-primary-hover disabled:opacity-40" [disabled]="!panFile" (click)="uploadPan()">Upload PAN</button>
+            <button class="mt-2 h-9 px-4 bg-primary text-white text-xs font-semibold rounded-control hover:bg-primary-hover disabled:opacity-40" [disabled]="!panFile || !panValid()" (click)="uploadPan()">Upload PAN</button>
           </div>
         </div>
       }

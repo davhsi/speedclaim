@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -6,6 +6,9 @@ import { AgentService, AgentCustomerDto } from '../services/agent.service';
 import { KycRecordDto } from '../../../core/models/api.models';
 import { FileUploadComponent } from '../../../shared/components/file-upload/file-upload';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+
+const AADHAAR_PATTERN = /^\d{12}$/;
+const PAN_PATTERN = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
 
 @Component({
   selector: 'app-agent-customer-kyc',
@@ -23,10 +26,24 @@ export class AgentCustomerKycComponent implements OnInit {
   selectedCustomerId = signal<number | null>(null);
   existingKyc = signal<KycRecordDto | null>(null);
   idType = signal<'aadhaar' | 'pan'>('aadhaar');
-  idNumber = '';
+  idNumber = signal('');
   frontFile: File | null = null;
   backFile: File | null = null;
   submitting = signal(false);
+
+  idValid = computed(() => {
+    const v = this.idNumber().trim().toUpperCase();
+    return this.idType() === 'aadhaar' ? AADHAAR_PATTERN.test(v) : PAN_PATTERN.test(v);
+  });
+
+  idError = computed(() => {
+    const v = this.idNumber().trim();
+    if (!v) return '';
+    if (this.idValid()) return '';
+    return this.idType() === 'aadhaar'
+      ? 'Aadhaar must be exactly 12 digits.'
+      : 'PAN must be in the format ABCDE1234F.';
+  });
 
   ngOnInit(): void {
     this.agentService.getCustomers().subscribe(c => this.customers.set(c));
@@ -45,15 +62,16 @@ export class AgentCustomerKycComponent implements OnInit {
   }
 
   submit(): void {
-    if (!this.selectedCustomerId() || !this.frontFile || !this.idNumber) return;
+    if (!this.selectedCustomerId() || !this.frontFile || !this.idValid()) return;
     this.submitting.set(true);
 
+    const idValue = this.idNumber().trim().toUpperCase();
     const fd = new FormData();
     fd.append('frontDocument', this.frontFile);
     fd.append('customerId', this.selectedCustomerId()!.toString());
 
     if (this.idType() === 'aadhaar') {
-      fd.append('aadhaarNumber', this.idNumber);
+      fd.append('aadhaarNumber', idValue);
       if (this.backFile) fd.append('backDocument', this.backFile);
       this.http.post<KycRecordDto>('/api/v1/users/kyc/aadhaar', fd).subscribe({
         next: () => {
@@ -64,7 +82,7 @@ export class AgentCustomerKycComponent implements OnInit {
         error: () => { this.toast.error('Upload failed'); this.submitting.set(false); },
       });
     } else {
-      fd.append('panNumber', this.idNumber);
+      fd.append('panNumber', idValue);
       this.http.post<KycRecordDto>('/api/v1/users/kyc/pan', fd).subscribe({
         next: () => {
           this.toast.success('PAN uploaded successfully');

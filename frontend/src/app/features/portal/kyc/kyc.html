@@ -71,22 +71,32 @@
 
       <div>
         <label class="block text-xs text-muted mb-1.5">Aadhaar number</label>
-        <input type="text" [(ngModel)]="aadhaarNum" placeholder="12 digit Aadhaar number" class="h-[42px] sc-numeric mb-2" />
+        <input type="text" [ngModel]="aadhaarNum()" (ngModelChange)="aadhaarNum.set($event)" inputmode="numeric" maxlength="12"
+               placeholder="12 digit Aadhaar number" class="h-[42px] sc-numeric mb-1"
+               [class]="aadhaarError() ? 'border-[1.5px] border-danger' : ''" />
+        @if (aadhaarError()) {
+          <div class="text-[11px] text-danger mb-1.5">{{ aadhaarError() }}</div>
+        }
         <app-file-upload label="Aadhaar document" hint="Front page (PDF, JPG, PNG up to 5MB)" (fileSelected)="aadhaarFile = $event" />
         <button
           class="mt-3 h-9 px-4 bg-primary text-white text-xs font-semibold rounded-control hover:bg-primary-hover disabled:opacity-40"
-          [disabled]="!aadhaarFile || !aadhaarNum || submitting()"
+          [disabled]="!aadhaarFile || !aadhaarValid() || submitting()"
           (click)="uploadAadhaar()"
         >Upload Aadhaar</button>
       </div>
 
       <div class="pt-4 border-t border-line">
         <label class="block text-xs text-muted mb-1.5">PAN number</label>
-        <input type="text" [(ngModel)]="panNum" placeholder="e.g., ABCDE1234F" class="h-[42px] mb-2" />
+        <input type="text" [ngModel]="panNum()" (ngModelChange)="panNum.set($event.toUpperCase())" maxlength="10"
+               placeholder="e.g., ABCDE1234F" class="h-[42px] mb-1"
+               [class]="panError() ? 'border-[1.5px] border-danger' : ''" />
+        @if (panError()) {
+          <div class="text-[11px] text-danger mb-1.5">{{ panError() }}</div>
+        }
         <app-file-upload label="PAN document" hint="Front page (PDF, JPG, PNG up to 5MB)" (fileSelected)="panFile = $event" />
         <button
           class="mt-3 h-9 px-4 bg-primary text-white text-xs font-semibold rounded-control hover:bg-primary-hover disabled:opacity-40"
-          [disabled]="!panFile || !panNum || submitting()"
+          [disabled]="!panFile || !panValid() || submitting()"
           (click)="uploadPan()"
         >Upload PAN</button>
       </div>

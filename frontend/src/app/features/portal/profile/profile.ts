@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProfileService } from './services/profile.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -9,6 +9,9 @@ import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialo
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 import { postalCodeValidator, phoneValidator } from '../../../shared/validators/input.validators';
+
+const AADHAAR_PATTERN = /^\d{12}$/;
+const PAN_PATTERN = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
 
 @Component({
   selector: 'app-profile',
@@ -31,10 +34,23 @@ export class ProfileComponent implements OnInit {
   deleteConfirm = signal<{ type: string; id: string } | null>(null);
   tabs = ['Personal Info', 'Family Members', 'KYC'];
 
-  aadhaarNum = '';
-  panNum = '';
+  aadhaarNum = signal('');
+  panNum = signal('');
   aadhaarFile: File | null = null;
   panFile: File | null = null;
+
+  aadhaarError = computed(() => {
+    const v = this.aadhaarNum().trim();
+    if (!v) return '';
+    return AADHAAR_PATTERN.test(v) ? '' : 'Aadhaar must be exactly 12 digits.';
+  });
+  panError = computed(() => {
+    const v = this.panNum().trim().toUpperCase();
+    if (!v) return '';
+    return PAN_PATTERN.test(v) ? '' : 'PAN must be in the format ABCDE1234F.';
+  });
+  aadhaarValid = computed(() => AADHAAR_PATTERN.test(this.aadhaarNum().trim()));
+  panValid = computed(() => PAN_PATTERN.test(this.panNum().trim().toUpperCase()));
 
   profileForm = this.fb.group({
     firstName: ['', Validators.required],
@@ -78,6 +94,11 @@ export class ProfileComponent implements OnInit {
   }
 
   saveProfile(): void {
+    if (this.profileForm.invalid) {
+      this.profileForm.markAllAsTouched();
+      this.toast.warning('Please correct the highlighted fields before saving.');
+      return;
+    }
     this.profileService.updateProfile(this.profileForm.getRawValue() as any).subscribe({
       next: () => this.toast.success('Profile updated'),
       error: () => this.toast.error('Update failed'),
@@ -85,6 +106,11 @@ export class ProfileComponent implements OnInit {
   }
 
   saveAddress(): void {
+    if (this.addressForm.invalid) {
+      this.addressForm.markAllAsTouched();
+      this.toast.warning('Please correct the highlighted fields before saving.');
+      return;
+    }
     this.profileService.addAddress(this.addressForm.getRawValue() as any).subscribe({
       next: () => {
         this.toast.success('Address added');
@@ -116,6 +142,11 @@ export class ProfileComponent implements OnInit {
   }
 
   saveMember(): void {
+    if (this.memberForm.invalid) {
+      this.memberForm.markAllAsTouched();
+      this.toast.warning('Please correct the highlighted fields before saving.');
+      return;
+    }
     this.profileService.addFamilyMember(this.memberForm.getRawValue() as any).subscribe({
       next: member => {
         this.familyMembers.update(m => [...m, member]);
@@ -128,16 +159,16 @@ export class ProfileComponent implements OnInit {
   }
 
   uploadAadhaar(): void {
-    if (!this.aadhaarFile) return;
-    this.profileService.uploadAadhaar(this.aadhaarFile, this.aadhaarNum).subscribe({
+    if (!this.aadhaarFile || !this.aadhaarValid()) return;
+    this.profileService.uploadAadhaar(this.aadhaarFile, this.aadhaarNum().trim()).subscribe({
       next: k => { this.kyc.set(k); this.toast.success('Aadhaar uploaded'); },
       error: () => this.toast.error('Upload failed'),
     });
   }
 
   uploadPan(): void {
-    if (!this.panFile) return;
-    this.profileService.uploadPan(this.panFile, this.panNum).subscribe({
+    if (!this.panFile || !this.panValid()) return;
+    this.profileService.uploadPan(this.panFile, this.panNum().trim().toUpperCase()).subscribe({
       next: k => { this.kyc.set(k); this.toast.success('PAN uploaded'); },
       error: () => this.toast.error('Upload failed'),
     });

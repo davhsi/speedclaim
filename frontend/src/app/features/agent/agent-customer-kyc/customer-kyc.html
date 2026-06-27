@@ -60,11 +60,18 @@
       <label class="block text-xs font-medium text-body mb-1.5">{{ idType() === 'aadhaar' ? 'Aadhaar number' : 'PAN number' }}</label>
       <input
         type="text"
-        [(ngModel)]="idNumber"
+        [ngModel]="idNumber()"
+        (ngModelChange)="idNumber.set(idType() === 'pan' ? $event.toUpperCase() : $event)"
+        [attr.maxlength]="idType() === 'aadhaar' ? 12 : 10"
         class="h-[42px] sc-numeric"
+        [class]="idError() ? 'border-[1.5px] border-danger' : ''"
         [placeholder]="idType() === 'aadhaar' ? '12 digit Aadhaar number' : 'e.g., ABCDE1234F'"
       />
-      <div class="text-[11px] text-muted mt-1">{{ idType() === 'aadhaar' ? 'Encrypted with AES-256. Only the last 4 digits are visible to staff.' : 'Encrypted at rest. Only the last 4 characters are visible.' }}</div>
+      @if (idError()) {
+        <div class="text-[11px] text-danger mt-1">{{ idError() }}</div>
+      } @else {
+        <div class="text-[11px] text-muted mt-1">{{ idType() === 'aadhaar' ? 'Encrypted with AES-256. Only the last 4 digits are visible to staff.' : 'Encrypted at rest. Only the last 4 characters are visible.' }}</div>
+      }
     </div>
 
     <!-- File uploads -->
@@ -91,7 +98,7 @@
       <a routerLink="/agent/customers" class="h-10 px-5 bg-white border border-line text-[13px] font-semibold text-body rounded-control hover:bg-surface transition-colors flex items-center">Cancel</a>
       <button
         class="h-10 px-5 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover disabled:opacity-40 transition-colors"
-        [disabled]="!selectedCustomerId() || !frontFile || !idNumber || submitting()"
+        [disabled]="!selectedCustomerId() || !frontFile || !idValid() || submitting()"
         (click)="submit()"
       >{{ submitting() ? 'Submitting...' : 'Submit KYC' }}</button>
     </div>
