@@ -46,6 +46,11 @@ public class ClaimService : IClaimService
         return surveyor is not null && surveyor.Id != Guid.Empty ? surveyor.Id : userId;
     }
 
+    private static bool IsSurveyReportLocked(ClaimStatus status)
+    {
+        return status is ClaimStatus.Approved or ClaimStatus.Rejected or ClaimStatus.Settled or ClaimStatus.Withdrawn;
+    }
+
     private ClaimDto MapToDto(Claim claim)
     {
         var user = claim.Customer?.User;
@@ -311,6 +316,17 @@ public class ClaimService : IClaimService
         var claim = await _unitOfWork.Claims.GetByIdAsync(claimId);
         if (claim == null || claim.SurveyorId != surveyorRecordId)
             throw new NotFoundException("Claim not found or surveyor not assigned to this claim.");
+
+        if (IsSurveyReportLocked(claim.Status))
+            throw new ConflictException($"Survey report cannot be submitted for a {claim.Status} claim.");
+
+        var existingReport = await _unitOfWork.SubmittedDocuments.FirstOrDefaultAsync(d =>
+            d.EntityType == EntityType.Claim &&
+            d.EntityId == claimId &&
+            d.DocumentKey == "SurveyorReport");
+
+        if (existingReport != null)
+            throw new ConflictException("Survey report has already been submitted for this claim.");
 
         if (request.ReportDocument == null || request.ReportDocument.Length == 0)
             throw new ValidationException("Invalid report file.");

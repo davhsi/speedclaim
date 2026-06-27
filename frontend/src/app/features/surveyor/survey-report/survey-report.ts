@@ -36,8 +36,10 @@ export class SurveyReportComponent implements OnInit {
   photos = signal<File[]>([]);
   docs = signal<File[]>([]);
 
+  dmgTypeErr = signal('');
   descErr = signal('');
   costErr = signal('');
+  driveableErr = signal('');
   photoErr = signal('');
 
   submitting = signal(false);
@@ -50,8 +52,18 @@ export class SurveyReportComponent implements OnInit {
     this.surveyorService.getAssignedClaims().subscribe({
       next: claims => {
         const found = claims.find(c => c.id.toString() === claimId);
-        if (found) this.claim.set(found);
-        else this.router.navigate(['/surveyor/claims']);
+        if (!found) {
+          this.router.navigate(['/surveyor/claims']);
+          return;
+        }
+
+        if (this.isSurveyReportLocked(found.status)) {
+          this.toastService.warning('This claim no longer accepts survey reports.');
+          this.router.navigate(['/surveyor/claims']);
+          return;
+        }
+
+        this.claim.set(found);
       },
       error: () => this.router.navigate(['/surveyor/claims']),
     });
@@ -88,12 +100,26 @@ export class SurveyReportComponent implements OnInit {
     this.docs.update(prev => prev.filter((_, i) => i !== index));
   }
 
+  selectDamageType(type: DamageType): void {
+    this.dmgType.set(type);
+    this.dmgTypeErr.set('');
+  }
+
+  setDriveable(value: boolean): void {
+    this.driveable.set(value);
+    this.driveableErr.set('');
+  }
+
   validate(): boolean {
     let ok = true;
+    if (!this.dmgType()) { this.dmgTypeErr.set('Please choose a damage type.'); ok = false; }
+    else this.dmgTypeErr.set('');
     if (!this.desc.trim()) { this.descErr.set('Please describe the damage observed.'); ok = false; }
     else this.descErr.set('');
     if (!this.cost || parseFloat(this.cost) <= 0) { this.costErr.set('Please enter a valid estimated repair cost.'); ok = false; }
     else this.costErr.set('');
+    if (this.driveable() === null) { this.driveableErr.set('Please indicate whether the vehicle is driveable.'); ok = false; }
+    else this.driveableErr.set('');
     if (this.photos().length === 0) { this.photoErr.set('Please upload at least one damage photo.'); ok = false; }
     else this.photoErr.set('');
     return ok;
@@ -101,13 +127,19 @@ export class SurveyReportComponent implements OnInit {
 
   submit(): void {
     if (this.submitting()) return;
+    const c = this.claim();
+    if (!c || this.isSurveyReportLocked(c.status)) {
+      this.toastService.warning('This claim no longer accepts survey reports.');
+      this.router.navigate(['/surveyor/claims']);
+      return;
+    }
+
     if (!this.validate()) {
       this.toastService.warning('Please fill in all required fields.');
       return;
     }
 
     this.submitting.set(true);
-    const c = this.claim()!;
 
     const remarks = [
       `Damage type: ${this.dmgType()}`,
@@ -148,5 +180,9 @@ export class SurveyReportComponent implements OnInit {
     const rest = integer.slice(0, -3);
     const formatted = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',');
     return '₹' + (formatted ? formatted + ',' : '') + lastThree + '.' + decimal;
+  }
+
+  private isSurveyReportLocked(status: string): boolean {
+    return ['Approved', 'PayoutProcessed', 'Rejected', 'Settled', 'Withdrawn'].includes(status);
   }
 }

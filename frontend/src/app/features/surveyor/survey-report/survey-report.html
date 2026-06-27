@@ -62,11 +62,14 @@
                       [class]="dmgType() === dt
                         ? 'border-primary bg-primary-light text-primary'
                         : 'border-line bg-white text-muted'"
-                      (click)="dmgType.set(dt)">
+                      (click)="selectDamageType(dt)">
                 {{ dt }}
               </button>
             }
           </div>
+          @if (dmgTypeErr()) {
+            <div class="text-[11px] text-danger mt-[5px]">{{ dmgTypeErr() }}</div>
+          }
         </div>
 
         <!-- Damage description -->
@@ -113,7 +116,7 @@
                     [class]="driveable() === true
                       ? 'border-success bg-success-bg text-success'
                       : 'border-line bg-white text-muted'"
-                    (click)="driveable.set(true)">
+                    (click)="setDriveable(true)">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
@@ -123,13 +126,16 @@
                     [class]="driveable() === false
                       ? 'border-danger bg-danger-bg text-danger'
                       : 'border-line bg-white text-muted'"
-                    (click)="driveable.set(false)">
+                    (click)="setDriveable(false)">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                 <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
               </svg>
               No
             </button>
           </div>
+          @if (driveableErr()) {
+            <div class="text-[11px] text-danger mt-[5px]">{{ driveableErr() }}</div>
+          }
         </div>
 
         <!-- Recommended workshop -->
@@ -244,12 +250,12 @@
           }
         </div>
 
-        <!-- API endpoint note -->
+        <!-- Review note -->
         <div class="bg-surface border border-line rounded-[10px] px-[13px] py-2.5 mb-4 flex items-center gap-2">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
-          <span class="text-[11px] text-muted sc-numeric">POST /claims/<strong class="text-primary">{{ claim()?.id }}</strong>/survey-report · multipart/form-data</span>
+          <span class="text-[11px] text-muted">Your report and photos will be shared with the claims officer for review.</span>
         </div>
 
         <!-- Submit button -->
@@ -281,9 +287,6 @@
         <div class="text-[19px] font-bold text-ink mb-2">Report submitted!</div>
         <div class="text-[13px] text-muted leading-relaxed mb-1.5">
           Survey report for <strong class="text-primary sc-numeric">{{ claim()?.claimNumber }}</strong> sent to the claims officer for review.
-        </div>
-        <div class="text-[10px] text-[#C5CBD3] sc-numeric mb-[22px] tracking-wide">
-          POST /claims/{{ claim()?.id }}/survey-report · 200 OK
         </div>
         <button class="w-full h-[46px] border-none bg-primary text-white rounded-[12px] text-sm font-bold cursor-pointer hover:bg-primary-dark transition-colors"
                 (click)="onDone()">

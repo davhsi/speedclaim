@@ -39,6 +39,8 @@ public class ClaimServiceTests
         _mockUnitOfWork.Setup(u => u.Policies).Returns(_mockPolicyRepo.Object);
         _mockUnitOfWork.Setup(u => u.ClaimStatusHistories).Returns(_mockHistoryRepo.Object);
         _mockUnitOfWork.Setup(u => u.SubmittedDocuments).Returns(_mockDocRepo.Object);
+        _mockDocRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<SubmittedDocument, bool>>>()))
+            .ReturnsAsync((SubmittedDocument?)null);
         _mockUnitOfWork.Setup(u => u.Customers).Returns(new Mock<IRepository<Customer>>().Object);
         _mockUnitOfWork.Setup(u => u.Surveyors).Returns(new Mock<IRepository<Surveyor>>().Object);
         _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
@@ -454,6 +456,46 @@ public class ClaimServiceTests
 
         Assert.That(result, Is.EqualTo("/storage/report.pdf"));
         _mockDocRepo.Verify(r => r.AddAsync(It.IsAny<SubmittedDocument>()), Times.Once);
+    }
+
+    [Test]
+    public void SubmitSurveyReportAsync_SettledClaim_ThrowsConflictException()
+    {
+        var claimId = Guid.NewGuid();
+        var surveyorId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, SurveyorId = surveyorId, CustomerId = Guid.NewGuid(), Status = ClaimStatus.Settled, ClaimNumber = "CLM-001", PolicyId = Guid.NewGuid() };
+
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.FileName).Returns("report.pdf");
+        mockFile.Setup(f => f.Length).Returns(2048);
+
+        var request = new SubmitSurveyReportRequest(5000m, DateTime.UtcNow.AddDays(-1), "minor damage", mockFile.Object);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _claimService.SubmitSurveyReportAsync(claimId, surveyorId, request));
+    }
+
+    [Test]
+    public void SubmitSurveyReportAsync_ExistingSurveyReport_ThrowsConflictException()
+    {
+        var claimId = Guid.NewGuid();
+        var surveyorId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, SurveyorId = surveyorId, CustomerId = Guid.NewGuid(), Status = ClaimStatus.UnderReview, ClaimNumber = "CLM-001", PolicyId = Guid.NewGuid() };
+
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+        _mockDocRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<SubmittedDocument, bool>>>()))
+            .ReturnsAsync(new SubmittedDocument { Id = Guid.NewGuid(), EntityType = EntityType.Claim, EntityId = claimId, DocumentKey = "SurveyorReport" });
+
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.FileName).Returns("report.pdf");
+        mockFile.Setup(f => f.Length).Returns(2048);
+
+        var request = new SubmitSurveyReportRequest(5000m, DateTime.UtcNow.AddDays(-1), "minor damage", mockFile.Object);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _claimService.SubmitSurveyReportAsync(claimId, surveyorId, request));
     }
 
     [Test]
