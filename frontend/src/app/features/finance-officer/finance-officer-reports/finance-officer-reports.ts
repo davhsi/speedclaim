@@ -56,9 +56,17 @@ export class FinanceOfficerReportsComponent implements OnInit {
 
   onExport(): void {
     if (this.exporting()) return;
+    if (!this.exportFrom || !this.exportTo) {
+      this.toast.warning('Please select both a from and to date.');
+      return;
+    }
+    if (this.exportFrom > this.exportTo) {
+      this.toast.warning('The from date must be on or before the to date.');
+      return;
+    }
     this.exporting.set(true);
 
-    this.financeService.exportPaymentReport().subscribe({
+    this.financeService.exportPaymentReport(this.exportFrom, this.exportTo).subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');

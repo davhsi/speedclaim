@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -559,17 +560,60 @@ public class FinanceService : IFinanceService
     public async Task<PaymentSummaryDto> GetPremiumCollectionSummaryAsync(string period)
     {
         var payments = await _unitOfWork.PremiumPayments.GetAllAsync();
+        var claims = await _unitOfWork.Claims.GetAllAsync();
+
+        // Honour the selected period when it is a "MMM yyyy" label (e.g. "Jun 2026").
+        // Unrecognised values (e.g. "this_month") fall back to all-time so existing
+        // callers keep working.
+        DateTime? monthStart = null, monthEnd = null;
+        if (DateTime.TryParseExact(period, "MMM yyyy", CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var parsed))
+        {
+            monthStart = new DateTime(parsed.Year, parsed.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+            monthEnd = monthStart.Value.AddMonths(1);
+        }
+
+        var paidInPeriod = payments
+            .Where(p => p.Status == PaymentStatus.Paid)
+            .Where(p => monthStart == null || (p.CreatedAt >= monthStart && p.CreatedAt < monthEnd))
+            .ToList();
+
+        var claimsPaidInPeriod = claims
+            .Where(c => c.Status == ClaimStatus.Settled && c.ClaimAmountApproved.HasValue)
+            .Where(c => monthStart == null ||
+                        (c.SettlementDate.HasValue && c.SettlementDate >= monthStart && c.SettlementDate < monthEnd))
+            .Sum(c => c.ClaimAmountApproved!.Value);
+
+        var premiums = paidInPeriod.Sum(p => p.Amount);
+
         return new PaymentSummaryDto
         {
-            TotalCollected = payments.Where(p => p.Status == PaymentStatus.Paid).Sum(p => p.Amount),
-            SuccessfulPayments = payments.Count(p => p.Status == PaymentStatus.Paid),
-            FailedPayments = payments.Count(p => p.Status == PaymentStatus.Failed)
+            TotalCollected = premiums,
+            Premiums = premiums,
+            ClaimsPaid = claimsPaidInPeriod,
+            NetInflow = premiums - claimsPaidInPeriod,
+            SuccessfulPayments = paidInPeriod.Count,
+            FailedPayments = payments.Count(p => p.Status == PaymentStatus.Failed &&
+                (monthStart == null || (p.CreatedAt >= monthStart && p.CreatedAt < monthEnd)))
         };
     }
 
-    public async Task<byte[]> ExportPaymentReportsAsync()
+    public async Task<byte[]> ExportPaymentReportsAsync(DateOnly? fromDate = null, DateOnly? toDate = null)
     {
         var payments = await _unitOfWork.PremiumPayments.GetAllAsync();
+
+        // Filter by the requested CreatedAt date range (inclusive) when provided,
+        // so the exported file matches the date range the officer selected in the UI.
+        if (fromDate.HasValue)
+        {
+            var fromUtc = fromDate.Value.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+            payments = payments.Where(p => p.CreatedAt >= fromUtc);
+        }
+        if (toDate.HasValue)
+        {
+            var toUtc = toDate.Value.ToDateTime(TimeOnly.MaxValue, DateTimeKind.Utc);
+            payments = payments.Where(p => p.CreatedAt <= toUtc);
+        }
 
         using var workbook = new XLWorkbook();
         var ws = workbook.Worksheets.Add("Payment Report");

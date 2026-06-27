@@ -27,5 +27,5 @@ public interface IFinanceService
     // Reports
     Task<IEnumerable<PremiumScheduleDto>> GetOverduePoliciesAsync();
     Task<PaymentSummaryDto> GetPremiumCollectionSummaryAsync(string period);
-    Task<byte[]> ExportPaymentReportsAsync();
+    Task<byte[]> ExportPaymentReportsAsync(DateOnly? fromDate = null, DateOnly? toDate = null);
 }

@@ -220,9 +220,12 @@ public class PaymentsController : BaseApiController
     [Authorize(Roles = "FinanceOfficer,Admin")]
     [HttpGet("reports/export")]
     [ProducesResponseType(typeof(FileContentResult), 200)]
-    public async Task<IActionResult> ExportPaymentReports()
+    public async Task<IActionResult> ExportPaymentReports([FromQuery] DateOnly? from = null, [FromQuery] DateOnly? to = null)
     {
-        var bytes = await _financeService.ExportPaymentReportsAsync();
+        if (from.HasValue && to.HasValue && from > to)
+            return BadRequest(new { message = "The 'from' date must be on or before the 'to' date." });
+
+        var bytes = await _financeService.ExportPaymentReportsAsync(from, to);
         return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "PaymentReport.xlsx");
     }
 

@@ -46,6 +46,9 @@ public class AgentCommissionDto
 public class PaymentSummaryDto
 {
     public decimal TotalCollected { get; set; }
+    public decimal Premiums { get; set; }
+    public decimal ClaimsPaid { get; set; }
+    public decimal NetInflow { get; set; }
     public int SuccessfulPayments { get; set; }
     public int FailedPayments { get; set; }
 }

@@ -54,8 +54,11 @@ export class FinanceOfficerService {
     return this.http.get<PaymentSummaryDto>('/api/v1/payments/reports/summary', { params });
   }
 
-  exportPaymentReport(): Observable<Blob> {
-    return this.http.get('/api/v1/payments/reports/export', { responseType: 'blob' });
+  exportPaymentReport(from?: string, to?: string): Observable<Blob> {
+    let params = new HttpParams();
+    if (from) params = params.set('from', from);
+    if (to) params = params.set('to', to);
+    return this.http.get('/api/v1/payments/reports/export', { params, responseType: 'blob' });
   }
 
   updateProfile(payload: { name: string; email: string; phone: string }): Observable<ApiMessage> {

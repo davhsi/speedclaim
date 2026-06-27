@@ -275,11 +275,49 @@ public class FinanceServiceTests
         mockPaymentRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(payments);
         _mockUnitOfWork.Setup(u => u.PremiumPayments).Returns(mockPaymentRepo.Object);
 
+        var mockClaimRepo = new Mock<IClaimRepository>();
+        mockClaimRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Claim>());
+        _mockUnitOfWork.Setup(u => u.Claims).Returns(mockClaimRepo.Object);
+
         var result = await _financeService.GetPremiumCollectionSummaryAsync("this_month");
 
         Assert.That(result.TotalCollected, Is.EqualTo(100));
+        Assert.That(result.Premiums, Is.EqualTo(100));
+        Assert.That(result.ClaimsPaid, Is.EqualTo(0));
+        Assert.That(result.NetInflow, Is.EqualTo(100));
         Assert.That(result.SuccessfulPayments, Is.EqualTo(1));
         Assert.That(result.FailedPayments, Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task GetPremiumCollectionSummaryAsync_NetInflowSubtractsSettledClaims()
+    {
+        var month = new DateTimeOffset(2026, 6, 15, 0, 0, 0, TimeSpan.Zero);
+        var payments = new List<PremiumPayment>
+        {
+            new PremiumPayment { Amount = 20000, Status = PaymentStatus.Paid, CreatedAt = month },
+            new PremiumPayment { Amount = 5000, Status = PaymentStatus.Paid, CreatedAt = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero) }
+        };
+        var claims = new List<Claim>
+        {
+            new Claim { Status = ClaimStatus.Settled, ClaimAmountApproved = 8000, SettlementDate = new DateTime(2026, 6, 20, 0, 0, 0, DateTimeKind.Utc) },
+            new Claim { Status = ClaimStatus.Settled, ClaimAmountApproved = 3000, SettlementDate = new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc) }
+        };
+
+        var mockPaymentRepo = new Mock<IPremiumPaymentRepository>();
+        mockPaymentRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(payments);
+        _mockUnitOfWork.Setup(u => u.PremiumPayments).Returns(mockPaymentRepo.Object);
+
+        var mockClaimRepo = new Mock<IClaimRepository>();
+        mockClaimRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(claims);
+        _mockUnitOfWork.Setup(u => u.Claims).Returns(mockClaimRepo.Object);
+
+        var result = await _financeService.GetPremiumCollectionSummaryAsync("Jun 2026");
+
+        // Only the June payment (20000) and June settled claim (8000) fall in the period.
+        Assert.That(result.Premiums, Is.EqualTo(20000));
+        Assert.That(result.ClaimsPaid, Is.EqualTo(8000));
+        Assert.That(result.NetInflow, Is.EqualTo(12000));
     }
 
     // --- DownloadReceiptAsync tests ---
@@ -483,6 +521,46 @@ public class FinanceServiceTests
         Assert.That(result.Length, Is.GreaterThan(0));
         Assert.That(result[0], Is.EqualTo(0x50)); // 'P'
         Assert.That(result[1], Is.EqualTo(0x4B)); // 'K'
+    }
+
+    [Test]
+    public async Task ExportPaymentReportsAsync_FiltersByDateRange()
+    {
+        var inRange = new PremiumPayment
+        {
+            Id = Guid.NewGuid(),
+            CustomerId = Guid.NewGuid(),
+            Amount = 100,
+            Currency = "INR",
+            PaymentType = PaymentType.FirstPremium,
+            Status = PaymentStatus.Paid,
+            CreatedAt = new DateTimeOffset(2026, 3, 15, 0, 0, 0, TimeSpan.Zero)
+        };
+        var outOfRange = new PremiumPayment
+        {
+            Id = Guid.NewGuid(),
+            CustomerId = Guid.NewGuid(),
+            Amount = 200,
+            Currency = "INR",
+            PaymentType = PaymentType.FirstPremium,
+            Status = PaymentStatus.Paid,
+            CreatedAt = new DateTimeOffset(2026, 8, 1, 0, 0, 0, TimeSpan.Zero)
+        };
+
+        var mockPaymentRepo = new Mock<IPremiumPaymentRepository>();
+        mockPaymentRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<PremiumPayment> { inRange, outOfRange });
+        _mockUnitOfWork.Setup(u => u.PremiumPayments).Returns(mockPaymentRepo.Object);
+
+        var result = await _financeService.ExportPaymentReportsAsync(
+            new DateOnly(2026, 1, 1), new DateOnly(2026, 6, 30));
+
+        using var ms = new System.IO.MemoryStream(result);
+        using var workbook = new ClosedXML.Excel.XLWorkbook(ms);
+        var ws = workbook.Worksheets.First();
+        var dataRows = ws.RowsUsed().Count() - 1; // exclude header
+
+        Assert.That(dataRows, Is.EqualTo(1), "Only the in-range payment should be exported.");
+        Assert.That(ws.Cell(2, 1).GetString(), Is.EqualTo(inRange.Id.ToString()));
     }
 
     [Test]
