@@ -2,9 +2,9 @@
   <div class="flex items-end justify-between flex-wrap gap-3 mb-5">
     <div>
       <h1 class="text-xl font-semibold text-ink">Claim payouts</h1>
-      <p class="text-sm text-muted mt-1">{{ filteredClaims().length }} claims — process Stripe payouts or mark approved claims settled manually.</p>
+      <p class="text-sm text-muted mt-1">{{ claimsSummary() }}</p>
     </div>
-    <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()" class="h-[38px] px-2.5 border border-line rounded-lg text-[13px] bg-white text-body cursor-pointer">
+    <select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event); onFilterChange()" class="h-[38px] px-2.5 border border-line rounded-lg text-[13px] bg-white text-body cursor-pointer">
       <option value="All">All statuses</option>
       <option value="Approved">Approved</option>
       <option value="Settled">Settled</option>

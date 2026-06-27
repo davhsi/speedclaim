@@ -26,6 +26,7 @@ export class ProposalDetailComponent implements OnInit {
   proposal = signal<ProposalDto | null>(null);
   product = signal<ProductDto | null>(null);
   showDialog = signal<'approve' | 'reject' | 'docs' | null>(null);
+  actionInFlight = signal(false);
   notes = '';
   rejectReason = '';
   docsRequest = '';
@@ -50,44 +51,75 @@ export class ProposalDetailComponent implements OnInit {
   }
 
   onApprove(): void {
+    if (this.actionInFlight()) return;
     const id = this.proposal()!.id.toString();
+    this.actionInFlight.set(true);
     this.uwService.reviewProposal(id, { isApproved: true, notes: this.notes || 'Approved' }).subscribe({
       next: () => {
         this.toast.success('Proposal approved. Policy has been created.');
         this.showDialog.set(null);
         this.router.navigate(['/underwriter/proposals']);
       },
+      error: () => {
+        this.actionInFlight.set(false);
+        this.toast.error('Approval failed.');
+      },
     });
   }
 
   onReject(): void {
-    if (!this.rejectReason.trim()) return;
+    if (this.actionInFlight() || !this.rejectReason.trim()) return;
     const id = this.proposal()!.id.toString();
-    this.uwService.reviewProposal(id, { isApproved: false, notes: this.rejectReason }).subscribe({
+    this.actionInFlight.set(true);
+    this.uwService.reviewProposal(id, { isApproved: false, notes: this.rejectReason.trim() }).subscribe({
       next: () => {
         this.toast.error('Proposal rejected.');
         this.showDialog.set(null);
         this.router.navigate(['/underwriter/proposals']);
       },
+      error: () => {
+        this.actionInFlight.set(false);
+        this.toast.error('Rejection failed.');
+      },
     });
   }
 
   onRequestDocs(): void {
-    if (!this.docsRequest.trim()) return;
+    if (this.actionInFlight() || !this.docsRequest.trim()) return;
     const id = this.proposal()!.id.toString();
-    this.uwService.requestDocs(id, this.docsRequest).subscribe({
+    this.actionInFlight.set(true);
+    this.uwService.requestDocs(id, this.docsRequest.trim()).subscribe({
       next: () => {
         this.toast.success('Document request sent to the customer.');
         this.showDialog.set(null);
+        this.actionInFlight.set(false);
+      },
+      error: () => {
+        this.actionInFlight.set(false);
+        this.toast.error('Document request failed.');
       },
     });
   }
 
   saveNotes(): void {
+    if (this.actionInFlight()) return;
     const id = this.proposal()!.id.toString();
+    this.actionInFlight.set(true);
     this.uwService.updateNotes(id, this.notes).subscribe({
-      next: () => this.toast.success('Notes saved.'),
+      next: () => {
+        this.actionInFlight.set(false);
+        this.toast.success('Notes saved.');
+      },
+      error: () => {
+        this.actionInFlight.set(false);
+        this.toast.error('Failed to save notes.');
+      },
     });
+  }
+
+  closeDialog(): void {
+    if (this.actionInFlight()) return;
+    this.showDialog.set(null);
   }
 
   goBack(): void {

@@ -79,7 +79,7 @@
       <div class="relative bg-white rounded-card shadow-lg max-w-lg w-full max-h-[85vh] overflow-y-auto animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
         <div class="flex items-center justify-between px-6 py-4 border-b border-line">
           <h3 class="text-[15px] font-semibold text-ink">Add product</h3>
-          <button (click)="closeModal()" class="text-muted bg-transparent border-none cursor-pointer p-1">
+          <button (click)="closeModal()" [disabled]="createSubmitting()" class="text-muted bg-transparent border-none cursor-pointer p-1 disabled:opacity-50 disabled:cursor-wait">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
           </button>
         </div>
@@ -156,8 +156,8 @@
           }
         </div>
         <div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-line">
-          <button (click)="closeModal()" class="h-9 px-4 bg-white text-body text-[13px] font-medium rounded-lg border border-line cursor-pointer hover:bg-surface">Cancel</button>
-          <button (click)="createProduct()" class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-lg border-none cursor-pointer hover:opacity-90">Create product</button>
+          <button (click)="closeModal()" [disabled]="createSubmitting()" class="h-9 px-4 bg-white text-body text-[13px] font-medium rounded-lg border border-line cursor-pointer hover:bg-surface disabled:opacity-50 disabled:cursor-wait">Cancel</button>
+          <button (click)="createProduct()" [disabled]="createProductInvalid() || createSubmitting()" class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-lg border-none cursor-pointer hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed">{{ createSubmitting() ? 'Creating...' : 'Create product' }}</button>
         </div>
       </div>
     </div>

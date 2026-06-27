@@ -21,14 +21,15 @@ export class FinanceOfficerPayoutsComponent implements OnInit {
 
   allClaims = signal<ClaimDto[]>([]);
   loading = signal(true);
-  statusFilter = 'All';
+  statusFilter = signal('All');
   processing = signal(new Set<string>());
   currentPage = signal(1);
   readonly pageSize = 10;
 
   filteredClaims = computed(() => {
-    if (this.statusFilter === 'All') return this.allClaims();
-    return this.allClaims().filter(c => c.status === this.statusFilter);
+    const status = this.statusFilter();
+    if (status === 'All') return this.allClaims();
+    return this.allClaims().filter(c => c.status === status);
   });
 
   totalPages = computed(() => Math.max(1, Math.ceil(this.filteredClaims().length / this.pageSize)));
@@ -75,7 +76,14 @@ export class FinanceOfficerPayoutsComponent implements OnInit {
     return map[type] ?? 'bg-surface-alt text-muted';
   }
 
+  claimsSummary(): string {
+    const count = this.filteredClaims().length;
+    const noun = count === 1 ? 'claim' : 'claims';
+    return `${count} ${noun} — process Stripe payouts or mark approved claims settled manually.`;
+  }
+
   processPayout(claim: ClaimDto): void {
+    if (this.processing().has(claim.id)) return;
     this.processing.update(s => new Set(s).add(claim.id));
     this.financeService.processClaimPayout(claim.id).subscribe({
       next: () => {
@@ -91,6 +99,7 @@ export class FinanceOfficerPayoutsComponent implements OnInit {
   }
 
   markSettled(claim: ClaimDto): void {
+    if (this.processing().has(claim.id)) return;
     this.processing.update(s => new Set(s).add(claim.id));
     this.financeService.markClaimSettled(claim.id).subscribe({
       next: () => {

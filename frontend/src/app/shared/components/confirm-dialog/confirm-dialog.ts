@@ -11,6 +11,7 @@ export class ConfirmDialogComponent {
   confirmLabel = input('Confirm');
   cancelLabel = input('Cancel');
   variant = input<'danger' | 'default'>('default');
+  disabled = input(false);
 
   confirmed = output<void>();
   cancelled = output<void>();

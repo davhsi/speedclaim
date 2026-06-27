@@ -25,6 +25,7 @@ export class AdminProductsComponent implements OnInit {
   selectedProduct = signal<ProductDto | null>(null);
   productDocs = signal<DocumentRequirementResponseDto[]>([]);
   rateBands = signal<PremiumRateDto[]>([]);
+  createSubmitting = signal(false);
 
   createForm = { productName: '', domain: 'Motor', uin: '', description: '', minAge: 18, maxAge: 65, minSumAssured: 100000, maxSumAssured: 5000000, minTenureYears: 1, maxTenureYears: 30, waitingPeriodDays: 30, allowsFamilyFloater: false, maxFamilyMembers: 1 };
 
@@ -101,13 +102,39 @@ export class AdminProductsComponent implements OnInit {
   }
 
   closeModal(): void {
+    if (this.createSubmitting()) return;
     this.activeModal.set(null);
   }
 
+  createProductInvalid(): boolean {
+    const f = this.createForm;
+    return !f.productName.trim()
+      || !f.uin.trim()
+      || !f.description.trim()
+      || f.minAge < 0
+      || f.maxAge < f.minAge
+      || f.minSumAssured <= 0
+      || f.maxSumAssured < f.minSumAssured
+      || f.minTenureYears <= 0
+      || f.maxTenureYears < f.minTenureYears
+      || f.waitingPeriodDays < 0
+      || (f.allowsFamilyFloater && f.maxFamilyMembers < 2);
+  }
+
   createProduct(): void {
+    if (this.createSubmitting() || this.createProductInvalid()) return;
+    this.createSubmitting.set(true);
     this.adminService.createProduct(this.createForm as any).subscribe({
-      next: () => { this.toastService.success('Product created'); this.closeModal(); this.loadProducts(); },
-      error: () => this.toastService.error('Failed to create product'),
+      next: () => {
+        this.createSubmitting.set(false);
+        this.toastService.success('Product created');
+        this.closeModal();
+        this.loadProducts();
+      },
+      error: () => {
+        this.createSubmitting.set(false);
+        this.toastService.error('Failed to create product');
+      },
     });
   }
 

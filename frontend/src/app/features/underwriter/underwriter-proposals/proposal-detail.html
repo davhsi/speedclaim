@@ -90,13 +90,13 @@
           <div class="text-sm font-semibold text-ink mb-3.5">Review decision</div>
           @if (isPending()) {
             <div class="flex flex-col gap-2.5">
-              <button (click)="showDialog.set('approve')" class="w-full h-[42px] rounded-lg border-none text-sm font-semibold text-white cursor-pointer bg-success hover:bg-success-dark transition-colors">
+              <button (click)="showDialog.set('approve')" [disabled]="actionInFlight()" class="w-full h-[42px] rounded-lg border-none text-sm font-semibold text-white cursor-pointer bg-success hover:bg-success-dark transition-colors disabled:opacity-50 disabled:cursor-wait">
                 Approve proposal
               </button>
-              <button (click)="showDialog.set('reject')" class="w-full h-[42px] rounded-lg border-none text-sm font-semibold text-white cursor-pointer bg-danger hover:bg-danger-dark transition-colors">
+              <button (click)="showDialog.set('reject')" [disabled]="actionInFlight()" class="w-full h-[42px] rounded-lg border-none text-sm font-semibold text-white cursor-pointer bg-danger hover:bg-danger-dark transition-colors disabled:opacity-50 disabled:cursor-wait">
                 Reject proposal
               </button>
-              <button (click)="showDialog.set('docs')" class="w-full h-[42px] rounded-lg border border-line bg-white text-sm font-semibold text-body cursor-pointer hover:bg-surface transition-colors">
+              <button (click)="showDialog.set('docs')" [disabled]="actionInFlight()" class="w-full h-[42px] rounded-lg border border-line bg-white text-sm font-semibold text-body cursor-pointer hover:bg-surface transition-colors disabled:opacity-50 disabled:cursor-wait">
                 Request documents
               </button>
             </div>
@@ -114,8 +114,8 @@
             class="w-full p-3 border border-line rounded-lg text-sm outline-none resize-y"
             placeholder="Add internal notes..."
           ></textarea>
-          <button (click)="saveNotes()" class="mt-2.5 h-9 px-4 rounded-lg border border-line bg-white text-[13px] font-semibold text-body cursor-pointer hover:bg-surface transition-colors">
-            Save note
+          <button (click)="saveNotes()" [disabled]="actionInFlight()" class="mt-2.5 h-9 px-4 rounded-lg border border-line bg-white text-[13px] font-semibold text-body cursor-pointer hover:bg-surface transition-colors disabled:opacity-50 disabled:cursor-wait">
+            {{ actionInFlight() ? 'Saving...' : 'Save note' }}
           </button>
         </div>
       </div>
@@ -128,21 +128,22 @@
       title="Approve proposal"
       message="This will approve the submission and trigger policy issuance. Please confirm this is your final decision."
       confirmLabel="Approve"
+      [disabled]="actionInFlight()"
       (confirmed)="onApprove()"
-      (cancelled)="showDialog.set(null)"
+      (cancelled)="closeDialog()"
     />
   }
 
   <!-- Reject dialog -->
   @if (showDialog() === 'reject') {
-    <div class="fixed inset-0 z-[400] flex items-center justify-center p-4" (click)="showDialog.set(null)">
+    <div class="fixed inset-0 z-[400] flex items-center justify-center p-4" (click)="closeDialog()">
       <div class="absolute inset-0 bg-black/40"></div>
       <div class="relative bg-white rounded-card shadow-lg max-w-md w-full p-6" (click)="$event.stopPropagation()">
         <h3 class="text-lg font-semibold text-ink mb-2">Reject proposal</h3>
         <textarea [(ngModel)]="rejectReason" rows="3" placeholder="Rejection reason *" class="w-full p-3 border border-line rounded-lg text-sm outline-none resize-y mb-4"></textarea>
         <div class="flex justify-end gap-3">
-          <button (click)="showDialog.set(null)" class="px-4 py-2 text-sm font-medium text-body bg-white border border-line rounded-lg hover:bg-surface-alt transition-colors">Cancel</button>
-          <button (click)="onReject()" class="px-4 py-2 text-sm font-medium text-white bg-danger rounded-lg hover:bg-red-700 transition-colors">Reject</button>
+          <button (click)="closeDialog()" [disabled]="actionInFlight()" class="px-4 py-2 text-sm font-medium text-body bg-white border border-line rounded-lg hover:bg-surface-alt transition-colors disabled:opacity-50 disabled:cursor-wait">Cancel</button>
+          <button (click)="onReject()" [disabled]="actionInFlight() || !rejectReason.trim()" class="px-4 py-2 text-sm font-medium text-white bg-danger rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">{{ actionInFlight() ? 'Rejecting...' : 'Reject' }}</button>
         </div>
       </div>
     </div>
@@ -150,14 +151,14 @@
 
   <!-- Request docs dialog -->
   @if (showDialog() === 'docs') {
-    <div class="fixed inset-0 z-[400] flex items-center justify-center p-4" (click)="showDialog.set(null)">
+    <div class="fixed inset-0 z-[400] flex items-center justify-center p-4" (click)="closeDialog()">
       <div class="absolute inset-0 bg-black/40"></div>
       <div class="relative bg-white rounded-card shadow-lg max-w-md w-full p-6" (click)="$event.stopPropagation()">
         <h3 class="text-lg font-semibold text-ink mb-2">Request additional documents</h3>
         <textarea [(ngModel)]="docsRequest" rows="3" placeholder="Documents required" class="w-full p-3 border border-line rounded-lg text-sm outline-none resize-y mb-4"></textarea>
         <div class="flex justify-end gap-3">
-          <button (click)="showDialog.set(null)" class="px-4 py-2 text-sm font-medium text-body bg-white border border-line rounded-lg hover:bg-surface-alt transition-colors">Cancel</button>
-          <button (click)="onRequestDocs()" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors">Send request</button>
+          <button (click)="closeDialog()" [disabled]="actionInFlight()" class="px-4 py-2 text-sm font-medium text-body bg-white border border-line rounded-lg hover:bg-surface-alt transition-colors disabled:opacity-50 disabled:cursor-wait">Cancel</button>
+          <button (click)="onRequestDocs()" [disabled]="actionInFlight() || !docsRequest.trim()" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed">{{ actionInFlight() ? 'Sending...' : 'Send request' }}</button>
         </div>
       </div>
     </div>
