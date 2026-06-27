@@ -26,7 +26,7 @@ export class AdminUsersComponent implements OnInit {
   currentPage = signal(1);
   pageSize = 5;
 
-  activeModal = signal<'changeRole' | 'sessions' | 'resetPw' | 'invite' | null>(null);
+  activeModal = signal<'changeRole' | 'sessions' | 'resetPw' | 'invite' | 'toggleStatus' | null>(null);
   selectedUser = signal<UserDto | null>(null);
   selectedRole = signal('');
   resetPwSent = signal(false);
@@ -167,13 +167,21 @@ export class AdminUsersComponent implements OnInit {
     });
   }
 
-  toggleUserStatus(user: UserDto): void {
+  openToggleStatusModal(user: UserDto): void {
+    this.selectedUser.set(user);
+    this.activeModal.set('toggleStatus');
+  }
+
+  confirmToggleStatus(): void {
+    const user = this.selectedUser();
+    if (!user) return;
     const next = !user.isActive;
     this.adminService.toggleUserStatus(user.id, next).subscribe({
       next: () => {
         this.allUsers.update(list => list.map(u => u.id === user.id ? { ...u, isActive: next } : u));
         if (next) this.toastService.success(user.fullName + ' activated');
         else this.toastService.warning(user.fullName + ' deactivated');
+        this.closeModal();
       },
       error: () => this.toastService.error('Failed to update status'),
     });
@@ -192,7 +200,16 @@ export class AdminUsersComponent implements OnInit {
   }
 
   submitInvite(): void {
-    this.toastService.success('Invite sent to ' + this.inviteForm.email);
+    const email = this.inviteForm.email.trim();
+    if (!this.inviteForm.name.trim() || !email) {
+      this.toastService.warning('Please enter a name and email.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      this.toastService.warning('Please enter a valid email address.');
+      return;
+    }
+    this.toastService.success('Invite sent to ' + email);
     this.closeModal();
   }
 
