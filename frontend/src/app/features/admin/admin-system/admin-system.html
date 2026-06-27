@@ -70,7 +70,7 @@
             @for (log of auditLogs(); track log.id) {
               <tr class="border-b border-line hover:bg-surface/50 transition-colors">
                 <td class="px-5 py-3 text-[12px] text-body font-mono whitespace-nowrap">{{ log.createdAt | dateFormat:'long' }}</td>
-                <td class="px-5 py-3 text-[12.5px] text-body">{{ log.userId ?? '—' }}</td>
+                <td class="px-5 py-3 text-[12.5px] text-body">{{ log.userName || (log.userId ? 'System' : '—') }}</td>
                 <td class="px-5 py-3 text-[12px] text-ink font-mono">{{ log.action }}</td>
                 <td class="px-5 py-3">
                   <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-surface text-body border border-line">{{ log.entityType }}</span>

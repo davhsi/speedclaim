@@ -570,6 +570,7 @@ export interface AuditLogDto {
   oldValue?: string;
   newValue?: string;
   userId?: string;
+  userName?: string;
   ipAddress?: string;
   createdAt: string;
 }

@@ -55,6 +55,12 @@ public class SystemService : ISystemService
     public async Task<IEnumerable<AuditLogDto>> GetAuditLogsAsync()
     {
         var logs = await _unitOfWork.AuditLogs.GetAllAsync();
+
+        // Resolve actor user ids to display names so the UI shows "Davish Official"
+        // instead of a raw GUID. Build a single lookup rather than querying per row.
+        var users = await _unitOfWork.Users.GetAllAsync();
+        var nameById = users.ToDictionary(u => u.Id, u => $"{u.FirstName} {u.LastName}".Trim());
+
         // Since we don't have pagination yet, we might want to order it descending and take top 100 or something in real app.
         // For now, we return all as per existing repo method signature.
         return logs.Select(l => new AuditLogDto(
@@ -65,6 +71,7 @@ public class SystemService : ISystemService
             l.OldValue,
             l.NewValue,
             l.UserId,
+            l.UserId.HasValue && nameById.TryGetValue(l.UserId.Value, out var name) ? name : null,
             l.IpAddress,
             l.CreatedAt
         ));

@@ -17,6 +17,7 @@ public record AuditLogDto(
     string? OldValue,
     string? NewValue,
     Guid? UserId,
+    string? UserName,
     string? IpAddress,
     DateTime CreatedAt
 );
