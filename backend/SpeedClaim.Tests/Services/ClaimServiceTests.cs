@@ -26,6 +26,19 @@ public class ClaimServiceTests
     
     private ClaimService _claimService;
 
+    private static Policy ActivePolicy(Guid policyId, Guid customerId)
+    {
+        return new Policy
+        {
+            Id = policyId,
+            CustomerId = customerId,
+            Status = PolicyStatus.Active,
+            SumAssured = 100000,
+            StartDate = DateTime.UtcNow.AddMonths(-1),
+            EndDate = DateTime.UtcNow.AddMonths(11)
+        };
+    }
+
     [SetUp]
     public void Setup()
     {
@@ -70,12 +83,7 @@ public class ClaimServiceTests
             "Fell and broke arm"
         );
 
-        var policy = new Policy
-        {
-            Id = policyId,
-            CustomerId = customerId,
-            Status = PolicyStatus.Active
-        };
+        var policy = ActivePolicy(policyId, customerId);
 
         _mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(policy);
 
@@ -107,6 +115,72 @@ public class ClaimServiceTests
 
         // Act & Assert
         Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.UnprocessableException>(() => _claimService.IntimateClaimAsync(customerId, request));
+    }
+
+    [Test]
+    public void IntimateClaimAsync_WithIncidentBeforePolicyStart_ThrowsException()
+    {
+        var customerId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+        var policy = ActivePolicy(policyId, customerId);
+        var request = new IntimateClaimRequest(
+            policyId,
+            null,
+            ClaimType.Health,
+            15000,
+            true,
+            policy.StartDate.AddDays(-1),
+            "Hospitalization before policy started"
+        );
+
+        _mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(policy);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.UnprocessableException>(() =>
+            _claimService.IntimateClaimAsync(customerId, request));
+    }
+
+    [Test]
+    public void IntimateClaimAsync_WithIncidentAfterPolicyEnd_ThrowsException()
+    {
+        var customerId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+        var policy = ActivePolicy(policyId, customerId);
+        var request = new IntimateClaimRequest(
+            policyId,
+            null,
+            ClaimType.Health,
+            15000,
+            true,
+            policy.EndDate.AddDays(1),
+            "Hospitalization after policy expired"
+        );
+
+        _mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(policy);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.UnprocessableException>(() =>
+            _claimService.IntimateClaimAsync(customerId, request));
+    }
+
+    [Test]
+    public void IntimateClaimAsync_WithAmountAboveCoverage_ThrowsException()
+    {
+        var customerId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+        var policy = ActivePolicy(policyId, customerId);
+        var request = new IntimateClaimRequest(
+            policyId,
+            null,
+            ClaimType.Health,
+            policy.SumAssured + 1,
+            true,
+            DateTime.UtcNow.AddDays(-2),
+            "Hospitalization claim above coverage"
+        );
+
+        _mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(policy);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.UnprocessableException>(() =>
+            _claimService.IntimateClaimAsync(customerId, request));
     }
 
     [Test]

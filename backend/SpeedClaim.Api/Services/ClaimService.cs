@@ -104,6 +104,13 @@ public class ClaimService : IClaimService
         if (policy.Status != PolicyStatus.Active)
             throw new UnprocessableException("Claim can only be intimated for an active policy.");
 
+        var incidentDate = request.IncidentDate.Date;
+        if (incidentDate < policy.StartDate.Date || incidentDate > policy.EndDate.Date)
+            throw new UnprocessableException("Incident date must fall within the active policy coverage period.");
+
+        if (policy.SumAssured > 0 && request.ClaimAmountRequested > policy.SumAssured)
+            throw new UnprocessableException("Claim amount cannot exceed the policy coverage amount.");
+
         var claim = new Claim
         {
             Id = Guid.NewGuid(),

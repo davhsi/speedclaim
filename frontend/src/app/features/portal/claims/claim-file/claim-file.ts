@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ClaimService } from '../services/claim.service';
@@ -30,11 +30,36 @@ export class ClaimFileComponent implements OnInit {
   today = new Date().toISOString().slice(0, 10);
 
   policyControl = this.fb.control('', Validators.required);
+  selectedPolicy = signal<PolicyDto | null>(null);
+  maxIncidentDate = computed(() => {
+    const policyEndDate = this.selectedPolicy()?.endDate?.slice(0, 10);
+    return policyEndDate && policyEndDate < this.today ? policyEndDate : this.today;
+  });
+
+  private withinPolicyCoverage = (control: AbstractControl): { aboveCoverage: true } | null => {
+    const policy = this.selectedPolicy();
+    const amount = Number(control.value);
+    if (!policy || !amount) return null;
+
+    return amount > policy.coverageAmount ? { aboveCoverage: true } : null;
+  };
+
+  private withinPolicyPeriod = (control: AbstractControl): { outsidePolicyPeriod: true } | null => {
+    const policy = this.selectedPolicy();
+    const value = control.value;
+    if (!policy || !value) return null;
+
+    const incident = this.toLocalDate(value);
+    const start = this.toLocalDate(policy.startDate);
+    const end = this.toLocalDate(policy.endDate);
+
+    return incident < start || incident > end ? { outsidePolicyPeriod: true } : null;
+  };
 
   claimForm = this.fb.group({
     claimType: ['Health', Validators.required],
-    claimAmountRequested: [0, [Validators.required, Validators.min(1)]],
-    incidentDate: ['', [Validators.required, this.notFutureDate]],
+    claimAmountRequested: [0, [Validators.required, Validators.min(1), this.withinPolicyCoverage]],
+    incidentDate: ['', [Validators.required, this.notFutureDate, this.withinPolicyPeriod]],
     incidentDescription: ['', [Validators.required, Validators.minLength(10)]],
     isCashless: [false],
   });
@@ -47,6 +72,13 @@ export class ClaimFileComponent implements OnInit {
   }
 
   onFileSelected(file: File): void { this.uploadedFiles.push(file); }
+
+  selectPolicy(policy: PolicyDto): void {
+    this.policyControl.setValue(policy.id);
+    this.selectedPolicy.set(policy);
+    this.claimForm.controls.claimAmountRequested.updateValueAndValidity();
+    this.claimForm.controls.incidentDate.updateValueAndValidity();
+  }
 
   submit(): void {
     if (this.submitting() || !this.policyControl.value || this.claimForm.invalid) return;
@@ -83,5 +115,11 @@ export class ClaimFileComponent implements OnInit {
     today.setHours(23, 59, 59, 999);
 
     return selected > today ? { futureDate: true } : null;
+  }
+
+  private toLocalDate(value: string): Date {
+    const [datePart] = value.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+    return new Date(year, month - 1, day);
   }
 }

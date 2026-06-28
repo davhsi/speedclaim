@@ -33,7 +33,7 @@
             <div
               class="flex items-center gap-[13px] border-[1.5px] rounded-[10px] p-3.5 mb-3 cursor-pointer transition-all"
               [class]="policyControl.value === p.id.toString() ? 'border-primary bg-primary-light' : 'border-line bg-white hover:border-primary-muted'"
-              (click)="policyControl.setValue(p.id.toString())"
+              (click)="selectPolicy(p)"
             >
               <div class="w-10 h-10 rounded-[10px] bg-surface-alt flex items-center justify-center shrink-0">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="text-muted"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -68,16 +68,28 @@
           </div>
           <div>
             <label class="block text-[13px] font-medium mb-1.5">Amount requested (₹)</label>
-            <input type="number" formControlName="claimAmountRequested" placeholder="0.00" class="h-[42px] sc-numeric" />
+            <input type="number" formControlName="claimAmountRequested" placeholder="0.00" [max]="selectedPolicy()?.coverageAmount ?? null" class="h-[42px] sc-numeric" />
             @if ((claimForm.controls.claimAmountRequested.touched || claimForm.controls.claimAmountRequested.dirty) && claimForm.controls.claimAmountRequested.errors) {
-              <p class="text-xs text-danger mt-1">Enter an amount greater than zero.</p>
+              <p class="text-xs text-danger mt-1">
+                @if (claimForm.controls.claimAmountRequested.errors['aboveCoverage']) {
+                  Amount cannot exceed {{ selectedPolicy()?.coverageAmount | money }}.
+                } @else {
+                  Enter an amount greater than zero.
+                }
+              </p>
             }
           </div>
           <div>
             <label class="block text-[13px] font-medium mb-1.5">Incident date</label>
-            <input type="date" formControlName="incidentDate" [max]="today" class="h-[42px]" />
+            <input type="date" formControlName="incidentDate" [min]="selectedPolicy()?.startDate?.slice(0, 10)" [max]="maxIncidentDate()" class="h-[42px]" />
             @if ((claimForm.controls.incidentDate.touched || claimForm.controls.incidentDate.dirty) && claimForm.controls.incidentDate.errors) {
-              <p class="text-xs text-danger mt-1">Incident date cannot be in the future.</p>
+              <p class="text-xs text-danger mt-1">
+                @if (claimForm.controls.incidentDate.errors['outsidePolicyPeriod']) {
+                  Incident date must be within this policy period.
+                } @else {
+                  Incident date cannot be in the future.
+                }
+              </p>
             }
           </div>
           <div class="flex items-center gap-2.5 pt-7">
