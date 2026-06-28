@@ -313,6 +313,8 @@ public class ProposalService : IProposalService
 
         var proposal = await _unitOfWork.Proposals.GetByIdAsync(pId);
         if (proposal == null) throw new NotFoundException("Proposal not found");
+        if (proposal.Status is ProposalStatus.Approved or ProposalStatus.Rejected)
+            throw new ConflictException($"Proposal has already been {proposal.Status}.");
 
         proposal.Status = isApproved ? ProposalStatus.Approved : ProposalStatus.Rejected;
         proposal.UnderwriterId = uId;
@@ -402,6 +404,8 @@ public class ProposalService : IProposalService
 
         var proposal = await _unitOfWork.Proposals.GetByIdAsync(pId);
         if (proposal == null) throw new NotFoundException("Proposal not found");
+        if (proposal.Status is ProposalStatus.Approved or ProposalStatus.Rejected)
+            throw new ConflictException($"Documents cannot be requested for a {proposal.Status} proposal.");
 
         proposal.Status = ProposalStatus.DocumentsPending;
         proposal.UnderwriterId = uId;

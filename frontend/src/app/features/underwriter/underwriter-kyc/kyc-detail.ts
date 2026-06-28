@@ -22,6 +22,7 @@ export class KycDetailComponent implements OnInit {
   kyc = signal<UnderwriterKycDto | null>(null);
   revealed = signal(false);
   showDialog = signal<'approve' | 'reject' | null>(null);
+  actionInFlight = signal(false);
   rejectReason = '';
 
   ngOnInit(): void {
@@ -45,26 +46,42 @@ export class KycDetailComponent implements OnInit {
   }
 
   onApprove(): void {
+    if (this.actionInFlight() || this.kyc()?.kycStatus !== 'Pending') return;
     const userId = this.kyc()!.userId;
+    this.actionInFlight.set(true);
     this.uwService.reviewKyc(userId, true, 'Approved').subscribe({
       next: () => {
         this.toast.success('KYC approved.');
         this.showDialog.set(null);
         this.router.navigate(['/underwriter/kyc']);
       },
+      error: () => {
+        this.actionInFlight.set(false);
+        this.toast.error('KYC approval failed.');
+      },
     });
   }
 
   onReject(): void {
-    if (!this.rejectReason.trim()) return;
+    if (this.actionInFlight() || this.kyc()?.kycStatus !== 'Pending' || !this.rejectReason.trim()) return;
     const userId = this.kyc()!.userId;
+    this.actionInFlight.set(true);
     this.uwService.reviewKyc(userId, false, this.rejectReason).subscribe({
       next: () => {
         this.toast.error('KYC rejected.');
         this.showDialog.set(null);
         this.router.navigate(['/underwriter/kyc']);
       },
+      error: () => {
+        this.actionInFlight.set(false);
+        this.toast.error('KYC rejection failed.');
+      },
     });
+  }
+
+  closeDialog(): void {
+    if (this.actionInFlight()) return;
+    this.showDialog.set(null);
   }
 
   goBack(): void {

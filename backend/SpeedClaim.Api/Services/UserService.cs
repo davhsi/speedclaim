@@ -382,6 +382,8 @@ public class UserService : IUserService
         var uid = Guid.Parse(customerId);
         var kycRecord = await _unitOfWork.KycRecords.FirstOrDefaultAsync(k => k.UserId == uid);
         if (kycRecord == null) throw new NotFoundException("KYC Record not found");
+        if (kycRecord.KycStatus != KycStatus.Pending)
+            throw new ConflictException($"KYC has already been {kycRecord.KycStatus}.");
 
         if (isApproved && (kycRecord.AadhaarNumber == null || kycRecord.PanNumber == null))
             throw new ValidationException("Both Aadhaar and PAN documents must be uploaded before KYC can be approved.");

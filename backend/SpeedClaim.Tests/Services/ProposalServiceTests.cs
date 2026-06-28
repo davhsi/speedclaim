@@ -233,6 +233,16 @@ public class ProposalServiceTests
     }
 
     [Test]
+    public void ApproveOrRejectProposalAsync_FinalProposal_ThrowsConflictException()
+    {
+        var proposal = new Proposal { Status = ProposalStatus.Approved };
+        _mockProposalRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(proposal);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _proposalService.ApproveOrRejectProposalAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), true, "Looks good"));
+    }
+
+    [Test]
     public async Task RequestAdditionalDocumentsAsync_Success()
     {
         var proposal = new Proposal();
@@ -243,6 +253,16 @@ public class ProposalServiceTests
         Assert.That(proposal.Status, Is.EqualTo(ProposalStatus.DocumentsPending));
         Assert.That(proposal.UnderwriterNotes, Is.EqualTo("Additional Docs Required: Need medical report"));
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public void RequestAdditionalDocumentsAsync_FinalProposal_ThrowsConflictException()
+    {
+        var proposal = new Proposal { Status = ProposalStatus.Rejected };
+        _mockProposalRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(proposal);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _proposalService.RequestAdditionalDocumentsAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), "Need medical report"));
     }
 
     // --- AddUnderwriterNotesAsync tests ---

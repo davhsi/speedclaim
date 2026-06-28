@@ -178,6 +178,18 @@ public class UserServiceTests
     }
 
     [Test]
+    public void ApproveRejectKycAsync_FinalRecord_ThrowsConflictException()
+    {
+        var customerId = Guid.NewGuid();
+        var kycRecord = new KycRecord { UserId = customerId, KycStatus = KycStatus.Approved, AadhaarNumber = "ENC_AADHAAR", PanNumber = "ENC_PAN" };
+
+        _mockKycRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>())).ReturnsAsync(kycRecord);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _userService.ApproveRejectKycAsync(customerId.ToString(), true, "All good", Guid.NewGuid().ToString()));
+    }
+
+    [Test]
     public void ActivateDeactivateUserAsync_UserNotFound_ThrowsException()
     {
         _mockUserRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((User?)null);

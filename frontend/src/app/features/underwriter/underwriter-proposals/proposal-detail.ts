@@ -47,11 +47,16 @@ export class ProposalDetailComponent implements OnInit {
 
   isPending(): boolean {
     const s = this.proposal()?.status;
+    return s === 'Submitted' || s === 'UnderReview';
+  }
+
+  canRequestDocuments(): boolean {
+    const s = this.proposal()?.status;
     return s === 'Submitted' || s === 'UnderReview' || s === 'DocumentsPending';
   }
 
   onApprove(): void {
-    if (this.actionInFlight()) return;
+    if (this.actionInFlight() || !this.isPending()) return;
     const id = this.proposal()!.id.toString();
     this.actionInFlight.set(true);
     this.uwService.reviewProposal(id, { isApproved: true, notes: this.notes || 'Approved' }).subscribe({
@@ -68,7 +73,7 @@ export class ProposalDetailComponent implements OnInit {
   }
 
   onReject(): void {
-    if (this.actionInFlight() || !this.rejectReason.trim()) return;
+    if (this.actionInFlight() || !this.isPending() || !this.rejectReason.trim()) return;
     const id = this.proposal()!.id.toString();
     this.actionInFlight.set(true);
     this.uwService.reviewProposal(id, { isApproved: false, notes: this.rejectReason.trim() }).subscribe({
@@ -85,7 +90,7 @@ export class ProposalDetailComponent implements OnInit {
   }
 
   onRequestDocs(): void {
-    if (this.actionInFlight() || !this.docsRequest.trim()) return;
+    if (this.actionInFlight() || !this.canRequestDocuments() || !this.docsRequest.trim()) return;
     const id = this.proposal()!.id.toString();
     this.actionInFlight.set(true);
     this.uwService.requestDocs(id, this.docsRequest.trim()).subscribe({
