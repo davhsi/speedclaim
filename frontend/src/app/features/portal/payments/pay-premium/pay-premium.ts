@@ -39,6 +39,7 @@ export class PayPremiumComponent implements OnInit {
   }
 
   pay(item: PremiumScheduleDto): void {
+    if (this.paying() || !this.isPayable(item)) return;
     this.paying.set(true);
     this.payingId.set(item.id);
     this.paymentService.createPaymentIntent(item.id, { policyId: item.policyId }).subscribe({

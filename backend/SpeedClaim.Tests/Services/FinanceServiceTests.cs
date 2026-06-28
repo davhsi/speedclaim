@@ -40,6 +40,7 @@ public class FinanceServiceTests
         _mockUnitOfWork.Setup(u => u.Customers).Returns(new Mock<IRepository<SpeedClaim.Api.Models.Customer>>().Object);
         _mockUnitOfWork.Setup(u => u.StripeCustomers).Returns(new Mock<IRepository<SpeedClaim.Api.Models.StripeCustomer>>().Object);
         _mockUnitOfWork.Setup(u => u.Users).Returns(new Mock<IUserRepository>().Object);
+        _mockUnitOfWork.Setup(u => u.Policies).Returns(new Mock<IPolicyRepository>().Object);
 
         _financeService = new FinanceService(_mockUnitOfWork.Object, _mockStripeWrapper.Object, _mockConfig.Object, _mockEmailService.Object, new Mock<INotificationService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<FinanceService>>());
     }
@@ -70,6 +71,10 @@ public class FinanceServiceTests
         var mockCustomerRepo = new Mock<IRepository<SpeedClaim.Api.Models.Customer>>();
         mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<SpeedClaim.Api.Models.Customer, bool>>>())).ReturnsAsync(customerEntity);
         _mockUnitOfWork.Setup(u => u.Customers).Returns(mockCustomerRepo.Object);
+
+        var mockPolicyRepo = new Mock<IPolicyRepository>();
+        mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(new Policy { Id = policyId, CustomerId = customerEntity.Id });
+        _mockUnitOfWork.Setup(u => u.Policies).Returns(mockPolicyRepo.Object);
 
         var existingStripeCustomer = new SpeedClaim.Api.Models.StripeCustomer { Id = Guid.NewGuid(), UserId = customerEntity.UserId, StripeCustomerId = "cus_test" };
         var mockStripeCustomerRepo = new Mock<IRepository<SpeedClaim.Api.Models.StripeCustomer>>();
@@ -115,21 +120,85 @@ public class FinanceServiceTests
     }
 
     [Test]
+    public void PayPremiumAsync_OtherCustomersSchedule_ThrowsForbiddenException()
+    {
+        var customerUserId = Guid.NewGuid();
+        var customerRecordId = Guid.NewGuid();
+        var scheduleId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+        var schedule = new PremiumSchedule
+        {
+            Id = scheduleId,
+            PolicyId = policyId,
+            Amount = 150.0m,
+            Status = PremiumScheduleStatus.Upcoming,
+            InstallmentNumber = 1
+        };
+
+        var mockScheduleRepo = new Mock<IRepository<PremiumSchedule>>();
+        mockScheduleRepo.Setup(r => r.GetByIdAsync(scheduleId)).ReturnsAsync(schedule);
+        _mockUnitOfWork.Setup(u => u.PremiumSchedules).Returns(mockScheduleRepo.Object);
+
+        var mockCustomerRepo = new Mock<IRepository<SpeedClaim.Api.Models.Customer>>();
+        mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<SpeedClaim.Api.Models.Customer, bool>>>()))
+            .ReturnsAsync(new SpeedClaim.Api.Models.Customer { Id = customerRecordId, UserId = customerUserId });
+        _mockUnitOfWork.Setup(u => u.Customers).Returns(mockCustomerRepo.Object);
+
+        var mockPolicyRepo = new Mock<IPolicyRepository>();
+        mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(new Policy { Id = policyId, CustomerId = Guid.NewGuid() });
+        _mockUnitOfWork.Setup(u => u.Policies).Returns(mockPolicyRepo.Object);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() =>
+            _financeService.PayPremiumAsync(customerUserId.ToString(), scheduleId.ToString(), new CreatePaymentIntentRequest { PolicyId = policyId }));
+        _mockStripeWrapper.Verify(s => s.CreatePaymentIntentAsync(It.IsAny<PaymentIntentCreateOptions>(), It.IsAny<RequestOptions>()), Times.Never);
+    }
+
+    [Test]
     public async Task GetPremiumScheduleAsync_ValidPolicy_ReturnsSchedules()
     {
+        var customerUserId = Guid.NewGuid();
+        var customerRecordId = Guid.NewGuid();
         var policyId = Guid.NewGuid();
         var schedules = new List<PremiumSchedule>
         {
             new PremiumSchedule { Id = Guid.NewGuid(), PolicyId = policyId, Amount = 100 }
         };
 
+        var mockCustomerRepo = new Mock<IRepository<SpeedClaim.Api.Models.Customer>>();
+        mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<SpeedClaim.Api.Models.Customer, bool>>>()))
+            .ReturnsAsync(new SpeedClaim.Api.Models.Customer { Id = customerRecordId, UserId = customerUserId });
+        _mockUnitOfWork.Setup(u => u.Customers).Returns(mockCustomerRepo.Object);
+
+        var mockPolicyRepo = new Mock<IPolicyRepository>();
+        mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(new Policy { Id = policyId, CustomerId = customerRecordId });
+        _mockUnitOfWork.Setup(u => u.Policies).Returns(mockPolicyRepo.Object);
+
         var mockScheduleRepo = new Mock<IRepository<PremiumSchedule>>();
         mockScheduleRepo.Setup(r => r.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<PremiumSchedule, bool>>>())).ReturnsAsync(schedules);
         _mockUnitOfWork.Setup(u => u.PremiumSchedules).Returns(mockScheduleRepo.Object);
 
-        var result = await _financeService.GetPremiumScheduleAsync(policyId.ToString(), Guid.NewGuid().ToString());
+        var result = await _financeService.GetPremiumScheduleAsync(policyId.ToString(), customerUserId.ToString());
 
         Assert.That(result.Count(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public void GetPremiumScheduleAsync_OtherCustomersPolicy_ThrowsForbiddenException()
+    {
+        var customerUserId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+
+        var mockCustomerRepo = new Mock<IRepository<SpeedClaim.Api.Models.Customer>>();
+        mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<SpeedClaim.Api.Models.Customer, bool>>>()))
+            .ReturnsAsync(new SpeedClaim.Api.Models.Customer { Id = Guid.NewGuid(), UserId = customerUserId });
+        _mockUnitOfWork.Setup(u => u.Customers).Returns(mockCustomerRepo.Object);
+
+        var mockPolicyRepo = new Mock<IPolicyRepository>();
+        mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(new Policy { Id = policyId, CustomerId = Guid.NewGuid() });
+        _mockUnitOfWork.Setup(u => u.Policies).Returns(mockPolicyRepo.Object);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() =>
+            _financeService.GetPremiumScheduleAsync(policyId.ToString(), customerUserId.ToString()));
     }
 
     [Test]
@@ -629,9 +698,10 @@ public class FinanceServiceTests
         var customerId = Guid.NewGuid();
         var scheduleId = Guid.NewGuid();
         var userId = Guid.NewGuid();
-        var request = new CreatePaymentIntentRequest { PolicyId = Guid.NewGuid() };
+        var policyId = Guid.NewGuid();
+        var request = new CreatePaymentIntentRequest { PolicyId = policyId };
 
-        var schedule = new PremiumSchedule { Id = scheduleId, Amount = 200m, Status = PremiumScheduleStatus.Upcoming, InstallmentNumber = 2 };
+        var schedule = new PremiumSchedule { Id = scheduleId, PolicyId = policyId, Amount = 200m, Status = PremiumScheduleStatus.Upcoming, InstallmentNumber = 2 };
         var mockScheduleRepo = new Mock<IRepository<PremiumSchedule>>();
         mockScheduleRepo.Setup(r => r.GetByIdAsync(scheduleId)).ReturnsAsync(schedule);
         _mockUnitOfWork.Setup(u => u.PremiumSchedules).Returns(mockScheduleRepo.Object);
@@ -640,6 +710,10 @@ public class FinanceServiceTests
         var mockCustomerRepo = new Mock<IRepository<SpeedClaim.Api.Models.Customer>>();
         mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<SpeedClaim.Api.Models.Customer, bool>>>())).ReturnsAsync(customerEntity);
         _mockUnitOfWork.Setup(u => u.Customers).Returns(mockCustomerRepo.Object);
+
+        var mockPolicyRepo = new Mock<IPolicyRepository>();
+        mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(new Policy { Id = policyId, CustomerId = customerEntity.Id });
+        _mockUnitOfWork.Setup(u => u.Policies).Returns(mockPolicyRepo.Object);
 
         var mockStripeCustomerRepo = new Mock<IRepository<SpeedClaim.Api.Models.StripeCustomer>>();
         mockStripeCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<SpeedClaim.Api.Models.StripeCustomer, bool>>>()))
@@ -902,6 +976,10 @@ public class FinanceServiceTests
         _mockUnitOfWork.Setup(u => u.Customers)
             .Returns(Mock.Of<IRepository<SpeedClaim.Api.Models.Customer>>(r =>
                 r.FirstOrDefaultAsync(It.IsAny<System.Linq.Expressions.Expression<Func<SpeedClaim.Api.Models.Customer, bool>>>()) == Task.FromResult<SpeedClaim.Api.Models.Customer?>(customer)));
+
+        _mockUnitOfWork.Setup(u => u.Policies)
+            .Returns(Mock.Of<IPolicyRepository>(r =>
+                r.GetByIdAsync(policyId) == Task.FromResult<Policy?>(new Policy { Id = policyId, CustomerId = customer.Id })));
 
         var stripeCustomer = new SpeedClaim.Api.Models.StripeCustomer { UserId = customer.UserId, StripeCustomerId = "cus_test" };
         _mockUnitOfWork.Setup(u => u.StripeCustomers)

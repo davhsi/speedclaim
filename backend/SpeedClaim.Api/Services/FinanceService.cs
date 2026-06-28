@@ -57,6 +57,11 @@ public class FinanceService : IFinanceService
             throw new ConflictException("Schedule is already paid.");
 
         var customerRecord = await ResolveCustomerAsync(cid);
+        var policy = schedule.PolicyId.HasValue
+            ? await _unitOfWork.Policies.GetByIdAsync(schedule.PolicyId.Value)
+            : null;
+        if (policy == null || policy.CustomerId != customerRecord.Id || policy.Id != request.PolicyId)
+            throw new ForbiddenException("Access denied to this premium schedule.");
 
         var stripeCustomerRecord = await _unitOfWork.StripeCustomers.FirstOrDefaultAsync(sc => sc.UserId == customerRecord.UserId);
         if (stripeCustomerRecord == null)
@@ -129,6 +134,12 @@ public class FinanceService : IFinanceService
     public async Task<IEnumerable<PremiumScheduleDto>> GetPremiumScheduleAsync(string policyId, string customerId)
     {
         if (!Guid.TryParse(policyId, out var pid)) throw new ValidationException("Invalid Policy ID");
+        if (!Guid.TryParse(customerId, out var cid)) throw new ValidationException("Invalid Customer ID");
+
+        var customerRecord = await ResolveCustomerAsync(cid);
+        var policy = await _unitOfWork.Policies.GetByIdAsync(pid);
+        if (policy == null || policy.CustomerId != customerRecord.Id)
+            throw new ForbiddenException("Access denied to this policy schedule.");
 
         var schedules = await _unitOfWork.PremiumSchedules.FindAsync(s => s.PolicyId == pid);
         return schedules.Select(s => new PremiumScheduleDto
