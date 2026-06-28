@@ -102,7 +102,13 @@
     @if (claim()!.status === 'DocumentsPending') {
       <div class="bg-white border border-line rounded-card shadow-sm p-6 mb-5">
         <div class="text-[13px] font-semibold text-ink mb-3">Upload required documents</div>
-        <app-file-upload label="Select document" hint="PDF, JPG, PNG up to 5MB" (fileSelected)="uploadDoc($event)" />
+        @if (uploading()) {
+          <div class="h-[110px] border-2 border-dashed border-line rounded-card bg-surface-alt flex items-center justify-center text-sm text-muted">
+            Uploading document...
+          </div>
+        } @else {
+          <app-file-upload label="Select document" hint="PDF, JPG, PNG up to 5MB" (fileSelected)="uploadDoc($event)" />
+        }
       </div>
     }
 

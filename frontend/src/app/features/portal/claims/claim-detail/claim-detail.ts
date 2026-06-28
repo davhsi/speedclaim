@@ -25,9 +25,15 @@ export class ClaimDetailComponent implements OnInit {
   claim = signal<ClaimDto | null>(null);
   timeline = signal<TimelineItem[]>([]);
   loading = signal(true);
+  uploading = signal(false);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
+    this.loadClaim(id);
+  }
+
+  private loadClaim(id: string): void {
+    this.loading.set(true);
     this.claimService.getById(id).subscribe({
       next: c => { this.claim.set(c); this.loading.set(false); },
       error: () => this.loading.set(false),
@@ -56,10 +62,25 @@ export class ClaimDetailComponent implements OnInit {
 
   uploadDoc(file: File): void {
     const c = this.claim();
-    if (!c) return;
-    this.claimService.uploadDocument(c.id, file.name.split('.')[0], file).subscribe({
-      next: () => this.toast.success('Document uploaded'),
-      error: () => this.toast.error('Upload failed'),
+    if (!c || this.uploading()) return;
+
+    this.uploading.set(true);
+    this.claimService.uploadDocument(c.id, this.documentKeyFor(file), file).subscribe({
+      next: () => {
+        this.toast.success('Document uploaded');
+        this.uploading.set(false);
+        this.loadClaim(c.id);
+      },
+      error: () => {
+        this.uploading.set(false);
+        this.toast.error('Upload failed');
+      },
     });
+  }
+
+  private documentKeyFor(file: File): string {
+    const baseName = file.name.replace(/\.[^/.]+$/, '');
+    const key = baseName.replace(/[^a-zA-Z0-9_-]+/g, '_').replace(/^_+|_+$/g, '');
+    return (key || 'SUPPORTING_DOCUMENT').slice(0, 100).toUpperCase();
   }
 }

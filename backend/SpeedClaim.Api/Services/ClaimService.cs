@@ -61,6 +61,11 @@ public class ClaimService : IClaimService
         return status is ClaimStatus.Intimated or ClaimStatus.DocumentsPending or ClaimStatus.UnderReview or ClaimStatus.PreAuthApproved;
     }
 
+    private static bool CanCustomerUploadDocument(ClaimStatus status)
+    {
+        return status is ClaimStatus.Intimated or ClaimStatus.DocumentsPending;
+    }
+
     private static string NormalizeDocumentKey(string documentType)
     {
         var key = documentType?.Trim();
@@ -170,6 +175,9 @@ public class ClaimService : IClaimService
         if (claim == null || claim.CustomerId != customerRecordId)
             throw new NotFoundException("Claim not found or access denied.");
 
+        if (!CanCustomerUploadDocument(claim.Status))
+            throw new ConflictException($"Documents cannot be uploaded while the claim is {claim.Status}.");
+
         if (file == null || file.Length == 0)
             throw new ValidationException("Invalid file.");
 
@@ -200,7 +208,7 @@ public class ClaimService : IClaimService
 
         await _unitOfWork.SubmittedDocuments.AddAsync(doc);
         
-        if (claim.Status == ClaimStatus.Intimated)
+        if (claim.Status == ClaimStatus.Intimated || claim.Status == ClaimStatus.DocumentsPending)
         {
             await UpdateClaimStatusInternalAsync(claim, ClaimStatus.UnderReview, customerId, "Documents uploaded, moving to review.");
         }

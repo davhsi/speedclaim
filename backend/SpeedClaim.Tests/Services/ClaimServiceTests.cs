@@ -479,7 +479,7 @@ public class ClaimServiceTests
     {
         var claimId = Guid.NewGuid();
         var customerId = Guid.NewGuid();
-        var claim = new Claim { Id = claimId, CustomerId = customerId, Status = ClaimStatus.UnderReview, ClaimNumber = "CLM-001", PolicyId = Guid.NewGuid() };
+        var claim = new Claim { Id = claimId, CustomerId = customerId, Status = ClaimStatus.DocumentsPending, ClaimNumber = "CLM-001", PolicyId = Guid.NewGuid() };
 
         _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
         _mockDocRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<SubmittedDocument, bool>>>()))
@@ -523,7 +523,7 @@ public class ClaimServiceTests
     {
         var claimId = Guid.NewGuid();
         var customerId = Guid.NewGuid();
-        var claim = new Claim { Id = claimId, CustomerId = customerId, Status = ClaimStatus.UnderReview, ClaimNumber = "CLM-001", PolicyId = Guid.NewGuid() };
+        var claim = new Claim { Id = claimId, CustomerId = customerId, Status = ClaimStatus.DocumentsPending, ClaimNumber = "CLM-001", PolicyId = Guid.NewGuid() };
         var oldDoc = new SubmittedDocument
         {
             Id = Guid.NewGuid(),
@@ -559,6 +559,40 @@ public class ClaimServiceTests
 
         Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() =>
             _claimService.UploadClaimDocumentAsync(claimId, customerId, "medical/bill", mockFile.Object));
+    }
+
+    [Test]
+    public void UploadClaimDocumentAsync_UnderReviewClaim_ThrowsConflictException()
+    {
+        var claimId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, CustomerId = customerId, Status = ClaimStatus.UnderReview, ClaimNumber = "CLM-001", PolicyId = Guid.NewGuid() };
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.FileName).Returns("doc.pdf");
+        mockFile.Setup(f => f.Length).Returns(1024);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _claimService.UploadClaimDocumentAsync(claimId, customerId, "medical_bill", mockFile.Object));
+        _mockStorage.Verify(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Test]
+    public void UploadClaimDocumentAsync_SettledClaim_ThrowsConflictException()
+    {
+        var claimId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, CustomerId = customerId, Status = ClaimStatus.Settled, ClaimNumber = "CLM-001", PolicyId = Guid.NewGuid() };
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.FileName).Returns("doc.pdf");
+        mockFile.Setup(f => f.Length).Returns(1024);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _claimService.UploadClaimDocumentAsync(claimId, customerId, "medical_bill", mockFile.Object));
+        _mockStorage.Verify(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
     [Test]
@@ -808,7 +842,7 @@ public class ClaimServiceTests
     {
         var claimId = Guid.NewGuid();
         var customerId = Guid.NewGuid();
-        var claim = new Claim { Id = claimId, CustomerId = customerId, Status = ClaimStatus.UnderReview };
+        var claim = new Claim { Id = claimId, CustomerId = customerId, Status = ClaimStatus.DocumentsPending };
         _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
 
         Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() =>
