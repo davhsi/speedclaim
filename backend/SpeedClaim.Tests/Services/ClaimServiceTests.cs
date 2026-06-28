@@ -23,6 +23,7 @@ public class ClaimServiceTests
     private Mock<IPolicyRepository> _mockPolicyRepo;
     private Mock<IRepository<ClaimStatusHistory>> _mockHistoryRepo;
     private Mock<ISubmittedDocumentRepository> _mockDocRepo;
+    private Mock<IStorageService> _mockStorage;
     
     private ClaimService _claimService;
 
@@ -47,6 +48,7 @@ public class ClaimServiceTests
         _mockPolicyRepo = new Mock<IPolicyRepository>();
         _mockHistoryRepo = new Mock<IRepository<ClaimStatusHistory>>();
         _mockDocRepo = new Mock<ISubmittedDocumentRepository>();
+        _mockStorage = new Mock<IStorageService>();
 
         _mockUnitOfWork.Setup(u => u.Claims).Returns(_mockClaimRepo.Object);
         _mockUnitOfWork.Setup(u => u.Policies).Returns(_mockPolicyRepo.Object);
@@ -54,6 +56,8 @@ public class ClaimServiceTests
         _mockUnitOfWork.Setup(u => u.SubmittedDocuments).Returns(_mockDocRepo.Object);
         _mockDocRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<SubmittedDocument, bool>>>()))
             .ReturnsAsync((SubmittedDocument?)null);
+        _mockStorage.Setup(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync("uploads/claims/doc.pdf");
         _mockUnitOfWork.Setup(u => u.Customers).Returns(new Mock<IRepository<Customer>>().Object);
         _mockUnitOfWork.Setup(u => u.Surveyors).Returns(new Mock<IRepository<Surveyor>>().Object);
         _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
@@ -63,7 +67,7 @@ public class ClaimServiceTests
             .ReturnsAsync(new KycRecord { KycStatus = KycStatus.Approved, AadhaarNumber = "ENC", PanNumber = "ENC" });
         _mockUnitOfWork.Setup(u => u.KycRecords).Returns(mockKycRepo.Object);
 
-        _claimService = new ClaimService(_mockUnitOfWork.Object, new Mock<IStorageService>().Object, new Mock<INotificationService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ClaimService>>());
+        _claimService = new ClaimService(_mockUnitOfWork.Object, _mockStorage.Object, new Mock<INotificationService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ClaimService>>());
     }
 
     [Test]
@@ -484,10 +488,12 @@ public class ClaimServiceTests
         var mockFile = new Mock<IFormFile>();
         mockFile.Setup(f => f.FileName).Returns("doc.pdf");
         mockFile.Setup(f => f.Length).Returns(1024);
+        mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream(new byte[] { 1, 2, 3 }));
 
         var result = await _claimService.UploadClaimDocumentAsync(claimId, customerId, "medical_bill", mockFile.Object);
 
-        Assert.That(result, Is.Not.Null);
+        Assert.That(result, Is.EqualTo("uploads/claims/doc.pdf"));
+        _mockStorage.Verify(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), "doc.pdf", $"claims/{claimId}"), Times.Once);
         _mockDocRepo.Verify(r => r.AddAsync(It.IsAny<SubmittedDocument>()), Times.Once);
     }
 
@@ -505,10 +511,54 @@ public class ClaimServiceTests
         var mockFile = new Mock<IFormFile>();
         mockFile.Setup(f => f.FileName).Returns("doc.pdf");
         mockFile.Setup(f => f.Length).Returns(1024);
+        mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream(new byte[] { 1, 2, 3 }));
 
         await _claimService.UploadClaimDocumentAsync(claimId, customerId, "medical_bill", mockFile.Object);
 
         _mockHistoryRepo.Verify(r => r.AddAsync(It.IsAny<ClaimStatusHistory>()), Times.Once);
+    }
+
+    [Test]
+    public async Task UploadClaimDocumentAsync_ReplacesExistingDocument_DeletesOldFile()
+    {
+        var claimId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, CustomerId = customerId, Status = ClaimStatus.UnderReview, ClaimNumber = "CLM-001", PolicyId = Guid.NewGuid() };
+        var oldDoc = new SubmittedDocument
+        {
+            Id = Guid.NewGuid(),
+            EntityType = EntityType.Claim,
+            EntityId = claimId,
+            DocumentKey = "MEDICAL_BILL",
+            FilePath = "uploads/claims/old.pdf"
+        };
+
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+        _mockDocRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<SubmittedDocument, bool>>>()))
+            .ReturnsAsync(new List<SubmittedDocument> { oldDoc });
+
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.FileName).Returns("replacement.pdf");
+        mockFile.Setup(f => f.Length).Returns(1024);
+        mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream(new byte[] { 1, 2, 3 }));
+
+        await _claimService.UploadClaimDocumentAsync(claimId, customerId, "medical_bill", mockFile.Object);
+
+        _mockStorage.Verify(s => s.DeleteFileAsync("uploads/claims/old.pdf"), Times.Once);
+        _mockDocRepo.Verify(r => r.Delete(oldDoc), Times.Once);
+    }
+
+    [Test]
+    public void UploadClaimDocumentAsync_InvalidDocumentKey_ThrowsValidationException()
+    {
+        var claimId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.FileName).Returns("doc.pdf");
+        mockFile.Setup(f => f.Length).Returns(1024);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() =>
+            _claimService.UploadClaimDocumentAsync(claimId, customerId, "medical/bill", mockFile.Object));
     }
 
     [Test]

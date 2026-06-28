@@ -12,6 +12,7 @@ export class FileUploadComponent {
   hint = input('');
 
   fileSelected = output<File>();
+  fileRemoved = output<File>();
 
   selectedFile = signal<File | null>(null);
   error = signal('');
@@ -33,8 +34,10 @@ export class FileUploadComponent {
   }
 
   removeFile(): void {
+    const file = this.selectedFile();
     this.selectedFile.set(null);
     this.error.set('');
+    if (file) this.fileRemoved.emit(file);
   }
 
   formatSize(bytes: number): string {

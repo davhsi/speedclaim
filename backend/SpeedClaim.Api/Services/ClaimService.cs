@@ -61,6 +61,21 @@ public class ClaimService : IClaimService
         return status is ClaimStatus.Intimated or ClaimStatus.DocumentsPending or ClaimStatus.UnderReview or ClaimStatus.PreAuthApproved;
     }
 
+    private static string NormalizeDocumentKey(string documentType)
+    {
+        var key = documentType?.Trim();
+        if (string.IsNullOrWhiteSpace(key))
+            throw new ValidationException("Document type is required.");
+
+        if (key.Length > 100)
+            throw new ValidationException("Document type cannot exceed 100 characters.");
+
+        if (key.Any(c => !char.IsLetterOrDigit(c) && c != '_' && c != '-'))
+            throw new ValidationException("Document type can only contain letters, numbers, underscores, and hyphens.");
+
+        return key.ToUpperInvariant();
+    }
+
     private ClaimDto MapToDto(Claim claim)
     {
         var user = claim.Customer?.User;
@@ -149,6 +164,7 @@ public class ClaimService : IClaimService
 
     public async Task<string> UploadClaimDocumentAsync(Guid claimId, Guid customerId, string documentType, IFormFile file)
     {
+        var documentKey = NormalizeDocumentKey(documentType);
         var customerRecordId = await ResolveCustomerIdAsync(customerId);
         var claim = await _unitOfWork.Claims.GetByIdAsync(claimId);
         if (claim == null || claim.CustomerId != customerRecordId)
@@ -157,20 +173,27 @@ public class ClaimService : IClaimService
         if (file == null || file.Length == 0)
             throw new ValidationException("Invalid file.");
 
+        using var stream = file.OpenReadStream();
+        var storedPath = await _storageService.UploadFileAsync(stream, file.FileName, $"claims/{claimId}");
+
         var existing = await _unitOfWork.SubmittedDocuments.FindAsync(
-            d => d.EntityId == claimId && d.DocumentKey == documentType);
+            d => d.EntityId == claimId && d.DocumentKey == documentKey);
         foreach (var old in existing)
+        {
+            if (!string.IsNullOrWhiteSpace(old.FilePath))
+                await _storageService.DeleteFileAsync(old.FilePath);
             _unitOfWork.SubmittedDocuments.Delete(old);
+        }
 
         var doc = new SubmittedDocument
         {
             Id = Guid.NewGuid(),
             EntityType = EntityType.Claim,
             EntityId = claimId,
-            DocumentKey = documentType,
+            DocumentKey = documentKey,
             OriginalFilename = file.FileName,
-            StoredFilename = $"{Guid.NewGuid()}_{file.FileName}",
-            FilePath = $"/uploads/claims/{claimId}/",
+            StoredFilename = storedPath.Split('/').Last(),
+            FilePath = storedPath,
             UploadedBy = customerId,
             UploadedAt = DateTime.UtcNow
         };

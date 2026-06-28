@@ -112,7 +112,7 @@
       @case (2) {
         <div class="text-[15px] font-semibold text-ink mb-2">Upload documents & submit</div>
         <p class="text-sm text-muted mb-4">Attach supporting evidence for your claim.</p>
-        <app-file-upload label="Supporting documents" hint="Hospital bills, police reports, etc. (PDF, JPG, PNG)" (fileSelected)="onFileSelected($event)" />
+        <app-file-upload label="Supporting documents" hint="Hospital bills, police reports, etc. (PDF, JPG, PNG)" (fileSelected)="onFileSelected($event)" (fileRemoved)="onFileRemoved($event)" />
         @if (uploadedFiles.length > 0) {
           <div class="mt-3 space-y-1.5">
             @for (f of uploadedFiles; track f.name) {

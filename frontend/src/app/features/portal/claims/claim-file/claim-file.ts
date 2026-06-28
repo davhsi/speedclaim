@@ -71,7 +71,13 @@ export class ClaimFileComponent implements OnInit {
     });
   }
 
-  onFileSelected(file: File): void { this.uploadedFiles.push(file); }
+  onFileSelected(file: File): void {
+    this.uploadedFiles = [file];
+  }
+
+  onFileRemoved(file: File): void {
+    this.uploadedFiles = this.uploadedFiles.filter(uploaded => uploaded !== file);
+  }
 
   selectPolicy(policy: PolicyDto): void {
     this.policyControl.setValue(policy.id);
@@ -94,11 +100,12 @@ export class ClaimFileComponent implements OnInit {
           this.router.navigate(['/claims', claim.id]);
           return;
         }
+        const files = [...this.uploadedFiles];
         let done = 0;
-        for (const file of this.uploadedFiles) {
-          this.claimService.uploadDocument(claim.id, file.name.split('.')[0], file).subscribe({
-            next: () => { if (++done === this.uploadedFiles.length) { this.toast.success('Claim filed successfully'); this.router.navigate(['/claims', claim.id]); } },
-            error: () => { if (++done === this.uploadedFiles.length) { this.toast.warning('Claim filed but some documents failed to upload'); this.router.navigate(['/claims', claim.id]); } },
+        for (const file of files) {
+          this.claimService.uploadDocument(claim.id, this.documentKeyFor(file), file).subscribe({
+            next: () => { if (++done === files.length) { this.toast.success('Claim filed successfully'); this.router.navigate(['/claims', claim.id]); } },
+            error: () => { if (++done === files.length) { this.toast.warning('Claim filed but some documents failed to upload'); this.router.navigate(['/claims', claim.id]); } },
           });
         }
       },
@@ -121,5 +128,11 @@ export class ClaimFileComponent implements OnInit {
     const [datePart] = value.split('T');
     const [year, month, day] = datePart.split('-').map(Number);
     return new Date(year, month - 1, day);
+  }
+
+  private documentKeyFor(file: File): string {
+    const baseName = file.name.replace(/\.[^/.]+$/, '');
+    const key = baseName.replace(/[^a-zA-Z0-9_-]+/g, '_').replace(/^_+|_+$/g, '');
+    return (key || 'SUPPORTING_DOCUMENT').slice(0, 100).toUpperCase();
   }
 }
