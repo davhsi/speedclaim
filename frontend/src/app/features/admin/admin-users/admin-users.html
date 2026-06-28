@@ -116,17 +116,22 @@
               <!-- Actions -->
               <td class="px-5 py-3 text-right">
                 <div class="flex items-center justify-end gap-1">
-                  <button title="Change role" (click)="openChangeRoleModal(user)"
-                    class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface transition-colors">
+                  <button [title]="canChangeRole(user) ? 'Change role' : 'Cannot change your own admin role'"
+                    (click)="openChangeRoleModal(user)"
+                    [disabled]="!canChangeRole(user) || actionInFlight()"
+                    class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                   </button>
-                  <button [title]="user.isActive ? 'Deactivate' : 'Activate'" (click)="openToggleStatusModal(user)"
-                    class="w-7 h-7 rounded-md border flex items-center justify-center cursor-pointer hover:bg-surface transition-colors"
+                  <button [title]="canToggleStatus(user) ? (user.isActive ? 'Deactivate' : 'Activate') : 'Cannot deactivate your own account'"
+                    (click)="openToggleStatusModal(user)"
+                    [disabled]="!canToggleStatus(user) || actionInFlight()"
+                    class="w-7 h-7 rounded-md border flex items-center justify-center cursor-pointer hover:bg-surface transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white"
                     [style.border-color]="user.isActive ? '#F5B4B4' : '#B2E4CE'">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" [attr.stroke]="user.isActive ? '#D14343' : '#1F9D6B'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 11-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
                   </button>
                   <button title="Reset password" (click)="openResetPwModal(user)"
-                    class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface transition-colors">
+                    [disabled]="actionInFlight()"
+                    class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
                   </button>
                 </div>
@@ -189,8 +194,8 @@
         </div>
 
         <div class="flex justify-end gap-2">
-          <button (click)="closeModal()" class="h-9 px-4 text-[13px] font-medium text-body border border-line rounded-lg bg-white cursor-pointer hover:bg-surface transition-colors">Cancel</button>
-          <button (click)="saveRole()" class="h-9 px-4 text-[13px] font-semibold text-white bg-primary rounded-lg border-none cursor-pointer hover:opacity-90 transition-opacity">Save role</button>
+          <button (click)="closeModal()" [disabled]="actionInFlight()" class="h-9 px-4 text-[13px] font-medium text-body border border-line rounded-lg bg-white cursor-pointer hover:bg-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Cancel</button>
+          <button (click)="saveRole()" [disabled]="actionInFlight()" class="h-9 px-4 text-[13px] font-semibold text-white bg-primary rounded-lg border-none cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">Save role</button>
         </div>
       </div>
     </div>
@@ -244,8 +249,8 @@
           <h3 class="text-[15px] font-bold text-ink mb-1">Reset password</h3>
           <p class="text-[12.5px] text-body mb-5">This will generate a temporary password for <span class="font-semibold text-ink">{{ selectedUser()?.email }}</span>. The user will need to change it on next login.</p>
           <div class="flex justify-end gap-2">
-            <button (click)="closeModal()" class="h-9 px-4 text-[13px] font-medium text-body border border-line rounded-lg bg-white cursor-pointer hover:bg-surface transition-colors">Cancel</button>
-            <button (click)="confirmResetPw()" class="h-9 px-4 text-[13px] font-semibold text-white bg-warning rounded-lg border-none cursor-pointer hover:opacity-90 transition-opacity">Reset password</button>
+            <button (click)="closeModal()" [disabled]="actionInFlight()" class="h-9 px-4 text-[13px] font-medium text-body border border-line rounded-lg bg-white cursor-pointer hover:bg-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Cancel</button>
+            <button (click)="confirmResetPw()" [disabled]="actionInFlight()" class="h-9 px-4 text-[13px] font-semibold text-white bg-warning rounded-lg border-none cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">Reset password</button>
           </div>
         } @else {
           <div class="flex items-center justify-center w-10 h-10 rounded-full bg-success-bg mb-4">
@@ -273,8 +278,8 @@
           <h3 class="text-[15px] font-bold text-ink mb-1">Deactivate user?</h3>
           <p class="text-[12.5px] text-body mb-5"><span class="font-semibold text-ink">{{ selectedUser()?.fullName }}</span> will be unable to sign in until reactivated. Any active sessions will be ended.</p>
           <div class="flex justify-end gap-2">
-            <button (click)="closeModal()" class="h-9 px-4 text-[13px] font-medium text-body border border-line rounded-lg bg-white cursor-pointer hover:bg-surface transition-colors">Cancel</button>
-            <button (click)="confirmToggleStatus()" class="h-9 px-4 text-[13px] font-semibold text-white bg-danger rounded-lg border-none cursor-pointer hover:opacity-90 transition-opacity">Deactivate</button>
+            <button (click)="closeModal()" [disabled]="actionInFlight()" class="h-9 px-4 text-[13px] font-medium text-body border border-line rounded-lg bg-white cursor-pointer hover:bg-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Cancel</button>
+            <button (click)="confirmToggleStatus()" [disabled]="actionInFlight()" class="h-9 px-4 text-[13px] font-semibold text-white bg-danger rounded-lg border-none cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">Deactivate</button>
           </div>
         } @else {
           <div class="flex items-center justify-center w-10 h-10 rounded-full bg-success-bg mb-4">
@@ -283,8 +288,8 @@
           <h3 class="text-[15px] font-bold text-ink mb-1">Activate user?</h3>
           <p class="text-[12.5px] text-body mb-5"><span class="font-semibold text-ink">{{ selectedUser()?.fullName }}</span> will regain access and be able to sign in.</p>
           <div class="flex justify-end gap-2">
-            <button (click)="closeModal()" class="h-9 px-4 text-[13px] font-medium text-body border border-line rounded-lg bg-white cursor-pointer hover:bg-surface transition-colors">Cancel</button>
-            <button (click)="confirmToggleStatus()" class="h-9 px-4 text-[13px] font-semibold text-white bg-success rounded-lg border-none cursor-pointer hover:opacity-90 transition-opacity">Activate</button>
+            <button (click)="closeModal()" [disabled]="actionInFlight()" class="h-9 px-4 text-[13px] font-medium text-body border border-line rounded-lg bg-white cursor-pointer hover:bg-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Cancel</button>
+            <button (click)="confirmToggleStatus()" [disabled]="actionInFlight()" class="h-9 px-4 text-[13px] font-semibold text-white bg-success rounded-lg border-none cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">Activate</button>
           </div>
         }
       </div>

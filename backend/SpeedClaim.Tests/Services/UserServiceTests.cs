@@ -126,7 +126,7 @@ public class UserServiceTests
     public void UpdateUserRoleAsync_UserNotFound_ThrowsException()
     {
         _mockUserRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((User?)null);
-        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _userService.UpdateUserRoleAsync(Guid.NewGuid().ToString(), "Admin"));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _userService.UpdateUserRoleAsync(Guid.NewGuid().ToString(), "Admin", Guid.NewGuid().ToString()));
         Assert.That(ex.Message, Is.EqualTo("User not found"));
     }
 
@@ -137,7 +137,7 @@ public class UserServiceTests
         var user = new User { Id = userId, Role = UserRole.Customer };
         _mockUserRepository.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
         
-        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() => _userService.UpdateUserRoleAsync(userId.ToString(), "InvalidRoleName"));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() => _userService.UpdateUserRoleAsync(userId.ToString(), "InvalidRoleName", Guid.NewGuid().ToString()));
         Assert.That(ex.Message, Is.EqualTo("Invalid role"));
     }
 
@@ -148,9 +148,55 @@ public class UserServiceTests
         var user = new User { Id = userId, Role = UserRole.Customer };
         _mockUserRepository.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
 
-        await _userService.UpdateUserRoleAsync(userId.ToString(), "Underwriter");
+        await _userService.UpdateUserRoleAsync(userId.ToString(), "Underwriter", Guid.NewGuid().ToString());
         
         Assert.That(user.Role, Is.EqualTo(UserRole.Underwriter));
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public void UpdateUserRoleAsync_SelfAdminDemotion_ThrowsConflictException()
+    {
+        var adminId = Guid.NewGuid();
+        var user = new User { Id = adminId, Role = UserRole.Admin, IsActive = true };
+        _mockUserRepository.Setup(r => r.GetByIdAsync(adminId)).ReturnsAsync(user);
+
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _userService.UpdateUserRoleAsync(adminId.ToString(), "Customer", adminId.ToString()));
+
+        Assert.That(ex.Message, Is.EqualTo("You cannot remove your own admin role."));
+    }
+
+    [Test]
+    public void UpdateUserRoleAsync_LastActiveAdminDemotion_ThrowsConflictException()
+    {
+        var targetId = Guid.NewGuid();
+        var adminId = Guid.NewGuid();
+        var user = new User { Id = targetId, Role = UserRole.Admin, IsActive = true };
+        _mockUserRepository.Setup(r => r.GetByIdAsync(targetId)).ReturnsAsync(user);
+        _mockUserRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<User, bool>>>()))
+            .ReturnsAsync(new List<User>());
+
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _userService.UpdateUserRoleAsync(targetId.ToString(), "Customer", adminId.ToString()));
+
+        Assert.That(ex.Message, Is.EqualTo("At least one active admin must remain."));
+    }
+
+    [Test]
+    public async Task UpdateUserRoleAsync_AdminDemotionWithOtherActiveAdmin_Success()
+    {
+        var targetId = Guid.NewGuid();
+        var adminId = Guid.NewGuid();
+        var user = new User { Id = targetId, Role = UserRole.Admin, IsActive = true };
+        var otherAdmin = new User { Id = adminId, Role = UserRole.Admin, IsActive = true };
+        _mockUserRepository.Setup(r => r.GetByIdAsync(targetId)).ReturnsAsync(user);
+        _mockUserRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<User, bool>>>()))
+            .ReturnsAsync(new List<User> { otherAdmin });
+
+        await _userService.UpdateUserRoleAsync(targetId.ToString(), "Customer", adminId.ToString());
+
+        Assert.That(user.Role, Is.EqualTo(UserRole.Customer));
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
 
@@ -205,6 +251,52 @@ public class UserServiceTests
         
         _mockUserRepository.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
         await _userService.ActivateDeactivateUserAsync(userId.ToString(), false, Guid.NewGuid().ToString());
+
+        Assert.That(user.IsActive, Is.False);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public void ActivateDeactivateUserAsync_SelfDeactivate_ThrowsConflictException()
+    {
+        var adminId = Guid.NewGuid();
+        var user = new User { Id = adminId, Role = UserRole.Admin, IsActive = true };
+        _mockUserRepository.Setup(r => r.GetByIdAsync(adminId)).ReturnsAsync(user);
+
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _userService.ActivateDeactivateUserAsync(adminId.ToString(), false, adminId.ToString()));
+
+        Assert.That(ex.Message, Is.EqualTo("You cannot deactivate your own account."));
+    }
+
+    [Test]
+    public void ActivateDeactivateUserAsync_LastActiveAdminDeactivate_ThrowsConflictException()
+    {
+        var targetId = Guid.NewGuid();
+        var adminId = Guid.NewGuid();
+        var user = new User { Id = targetId, Role = UserRole.Admin, IsActive = true };
+        _mockUserRepository.Setup(r => r.GetByIdAsync(targetId)).ReturnsAsync(user);
+        _mockUserRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<User, bool>>>()))
+            .ReturnsAsync(new List<User>());
+
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _userService.ActivateDeactivateUserAsync(targetId.ToString(), false, adminId.ToString()));
+
+        Assert.That(ex.Message, Is.EqualTo("At least one active admin must remain."));
+    }
+
+    [Test]
+    public async Task ActivateDeactivateUserAsync_AdminDeactivateWithOtherActiveAdmin_Success()
+    {
+        var targetId = Guid.NewGuid();
+        var adminId = Guid.NewGuid();
+        var user = new User { Id = targetId, Role = UserRole.Admin, IsActive = true };
+        var otherAdmin = new User { Id = adminId, Role = UserRole.Admin, IsActive = true };
+        _mockUserRepository.Setup(r => r.GetByIdAsync(targetId)).ReturnsAsync(user);
+        _mockUserRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<User, bool>>>()))
+            .ReturnsAsync(new List<User> { otherAdmin });
+
+        await _userService.ActivateDeactivateUserAsync(targetId.ToString(), false, adminId.ToString());
 
         Assert.That(user.IsActive, Is.False);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);

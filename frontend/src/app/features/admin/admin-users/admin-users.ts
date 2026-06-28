@@ -6,6 +6,7 @@ import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 import { AdminService } from '../services/admin.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { UserDto, SessionDto } from '../../../core/models/api.models';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-admin-users',
@@ -16,6 +17,7 @@ import { UserDto, SessionDto } from '../../../core/models/api.models';
 export class AdminUsersComponent implements OnInit {
   private adminService = inject(AdminService);
   private toastService = inject(ToastService);
+  private authService = inject(AuthService);
 
   allUsers = signal<UserDto[]>([]);
   sessions = signal<SessionDto[]>([]);
@@ -30,6 +32,7 @@ export class AdminUsersComponent implements OnInit {
   selectedUser = signal<UserDto | null>(null);
   selectedRole = signal('');
   resetPwSent = signal(false);
+  actionInFlight = signal(false);
   inviteForm = { name: '', email: '', role: 'Surveyor' };
 
   filteredUsers = computed(() => {
@@ -128,7 +131,23 @@ export class AdminUsersComponent implements OnInit {
     return u ? this.sessions().filter(s => s.userId === u.id) : [];
   }
 
+  isSelf(user: UserDto): boolean {
+    return user.id === this.authService.currentUser()?.id;
+  }
+
+  canChangeRole(user: UserDto): boolean {
+    return !(this.isSelf(user) && user.role === 'Admin');
+  }
+
+  canToggleStatus(user: UserDto): boolean {
+    return !this.isSelf(user);
+  }
+
   openChangeRoleModal(user: UserDto): void {
+    if (!this.canChangeRole(user)) {
+      this.toastService.warning('You cannot remove your own admin role.');
+      return;
+    }
     this.selectedUser.set(user);
     this.selectedRole.set(user.role);
     this.activeModal.set('changeRole');
@@ -151,51 +170,79 @@ export class AdminUsersComponent implements OnInit {
   }
 
   closeModal(): void {
+    if (this.actionInFlight()) return;
     this.activeModal.set(null);
   }
 
   saveRole(): void {
     const u = this.selectedUser();
-    if (!u) return;
+    if (!u || this.actionInFlight()) return;
+    if (!this.canChangeRole(u)) {
+      this.toastService.warning('You cannot remove your own admin role.');
+      return;
+    }
+    this.actionInFlight.set(true);
     this.adminService.changeUserRole(u.id, this.selectedRole()).subscribe({
       next: () => {
         this.allUsers.update(list => list.map(usr => usr.id === u.id ? { ...usr, role: this.selectedRole() as any } : usr));
         this.toastService.success('Role updated for ' + u.fullName);
+        this.actionInFlight.set(false);
         this.closeModal();
       },
-      error: () => this.toastService.error('Failed to update role'),
+      error: () => {
+        this.actionInFlight.set(false);
+        this.toastService.error('Failed to update role');
+      },
     });
   }
 
   openToggleStatusModal(user: UserDto): void {
+    if (!this.canToggleStatus(user)) {
+      this.toastService.warning('You cannot deactivate your own account.');
+      return;
+    }
     this.selectedUser.set(user);
     this.activeModal.set('toggleStatus');
   }
 
   confirmToggleStatus(): void {
     const user = this.selectedUser();
-    if (!user) return;
+    if (!user || this.actionInFlight()) return;
+    if (!this.canToggleStatus(user)) {
+      this.toastService.warning('You cannot deactivate your own account.');
+      return;
+    }
     const next = !user.isActive;
+    this.actionInFlight.set(true);
     this.adminService.toggleUserStatus(user.id, next).subscribe({
       next: () => {
         this.allUsers.update(list => list.map(u => u.id === user.id ? { ...u, isActive: next } : u));
         if (next) this.toastService.success(user.fullName + ' activated');
         else this.toastService.warning(user.fullName + ' deactivated');
+        this.actionInFlight.set(false);
         this.closeModal();
       },
-      error: () => this.toastService.error('Failed to update status'),
+      error: () => {
+        this.actionInFlight.set(false);
+        this.toastService.error('Failed to update status');
+      },
     });
   }
 
   confirmResetPw(): void {
     const u = this.selectedUser();
-    if (!u) return;
+    if (!u || this.actionInFlight()) return;
+    this.actionInFlight.set(true);
     this.adminService.resetPassword(u.id, { newPassword: 'TempPass@123' }).subscribe({
       next: () => {
         this.resetPwSent.set(true);
         this.toastService.success('Password reset for ' + u.email);
+        this.actionInFlight.set(false);
       },
-      error: () => this.toastService.error('Failed to reset password'),
+      error: () => {
+        this.actionInFlight.set(false);
+        this.toastService.error('Failed to reset password');
+      },
     });
   }
 

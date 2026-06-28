@@ -26,7 +26,7 @@ public interface IUserService
     Task<PagedResponse<UserDto>> GetAllUsersAsync(int page, int pageSize);
     Task<PagedResponse<KycRecordDto>> GetPendingKycAsync(int page, int pageSize);
     Task<KycRecordDto?> GetMyKycAsync(string customerId);
-    Task UpdateUserRoleAsync(string targetUserId, string role);
+    Task UpdateUserRoleAsync(string targetUserId, string role, string adminId);
     Task ApproveRejectKycAsync(string customerId, bool isApproved, string reason, string reviewerId);
     Task ActivateDeactivateUserAsync(string targetUserId, bool isActive, string adminId);
     Task<IEnumerable<SessionDto>> GetAllSessionsAsync();

@@ -342,17 +342,33 @@ public class UserService : IUserService
         return new PagedResponse<KycRecordDto>(items.Select(MapToKycDto), page, pageSize, total);
     }
 
-    public async Task UpdateUserRoleAsync(string targetUserId, string role)
+    public async Task UpdateUserRoleAsync(string targetUserId, string role, string adminId)
     {
         if (!Enum.TryParse<UserRole>(role, out var parsedRole))
             throw new ValidationException("Invalid role");
 
         var uid = Guid.Parse(targetUserId);
+        var adminUid = Guid.Parse(adminId);
         var user = await _unitOfWork.Users.GetByIdAsync(uid);
         if (user == null) throw new NotFoundException("User not found");
 
+        if (uid == adminUid && user.Role == UserRole.Admin && parsedRole != UserRole.Admin)
+            throw new ConflictException("You cannot remove your own admin role.");
+
+        if (user.Role == UserRole.Admin && parsedRole != UserRole.Admin && !await HasOtherActiveAdminAsync(uid))
+            throw new ConflictException("At least one active admin must remain.");
+
         user.Role = parsedRole;
         await _unitOfWork.CompleteAsync();
+    }
+
+    private async Task<bool> HasOtherActiveAdminAsync(Guid userId)
+    {
+        var admins = await _unitOfWork.Users.FindAsync(u =>
+            u.Id != userId &&
+            u.Role == UserRole.Admin &&
+            u.IsActive);
+        return admins.Any();
     }
 
     private KycRecordDto MapToKycDto(KycRecord k)
@@ -404,8 +420,15 @@ public class UserService : IUserService
     public async Task ActivateDeactivateUserAsync(string targetUserId, bool isActive, string adminId)
     {
         var uid = Guid.Parse(targetUserId);
+        var adminUid = Guid.Parse(adminId);
         var user = await _unitOfWork.Users.GetByIdAsync(uid);
         if (user == null) throw new NotFoundException("User not found");
+
+        if (!isActive && uid == adminUid)
+            throw new ConflictException("You cannot deactivate your own account.");
+
+        if (!isActive && user.Role == UserRole.Admin && !await HasOtherActiveAdminAsync(uid))
+            throw new ConflictException("At least one active admin must remain.");
 
         user.IsActive = isActive;
         await _unitOfWork.CompleteAsync();

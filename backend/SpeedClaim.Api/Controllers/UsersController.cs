@@ -315,7 +315,8 @@ public class UsersController : BaseApiController
     [ProducesResponseType(404)]
     public async Task<IActionResult> ChangeUserRole(string userId, [FromBody] string role)
     {
-        await _userService.UpdateUserRoleAsync(userId, role);
+        var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        await _userService.UpdateUserRoleAsync(userId, role, adminId);
         return Ok(new { message = $"User role updated to {role}." });
     }
 
