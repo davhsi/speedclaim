@@ -10,6 +10,7 @@ namespace SpeedClaim.Api.Interfaces;
 public interface IAgentService
 {
     Task<IEnumerable<UserDto>> GetAssignedCustomersAsync(string agentId);
+    Task EnsureCustomerAssignedAsync(string agentId, string customerUserId);
     Task<AgentDashboardDto> GetAgentDashboardAsync(string agentId);
     Task<AgentProfileDto> GetAgentProfileAsync(string agentId);
     Task UpdateAgentProfileAsync(string agentId, UpdateAgentProfileRequest request);

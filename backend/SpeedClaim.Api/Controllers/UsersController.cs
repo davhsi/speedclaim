@@ -14,11 +14,13 @@ namespace SpeedClaim.Api.Controllers;
 public class UsersController : BaseApiController
 {
     private readonly IUserService _userService;
+    private readonly IAgentService _agentService;
     private readonly INotificationService _notificationService;
 
-    public UsersController(IUserService userService, INotificationService notificationService)
+    public UsersController(IUserService userService, IAgentService agentService, INotificationService notificationService)
     {
         _userService = userService;
+        _agentService = agentService;
         _notificationService = notificationService;
     }
 
@@ -125,7 +127,10 @@ public class UsersController : BaseApiController
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         var role = User.FindFirstValue(ClaimTypes.Role);
         if (role == "Agent" && request.CustomerId.HasValue)
+        {
+            await _agentService.EnsureCustomerAssignedAsync(userId, request.CustomerId.Value.ToString());
             userId = request.CustomerId.Value.ToString();
+        }
 
         await _userService.UploadAadhaarAsync(userId, request);
         var kyc = await _userService.GetMyKycAsync(userId);
@@ -142,7 +147,10 @@ public class UsersController : BaseApiController
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         var role = User.FindFirstValue(ClaimTypes.Role);
         if (role == "Agent" && request.CustomerId.HasValue)
+        {
+            await _agentService.EnsureCustomerAssignedAsync(userId, request.CustomerId.Value.ToString());
             userId = request.CustomerId.Value.ToString();
+        }
 
         await _userService.UploadPanAsync(userId, request);
         var kyc = await _userService.GetMyKycAsync(userId);

@@ -23,7 +23,7 @@ export class AgentCustomerKycComponent implements OnInit {
   private router = inject(Router);
 
   customers = signal<AgentCustomerDto[]>([]);
-  selectedCustomerId = signal<number | null>(null);
+  selectedCustomerId = signal<string | null>(null);
   existingKyc = signal<KycRecordDto | null>(null);
   idType = signal<'aadhaar' | 'pan'>('aadhaar');
   idNumber = signal('');
@@ -50,7 +50,7 @@ export class AgentCustomerKycComponent implements OnInit {
   }
 
   onCustomerChange(event: Event): void {
-    const id = Number((event.target as HTMLSelectElement).value);
+    const id = (event.target as HTMLSelectElement).value;
     this.selectedCustomerId.set(id || null);
     this.existingKyc.set(null);
     if (id) {
@@ -62,7 +62,7 @@ export class AgentCustomerKycComponent implements OnInit {
   }
 
   submit(): void {
-    if (!this.selectedCustomerId() || !this.frontFile || !this.idValid()) return;
+    if (this.submitting() || !this.selectedCustomerId() || !this.frontFile || !this.idValid()) return;
     this.submitting.set(true);
 
     const idValue = this.idNumber().trim().toUpperCase();

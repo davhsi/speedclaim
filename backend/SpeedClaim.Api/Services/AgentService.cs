@@ -68,6 +68,20 @@ public class AgentService : IAgentService
         return customers;
     }
 
+    public async Task EnsureCustomerAssignedAsync(string agentId, string customerUserId)
+    {
+        var aId = Guid.Parse(agentId);
+        var customerUid = Guid.Parse(customerUserId);
+        var agent = await ResolveAgentAsync(aId);
+        var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == customerUid);
+        if (customer == null) throw new NotFoundException("Customer not found.");
+
+        var proposal = await _unitOfWork.Proposals.FirstOrDefaultAsync(p =>
+            p.AgentId == agent.Id && p.CustomerId == customer.Id);
+        if (proposal == null)
+            throw new ForbiddenException("Customer is not assigned to this agent.");
+    }
+
     public async Task<AgentDashboardDto> GetAgentDashboardAsync(string agentId)
     {
         var aId = Guid.Parse(agentId);

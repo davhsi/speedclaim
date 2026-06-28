@@ -77,6 +77,43 @@ public class AgentServiceTests
     }
 
     [Test]
+    public async Task EnsureCustomerAssignedAsync_AssignedCustomer_Succeeds()
+    {
+        var agentUserId = Guid.NewGuid();
+        var agentId = Guid.NewGuid();
+        var customerUserId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+
+        _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>()))
+            .ReturnsAsync(new Agent { Id = agentId, UserId = agentUserId });
+        _mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>()))
+            .ReturnsAsync(new Customer { Id = customerId, UserId = customerUserId });
+        _mockProposalRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Proposal, bool>>>()))
+            .ReturnsAsync(new Proposal { AgentId = agentId, CustomerId = customerId });
+
+        await _agentService.EnsureCustomerAssignedAsync(agentUserId.ToString(), customerUserId.ToString());
+    }
+
+    [Test]
+    public void EnsureCustomerAssignedAsync_UnassignedCustomer_ThrowsForbiddenException()
+    {
+        var agentUserId = Guid.NewGuid();
+        var agentId = Guid.NewGuid();
+        var customerUserId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+
+        _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>()))
+            .ReturnsAsync(new Agent { Id = agentId, UserId = agentUserId });
+        _mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>()))
+            .ReturnsAsync(new Customer { Id = customerId, UserId = customerUserId });
+        _mockProposalRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Proposal, bool>>>()))
+            .ReturnsAsync((Proposal?)null);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() =>
+            _agentService.EnsureCustomerAssignedAsync(agentUserId.ToString(), customerUserId.ToString()));
+    }
+
+    [Test]
     public async Task GetAgentDashboardAsync_ReturnsDashboardStats()
     {
         var agentId = Guid.NewGuid();
