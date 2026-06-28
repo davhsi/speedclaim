@@ -77,16 +77,16 @@ export class ClaimDetailComponent implements OnInit {
 
   canApprove(): boolean {
     const s = this.claim()?.status;
-    return s === 'UnderReview' || s === 'PreAuthApproved';
+    return this.isAssignedToSelf() && (s === 'UnderReview' || s === 'PreAuthApproved');
   }
 
   canReject(): boolean {
     const s = this.claim()?.status;
-    return s === 'UnderReview' || s === 'Intimated' || s === 'DocumentsPending';
+    return this.isAssignedToSelf() && (s === 'UnderReview' || s === 'Intimated' || s === 'DocumentsPending' || s === 'PreAuthApproved');
   }
 
   canSettle(): boolean {
-    return this.claim()?.status === 'Approved';
+    return this.isAssignedToSelf() && this.claim()?.status === 'Approved';
   }
 
   isTerminal(): boolean {
@@ -106,17 +106,17 @@ export class ClaimDetailComponent implements OnInit {
 
   canAssignSurveyor(): boolean {
     const c = this.claim();
-    return !!c && ['Accident', 'Theft', 'NaturalDamage'].includes(c.claimType) && !c.surveyorId && !this.isActionLocked();
+    return !!c && this.isAssignedToSelf() && ['Accident', 'Theft', 'NaturalDamage'].includes(c.claimType) && !c.surveyorId && (c.status === 'Intimated' || c.status === 'UnderReview');
   }
 
   canRequestDocs(): boolean {
     const s = this.claim()?.status;
-    return s === 'Intimated' || s === 'UnderReview' || s === 'DocumentsPending' || s === 'PreAuthApproved';
+    return this.isAssignedToSelf() && (s === 'Intimated' || s === 'UnderReview' || s === 'PreAuthApproved');
   }
 
   canApprovePreAuth(): boolean {
     const c = this.claim();
-    return !!(c?.isCashless && c.status === 'PreAuthRequested');
+    return !!(c?.isCashless && this.isAssignedToSelf() && c.status === 'PreAuthRequested');
   }
 
   onAssignSelf(): void {
@@ -179,7 +179,7 @@ export class ClaimDetailComponent implements OnInit {
 
     switch (this.modalType()) {
       case 'approve':
-        return !this.hasPositiveAmount(this.modalAmount);
+        return !this.hasValidApprovedAmount(this.modalAmount);
       case 'reject':
         return this.modalReason.trim().length === 0;
       case 'assignSurveyor':
@@ -233,7 +233,7 @@ export class ClaimDetailComponent implements OnInit {
         break;
       case 'requestDocs':
         this.claimsService.requestDocs(c.id, this.modalDocs.trim()).subscribe({
-          next: () => { this.finishAction('Document request sent', 'success'); this.closeModal(); },
+          next: () => { this.finishAction('Document request sent', 'success'); this.closeModal(); this.loadClaim(c.id); },
           error: () => this.finishAction('Failed to send request', 'error'),
         });
         break;
@@ -251,9 +251,10 @@ export class ClaimDetailComponent implements OnInit {
     this.showToast(message, type);
   }
 
-  private hasPositiveAmount(value: string): boolean {
+  private hasValidApprovedAmount(value: string): boolean {
+    const claim = this.claim();
     const amount = Number(value);
-    return Number.isFinite(amount) && amount > 0;
+    return Number.isFinite(amount) && amount > 0 && (!claim || amount <= claim.claimAmountRequested);
   }
 
   private showToast(message: string, type: ToastType): void {

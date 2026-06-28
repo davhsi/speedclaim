@@ -197,7 +197,10 @@
           @case ('approve') {
             <div class="mb-4">
               <label class="block text-[13px] font-medium text-ink mb-1.5">Approved amount <span class="text-danger">*</span></label>
-              <input [(ngModel)]="modalAmount" type="number" placeholder="e.g. 42500" class="w-full h-11 px-3 border border-line rounded-lg text-sm text-ink outline-none sc-numeric" />
+              <input [(ngModel)]="modalAmount" type="number" min="1" [max]="claim()?.claimAmountRequested ?? null" placeholder="e.g. 42500" class="w-full h-11 px-3 border border-line rounded-lg text-sm text-ink outline-none sc-numeric" />
+              @if (modalAmount && modalConfirmDisabled()) {
+                <p class="text-xs text-danger mt-1">Approved amount must be greater than zero and no more than the requested amount.</p>
+              }
             </div>
             <div class="mb-5">
               <label class="block text-[13px] font-medium text-ink mb-1.5">Notes (optional)</label>
