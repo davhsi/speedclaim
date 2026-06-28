@@ -62,7 +62,7 @@ export class AdminLayoutComponent implements OnInit {
     this.adminService.getAgentProfiles().subscribe({
       next: (agents) => this.agentCount.set(agents.length),
     });
-    this.adminService.getProducts().subscribe({
+    this.adminService.getAdminProducts().subscribe({
       next: (products) => this.productCount.set(products.length),
     });
   }

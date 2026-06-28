@@ -77,8 +77,16 @@ export class AdminService {
     return this.http.get<ProductDto[]>('/api/v1/products');
   }
 
+  getAdminProducts(): Observable<ProductDto[]> {
+    return this.http.get<ProductDto[]>('/api/v1/admin/products');
+  }
+
   createProduct(req: CreateProductRequest): Observable<ProductDto> {
     return this.http.post<ProductDto>('/api/v1/products', req);
+  }
+
+  getProductRates(productId: string): Observable<PremiumRateDto[]> {
+    return this.http.get<PremiumRateDto[]>(`/api/v1/products/${productId}/rates`);
   }
 
   updateProductRates(productId: string, rates: PremiumRateDto[]): Observable<ApiMessage> {

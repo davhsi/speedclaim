@@ -18,26 +18,37 @@ public class ProductService : IProductService
         _unitOfWork = unitOfWork;
     }
 
+    private static ProductDto MapProduct(InsuranceProduct product)
+    {
+        return new ProductDto(
+            product.Id,
+            product.ProductName,
+            product.Domain,
+            product.Uin,
+            product.Description,
+            product.MinAge,
+            product.MaxAge,
+            product.MinSumAssured,
+            product.MaxSumAssured,
+            product.MinTenureYears,
+            product.MaxTenureYears,
+            product.WaitingPeriodDays,
+            product.AllowsFamilyFloater,
+            product.MaxFamilyMembers,
+            product.IsActive
+        );
+    }
+
     public async Task<IEnumerable<ProductDto>> GetAvailableProductsAsync()
     {
         var products = await _unitOfWork.InsuranceProducts.FindAsync(p => p.IsActive);
-        return products.Select(p => new ProductDto(
-            p.Id,
-            p.ProductName,
-            p.Domain,
-            p.Uin,
-            p.Description,
-            p.MinAge,
-            p.MaxAge,
-            p.MinSumAssured,
-            p.MaxSumAssured,
-            p.MinTenureYears,
-            p.MaxTenureYears,
-            p.WaitingPeriodDays,
-            p.AllowsFamilyFloater,
-            p.MaxFamilyMembers,
-            p.IsActive
-        ));
+        return products.Select(MapProduct);
+    }
+
+    public async Task<IEnumerable<ProductDto>> GetAllProductsAsync()
+    {
+        var products = await _unitOfWork.InsuranceProducts.GetAllAsync();
+        return products.Select(MapProduct);
     }
 
     public async Task<ProductDto> CreateProductAsync(CreateProductRequest request, string adminId)
@@ -65,23 +76,25 @@ public class ProductService : IProductService
         await _unitOfWork.InsuranceProducts.AddAsync(product);
         await _unitOfWork.CompleteAsync();
 
-        return new ProductDto(
-            product.Id,
-            product.ProductName,
-            product.Domain,
-            product.Uin,
-            product.Description,
-            product.MinAge,
-            product.MaxAge,
-            product.MinSumAssured,
-            product.MaxSumAssured,
-            product.MinTenureYears,
-            product.MaxTenureYears,
-            product.WaitingPeriodDays,
-            product.AllowsFamilyFloater,
-            product.MaxFamilyMembers,
-            product.IsActive
-        );
+        return MapProduct(product);
+    }
+
+    public async Task<IEnumerable<PremiumRateDto>> GetPremiumRatesAsync(string productId)
+    {
+        var pId = Guid.Parse(productId);
+        var product = await _unitOfWork.InsuranceProducts.GetByIdAsync(pId);
+        if (product == null) throw new NotFoundException("Product not found");
+
+        var rates = await _unitOfWork.PremiumRateTables.FindAsync(r => r.ProductId == pId);
+        return rates
+            .OrderBy(r => r.AgeMin)
+            .ThenBy(r => r.SumAssuredMin)
+            .Select(r => new PremiumRateDto(
+                r.AgeMin,
+                r.AgeMax,
+                r.SumAssuredMin,
+                r.SumAssuredMax,
+                r.AnnualPremium));
     }
 
     public async Task UpdatePremiumRateTableAsync(string productId, UpdatePremiumRatesRequest request, string adminId)
@@ -163,11 +176,7 @@ public class ProductService : IProductService
         var product = await _unitOfWork.InsuranceProducts.GetByIdAsync(pId);
         if (product == null) throw new NotFoundException("Product not found.");
 
-        return new ProductDto(
-            product.Id, product.ProductName, product.Domain, product.Uin, product.Description,
-            product.MinAge, product.MaxAge, product.MinSumAssured, product.MaxSumAssured,
-            product.MinTenureYears, product.MaxTenureYears, product.WaitingPeriodDays,
-            product.AllowsFamilyFloater, product.MaxFamilyMembers, product.IsActive);
+        return MapProduct(product);
     }
 
     public async Task ToggleProductStatusAsync(string productId, bool isActive, string adminId)

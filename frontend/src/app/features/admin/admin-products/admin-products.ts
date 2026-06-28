@@ -26,6 +26,10 @@ export class AdminProductsComponent implements OnInit {
   productDocs = signal<DocumentRequirementResponseDto[]>([]);
   rateBands = signal<PremiumRateDto[]>([]);
   createSubmitting = signal(false);
+  ratesLoading = signal(false);
+  ratesSubmitting = signal(false);
+  docsSubmitting = signal(false);
+  statusUpdatingId = signal<string | null>(null);
 
   createForm = { productName: '', domain: 'Motor', uin: '', description: '', minAge: 18, maxAge: 65, minSumAssured: 100000, maxSumAssured: 5000000, minTenureYears: 1, maxTenureYears: 30, waitingPeriodDays: 30, allowsFamilyFloater: false, maxFamilyMembers: 1 };
 
@@ -61,7 +65,7 @@ export class AdminProductsComponent implements OnInit {
   }
 
   private loadProducts(): void {
-    this.adminService.getProducts().subscribe({
+    this.adminService.getAdminProducts().subscribe({
       next: products => { this.products.set(products); this.loading.set(false); },
       error: () => this.loading.set(false),
     });
@@ -87,8 +91,19 @@ export class AdminProductsComponent implements OnInit {
 
   openEditRatesModal(product: ProductDto): void {
     this.selectedProduct.set(product);
-    this.rateBands.set([{ ageMin: 18, ageMax: 30, sumAssuredMin: 100000, sumAssuredMax: 500000, annualPremium: 5000 }]);
+    this.rateBands.set([]);
+    this.ratesLoading.set(true);
     this.activeModal.set('editRates');
+    this.adminService.getProductRates(product.id).subscribe({
+      next: rates => {
+        this.rateBands.set(rates);
+        this.ratesLoading.set(false);
+      },
+      error: () => {
+        this.ratesLoading.set(false);
+        this.toastService.error('Failed to load rates');
+      },
+    });
   }
 
   openEditDocsModal(product: ProductDto): void {
@@ -102,7 +117,7 @@ export class AdminProductsComponent implements OnInit {
   }
 
   closeModal(): void {
-    if (this.createSubmitting()) return;
+    if (this.createSubmitting() || this.ratesSubmitting() || this.docsSubmitting()) return;
     this.activeModal.set(null);
   }
 
@@ -139,11 +154,18 @@ export class AdminProductsComponent implements OnInit {
   }
 
   toggleProductStatus(product: ProductDto): void {
+    if (this.statusUpdatingId()) return;
     const next = !product.isActive;
+    this.statusUpdatingId.set(product.id);
     this.adminService.toggleProductStatus(product.id, next).subscribe({
       next: () => {
         this.products.update(list => list.map(p => p.id === product.id ? { ...p, isActive: next } : p));
         this.toastService.success(product.productName + (next ? ' activated' : ' deactivated'));
+        this.statusUpdatingId.set(null);
+      },
+      error: () => {
+        this.statusUpdatingId.set(null);
+        this.toastService.error('Failed to update product status');
       },
     });
   }
@@ -161,12 +183,30 @@ export class AdminProductsComponent implements OnInit {
     this.rateBands.update(bands => bands.map((b, i) => i === index ? { ...b, [field]: val } : b));
   }
 
+  ratesInvalid(): boolean {
+    const bands = this.rateBands();
+    return bands.length === 0 || bands.some(b =>
+      b.ageMin < 0
+      || b.ageMax < b.ageMin
+      || b.sumAssuredMin <= 0
+      || b.sumAssuredMax < b.sumAssuredMin
+      || b.annualPremium <= 0);
+  }
+
   saveRates(): void {
     const p = this.selectedProduct();
-    if (!p) return;
+    if (!p || this.ratesSubmitting() || this.ratesInvalid()) return;
+    this.ratesSubmitting.set(true);
     this.adminService.updateProductRates(p.id, this.rateBands()).subscribe({
-      next: () => { this.toastService.success('Rates updated'); this.closeModal(); },
-      error: () => this.toastService.error('Failed to update rates'),
+      next: () => {
+        this.ratesSubmitting.set(false);
+        this.toastService.success('Rates updated');
+        this.closeModal();
+      },
+      error: () => {
+        this.ratesSubmitting.set(false);
+        this.toastService.error('Failed to update rates');
+      },
     });
   }
 
@@ -176,14 +216,22 @@ export class AdminProductsComponent implements OnInit {
 
   saveDocs(): void {
     const p = this.selectedProduct();
-    if (!p) return;
+    if (!p || this.docsSubmitting()) return;
     const reqs = this.productDocs().map(d => ({
       entityType: d.entityType, domain: d.domain, documentKey: d.documentKey,
       label: d.label, description: d.description, isMandatory: d.isMandatory, isActive: d.isActive,
     }));
+    this.docsSubmitting.set(true);
     this.adminService.updateProductDocuments(p.id, reqs).subscribe({
-      next: () => { this.toastService.success('Document requirements saved'); this.closeModal(); },
-      error: () => this.toastService.error('Failed to save documents'),
+      next: () => {
+        this.docsSubmitting.set(false);
+        this.toastService.success('Document requirements saved');
+        this.closeModal();
+      },
+      error: () => {
+        this.docsSubmitting.set(false);
+        this.toastService.error('Failed to save documents');
+      },
     });
   }
 }

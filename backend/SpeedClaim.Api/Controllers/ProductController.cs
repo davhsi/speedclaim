@@ -45,6 +45,16 @@ public class ProductsController : BaseApiController
 
     #region Admin Endpoints
 
+    /// <summary>Admin — get all insurance products, including inactive products</summary>
+    [Authorize(Roles = "Admin")]
+    [HttpGet("~/api/v{version:apiVersion}/admin/products")]
+    [ProducesResponseType(typeof(IEnumerable<ProductDto>), 200)]
+    public async Task<IActionResult> GetAllProductsForAdmin()
+    {
+        var result = await _productService.GetAllProductsAsync();
+        return Ok(result);
+    }
+
     /// <summary>Admin — create a new insurance product</summary>
     [Authorize(Roles = "Admin")]
     [HttpPost]
@@ -54,6 +64,18 @@ public class ProductsController : BaseApiController
         var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         if (adminId == null) return Unauthorized();
         var result = await _productService.CreateProductAsync(request, adminId);
+        return Ok(result);
+    }
+
+    /// <summary>Admin — get the premium rate table for a product</summary>
+    /// <param name="id">Product ID</param>
+    [Authorize(Roles = "Admin")]
+    [HttpGet("{id}/rates")]
+    [ProducesResponseType(typeof(IEnumerable<PremiumRateDto>), 200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> GetRates(string id)
+    {
+        var result = await _productService.GetPremiumRatesAsync(id);
         return Ok(result);
     }
 

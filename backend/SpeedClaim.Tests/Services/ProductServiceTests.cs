@@ -55,6 +55,23 @@ public class ProductServiceTests
     }
 
     [Test]
+    public async Task GetAllProductsAsync_ReturnsActiveAndInactiveProducts()
+    {
+        var products = new List<InsuranceProduct>
+        {
+            new InsuranceProduct { Id = Guid.NewGuid(), ProductName = "Active Plan", IsActive = true },
+            new InsuranceProduct { Id = Guid.NewGuid(), ProductName = "Retired Plan", IsActive = false }
+        };
+
+        _mockProductRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(products);
+
+        var result = (await _productService.GetAllProductsAsync()).ToList();
+
+        Assert.That(result.Count, Is.EqualTo(2));
+        Assert.That(result.Any(p => !p.IsActive), Is.True);
+    }
+
+    [Test]
     public async Task CreateProductAsync_ValidRequest_Success()
     {
         var request = new CreateProductRequest("Name", "Domain", "UIN-123", "Desc", 18, 65, 100000, 500000, 1, 10, 30, true, 4);
@@ -78,6 +95,39 @@ public class ProductServiceTests
         
         var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _productService.UpdatePremiumRateTableAsync(Guid.NewGuid().ToString(), request, Guid.NewGuid().ToString()));
         Assert.That(ex.Message, Is.EqualTo("Product not found"));
+    }
+
+    [Test]
+    public void GetPremiumRatesAsync_ProductNotFound_ThrowsException()
+    {
+        _mockProductRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((InsuranceProduct?)null);
+
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() =>
+            _productService.GetPremiumRatesAsync(Guid.NewGuid().ToString()));
+
+        Assert.That(ex.Message, Is.EqualTo("Product not found"));
+    }
+
+    [Test]
+    public async Task GetPremiumRatesAsync_ReturnsConfiguredRates()
+    {
+        var productId = Guid.NewGuid();
+        var product = new InsuranceProduct { Id = productId };
+        var rates = new List<PremiumRateTable>
+        {
+            new PremiumRateTable { ProductId = productId, AgeMin = 31, AgeMax = 45, SumAssuredMin = 100000, SumAssuredMax = 500000, AnnualPremium = 8000 },
+            new PremiumRateTable { ProductId = productId, AgeMin = 18, AgeMax = 30, SumAssuredMin = 100000, SumAssuredMax = 500000, AnnualPremium = 5000 }
+        };
+
+        _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
+        _mockRateRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<PremiumRateTable, bool>>>()))
+            .ReturnsAsync(rates);
+
+        var result = (await _productService.GetPremiumRatesAsync(productId.ToString())).ToList();
+
+        Assert.That(result.Count, Is.EqualTo(2));
+        Assert.That(result[0].AgeMin, Is.EqualTo(18));
+        Assert.That(result[0].AnnualPremium, Is.EqualTo(5000));
     }
 
     [Test]
