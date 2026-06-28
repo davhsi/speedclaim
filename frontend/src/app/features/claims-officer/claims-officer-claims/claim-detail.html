@@ -100,11 +100,16 @@
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-muted"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               <span class="text-[13px] text-body">Officer #{{ c.assignedOfficerId }}</span>
             </div>
-          } @else {
+          } @else if (canAssignSelf()) {
             <button (click)="onAssignSelf()" [disabled]="actionInFlight()" class="flex items-center justify-center gap-2 w-full h-10 border border-primary bg-primary-light rounded-lg text-[13px] font-semibold text-primary cursor-pointer hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-wait">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
               {{ actionInFlight() ? 'Assigning...' : 'Assign to self' }}
             </button>
+          } @else {
+            <div class="flex items-center gap-2 bg-surface border border-line rounded-lg px-3 py-2.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-muted"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span class="text-[13px] text-body">Assignment closed</span>
+            </div>
           }
         </div>
 

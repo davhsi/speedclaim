@@ -94,13 +94,24 @@ export class ClaimDetailComponent implements OnInit {
     return s === 'Settled' || s === 'Rejected' || s === 'Withdrawn';
   }
 
+  isActionLocked(): boolean {
+    const s = this.claim()?.status;
+    return s === 'Approved' || s === 'Settled' || s === 'Rejected' || s === 'Withdrawn';
+  }
+
+  canAssignSelf(): boolean {
+    const c = this.claim();
+    return !!c && !c.assignedOfficerId && !this.isActionLocked();
+  }
+
   canAssignSurveyor(): boolean {
     const c = this.claim();
-    return !!c && ['Accident', 'Theft', 'NaturalDamage'].includes(c.claimType) && !c.surveyorId && !this.isTerminal();
+    return !!c && ['Accident', 'Theft', 'NaturalDamage'].includes(c.claimType) && !c.surveyorId && !this.isActionLocked();
   }
 
   canRequestDocs(): boolean {
-    return !this.isTerminal();
+    const s = this.claim()?.status;
+    return s === 'Intimated' || s === 'UnderReview' || s === 'DocumentsPending' || s === 'PreAuthApproved';
   }
 
   canApprovePreAuth(): boolean {
@@ -110,7 +121,7 @@ export class ClaimDetailComponent implements OnInit {
 
   onAssignSelf(): void {
     const c = this.claim();
-    if (!c || this.actionInFlight()) return;
+    if (!c || this.actionInFlight() || !this.canAssignSelf()) return;
     this.actionInFlight.set(true);
     this.claimsService.assignToSelf(c.id).subscribe({
       next: () => {

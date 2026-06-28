@@ -150,6 +150,18 @@ public class ClaimServiceTests
     }
 
     [Test]
+    public void AssignSurveyorAsync_ApprovedClaim_ThrowsConflictException()
+    {
+        var claimId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, ClaimType = ClaimType.Accident, Status = ClaimStatus.Approved };
+
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _claimService.AssignSurveyorAsync(claimId, Guid.NewGuid(), Guid.NewGuid(), "Test"));
+    }
+
+    [Test]
     public async Task ApproveOrRejectClaimAsync_WhenApproved_UpdatesStatusAndAmount()
     {
         // Arrange
@@ -300,7 +312,7 @@ public class ClaimServiceTests
     {
         var claimId = Guid.NewGuid();
         var officerId = Guid.NewGuid();
-        var claim = new Claim { Id = claimId, CustomerId = Guid.NewGuid(), ClaimType = ClaimType.Health, Status = ClaimStatus.Intimated, IsCashless = true };
+        var claim = new Claim { Id = claimId, CustomerId = Guid.NewGuid(), ClaimType = ClaimType.Health, Status = ClaimStatus.PreAuthRequested, IsCashless = true };
         _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
         _mockUnitOfWork.Setup(u => u.Customers.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Customer?)null);
 
@@ -313,10 +325,21 @@ public class ClaimServiceTests
     public void ApproveCashlessPreAuthAsync_NonCashlessClaim_ThrowsInvalidOperation()
     {
         var claimId = Guid.NewGuid();
-        var claim = new Claim { Id = claimId, ClaimType = ClaimType.Health, Status = ClaimStatus.Intimated, IsCashless = false };
+        var claim = new Claim { Id = claimId, ClaimType = ClaimType.Health, Status = ClaimStatus.PreAuthRequested, IsCashless = false };
         _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
 
         Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.UnprocessableException>(() => _claimService.ApproveCashlessPreAuthAsync(claimId, Guid.NewGuid()));
+    }
+
+    [Test]
+    public void ApproveCashlessPreAuthAsync_NotAwaitingPreAuth_ThrowsConflictException()
+    {
+        var claimId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, ClaimType = ClaimType.Health, Status = ClaimStatus.Intimated, IsCashless = true };
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _claimService.ApproveCashlessPreAuthAsync(claimId, Guid.NewGuid()));
     }
 
     [Test]
@@ -427,6 +450,18 @@ public class ClaimServiceTests
 
         Assert.That(claim.AssignedOfficerId, Is.EqualTo(officerId));
         _mockHistoryRepo.Verify(r => r.AddAsync(It.IsAny<ClaimStatusHistory>()), Times.Once);
+    }
+
+    [Test]
+    public void AssignClaimAsync_ApprovedClaim_ThrowsConflictException()
+    {
+        var claimId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, CustomerId = Guid.NewGuid(), Status = ClaimStatus.Approved, ClaimNumber = "CLM-001", PolicyId = Guid.NewGuid() };
+
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _claimService.AssignClaimAsync(claimId, Guid.NewGuid()));
     }
 
     [Test]
@@ -546,6 +581,18 @@ public class ClaimServiceTests
     }
 
     [Test]
+    public void RequestAdditionalDocumentsAsync_SettledClaim_ThrowsConflictException()
+    {
+        var claimId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, Status = ClaimStatus.Settled, CustomerId = Guid.NewGuid(), ClaimNumber = "CLM-X", PolicyId = Guid.NewGuid() };
+
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _claimService.RequestAdditionalDocumentsAsync(claimId, "more docs needed", Guid.NewGuid()));
+    }
+
+    [Test]
     public void MarkClaimAsSettledAsync_ClaimNotApproved_ThrowsUnprocessableException()
     {
         var claimId = Guid.NewGuid();
@@ -568,6 +615,20 @@ public class ClaimServiceTests
         var request = new ApproveRejectClaimRequest(true, null, "approved");
 
         Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() =>
+            _claimService.ApproveOrRejectClaimAsync(claimId, request, Guid.NewGuid()));
+    }
+
+    [Test]
+    public void ApproveOrRejectClaimAsync_SettledClaim_ThrowsConflictException()
+    {
+        var claimId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, Status = ClaimStatus.Settled, CustomerId = Guid.NewGuid(), ClaimNumber = "CLM-X", PolicyId = Guid.NewGuid() };
+
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+
+        var request = new ApproveRejectClaimRequest(true, 1000m, "approved");
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
             _claimService.ApproveOrRejectClaimAsync(claimId, request, Guid.NewGuid()));
     }
 

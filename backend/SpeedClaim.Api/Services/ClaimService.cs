@@ -51,6 +51,16 @@ public class ClaimService : IClaimService
         return status is ClaimStatus.Approved or ClaimStatus.Rejected or ClaimStatus.Settled or ClaimStatus.Withdrawn;
     }
 
+    private static bool IsClaimActionLocked(ClaimStatus status)
+    {
+        return status is ClaimStatus.Approved or ClaimStatus.Rejected or ClaimStatus.Settled or ClaimStatus.Withdrawn;
+    }
+
+    private static bool CanDecideClaim(ClaimStatus status)
+    {
+        return status is ClaimStatus.Intimated or ClaimStatus.DocumentsPending or ClaimStatus.UnderReview or ClaimStatus.PreAuthApproved;
+    }
+
     private ClaimDto MapToDto(Claim claim)
     {
         var user = claim.Customer?.User;
@@ -226,6 +236,9 @@ public class ClaimService : IClaimService
         var claim = await _unitOfWork.Claims.GetByIdAsync(claimId);
         if (claim == null) throw new NotFoundException("Claim not found.");
 
+        if (IsClaimActionLocked(claim.Status))
+            throw new ConflictException($"Claim cannot be assigned while it is {claim.Status}.");
+
         claim.AssignedOfficerId = officerId;
         claim.UpdatedAt = DateTimeOffset.UtcNow;
         
@@ -245,6 +258,9 @@ public class ClaimService : IClaimService
         var claim = await _unitOfWork.Claims.GetByIdAsync(claimId);
         if (claim == null) throw new NotFoundException("Claim not found.");
 
+        if (IsClaimActionLocked(claim.Status))
+            throw new ConflictException($"Additional documents cannot be requested while the claim is {claim.Status}.");
+
         await UpdateClaimStatusInternalAsync(claim, ClaimStatus.DocumentsPending, officerId, $"Additional documents requested: {details}");
     }
 
@@ -252,6 +268,9 @@ public class ClaimService : IClaimService
     {
         var claim = await _unitOfWork.Claims.GetByIdAsync(claimId);
         if (claim == null) throw new NotFoundException("Claim not found.");
+
+        if (!CanDecideClaim(claim.Status))
+            throw new ConflictException($"Claim cannot be approved or rejected while it is {claim.Status}.");
 
         var newStatus = request.IsApproved ? ClaimStatus.Approved : ClaimStatus.Rejected;
         
@@ -275,6 +294,8 @@ public class ClaimService : IClaimService
         if (claim == null) throw new NotFoundException("Claim not found.");
         
         if (!claim.IsCashless) throw new UnprocessableException("Claim is not a cashless claim.");
+        if (claim.Status != ClaimStatus.PreAuthRequested)
+            throw new ConflictException("Cashless pre-authorisation can only be approved while the claim is awaiting pre-auth.");
 
         await UpdateClaimStatusInternalAsync(claim, ClaimStatus.PreAuthApproved, officerId, "Cashless Pre-Auth Approved.");
     }
@@ -286,6 +307,9 @@ public class ClaimService : IClaimService
 
         if (claim.ClaimType != ClaimType.Accident && claim.ClaimType != ClaimType.Theft && claim.ClaimType != ClaimType.NaturalDamage)
             throw new UnprocessableException("Surveyor can only be assigned to Motor or Property related claims.");
+
+        if (IsClaimActionLocked(claim.Status))
+            throw new ConflictException($"Surveyor cannot be assigned while the claim is {claim.Status}.");
 
         claim.SurveyorId = surveyorId;
         await UpdateClaimStatusInternalAsync(claim, ClaimStatus.UnderReview, officerId, $"Surveyor assigned. Notes: {notes}");
