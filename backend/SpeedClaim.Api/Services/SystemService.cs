@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using SpeedClaim.Api.Dtos.SystemManagement;
 using SpeedClaim.Api.Interfaces;
@@ -19,24 +20,42 @@ public class SystemService : ISystemService
 
     public async Task UpdateSystemConfigAsync(UpdateSystemConfigRequest request, Guid adminId)
     {
-        var config = await _unitOfWork.SystemConfigs.SingleOrDefaultAsync(c => c.ConfigKey == request.ConfigKey);
+        var key = request.ConfigKey.Trim();
+        var value = request.ConfigValue.Trim();
+        var config = await _unitOfWork.SystemConfigs.SingleOrDefaultAsync(c => c.ConfigKey == key);
+        var oldValue = config?.ConfigValue;
         
         if (config == null)
         {
             config = new SystemConfig
             {
                 Id = Guid.NewGuid(),
-                ConfigKey = request.ConfigKey,
-                ConfigValue = request.ConfigValue
+                ConfigKey = key,
+                ConfigValue = value,
+                UpdatedById = adminId,
+                UpdatedAt = DateTimeOffset.UtcNow
             };
             await _unitOfWork.SystemConfigs.AddAsync(config);
         }
         else
         {
-            config.ConfigValue = request.ConfigValue;
+            config.ConfigValue = value;
+            config.UpdatedById = adminId;
             config.UpdatedAt = DateTimeOffset.UtcNow;
             _unitOfWork.SystemConfigs.Update(config);
         }
+
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = adminId,
+            EntityType = "SystemConfig",
+            EntityId = config.Id,
+            Action = oldValue == null ? "SystemConfigCreated" : "SystemConfigUpdated",
+            OldValue = oldValue == null ? null : JsonSerializer.Serialize(oldValue),
+            NewValue = JsonSerializer.Serialize(value),
+            CreatedAt = DateTime.UtcNow
+        });
 
         await _unitOfWork.CompleteAsync();
     }
@@ -93,27 +112,43 @@ public class SystemService : ISystemService
 
     public async Task ManageEmailTemplatesAsync(ManageEmailTemplateRequest request, Guid adminId)
     {
-        var template = await _unitOfWork.EmailTemplates.SingleOrDefaultAsync(t => t.TemplateKey == request.TemplateKey);
+        var key = request.TemplateKey.Trim();
+        var subject = request.Subject.Trim();
+        var bodyHtml = request.BodyHtml.Trim();
+        var template = await _unitOfWork.EmailTemplates.SingleOrDefaultAsync(t => t.TemplateKey == key);
+        var oldValue = template == null ? null : JsonSerializer.Serialize(new { template.Subject, template.BodyHtml });
 
         if (template == null)
         {
             template = new EmailTemplate
             {
                 Id = Guid.NewGuid(),
-                TemplateKey = request.TemplateKey,
-                Subject = request.Subject,
-                BodyHtml = request.BodyHtml,
+                TemplateKey = key,
+                Subject = subject,
+                BodyHtml = bodyHtml,
                 CreatedAt = DateTimeOffset.UtcNow
             };
             await _unitOfWork.EmailTemplates.AddAsync(template);
         }
         else
         {
-            template.Subject = request.Subject;
-            template.BodyHtml = request.BodyHtml;
+            template.Subject = subject;
+            template.BodyHtml = bodyHtml;
             template.UpdatedAt = DateTimeOffset.UtcNow;
             _unitOfWork.EmailTemplates.Update(template);
         }
+
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = adminId,
+            EntityType = "EmailTemplate",
+            EntityId = template.Id,
+            Action = oldValue == null ? "EmailTemplateCreated" : "EmailTemplateUpdated",
+            OldValue = oldValue,
+            NewValue = JsonSerializer.Serialize(new { template.Subject, template.BodyHtml }),
+            CreatedAt = DateTime.UtcNow
+        });
 
         await _unitOfWork.CompleteAsync();
     }

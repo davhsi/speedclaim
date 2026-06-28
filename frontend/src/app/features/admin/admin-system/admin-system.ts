@@ -20,6 +20,7 @@ export class AdminSystemComponent implements OnInit {
   configs = signal<SystemConfigDto[]>([]);
   editingKey = signal<string | null>(null);
   editValue = signal('');
+  configSavingKey = signal<string | null>(null);
 
   auditLogs = signal<AuditLogDto[]>([]);
   notifLogs = signal<NotificationDto[]>([]);
@@ -28,6 +29,7 @@ export class AdminSystemComponent implements OnInit {
   activeModal = signal<'editTemplate' | null>(null);
   templateForm = { templateKey: '', subject: '', bodyHtml: '' };
   selectedTemplate = signal<EmailTemplateDto | null>(null);
+  templateSaving = signal(false);
 
   tabs = [
     { key: 'configs' as const, label: 'Configuration' },
@@ -64,22 +66,35 @@ export class AdminSystemComponent implements OnInit {
   }
 
   startEditConfig(cfg: SystemConfigDto): void {
+    if (this.configSavingKey()) return;
     this.editingKey.set(cfg.configKey);
     this.editValue.set(cfg.configValue);
   }
 
   cancelEditConfig(): void {
+    if (this.configSavingKey()) return;
     this.editingKey.set(null);
   }
 
+  configInvalid(): boolean {
+    return !this.editValue().trim() || this.editValue().length > 2000;
+  }
+
   saveConfig(key: string): void {
-    this.adminService.updateSystemConfig({ configKey: key, configValue: this.editValue() }).subscribe({
+    if (this.configSavingKey() || this.configInvalid()) return;
+    const value = this.editValue().trim();
+    this.configSavingKey.set(key);
+    this.adminService.updateSystemConfig({ configKey: key, configValue: value }).subscribe({
       next: () => {
-        this.configs.update(list => list.map(c => c.configKey === key ? { ...c, configValue: this.editValue() } : c));
+        this.configs.update(list => list.map(c => c.configKey === key ? { ...c, configValue: value } : c));
         this.editingKey.set(null);
+        this.configSavingKey.set(null);
         this.toastService.success('Config "' + key + '" saved');
       },
-      error: () => this.toastService.error('Failed to save config'),
+      error: () => {
+        this.configSavingKey.set(null);
+        this.toastService.error('Failed to save config');
+      },
     });
   }
 
@@ -99,19 +114,42 @@ export class AdminSystemComponent implements OnInit {
   }
 
   openEditTemplateModal(tpl: EmailTemplateDto): void {
+    if (this.templateSaving()) return;
     this.selectedTemplate.set(tpl);
     this.templateForm = { templateKey: tpl.templateKey, subject: tpl.subject, bodyHtml: tpl.bodyHtml };
     this.activeModal.set('editTemplate');
   }
 
   closeModal(): void {
+    if (this.templateSaving()) return;
     this.activeModal.set(null);
   }
 
+  templateInvalid(): boolean {
+    return !this.templateForm.subject.trim()
+      || !this.templateForm.bodyHtml.trim()
+      || this.templateForm.subject.length > 200;
+  }
+
   saveTemplate(): void {
-    this.adminService.saveEmailTemplate(this.templateForm).subscribe({
-      next: () => { this.toastService.success('Template saved'); this.closeModal(); this.loadTemplates(); },
-      error: () => this.toastService.error('Failed to save template'),
+    if (this.templateSaving() || this.templateInvalid()) return;
+    this.templateSaving.set(true);
+    const request = {
+      templateKey: this.templateForm.templateKey.trim(),
+      subject: this.templateForm.subject.trim(),
+      bodyHtml: this.templateForm.bodyHtml.trim(),
+    };
+    this.adminService.saveEmailTemplate(request).subscribe({
+      next: () => {
+        this.templateSaving.set(false);
+        this.toastService.success('Template saved');
+        this.closeModal();
+        this.loadTemplates();
+      },
+      error: () => {
+        this.templateSaving.set(false);
+        this.toastService.error('Failed to save template');
+      },
     });
   }
 }

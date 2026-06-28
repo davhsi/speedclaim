@@ -46,10 +46,19 @@ public class SystemServiceTests
         _mockUnitOfWork.Setup(u => u.SystemConfigs.SingleOrDefaultAsync(It.IsAny<Expression<Func<SystemConfig, bool>>>()))
             .ReturnsAsync((SystemConfig)null);
 
-        var request = new UpdateSystemConfigRequest("NewKey", "NewVal");
-        await _systemService.UpdateSystemConfigAsync(request, Guid.NewGuid());
+        var adminId = Guid.NewGuid();
+        var request = new UpdateSystemConfigRequest(" NewKey ", " NewVal ");
+        await _systemService.UpdateSystemConfigAsync(request, adminId);
 
-        _mockUnitOfWork.Verify(u => u.SystemConfigs.AddAsync(It.Is<SystemConfig>(c => c.ConfigKey == "NewKey" && c.ConfigValue == "NewVal")), Times.Once);
+        _mockUnitOfWork.Verify(u => u.SystemConfigs.AddAsync(It.Is<SystemConfig>(c =>
+            c.ConfigKey == "NewKey" &&
+            c.ConfigValue == "NewVal" &&
+            c.UpdatedById == adminId &&
+            c.UpdatedAt.HasValue)), Times.Once);
+        _mockUnitOfWork.Verify(u => u.AuditLogs.AddAsync(It.Is<AuditLog>(a =>
+            a.UserId == adminId &&
+            a.EntityType == "SystemConfig" &&
+            a.Action == "SystemConfigCreated")), Times.Once);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
 
@@ -60,11 +69,20 @@ public class SystemServiceTests
         _mockUnitOfWork.Setup(u => u.SystemConfigs.SingleOrDefaultAsync(It.IsAny<Expression<Func<SystemConfig, bool>>>()))
             .ReturnsAsync(existingConfig);
 
+        var adminId = Guid.NewGuid();
         var request = new UpdateSystemConfigRequest("OldKey", "NewVal");
-        await _systemService.UpdateSystemConfigAsync(request, Guid.NewGuid());
+        await _systemService.UpdateSystemConfigAsync(request, adminId);
 
         Assert.That(existingConfig.ConfigValue, Is.EqualTo("NewVal"));
+        Assert.That(existingConfig.UpdatedById, Is.EqualTo(adminId));
+        Assert.That(existingConfig.UpdatedAt, Is.Not.Null);
         _mockUnitOfWork.Verify(u => u.SystemConfigs.Update(existingConfig), Times.Once);
+        _mockUnitOfWork.Verify(u => u.AuditLogs.AddAsync(It.Is<AuditLog>(a =>
+            a.UserId == adminId &&
+            a.EntityType == "SystemConfig" &&
+            a.Action == "SystemConfigUpdated" &&
+            a.OldValue != null &&
+            a.NewValue != null)), Times.Once);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
 
@@ -74,10 +92,18 @@ public class SystemServiceTests
         _mockUnitOfWork.Setup(u => u.EmailTemplates.SingleOrDefaultAsync(It.IsAny<Expression<Func<EmailTemplate, bool>>>()))
             .ReturnsAsync((EmailTemplate)null);
 
-        var request = new ManageEmailTemplateRequest("Tpl1", "Sub1", "Body1");
-        await _systemService.ManageEmailTemplatesAsync(request, Guid.NewGuid());
+        var adminId = Guid.NewGuid();
+        var request = new ManageEmailTemplateRequest(" Tpl1 ", " Sub1 ", " Body1 ");
+        await _systemService.ManageEmailTemplatesAsync(request, adminId);
 
-        _mockUnitOfWork.Verify(u => u.EmailTemplates.AddAsync(It.Is<EmailTemplate>(t => t.TemplateKey == "Tpl1")), Times.Once);
+        _mockUnitOfWork.Verify(u => u.EmailTemplates.AddAsync(It.Is<EmailTemplate>(t =>
+            t.TemplateKey == "Tpl1" &&
+            t.Subject == "Sub1" &&
+            t.BodyHtml == "Body1")), Times.Once);
+        _mockUnitOfWork.Verify(u => u.AuditLogs.AddAsync(It.Is<AuditLog>(a =>
+            a.UserId == adminId &&
+            a.EntityType == "EmailTemplate" &&
+            a.Action == "EmailTemplateCreated")), Times.Once);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
 
@@ -152,12 +178,20 @@ public class SystemServiceTests
         _mockUnitOfWork.Setup(u => u.EmailTemplates.SingleOrDefaultAsync(It.IsAny<Expression<Func<EmailTemplate, bool>>>()))
             .ReturnsAsync(existing);
 
+        var adminId = Guid.NewGuid();
         var request = new ManageEmailTemplateRequest("WelcomeEmail", "New Subject", "New Body");
-        await _systemService.ManageEmailTemplatesAsync(request, Guid.NewGuid());
+        await _systemService.ManageEmailTemplatesAsync(request, adminId);
 
         Assert.That(existing.Subject, Is.EqualTo("New Subject"));
         Assert.That(existing.BodyHtml, Is.EqualTo("New Body"));
+        Assert.That(existing.UpdatedAt, Is.Not.Null);
         _mockUnitOfWork.Verify(u => u.EmailTemplates.Update(existing), Times.Once);
+        _mockUnitOfWork.Verify(u => u.AuditLogs.AddAsync(It.Is<AuditLog>(a =>
+            a.UserId == adminId &&
+            a.EntityType == "EmailTemplate" &&
+            a.Action == "EmailTemplateUpdated" &&
+            a.OldValue != null &&
+            a.NewValue != null)), Times.Once);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
 }

@@ -26,7 +26,7 @@
                 <td class="px-5 py-3 text-[12px] font-mono text-ink whitespace-nowrap">{{ cfg.configKey }}</td>
                 <td class="px-5 py-3">
                   @if (editingKey() === cfg.configKey) {
-                    <input type="text" [ngModel]="editValue()" (ngModelChange)="editValue.set($event)" class="w-full h-7 px-2 border-[1.5px] border-primary rounded text-[12.5px] font-mono bg-white outline-none" />
+                    <input type="text" [ngModel]="editValue()" (ngModelChange)="editValue.set($event)" [disabled]="configSavingKey() === cfg.configKey" class="w-full h-7 px-2 border-[1.5px] border-primary rounded text-[12.5px] font-mono bg-white outline-none disabled:opacity-60 disabled:cursor-wait" />
                   } @else {
                     <span class="text-[12.5px] text-body font-mono">{{ cfg.configValue }}</span>
                   }
@@ -35,11 +35,11 @@
                 <td class="px-5 py-3 text-right">
                   @if (editingKey() === cfg.configKey) {
                     <div class="flex items-center justify-end gap-1">
-                      <button (click)="saveConfig(cfg.configKey)" class="h-7 px-3 bg-primary text-white text-[11px] font-semibold rounded-md border-none cursor-pointer">Save</button>
-                      <button (click)="cancelEditConfig()" class="h-7 px-3 bg-white text-body text-[11px] font-medium rounded-md border border-line cursor-pointer">Cancel</button>
+                      <button (click)="saveConfig(cfg.configKey)" [disabled]="configSavingKey() === cfg.configKey || configInvalid()" class="h-7 px-3 bg-primary text-white text-[11px] font-semibold rounded-md border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">{{ configSavingKey() === cfg.configKey ? 'Saving...' : 'Save' }}</button>
+                      <button (click)="cancelEditConfig()" [disabled]="configSavingKey() === cfg.configKey" class="h-7 px-3 bg-white text-body text-[11px] font-medium rounded-md border border-line cursor-pointer disabled:opacity-50 disabled:cursor-wait">Cancel</button>
                     </div>
                   } @else {
-                    <button (click)="startEditConfig(cfg)" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface">
+                    <button (click)="startEditConfig(cfg)" [disabled]="configSavingKey() !== null" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white">
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     </button>
                   }
@@ -140,7 +140,7 @@
                   <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border" [style.background]="tpl.isActive ? '#E8F7F1' : '#F0F1F3'" [style.color]="tpl.isActive ? '#1F9D6B' : '#6B7685'" [style.border-color]="tpl.isActive ? '#B2E4CE' : '#D1D5DB'">{{ tpl.isActive ? 'Active' : 'Inactive' }}</span>
                 </td>
                 <td class="px-5 py-3 text-right">
-                  <button (click)="openEditTemplateModal(tpl)" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface">
+                  <button (click)="openEditTemplateModal(tpl)" [disabled]="templateSaving()" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                   </button>
                 </td>
@@ -161,23 +161,23 @@
       <div class="relative bg-white rounded-card shadow-lg max-w-lg w-full animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
         <div class="flex items-center justify-between px-6 py-4 border-b border-line">
           <h3 class="text-[15px] font-semibold text-ink">Edit template — {{ selectedTemplate()?.templateKey }}</h3>
-          <button (click)="closeModal()" class="text-muted bg-transparent border-none cursor-pointer p-1">
+          <button (click)="closeModal()" [disabled]="templateSaving()" class="text-muted bg-transparent border-none cursor-pointer p-1 disabled:opacity-50 disabled:cursor-wait">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
           </button>
         </div>
         <div class="px-6 py-5 space-y-4">
           <div>
             <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Subject</label>
-            <input type="text" [(ngModel)]="templateForm.subject" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+            <input type="text" [(ngModel)]="templateForm.subject" [disabled]="templateSaving()" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary disabled:opacity-60 disabled:cursor-wait" />
           </div>
           <div>
             <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Body (HTML)</label>
-            <textarea [(ngModel)]="templateForm.bodyHtml" rows="10" class="w-full px-3 py-2 border border-line rounded-lg text-[12px] font-mono text-ink outline-none focus:border-primary resize-none"></textarea>
+            <textarea [(ngModel)]="templateForm.bodyHtml" [disabled]="templateSaving()" rows="10" class="w-full px-3 py-2 border border-line rounded-lg text-[12px] font-mono text-ink outline-none focus:border-primary resize-none disabled:opacity-60 disabled:cursor-wait"></textarea>
           </div>
         </div>
         <div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-line">
-          <button (click)="closeModal()" class="h-9 px-4 bg-white text-body text-[13px] font-medium rounded-lg border border-line cursor-pointer hover:bg-surface">Cancel</button>
-          <button (click)="saveTemplate()" class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-lg border-none cursor-pointer hover:opacity-90">Save template</button>
+          <button (click)="closeModal()" [disabled]="templateSaving()" class="h-9 px-4 bg-white text-body text-[13px] font-medium rounded-lg border border-line cursor-pointer hover:bg-surface disabled:opacity-50 disabled:cursor-wait">Cancel</button>
+          <button (click)="saveTemplate()" [disabled]="templateSaving() || templateInvalid()" class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-lg border-none cursor-pointer hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed">{{ templateSaving() ? 'Saving...' : 'Save template' }}</button>
         </div>
       </div>
     </div>
