@@ -27,6 +27,7 @@ export class ProposalSubmitComponent implements OnInit {
   submitting = signal(false);
   familyMembers = signal<FamilyMemberDto[]>([]);
   docRequirements = signal<DocumentRequirementDto[]>([]);
+  docRequirementsLoaded = signal(false);
   profile = signal<UserDto | null>(null);
   uploadedFiles = new Map<string, File>();
   stepLabels = ['Details', 'Nominees', 'Documents'];
@@ -45,7 +46,16 @@ export class ProposalSubmitComponent implements OnInit {
     const state = history.state;
     if (state?.productId) {
       this.form.patchValue(state);
+      this.form.controls.productId.disable();
+      this.form.controls.sumAssured.disable();
+      this.form.controls.tenureYears.disable();
+      this.form.controls.premiumAmount.disable();
+      this.form.controls.paymentFrequency.disable();
       this.loadDocRequirements(state.productId);
+    } else {
+      this.toast.warning('Please generate a quote before submitting a proposal.');
+      this.router.navigate(['/quote'], { replaceUrl: true });
+      return;
     }
     this.profileService.getProfile().subscribe(profile => this.profile.set(profile));
     this.profileService.getFamilyMembers().subscribe(m => this.familyMembers.set(m));
@@ -72,9 +82,24 @@ export class ProposalSubmitComponent implements OnInit {
 
   onDocSelected(key: string, file: File): void { this.uploadedFiles.set(key, file); }
 
+  requiredDocumentsUploaded(): boolean {
+    return this.docRequirementsLoaded() && this.docRequirements()
+      .filter(d => d.isMandatory)
+      .every(d => this.uploadedFiles.has(d.documentKey));
+  }
+
   private loadDocRequirements(productId: string): void {
     this.http.get<DocumentRequirementDto[]>(`/api/v1/products/${productId}/documents`)
-      .subscribe(docs => this.docRequirements.set(docs));
+      .subscribe({
+        next: docs => {
+          this.docRequirements.set(docs);
+          this.docRequirementsLoaded.set(true);
+        },
+        error: () => {
+          this.docRequirementsLoaded.set(true);
+          this.toast.warning('Document requirements could not be loaded.');
+        },
+      });
   }
 
   submit(): void {
@@ -85,6 +110,10 @@ export class ProposalSubmitComponent implements OnInit {
     }
     if (this.form.invalid || !this.nomineesValid) {
       this.toast.warning('Please complete all required fields before submitting.');
+      return;
+    }
+    if (!this.requiredDocumentsUploaded()) {
+      this.toast.warning('Please upload all required documents before submitting.');
       return;
     }
 

@@ -33,19 +33,37 @@ public class ProposalService : IProposalService
         var productId = Guid.Parse(request.ProductId);
         var product = await _unitOfWork.InsuranceProducts.GetByIdAsync(productId);
         if (product == null) throw new NotFoundException("Product not found");
+        if (!product.IsActive) throw new ConflictException("Product is not available for new quotes.");
+        ValidateProductEligibility(product, request.Age, request.SumAssured, request.TenureYears);
 
+        var premiumAmount = await CalculatePremiumAsync(productId, request.Age, request.SumAssured);
+
+        return new GenerateQuoteResponse(premiumAmount, request.SumAssured, request.TenureYears, "Monthly");
+    }
+
+    private static void ValidateProductEligibility(InsuranceProduct product, int age, decimal sumAssured, int tenureYears)
+    {
+        if (age < product.MinAge || age > product.MaxAge)
+            throw new ValidationException($"Age must be between {product.MinAge} and {product.MaxAge} for this product.");
+
+        if (sumAssured < product.MinSumAssured || sumAssured > product.MaxSumAssured)
+            throw new ValidationException($"Sum assured must be between {product.MinSumAssured} and {product.MaxSumAssured}.");
+
+        if (tenureYears < product.MinTenureYears || tenureYears > product.MaxTenureYears)
+            throw new ValidationException($"Tenure must be between {product.MinTenureYears} and {product.MaxTenureYears} years.");
+    }
+
+    private async Task<decimal> CalculatePremiumAsync(Guid productId, int age, decimal sumAssured)
+    {
         var rateTables = await _unitOfWork.PremiumRateTables.FindAsync(r => r.ProductId == productId);
-        var applicableRate = rateTables.FirstOrDefault(r => 
-            r.AgeMin <= request.Age && r.AgeMax >= request.Age &&
-            r.SumAssuredMin <= request.SumAssured && r.SumAssuredMax >= request.SumAssured);
+        var applicableRate = rateTables.FirstOrDefault(r =>
+            r.AgeMin <= age && r.AgeMax >= age &&
+            r.SumAssuredMin <= sumAssured && r.SumAssuredMax >= sumAssured);
 
         if (applicableRate == null)
             throw new NotFoundException("No applicable rate found for the given criteria");
 
-        // Basic quote math: AnnualPremium
-        var premiumAmount = applicableRate.AnnualPremium;
-
-        return new GenerateQuoteResponse(premiumAmount, request.SumAssured, request.TenureYears, "Monthly");
+        return applicableRate.AnnualPremium;
     }
 
     public async Task<ProposalDto> SubmitProposalAsync(string userId, SubmitProposalRequest request, bool isAgent)
@@ -56,12 +74,23 @@ public class ProposalService : IProposalService
 
         var product = await _unitOfWork.InsuranceProducts.GetByIdAsync(productId);
         if (product == null) throw new NotFoundException("Product not found");
+        if (!product.IsActive) throw new ConflictException("Product is not available for new proposals.");
 
         var customerRecord = await _unitOfWork.Customers.GetByIdAsync(customerId);
         if (customerRecord == null) throw new NotFoundException("Customer not found");
+        if (!isAgent && customerRecord.UserId != uId)
+            throw new ForbiddenException("You can only submit proposals for your own customer profile.");
+        if (!customerRecord.DateOfBirth.HasValue)
+            throw new ValidationException("Customer date of birth is required before submitting a proposal.");
+
+        var customerAge = CalculateAge(customerRecord.DateOfBirth.Value);
+        ValidateProductEligibility(product, customerAge, request.SumAssured, request.TenureYears);
+
         var kyc = await _unitOfWork.KycRecords.FirstOrDefaultAsync(k => k.UserId == customerRecord.UserId);
         if (kyc == null || kyc.KycStatus != KycStatus.Approved)
             throw new ForbiddenException("KYC must be approved before submitting a proposal.");
+
+        var premiumAmount = await CalculatePremiumAsync(productId, customerAge, request.SumAssured);
 
         var proposal = new Proposal
         {
@@ -71,7 +100,7 @@ public class ProposalService : IProposalService
             PolicyType = request.CustomerMemberIds != null && request.CustomerMemberIds.Count > 0 ? PolicyType.FamilyFloater : PolicyType.Individual,
             SumAssured = request.SumAssured,
             TenureYears = request.TenureYears,
-            PremiumAmount = request.PremiumAmount,
+            PremiumAmount = premiumAmount,
             PaymentFrequency = request.PaymentFrequency,
             Status = ProposalStatus.Submitted,
             SubmittedAt = DateTimeOffset.UtcNow,
@@ -178,6 +207,14 @@ public class ProposalService : IProposalService
             proposal.CreatedAt,
             product.ProductName
         );
+    }
+
+    private static int CalculateAge(DateOnly dateOfBirth)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var age = today.Year - dateOfBirth.Year;
+        if (dateOfBirth > today.AddYears(-age)) age--;
+        return age;
     }
 
     public async Task<IEnumerable<ProposalDto>> GetMyProposalsAsync(string userId, bool isAgent)

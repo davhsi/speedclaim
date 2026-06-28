@@ -29,19 +29,19 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5" [formGroup]="form">
           <div>
             <label class="block text-[13px] font-medium mb-1.5">Product ID</label>
-            <input type="text" formControlName="productId" class="h-[42px]" />
+            <input type="text" formControlName="productId" class="h-[42px] disabled:opacity-70 disabled:cursor-not-allowed" />
           </div>
           <div>
             <label class="block text-[13px] font-medium mb-1.5">Sum assured (₹)</label>
-            <input type="number" formControlName="sumAssured" class="h-[42px] sc-numeric" />
+            <input type="number" formControlName="sumAssured" class="h-[42px] sc-numeric disabled:opacity-70 disabled:cursor-not-allowed" />
           </div>
           <div>
             <label class="block text-[13px] font-medium mb-1.5">Tenure (years)</label>
-            <input type="number" formControlName="tenureYears" class="h-[42px]" />
+            <input type="number" formControlName="tenureYears" class="h-[42px] disabled:opacity-70 disabled:cursor-not-allowed" />
           </div>
           <div>
             <label class="block text-[13px] font-medium mb-1.5">Payment frequency</label>
-            <select formControlName="paymentFrequency" class="h-[42px]">
+            <select formControlName="paymentFrequency" class="h-[42px] disabled:opacity-70 disabled:cursor-not-allowed">
               <option value="Monthly">Monthly</option>
               <option value="Quarterly">Quarterly</option>
               <option value="HalfYearly">Half Yearly</option>
@@ -50,7 +50,7 @@
           </div>
           <div>
             <label class="block text-[13px] font-medium mb-1.5">Premium (₹)</label>
-            <input type="number" formControlName="premiumAmount" class="h-[42px] sc-numeric" />
+            <input type="number" formControlName="premiumAmount" class="h-[42px] sc-numeric disabled:opacity-70 disabled:cursor-not-allowed" />
           </div>
         </div>
         <div class="flex justify-end mt-5 pt-5 border-t border-line">
@@ -117,7 +117,7 @@
         }
         <div class="flex justify-between mt-5 pt-5 border-t border-line">
           <button class="h-10 px-5 border border-line bg-white text-[13px] font-semibold text-body rounded-control hover:bg-surface-alt transition-colors" (click)="step.set(1)">Back</button>
-          <button class="h-10 px-5 bg-accent text-white text-[13px] font-semibold rounded-control hover:bg-accent-hover transition-colors disabled:opacity-50" [disabled]="submitting()" (click)="submit()">
+          <button class="h-10 px-5 bg-accent text-white text-[13px] font-semibold rounded-control hover:bg-accent-hover transition-colors disabled:opacity-50" [disabled]="submitting() || !requiredDocumentsUploaded()" (click)="submit()">
             {{ submitting() ? 'Submitting...' : 'Submit Proposal' }}
           </button>
         </div>

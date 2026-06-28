@@ -24,6 +24,7 @@ public class ProposalServiceTests
     private Mock<IRepository<Agent>> _mockAgentRepo = null!;
     private Mock<IRepository<Customer>> _mockCustomerRepo = null!;
     private ProposalService _proposalService = null!;
+    private static readonly DateOnly AdultDob = DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-30));
 
     [SetUp]
     public void Setup()
@@ -37,7 +38,7 @@ public class ProposalServiceTests
 
         var defaultCustomerUserId = Guid.NewGuid();
         _mockCustomerRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>()))
-            .ReturnsAsync(new Customer { Id = Guid.NewGuid(), UserId = defaultCustomerUserId });
+            .ReturnsAsync(new Customer { Id = Guid.NewGuid(), UserId = defaultCustomerUserId, DateOfBirth = AdultDob });
 
         var mockKycRepo = new Mock<IRepository<KycRecord>>();
         mockKycRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>()))
@@ -57,6 +58,33 @@ public class ProposalServiceTests
         _proposalService = new ProposalService(_mockUnitOfWork.Object, new Mock<INotificationService>().Object, new Mock<IStorageService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ProposalService>>());
     }
 
+    private static InsuranceProduct ActiveProduct(string domain = "Health") => new()
+    {
+        Domain = domain,
+        IsActive = true,
+        MinAge = 18,
+        MaxAge = 65,
+        MinSumAssured = 100000,
+        MaxSumAssured = 5000000,
+        MinTenureYears = 1,
+        MaxTenureYears = 30
+    };
+
+    private void SetupRate(decimal premium = 2500)
+    {
+        _mockRateRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<PremiumRateTable, bool>>>()))
+            .ReturnsAsync(new List<PremiumRateTable>
+            {
+                new PremiumRateTable { AgeMin = 18, AgeMax = 65, SumAssuredMin = 100000, SumAssuredMax = 5000000, AnnualPremium = premium }
+            });
+    }
+
+    private void SetupCustomer(Guid customerId, Guid userId)
+    {
+        _mockCustomerRepo.Setup(r => r.GetByIdAsync(customerId))
+            .ReturnsAsync(new Customer { Id = customerId, UserId = userId, DateOfBirth = AdultDob });
+    }
+
     [Test]
     public void GenerateQuoteAsync_ProductNotFound_ThrowsException()
     {
@@ -70,7 +98,7 @@ public class ProposalServiceTests
     [Test]
     public void GenerateQuoteAsync_NoApplicableRate_ThrowsException()
     {
-        var product = new InsuranceProduct();
+        var product = ActiveProduct();
         _mockProductRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(product);
         _mockRateRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<PremiumRateTable, bool>>>())).ReturnsAsync(new List<PremiumRateTable>());
 
@@ -83,7 +111,7 @@ public class ProposalServiceTests
     public async Task GenerateQuoteAsync_Success()
     {
         var productId = Guid.NewGuid();
-        var product = new InsuranceProduct();
+        var product = ActiveProduct();
         var rateTable = new PremiumRateTable { AgeMin = 20, AgeMax = 40, SumAssuredMin = 0, SumAssuredMax = 200000, AnnualPremium = 2500 };
         
         _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
@@ -99,15 +127,47 @@ public class ProposalServiceTests
     }
 
     [Test]
+    public void GenerateQuoteAsync_InactiveProduct_ThrowsConflictException()
+    {
+        var productId = Guid.NewGuid();
+        var product = ActiveProduct();
+        product.IsActive = false;
+        _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
+
+        var request = new GenerateQuoteRequest(productId.ToString(), 30, "Male", 100000, 10);
+
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _proposalService.GenerateQuoteAsync(request));
+
+        Assert.That(ex.Message, Is.EqualTo("Product is not available for new quotes."));
+    }
+
+    [Test]
+    public void GenerateQuoteAsync_OutOfProductRange_ThrowsValidationException()
+    {
+        var productId = Guid.NewGuid();
+        _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(ActiveProduct());
+
+        var request = new GenerateQuoteRequest(productId.ToString(), 30, "Male", 99999, 10);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() =>
+            _proposalService.GenerateQuoteAsync(request));
+    }
+
+    [Test]
     public async Task SubmitProposalAsync_AsCustomer_Success()
     {
         var userId = Guid.NewGuid().ToString();
-        var customerId = Guid.NewGuid().ToString();
+        var userGuid = Guid.Parse(userId);
+        var customerGuid = Guid.NewGuid();
+        var customerId = customerGuid.ToString();
         var productId = Guid.NewGuid().ToString();
 
-        var product = new InsuranceProduct { Domain = "Health" };
+        var product = ActiveProduct();
         _mockProductRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(product);
         _mockProposalRepo.Setup(r => r.AddAsync(It.IsAny<Proposal>())).Returns(Task.CompletedTask);
+        SetupCustomer(customerGuid, userGuid);
+        SetupRate();
 
         var request = new SubmitProposalRequest(customerId, productId, 100000, 10, 2500, "Monthly", 
             new HealthDetailDto("", "", "", 0, false, 0), null, null, 
@@ -122,6 +182,59 @@ public class ProposalServiceTests
     }
 
     [Test]
+    public async Task SubmitProposalAsync_TamperedPremium_RecalculatesPremium()
+    {
+        var userGuid = Guid.NewGuid();
+        var customerGuid = Guid.NewGuid();
+        var productId = Guid.NewGuid().ToString();
+        _mockProductRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(ActiveProduct());
+        _mockProposalRepo.Setup(r => r.AddAsync(It.IsAny<Proposal>())).Returns(Task.CompletedTask);
+        SetupCustomer(customerGuid, userGuid);
+        SetupRate(2500);
+
+        var request = new SubmitProposalRequest(customerGuid.ToString(), productId, 100000, 10, 1, "Monthly",
+            null, null, null,
+            new List<string>(),
+            new List<NomineeDto> { new NomineeDto("Jane Doe", "Spouse", AdultDob, 100, false, null) });
+
+        var result = await _proposalService.SubmitProposalAsync(userGuid.ToString(), request, false);
+
+        Assert.That(result.PremiumAmount, Is.EqualTo(2500));
+    }
+
+    [Test]
+    public void SubmitProposalAsync_InactiveProduct_ThrowsConflictException()
+    {
+        var userGuid = Guid.NewGuid();
+        var customerGuid = Guid.NewGuid();
+        var product = ActiveProduct();
+        product.IsActive = false;
+        _mockProductRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(product);
+        SetupCustomer(customerGuid, userGuid);
+
+        var request = new SubmitProposalRequest(customerGuid.ToString(), Guid.NewGuid().ToString(), 100000, 10, 2500, "Monthly",
+            null, null, null, new List<string>(), new List<NomineeDto>());
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _proposalService.SubmitProposalAsync(userGuid.ToString(), request, false));
+    }
+
+    [Test]
+    public void SubmitProposalAsync_OtherCustomer_ThrowsForbiddenException()
+    {
+        var userGuid = Guid.NewGuid();
+        var customerGuid = Guid.NewGuid();
+        _mockProductRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(ActiveProduct());
+        SetupCustomer(customerGuid, Guid.NewGuid());
+
+        var request = new SubmitProposalRequest(customerGuid.ToString(), Guid.NewGuid().ToString(), 100000, 10, 2500, "Monthly",
+            null, null, null, new List<string>(), new List<NomineeDto>());
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() =>
+            _proposalService.SubmitProposalAsync(userGuid.ToString(), request, false));
+    }
+
+    [Test]
     public async Task SubmitProposalAsync_AsAgent_Success()
     {
         var userId = Guid.NewGuid();
@@ -129,10 +242,11 @@ public class ProposalServiceTests
         var productId = Guid.NewGuid().ToString();
         var agent = new Agent { Id = Guid.NewGuid() };
 
-        var product = new InsuranceProduct { Domain = "Health" };
+        var product = ActiveProduct();
         _mockProductRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(product);
         _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync(agent);
         _mockProposalRepo.Setup(r => r.AddAsync(It.IsAny<Proposal>())).Returns(Task.CompletedTask);
+        SetupRate();
 
         var request = new SubmitProposalRequest(customerId, productId, 100000, 10, 2500, "Monthly", 
             null, new LifeDetailDto("", 0, 0, false, false), null, 
@@ -406,9 +520,13 @@ public class ProposalServiceTests
         var customerId = Guid.NewGuid().ToString();
         var productId = Guid.NewGuid().ToString();
 
-        var product = new InsuranceProduct { Domain = "Motor" };
+        var userGuid = Guid.Parse(userId);
+        var customerGuid = Guid.Parse(customerId);
+        var product = ActiveProduct("Motor");
         _mockProductRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(product);
         _mockProposalRepo.Setup(r => r.AddAsync(It.IsAny<Proposal>())).Returns(Task.CompletedTask);
+        SetupCustomer(customerGuid, userGuid);
+        SetupRate(15000);
 
         var motorDetail = new MotorDetailDto("MH01AB1234", "Honda", "City", 2022, "Sedan", 500000m, "ENG123", "CHS456", "Comprehensive");
         var request = new SubmitProposalRequest(customerId, productId, 500000, 5, 15000, "Annual",
@@ -515,9 +633,13 @@ public class ProposalServiceTests
         var customerId = Guid.NewGuid().ToString();
         var productId = Guid.NewGuid().ToString();
 
-        var product = new InsuranceProduct { Domain = "Life" };
+        var userGuid = Guid.Parse(userId);
+        var customerGuid = Guid.Parse(customerId);
+        var product = ActiveProduct("Life");
         _mockProductRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(product);
         _mockProposalRepo.Setup(r => r.AddAsync(It.IsAny<Proposal>())).Returns(Task.CompletedTask);
+        SetupCustomer(customerGuid, userGuid);
+        SetupRate(50000);
 
         var lifeDetail = new LifeDetailDto("Endowment", 500000m, 1000000m, true, false);
         var request = new SubmitProposalRequest(customerId, productId, 1000000, 20, 50000, "Annual",

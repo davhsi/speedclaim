@@ -54,6 +54,7 @@ export class QuoteComponent implements OnInit {
           this.preselectedProduct.set(p);
           this.selectedProduct.set(p);
           this.form.patchValue({ productId: p.id });
+          this.applyProductValidators(p);
         }
       }
     });
@@ -63,12 +64,17 @@ export class QuoteComponent implements OnInit {
     const id = this.form.value.productId;
     const p = this.products().find(pr => pr.id === id) ?? null;
     this.selectedProduct.set(p);
+    this.quoteResult.set(null);
+    if (p) this.applyProductValidators(p);
   }
 
   onSubmit(): void {
     if (this.form.invalid) return;
     const v = this.form.value;
-    const sp = this.selectedProduct()!;
+    if (!this.selectedProduct()) {
+      this.toast.warning('Please select a product before calculating premium.');
+      return;
+    }
 
     const req: GenerateQuoteRequest = {
       productId: v.productId!,
@@ -112,5 +118,20 @@ export class QuoteComponent implements OnInit {
       age--;
     }
     return age;
+  }
+
+  private applyProductValidators(product: ProductDto): void {
+    this.form.controls.sumAssured.setValidators([
+      Validators.required,
+      Validators.min(product.minSumAssured),
+      Validators.max(product.maxSumAssured),
+    ]);
+    this.form.controls.tenureYears.setValidators([
+      Validators.required,
+      Validators.min(product.minTenureYears),
+      Validators.max(product.maxTenureYears),
+    ]);
+    this.form.controls.sumAssured.updateValueAndValidity();
+    this.form.controls.tenureYears.updateValueAndValidity();
   }
 }
