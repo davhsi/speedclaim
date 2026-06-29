@@ -534,6 +534,10 @@ public class FinanceService : IFinanceService
         if (claim.Status == ClaimStatus.Settled)
             throw new ConflictException("Claim is already marked as settled.");
 
+        if (claim.Status != ClaimStatus.Approved)
+            throw new UnprocessableException("Claim must be approved before financial settlement.");
+
+        var oldStatus = claim.Status;
         claim.Status = ClaimStatus.Settled;
         claim.SettlementDate = DateTime.UtcNow;
         claim.UpdatedAt = DateTimeOffset.UtcNow;
@@ -542,7 +546,7 @@ public class FinanceService : IFinanceService
         {
             Id = Guid.NewGuid(),
             ClaimId = claim.Id,
-            OldStatus = ClaimStatus.Approved,
+            OldStatus = oldStatus,
             NewStatus = ClaimStatus.Settled,
             ChangedById = Guid.Parse(financeOfficerId),
             Notes = "Marked as financially settled by Finance Officer.",

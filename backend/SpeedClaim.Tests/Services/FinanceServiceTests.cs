@@ -551,12 +551,35 @@ public class FinanceServiceTests
         _mockUnitOfWork.Setup(u => u.ClaimStatusHistories).Returns(mockHistoryRepo.Object);
         _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
 
+        ClaimStatusHistory? capturedHistory = null;
+        mockHistoryRepo.Setup(r => r.AddAsync(It.IsAny<ClaimStatusHistory>()))
+            .Callback<ClaimStatusHistory>(h => capturedHistory = h)
+            .Returns(Task.CompletedTask);
+
         await _financeService.MarkClaimFinanciallySettledAsync(claimId.ToString(), officerId.ToString());
 
         Assert.That(claim.Status, Is.EqualTo(ClaimStatus.Settled));
         Assert.That(claim.SettlementDate, Is.Not.Null);
+        Assert.That(capturedHistory, Is.Not.Null);
+        Assert.That(capturedHistory!.OldStatus, Is.EqualTo(ClaimStatus.Approved));
+        Assert.That(capturedHistory.NewStatus, Is.EqualTo(ClaimStatus.Settled));
         mockHistoryRepo.Verify(r => r.AddAsync(It.IsAny<ClaimStatusHistory>()), Times.Once);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public void MarkClaimFinanciallySettledAsync_NonApprovedClaim_ThrowsUnprocessableException()
+    {
+        var claimId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, Status = ClaimStatus.Intimated };
+
+        var mockClaimRepo = new Mock<IClaimRepository>();
+        mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+        _mockUnitOfWork.Setup(u => u.Claims).Returns(mockClaimRepo.Object);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.UnprocessableException>(() =>
+            _financeService.MarkClaimFinanciallySettledAsync(claimId.ToString(), Guid.NewGuid().ToString()));
+        Assert.That(claim.Status, Is.EqualTo(ClaimStatus.Intimated));
     }
 
     // --- ExportPaymentReportsAsync test ---
