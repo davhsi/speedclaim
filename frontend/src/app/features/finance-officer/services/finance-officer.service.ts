@@ -11,6 +11,10 @@ import { ClaimStatus } from '../../../core/models/enums';
 export class FinanceOfficerService {
   private http = inject(HttpClient);
 
+  private idempotencyOptions() {
+    return { headers: { 'Idempotency-Key': crypto.randomUUID() } };
+  }
+
   getAllPaymentRecords(): Observable<FinancePaymentRecordDto[]> {
     return this.http.get<FinancePaymentRecordDto[]>('/api/v1/payments/all-records');
   }
@@ -20,7 +24,7 @@ export class FinanceOfficerService {
   }
 
   refundPayment(paymentId: string): Observable<ApiMessage> {
-    return this.http.post<ApiMessage>(`/api/v1/payments/${paymentId}/refund`, {});
+    return this.http.post<ApiMessage>(`/api/v1/payments/${paymentId}/refund`, {}, this.idempotencyOptions());
   }
 
   getClaimsForPayout(status?: ClaimStatus): Observable<PagedResponse<ClaimDto>> {
@@ -30,7 +34,7 @@ export class FinanceOfficerService {
   }
 
   processClaimPayout(claimId: string): Observable<ApiMessage> {
-    return this.http.post<ApiMessage>(`/api/v1/payments/payout/claim/${claimId}`, {});
+    return this.http.post<ApiMessage>(`/api/v1/payments/payout/claim/${claimId}`, {}, this.idempotencyOptions());
   }
 
   markClaimSettled(claimId: string): Observable<ApiMessage> {
@@ -41,8 +45,8 @@ export class FinanceOfficerService {
     return this.http.get<AgentCommissionDto[]>('/api/v1/payments/commissions/pending');
   }
 
-  approveCommission(id: number): Observable<ApiMessage> {
-    return this.http.post<ApiMessage>(`/api/v1/payments/commissions/${id}/approve`, {});
+  approveCommission(id: string): Observable<ApiMessage> {
+    return this.http.post<ApiMessage>(`/api/v1/payments/commissions/${id}/approve`, {}, this.idempotencyOptions());
   }
 
   getOverduePolicies(): Observable<OverduePolicyDto[]> {

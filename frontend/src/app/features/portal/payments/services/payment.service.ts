@@ -16,7 +16,11 @@ export class PaymentService {
   }
 
   createPaymentIntent(scheduleId: string, req: CreatePaymentIntentRequest): Observable<CreatePaymentIntentResponse> {
-    return this.http.post<CreatePaymentIntentResponse>(`${this.api}/pay/${scheduleId}`, req);
+    return this.http.post<CreatePaymentIntentResponse>(
+      `${this.api}/pay/${scheduleId}`,
+      req,
+      { headers: { 'Idempotency-Key': crypto.randomUUID() } },
+    );
   }
 
   getHistory(): Observable<PaymentRecordDto[]> {

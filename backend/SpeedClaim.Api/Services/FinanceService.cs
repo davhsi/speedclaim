@@ -559,15 +559,50 @@ public class FinanceService : IFinanceService
     public async Task<IEnumerable<AgentCommissionDto>> GetPendingCommissionsAsync()
     {
         var commissions = await _unitOfWork.AgentCommissions.FindAsync(c => c.Status == "PENDING");
-        return commissions.Select(c => new AgentCommissionDto
+        var commissionList = commissions.ToList();
+        var agentIds = commissionList.Select(c => c.AgentId).Distinct().ToList();
+        var policyIds = commissionList.Select(c => c.PolicyId).Distinct().ToList();
+        var agents = agentIds.Count == 0
+            ? new List<Agent>()
+            : (await _unitOfWork.Agents.FindAsync(a => agentIds.Contains(a.Id))).ToList();
+        var policies = policyIds.Count == 0
+            ? new List<Policy>()
+            : (await _unitOfWork.Policies.FindAsync(p => policyIds.Contains(p.Id))).ToList();
+        var userIds = agents.Select(a => a.UserId).Distinct().ToList();
+        var productIds = policies.Select(p => p.ProductId).Distinct().ToList();
+        var users = userIds.Count == 0
+            ? new List<User>()
+            : (await _unitOfWork.Users.FindAsync(u => userIds.Contains(u.Id))).ToList();
+        var products = productIds.Count == 0
+            ? new List<InsuranceProduct>()
+            : (await _unitOfWork.InsuranceProducts.FindAsync(p => productIds.Contains(p.Id))).ToList();
+
+        var agentMap = agents.ToDictionary(a => a.Id);
+        var policyMap = policies.ToDictionary(p => p.Id);
+        var userMap = users.ToDictionary(u => u.Id);
+        var productMap = products.ToDictionary(p => p.Id);
+
+        return commissionList.Select(c =>
         {
-            Id = c.Id,
-            AgentId = c.AgentId,
-            PolicyId = c.PolicyId,
-            CommissionAmount = c.CommissionAmount,
-            Status = c.Status,
-            CreatedAt = c.CreatedAt,
-            PaidAt = c.PaidAt
+            agentMap.TryGetValue(c.AgentId, out var agent);
+            policyMap.TryGetValue(c.PolicyId, out var policy);
+            var agentUser = agent != null && userMap.TryGetValue(agent.UserId, out var user) ? user : null;
+            var product = policy != null && productMap.TryGetValue(policy.ProductId, out var foundProduct) ? foundProduct : null;
+
+            return new AgentCommissionDto
+            {
+                Id = c.Id,
+                AgentId = c.AgentId,
+                AgentName = agentUser == null ? "Unassigned agent" : $"{agentUser.FirstName} {agentUser.LastName}".Trim(),
+                PolicyId = c.PolicyId,
+                PolicyNumber = policy?.PolicyNumber ?? string.Empty,
+                Domain = product?.Domain ?? string.Empty,
+                CommissionRate = c.CommissionRate * 100,
+                CommissionAmount = c.CommissionAmount,
+                Status = NormalizeCommissionStatus(c.Status),
+                CreatedAt = c.CreatedAt,
+                PaidAt = c.PaidAt
+            };
         });
     }
 
@@ -576,26 +611,70 @@ public class FinanceService : IFinanceService
         if (!Guid.TryParse(commissionId, out var cid)) throw new ValidationException("Invalid Commission ID");
         var commission = await _unitOfWork.AgentCommissions.GetByIdAsync(cid);
         if (commission == null) throw new NotFoundException("Commission not found");
+        if (commission.Status == "PAID")
+            throw new ConflictException("Commission is already paid.");
+        if (commission.Status != "PENDING")
+            throw new UnprocessableException("Only pending commissions can be approved.");
 
         commission.Status = "PAID";
         commission.PaidAt = DateTimeOffset.UtcNow;
         await _unitOfWork.CompleteAsync();
     }
 
-    public async Task<IEnumerable<PremiumScheduleDto>> GetOverduePoliciesAsync()
+    public async Task<IEnumerable<OverduePolicyDto>> GetOverduePoliciesAsync()
     {
         var overdueSchedules = await _unitOfWork.PremiumSchedules.FindAsync(s => s.Status == PremiumScheduleStatus.Overdue);
-        return overdueSchedules.Select(s => new PremiumScheduleDto
+        var scheduleList = overdueSchedules.ToList();
+        var policyIds = scheduleList.Where(s => s.PolicyId.HasValue).Select(s => s.PolicyId!.Value).Distinct().ToList();
+        var policies = policyIds.Count == 0
+            ? new List<Policy>()
+            : (await _unitOfWork.Policies.FindAsync(p => policyIds.Contains(p.Id))).ToList();
+        var customerIds = policies.Select(p => p.CustomerId).Distinct().ToList();
+        var productIds = policies.Select(p => p.ProductId).Distinct().ToList();
+        var customers = customerIds.Count == 0
+            ? new List<Models.Customer>()
+            : (await _unitOfWork.Customers.FindAsync(c => customerIds.Contains(c.Id))).ToList();
+        var overdueCustomerUserIds = customers.Select(c => c.UserId).Distinct().ToList();
+        var users = overdueCustomerUserIds.Count == 0
+            ? new List<User>()
+            : (await _unitOfWork.Users.FindAsync(u => overdueCustomerUserIds.Contains(u.Id))).ToList();
+        var products = productIds.Count == 0
+            ? new List<InsuranceProduct>()
+            : (await _unitOfWork.InsuranceProducts.FindAsync(p => productIds.Contains(p.Id))).ToList();
+
+        var policyMap = policies.ToDictionary(p => p.Id);
+        var customerMap = customers.ToDictionary(c => c.Id);
+        var userMap = users.ToDictionary(u => u.Id);
+        var productMap = products.ToDictionary(p => p.Id);
+
+        return scheduleList.Select(s =>
         {
-            Id = s.Id,
-            PolicyId = s.PolicyId,
-            ProposalId = s.ProposalId,
-            InstallmentNumber = s.InstallmentNumber,
-            AmountDue = s.Amount,
-            DueDate = s.DueDate,
-            Status = s.Status.ToString(),
-            PaymentId = s.PaymentId
+            var policy = s.PolicyId.HasValue && policyMap.TryGetValue(s.PolicyId.Value, out var foundPolicy) ? foundPolicy : null;
+            var customer = policy != null && customerMap.TryGetValue(policy.CustomerId, out var foundCustomer) ? foundCustomer : null;
+            var user = customer != null && userMap.TryGetValue(customer.UserId, out var foundUser) ? foundUser : null;
+            var product = policy != null && productMap.TryGetValue(policy.ProductId, out var foundProduct) ? foundProduct : null;
+
+            return new OverduePolicyDto
+            {
+                PolicyId = s.PolicyId,
+                PolicyNumber = policy?.PolicyNumber ?? string.Empty,
+                CustomerName = user == null ? string.Empty : $"{user.FirstName} {user.LastName}".Trim(),
+                Domain = product?.Domain ?? string.Empty,
+                AmountDue = s.Amount,
+                DaysOverdue = Math.Max(0, (DateTime.UtcNow.Date - s.DueDate.Date).Days),
+                DueDate = s.DueDate
+            };
         });
+    }
+
+    private static string NormalizeCommissionStatus(string status)
+    {
+        return status.ToUpperInvariant() switch
+        {
+            "PENDING" => "Pending",
+            "PAID" => "Paid",
+            _ => status
+        };
     }
 
     public async Task<PaymentSummaryDto> GetPremiumCollectionSummaryAsync(string period)

@@ -480,10 +480,10 @@ export interface NotificationDto {
 }
 
 export interface AgentCommissionDto {
-  id: number;
-  agentId: number;
+  id: string;
+  agentId: string;
   agentName: string;
-  policyId: number;
+  policyId: string;
   policyNumber: string;
   domain: InsuranceDomain;
   commissionRate: number;
@@ -501,7 +501,7 @@ export interface PaymentSummaryDto {
 }
 
 export interface OverduePolicyDto {
-  policyId: number;
+  policyId?: string;
   policyNumber: string;
   customerName: string;
   domain: InsuranceDomain;

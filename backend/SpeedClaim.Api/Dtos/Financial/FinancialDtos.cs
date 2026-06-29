@@ -36,11 +36,26 @@ public class AgentCommissionDto
 {
     public Guid Id { get; set; }
     public Guid AgentId { get; set; }
+    public string AgentName { get; set; } = string.Empty;
     public Guid PolicyId { get; set; }
+    public string PolicyNumber { get; set; } = string.Empty;
+    public string Domain { get; set; } = string.Empty;
+    public decimal CommissionRate { get; set; }
     public decimal CommissionAmount { get; set; }
     public string Status { get; set; } = string.Empty;
     public DateTimeOffset? PaidAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
+}
+
+public class OverduePolicyDto
+{
+    public Guid? PolicyId { get; set; }
+    public string PolicyNumber { get; set; } = string.Empty;
+    public string CustomerName { get; set; } = string.Empty;
+    public string Domain { get; set; } = string.Empty;
+    public decimal AmountDue { get; set; }
+    public int DaysOverdue { get; set; }
+    public DateTime DueDate { get; set; }
 }
 
 public class PaymentSummaryDto

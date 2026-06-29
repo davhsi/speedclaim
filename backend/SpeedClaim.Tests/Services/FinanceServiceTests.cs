@@ -41,6 +41,8 @@ public class FinanceServiceTests
         _mockUnitOfWork.Setup(u => u.StripeCustomers).Returns(new Mock<IRepository<SpeedClaim.Api.Models.StripeCustomer>>().Object);
         _mockUnitOfWork.Setup(u => u.Users).Returns(new Mock<IUserRepository>().Object);
         _mockUnitOfWork.Setup(u => u.Policies).Returns(new Mock<IPolicyRepository>().Object);
+        _mockUnitOfWork.Setup(u => u.Agents).Returns(new Mock<IRepository<Agent>>().Object);
+        _mockUnitOfWork.Setup(u => u.InsuranceProducts).Returns(new Mock<IRepository<InsuranceProduct>>().Object);
 
         _financeService = new FinanceService(_mockUnitOfWork.Object, _mockStripeWrapper.Object, _mockConfig.Object, _mockEmailService.Object, new Mock<INotificationService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<FinanceService>>());
     }
@@ -285,17 +287,50 @@ public class FinanceServiceTests
     [Test]
     public async Task GetPendingCommissionsAsync_ReturnsCommissions()
     {
+        var agentId = Guid.NewGuid();
+        var agentUserId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
         var commissions = new List<AgentCommission>
         {
-            new AgentCommission { Id = Guid.NewGuid(), Status = "PENDING" }
+            new AgentCommission
+            {
+                Id = Guid.NewGuid(),
+                AgentId = agentId,
+                PolicyId = policyId,
+                CommissionRate = 0.05m,
+                CommissionAmount = 125,
+                Status = "PENDING"
+            }
         };
 
         var mockCommissionRepo = new Mock<IRepository<AgentCommission>>();
         mockCommissionRepo.Setup(r => r.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<AgentCommission, bool>>>())).ReturnsAsync(commissions);
         _mockUnitOfWork.Setup(u => u.AgentCommissions).Returns(mockCommissionRepo.Object);
+        var mockAgentRepo = new Mock<IRepository<Agent>>();
+        mockAgentRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Agent, bool>>>()))
+            .ReturnsAsync(new List<Agent> { new Agent { Id = agentId, UserId = agentUserId } });
+        _mockUnitOfWork.Setup(u => u.Agents).Returns(mockAgentRepo.Object);
+        var mockPolicyRepo = new Mock<IPolicyRepository>();
+        mockPolicyRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Policy, bool>>>()))
+            .ReturnsAsync(new List<Policy> { new Policy { Id = policyId, PolicyNumber = "POL-001", ProductId = productId } });
+        _mockUnitOfWork.Setup(u => u.Policies).Returns(mockPolicyRepo.Object);
+        var mockUserRepo = new Mock<IUserRepository>();
+        mockUserRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<User, bool>>>()))
+            .ReturnsAsync(new List<User> { new User { Id = agentUserId, FirstName = "Agent", LastName = "One" } });
+        _mockUnitOfWork.Setup(u => u.Users).Returns(mockUserRepo.Object);
+        var mockProductRepo = new Mock<IRepository<InsuranceProduct>>();
+        mockProductRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<InsuranceProduct, bool>>>()))
+            .ReturnsAsync(new List<InsuranceProduct> { new InsuranceProduct { Id = productId, Domain = "Health" } });
+        _mockUnitOfWork.Setup(u => u.InsuranceProducts).Returns(mockProductRepo.Object);
 
-        var result = await _financeService.GetPendingCommissionsAsync();
-        Assert.That(result.Count(), Is.EqualTo(1));
+        var result = (await _financeService.GetPendingCommissionsAsync()).ToList();
+        Assert.That(result.Count, Is.EqualTo(1));
+        Assert.That(result[0].Status, Is.EqualTo("Pending"));
+        Assert.That(result[0].AgentName, Is.EqualTo("Agent One"));
+        Assert.That(result[0].PolicyNumber, Is.EqualTo("POL-001"));
+        Assert.That(result[0].Domain, Is.EqualTo("Health"));
+        Assert.That(result[0].CommissionRate, Is.EqualTo(5));
     }
 
     [Test]
@@ -316,19 +351,66 @@ public class FinanceServiceTests
     }
 
     [Test]
+    public void ApproveAndPayCommissionAsync_AlreadyPaid_ThrowsConflictException()
+    {
+        var commissionId = Guid.NewGuid();
+        var commission = new AgentCommission { Id = commissionId, Status = "PAID" };
+
+        var mockCommissionRepo = new Mock<IRepository<AgentCommission>>();
+        mockCommissionRepo.Setup(r => r.GetByIdAsync(commissionId)).ReturnsAsync(commission);
+        _mockUnitOfWork.Setup(u => u.AgentCommissions).Returns(mockCommissionRepo.Object);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _financeService.ApproveAndPayCommissionAsync(commissionId.ToString(), Guid.NewGuid().ToString()));
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Never);
+    }
+
+    [Test]
     public async Task GetOverduePoliciesAsync_ReturnsOverdueSchedules()
     {
+        var policyId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
         var schedules = new List<PremiumSchedule>
         {
-            new PremiumSchedule { Id = Guid.NewGuid(), Status = PremiumScheduleStatus.Overdue }
+            new PremiumSchedule
+            {
+                Id = Guid.NewGuid(),
+                PolicyId = policyId,
+                Amount = 300,
+                DueDate = DateTime.UtcNow.Date.AddDays(-12),
+                Status = PremiumScheduleStatus.Overdue
+            }
         };
 
         var mockScheduleRepo = new Mock<IRepository<PremiumSchedule>>();
         mockScheduleRepo.Setup(r => r.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<PremiumSchedule, bool>>>())).ReturnsAsync(schedules);
         _mockUnitOfWork.Setup(u => u.PremiumSchedules).Returns(mockScheduleRepo.Object);
+        var mockPolicyRepo = new Mock<IPolicyRepository>();
+        mockPolicyRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Policy, bool>>>()))
+            .ReturnsAsync(new List<Policy> { new Policy { Id = policyId, CustomerId = customerId, ProductId = productId, PolicyNumber = "POL-OD" } });
+        _mockUnitOfWork.Setup(u => u.Policies).Returns(mockPolicyRepo.Object);
+        var mockCustomerRepo = new Mock<IRepository<SpeedClaim.Api.Models.Customer>>();
+        mockCustomerRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<SpeedClaim.Api.Models.Customer, bool>>>()))
+            .ReturnsAsync(new List<SpeedClaim.Api.Models.Customer> { new SpeedClaim.Api.Models.Customer { Id = customerId, UserId = userId } });
+        _mockUnitOfWork.Setup(u => u.Customers).Returns(mockCustomerRepo.Object);
+        var mockUserRepo = new Mock<IUserRepository>();
+        mockUserRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<User, bool>>>()))
+            .ReturnsAsync(new List<User> { new User { Id = userId, FirstName = "Customer", LastName = "One" } });
+        _mockUnitOfWork.Setup(u => u.Users).Returns(mockUserRepo.Object);
+        var mockProductRepo = new Mock<IRepository<InsuranceProduct>>();
+        mockProductRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<InsuranceProduct, bool>>>()))
+            .ReturnsAsync(new List<InsuranceProduct> { new InsuranceProduct { Id = productId, Domain = "Motor" } });
+        _mockUnitOfWork.Setup(u => u.InsuranceProducts).Returns(mockProductRepo.Object);
 
-        var result = await _financeService.GetOverduePoliciesAsync();
-        Assert.That(result.Count(), Is.EqualTo(1));
+        var result = (await _financeService.GetOverduePoliciesAsync()).ToList();
+        Assert.That(result.Count, Is.EqualTo(1));
+        Assert.That(result[0].PolicyNumber, Is.EqualTo("POL-OD"));
+        Assert.That(result[0].CustomerName, Is.EqualTo("Customer One"));
+        Assert.That(result[0].Domain, Is.EqualTo("Motor"));
+        Assert.That(result[0].AmountDue, Is.EqualTo(300));
+        Assert.That(result[0].DaysOverdue, Is.GreaterThanOrEqualTo(12));
     }
 
     [Test]

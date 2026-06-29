@@ -199,7 +199,7 @@ public class PaymentsController : BaseApiController
     /// <summary>Get all premium schedules currently in Overdue status</summary>
     [Authorize(Roles = "FinanceOfficer,Admin")]
     [HttpGet("reports/overdue")]
-    [ProducesResponseType(typeof(IEnumerable<PremiumScheduleDto>), 200)]
+    [ProducesResponseType(typeof(IEnumerable<OverduePolicyDto>), 200)]
     public async Task<IActionResult> GetOverduePolicies()
     {
         var result = await _financeService.GetOverduePoliciesAsync();

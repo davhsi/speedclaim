@@ -25,7 +25,7 @@ public interface IFinanceService
     Task ApproveAndPayCommissionAsync(string commissionId, string financeOfficerId);
 
     // Reports
-    Task<IEnumerable<PremiumScheduleDto>> GetOverduePoliciesAsync();
+    Task<IEnumerable<OverduePolicyDto>> GetOverduePoliciesAsync();
     Task<PaymentSummaryDto> GetPremiumCollectionSummaryAsync(string period);
     Task<byte[]> ExportPaymentReportsAsync(DateOnly? fromDate = null, DateOnly? toDate = null);
 }
