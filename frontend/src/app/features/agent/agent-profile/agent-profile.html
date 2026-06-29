@@ -72,9 +72,10 @@
       <!-- Actions -->
       <div class="flex justify-between items-center mt-5 pt-5 border-t border-line">
         <button
-          class="h-10 px-4 bg-white border border-line text-[13px] font-semibold text-body rounded-control hover:bg-surface transition-colors"
+          class="h-10 px-4 bg-white border border-line text-[13px] font-semibold text-body rounded-control hover:bg-surface transition-colors disabled:opacity-40 disabled:cursor-wait"
+          [disabled]="resettingPassword()"
           (click)="resetPassword()"
-        >Reset password</button>
+        >{{ resettingPassword() ? 'Sending...' : 'Reset password' }}</button>
         <button
           class="h-10 px-5 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover disabled:opacity-40 transition-colors"
           [disabled]="profileForm.invalid || saving()"

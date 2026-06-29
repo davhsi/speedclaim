@@ -20,6 +20,7 @@ export class AgentProfileComponent implements OnInit {
 
   profile = signal<AgentProfileDto | null>(null);
   saving = signal(false);
+  resettingPassword = signal(false);
 
   profileForm = this.fb.group({
     salutation: ['Mr', Validators.required],
@@ -77,11 +78,19 @@ export class AgentProfileComponent implements OnInit {
   }
 
   resetPassword(): void {
+    if (this.resettingPassword()) return;
     const email = this.profile()?.email;
     if (!email) return;
+    this.resettingPassword.set(true);
     this.authService.forgotPassword({ email }).subscribe({
-      next: () => this.toast.info('Password reset link sent to your email.'),
-      error: () => this.toast.error('Could not send reset link.'),
+      next: () => {
+        this.toast.info('Password reset link sent to your email.');
+        this.resettingPassword.set(false);
+      },
+      error: () => {
+        this.toast.error('Could not send reset link.');
+        this.resettingPassword.set(false);
+      },
     });
   }
 }

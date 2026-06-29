@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
@@ -18,6 +18,8 @@ export class FinanceOfficerProfileComponent implements OnInit {
   profileName = '';
   profileEmail = '';
   profilePhone = '';
+  saving = signal(false);
+  resettingPassword = signal(false);
 
   ngOnInit(): void {
     const u = this.authService.currentUser();
@@ -43,17 +45,38 @@ export class FinanceOfficerProfileComponent implements OnInit {
   }
 
   onResetPassword(): void {
-    this.toast.success('Password reset link sent to your registered email');
+    if (this.resettingPassword()) return;
+    const email = this.authService.currentUser()?.email;
+    if (!email) return;
+    this.resettingPassword.set(true);
+    this.authService.forgotPassword({ email }).subscribe({
+      next: () => {
+        this.toast.success('Password reset link sent to your registered email');
+        this.resettingPassword.set(false);
+      },
+      error: () => {
+        this.toast.error('Could not send reset link');
+        this.resettingPassword.set(false);
+      },
+    });
   }
 
   onSave(): void {
+    if (this.saving()) return;
+    this.saving.set(true);
     this.financeService.updateProfile({
       name: this.profileName,
       email: this.profileEmail,
       phone: this.profilePhone,
     }).subscribe({
-      next: () => this.toast.success('Profile updated successfully'),
-      error: () => this.toast.error('Failed to update profile'),
+      next: () => {
+        this.toast.success('Profile updated successfully');
+        this.saving.set(false);
+      },
+      error: () => {
+        this.toast.error('Failed to update profile');
+        this.saving.set(false);
+      },
     });
   }
 }

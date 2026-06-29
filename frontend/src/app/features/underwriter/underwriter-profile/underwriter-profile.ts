@@ -18,6 +18,8 @@ export class UnderwriterProfileComponent implements OnInit {
   name = '';
   email = '';
   phone = '';
+  saving = signal(false);
+  resettingPassword = signal(false);
 
   ngOnInit(): void {
     const u = this.authService.currentUser();
@@ -40,17 +42,37 @@ export class UnderwriterProfileComponent implements OnInit {
   }
 
   onSave(): void {
+    if (this.saving()) return;
     const parts = this.name.trim().split(/\s+/);
     const firstName = parts[0] || '';
     const lastName = parts.slice(1).join(' ') || '';
+    this.saving.set(true);
     this.uwService.updateProfile({ firstName, lastName, phone: this.phone }).subscribe({
-      next: () => this.toast.success('Profile changes saved.'),
+      next: () => {
+        this.toast.success('Profile changes saved.');
+        this.saving.set(false);
+      },
+      error: () => {
+        this.toast.error('Failed to save profile changes.');
+        this.saving.set(false);
+      },
     });
   }
 
   onResetPassword(): void {
-    this.uwService.requestPasswordReset(this.email).subscribe({
-      next: () => this.toast.success('Password reset link sent to your registered email.'),
+    if (this.resettingPassword()) return;
+    const email = this.authService.currentUser()?.email;
+    if (!email) return;
+    this.resettingPassword.set(true);
+    this.uwService.requestPasswordReset(email).subscribe({
+      next: () => {
+        this.toast.success('Password reset link sent to your registered email.');
+        this.resettingPassword.set(false);
+      },
+      error: () => {
+        this.toast.error('Could not send reset link.');
+        this.resettingPassword.set(false);
+      },
     });
   }
 
