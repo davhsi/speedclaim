@@ -41,11 +41,15 @@ export class EndorsementListComponent implements OnInit {
     this.uwService.getPendingEndorsements(1, 50).subscribe({
       next: (res) => {
         this.endorsements.set(res.data);
-        this.pendingCount.set(res.data.filter(e => e.status === 'Pending').length);
+        this.pendingCount.set(res.data.filter(e => this.isReviewable(e)).length);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  isReviewable(e: EndorsementDto): boolean {
+    return e.status === 'Requested';
   }
 
   formatType(type: string): string {

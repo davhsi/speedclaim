@@ -38,7 +38,7 @@ export class PolicyDetailComponent implements OnInit {
   tabs = ['Overview', 'Nominees', 'Endorsements', 'History'];
 
   endorsementForm = this.fb.group({
-    type: ['NomineeChange', Validators.required],
+    endorsementType: ['NomineeChange', Validators.required],
     description: ['', [Validators.required, Validators.minLength(10)]],
   });
 
@@ -101,7 +101,7 @@ export class PolicyDetailComponent implements OnInit {
       next: () => {
         this.toast.success('Endorsement request submitted');
         this.showEndorsementForm.set(false);
-        this.endorsementForm.reset({ type: 'NomineeChange' });
+        this.endorsementForm.reset({ endorsementType: 'NomineeChange' });
         this.policyService.getEndorsements(this.policy()!.id).subscribe(e => this.endorsements.set(e));
       },
       error: () => this.toast.error('Failed to submit endorsement'),

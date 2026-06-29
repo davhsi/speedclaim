@@ -120,7 +120,7 @@
                 <div class="text-[13px] font-semibold text-ink mb-2">Request an endorsement</div>
                 <div>
                   <label class="block text-xs text-muted mb-1.5">Type</label>
-                  <select formControlName="type" class="text-sm h-[42px]">
+                  <select formControlName="endorsementType" class="text-sm h-[42px]">
                     <option value="NomineeChange">Nominee Change</option>
                     <option value="AddressChange">Address Change</option>
                     <option value="ContactUpdate">Contact Update</option>
@@ -143,7 +143,7 @@
             @for (e of endorsements(); track e.id) {
               <div class="flex items-center justify-between px-4 py-3.5 border-b border-line last:border-0">
                 <div>
-                  <div class="text-sm font-semibold text-ink">{{ e.type }}</div>
+                  <div class="text-sm font-semibold text-ink">{{ e.endorsementType }}</div>
                   <div class="text-xs text-muted mt-0.5">{{ e.description }}</div>
                 </div>
                 <app-status-badge [status]="e.status" />

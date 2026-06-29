@@ -1,7 +1,7 @@
 <div class="animate-sc-fade">
   <div class="mb-5">
     <h1 class="text-xl font-semibold text-ink">Endorsement review queue</h1>
-    <p class="text-sm text-muted mt-1">{{ pendingCount() }} endorsements awaiting approval.</p>
+    <p class="text-sm text-muted mt-1">{{ pendingCount() }} endorsement requests awaiting review.</p>
   </div>
 
   <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
@@ -29,11 +29,11 @@
             <tr class="border-b border-line">
               <td class="px-4 py-[13px] text-xs font-semibold text-primary sc-numeric whitespace-nowrap">{{ e.id }}</td>
               <td class="px-4 py-[13px] text-xs text-body sc-numeric whitespace-nowrap">{{ e.policyId }}</td>
-              <td class="px-4 py-[13px] text-body whitespace-nowrap">{{ formatType(e.type) }}</td>
+              <td class="px-4 py-[13px] text-body whitespace-nowrap">{{ formatType(e.endorsementType) }}</td>
               <td class="px-4 py-[13px] text-muted text-[13px] max-w-[200px] truncate">{{ e.description }}</td>
               <td class="px-4 py-[13px]"><app-status-badge [status]="e.status" /></td>
               <td class="px-4 py-[13px]">
-                @if (e.status === 'Pending') {
+                @if (isReviewable(e)) {
                   <div class="flex gap-2">
                     <button (click)="onApprove(e)" class="h-[32px] px-3 rounded-[7px] border-none text-xs font-semibold text-white cursor-pointer bg-success hover:bg-success-dark transition-colors">
                       Approve

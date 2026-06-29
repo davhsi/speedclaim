@@ -341,7 +341,7 @@ export interface UpdateNomineeRequest {
 export interface EndorsementDto {
   id: number;
   policyId: number;
-  type: EndorsementType;
+  endorsementType: EndorsementType;
   status: EndorsementStatus;
   description: string;
   oldValue?: string;
@@ -352,7 +352,7 @@ export interface EndorsementDto {
 }
 
 export interface RequestEndorsementRequest {
-  type: EndorsementType;
+  endorsementType: EndorsementType;
   description: string;
   oldValue?: string;
   newValue?: string;

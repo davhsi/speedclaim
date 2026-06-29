@@ -34,7 +34,7 @@ export type Relationship = 'Spouse' | 'Son' | 'Daughter' | 'Father' | 'Mother' |
 
 export type EndorsementType = 'NomineeChange' | 'AddressChange' | 'VehicleCorrection' | 'ContactUpdate' | 'SumAssuredChange' | 'Other';
 
-export type EndorsementStatus = 'Pending' | 'Approved' | 'Rejected';
+export type EndorsementStatus = 'Requested' | 'Approved' | 'Rejected';
 
 export type AddressType = 'Permanent' | 'Current';
 

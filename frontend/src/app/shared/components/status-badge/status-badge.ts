@@ -30,6 +30,7 @@ export class StatusBadgeComponent {
       PreAuthApproved: 'Pre-Auth Approved',
       DocumentsPending: 'Docs Pending',
       InProgress: 'In Progress',
+      Requested: 'Requested',
     };
     return labels[s] ?? s;
   });
@@ -44,6 +45,7 @@ export class StatusBadgeComponent {
       Resolved: 'bg-success-bg text-success border border-success-border',
 
       Pending: 'bg-warning-bg text-warning border border-warning-border',
+      Requested: 'bg-warning-bg text-warning border border-warning-border',
       UnderReview: 'bg-warning-bg text-warning border border-warning-border',
       PreAuthRequested: 'bg-warning-bg text-warning border border-warning-border',
       InProgress: 'bg-warning-bg text-warning border border-warning-border',
@@ -77,7 +79,7 @@ export class StatusBadgeComponent {
     const s = this.status();
     const map: Record<string, string> = {
       Active: 'bg-success', Approved: 'bg-success', Paid: 'bg-success', Settled: 'bg-success', Resolved: 'bg-success',
-      Pending: 'bg-warning', UnderReview: 'bg-warning', PreAuthRequested: 'bg-warning', InProgress: 'bg-warning',
+      Pending: 'bg-warning', Requested: 'bg-warning', UnderReview: 'bg-warning', PreAuthRequested: 'bg-warning', InProgress: 'bg-warning',
       Due: 'bg-warning', Submitted: 'bg-warning', Intimated: 'bg-warning', Open: 'bg-warning',
       Inactive: 'bg-danger',
       Rejected: 'bg-danger', Cancelled: 'bg-danger', Failed: 'bg-danger', Overdue: 'bg-danger',
