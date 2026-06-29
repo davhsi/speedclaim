@@ -4,7 +4,16 @@
     Back to KYC queue
   </button>
 
-  @if (kyc(); as k) {
+  @if (loading()) {
+    <div class="bg-white border border-line rounded-card p-12 text-center">
+      <p class="text-sm text-muted">Loading KYC details...</p>
+    </div>
+  } @else if (notFound()) {
+    <div class="bg-white border border-line rounded-card p-12 text-center">
+      <p class="text-sm font-semibold text-ink">KYC record not found</p>
+      <p class="text-sm text-muted mt-1">This customer may not have submitted both identity documents yet.</p>
+    </div>
+  } @else if (kyc(); as k) {
     <div class="flex items-center gap-2.5 flex-wrap mb-1">
       <span class="text-xl font-semibold text-ink">KYC Review</span>
       <app-status-badge [status]="k.kycStatus" />

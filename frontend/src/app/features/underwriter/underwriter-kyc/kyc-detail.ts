@@ -20,6 +20,8 @@ export class KycDetailComponent implements OnInit {
   private toast = inject(ToastService);
 
   kyc = signal<UnderwriterKycDto | null>(null);
+  loading = signal(true);
+  notFound = signal(false);
   revealed = signal(false);
   showDialog = signal<'approve' | 'reject' | null>(null);
   actionInFlight = signal(false);
@@ -27,10 +29,14 @@ export class KycDetailComponent implements OnInit {
 
   ngOnInit(): void {
     const userId = this.route.snapshot.paramMap.get('userId')!;
-    this.uwService.getPendingKyc(1, 100).subscribe({
-      next: (res) => {
-        const record = res.data.find(k => k.userId === userId);
-        if (record) this.kyc.set(record);
+    this.uwService.getKycByUserId(userId).subscribe({
+      next: (record) => {
+        this.kyc.set(record);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.notFound.set(true);
+        this.loading.set(false);
       },
     });
   }

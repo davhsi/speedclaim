@@ -339,7 +339,7 @@ public class ProposalServiceTests
     [Test]
     public async Task ApproveOrRejectProposalAsync_Approved_CreatesPremiumSchedule()
     {
-        var proposal = new Proposal { PremiumAmount = 2500, PremiumSchedules = new List<PremiumSchedule>() };
+        var proposal = new Proposal { Status = ProposalStatus.Submitted, PremiumAmount = 2500, PremiumSchedules = new List<PremiumSchedule>() };
         _mockProposalRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(proposal);
 
         PremiumSchedule? captured = null;
@@ -362,7 +362,7 @@ public class ProposalServiceTests
     [Test]
     public async Task ApproveOrRejectProposalAsync_Rejected_SetsReason()
     {
-        var proposal = new Proposal();
+        var proposal = new Proposal { Status = ProposalStatus.Submitted };
         _mockProposalRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(proposal);
 
         await _proposalService.ApproveOrRejectProposalAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), false, "High risk");
@@ -380,6 +380,18 @@ public class ProposalServiceTests
 
         Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
             _proposalService.ApproveOrRejectProposalAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), true, "Looks good"));
+    }
+
+    [Test]
+    public void ApproveOrRejectProposalAsync_DocumentsPendingProposal_ThrowsUnprocessableException()
+    {
+        var proposal = new Proposal { Status = ProposalStatus.DocumentsPending };
+        _mockProposalRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(proposal);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.UnprocessableException>(() =>
+            _proposalService.ApproveOrRejectProposalAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), true, "Looks good"));
+
+        _mockProposalRepo.Verify(r => r.Update(It.IsAny<Proposal>()), Times.Never);
     }
 
     [Test]

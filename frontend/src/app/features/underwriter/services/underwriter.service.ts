@@ -59,6 +59,10 @@ export class UnderwriterService {
     return this.http.get<PagedResponse<UnderwriterKycDto>>('/api/v1/users/kyc/pending', { params });
   }
 
+  getKycByUserId(customerId: string): Observable<UnderwriterKycDto> {
+    return this.http.get<UnderwriterKycDto>(`/api/v1/users/${customerId}/kyc`);
+  }
+
   reviewKyc(customerId: string, isApproved: boolean, reason: string): Observable<UnderwriterKycDto> {
     const params = new HttpParams().set('isApproved', isApproved).set('reason', reason);
     return this.http.put<UnderwriterKycDto>(`/api/v1/users/${customerId}/kyc/review`, {}, { params });

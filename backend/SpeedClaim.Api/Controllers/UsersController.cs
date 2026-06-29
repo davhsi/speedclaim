@@ -277,6 +277,18 @@ public class UsersController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>Get a customer's KYC submission by user ID for underwriter/admin review</summary>
+    /// <param name="customerId">Customer user ID</param>
+    [Authorize(Roles = "Underwriter,Admin")]
+    [HttpGet("{customerId}/kyc")]
+    [ProducesResponseType(typeof(KycRecordDto), 200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> GetCustomerKyc(string customerId)
+    {
+        var kyc = await _userService.GetMyKycAsync(customerId);
+        return kyc == null ? NotFound(new { message = "KYC record not found." }) : Ok(kyc);
+    }
+
     /// <summary>Approve or reject a customer's KYC submission. Both Aadhaar and PAN must be uploaded before approval.</summary>
     /// <param name="customerId">Customer user ID</param>
     [Authorize(Roles = "Underwriter,Admin")]
