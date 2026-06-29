@@ -27,7 +27,10 @@
             }
           } @else {
             @for (pol of pagedPolicies(); track pol.id) {
-              <tr class="border-b border-line hover:bg-surface transition-colors">
+              <tr
+                class="border-b border-line hover:bg-surface transition-colors"
+                [class.bg-primary-light]="isHighlighted(pol)"
+              >
                 <td class="px-4 py-3.5 text-ink font-semibold sc-numeric text-xs">{{ pol.policyNumber }}</td>
                 <td class="px-4 py-3.5">
                   <div class="font-semibold text-ink">{{ pol.productName }}</div>

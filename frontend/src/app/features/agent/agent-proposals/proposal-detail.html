@@ -1,0 +1,58 @@
+<div class="animate-sc-fade">
+  <button (click)="goBack()" class="inline-flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-primary text-[13px] font-medium p-0 mb-4">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Back to proposals
+  </button>
+
+  @if (loading()) {
+    <app-skeleton variant="card" />
+  } @else if (proposal(); as p) {
+    <div class="flex items-start justify-between flex-wrap gap-3 mb-5">
+      <div>
+        <div class="flex items-center gap-2.5 flex-wrap mb-1">
+          <h1 class="text-xl font-semibold text-ink">{{ p.proposalNumber }}</h1>
+          <app-status-badge [status]="p.status" />
+        </div>
+        <p class="text-sm text-muted">{{ p.productName || 'Insurance product' }} submitted {{ p.createdAt | dateFormat }}</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-5 items-start">
+      <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
+        <div class="px-5 py-4 border-b border-line">
+          <div class="text-sm font-semibold text-ink">Proposal details</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2">
+          @for (entry of detailEntries(p); track entry.label) {
+            <div class="p-4 border-b border-line sm:odd:border-r">
+              <div class="text-[11px] font-semibold text-muted uppercase mb-1">{{ entry.label }}</div>
+              <div class="text-sm font-medium text-ink">{{ entry.value }}</div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="bg-white border border-line rounded-card shadow-sm p-5">
+        <div class="text-sm font-semibold text-ink mb-3.5">Financial summary</div>
+        <div class="space-y-3">
+          <div>
+            <div class="text-[11px] font-semibold text-muted uppercase mb-1">Cover amount</div>
+            <div class="text-lg font-bold text-ink sc-numeric">{{ p.sumAssured | money }}</div>
+          </div>
+          <div>
+            <div class="text-[11px] font-semibold text-muted uppercase mb-1">Premium</div>
+            <div class="text-lg font-bold text-ink sc-numeric">{{ p.premiumAmount | money }}</div>
+            <div class="text-xs text-muted">{{ p.paymentFrequency }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    @if (p.underwriterNotes) {
+      <div class="mt-5 bg-white border border-line rounded-card shadow-sm p-5">
+        <div class="text-sm font-semibold text-ink mb-2">Underwriter notes</div>
+        <p class="text-sm text-body whitespace-pre-line">{{ p.underwriterNotes }}</p>
+      </div>
+    }
+  }
+</div>

@@ -35,13 +35,14 @@
             <th class="px-4 py-3 text-left font-semibold text-ink text-xs">Premium</th>
             <th class="px-4 py-3 text-left font-semibold text-ink text-xs">Status</th>
             <th class="px-4 py-3 text-left font-semibold text-ink text-xs">Submitted</th>
+            <th class="px-4 py-3 text-right font-semibold text-ink text-xs">Action</th>
           </tr>
         </thead>
         <tbody>
           @if (loading()) {
             @for (i of [1,2,3,4]; track i) {
               <tr class="border-b border-line">
-                <td colspan="6" class="px-4 py-3"><app-skeleton variant="table-row" /></td>
+                <td colspan="7" class="px-4 py-3"><app-skeleton variant="table-row" /></td>
               </tr>
             }
           } @else {
@@ -55,11 +56,19 @@
                   <app-status-badge [status]="prop.status" />
                 </td>
                 <td class="px-4 py-3.5 text-muted text-xs">{{ prop.createdAt | dateFormat }}</td>
+                <td class="px-4 py-3.5 text-right">
+                  <a
+                    [routerLink]="['/agent/proposals', prop.id]"
+                    class="inline-flex h-8 px-3 items-center rounded-control border border-line bg-white text-xs font-semibold text-body hover:bg-surface transition-colors"
+                  >
+                    View
+                  </a>
+                </td>
               </tr>
             }
             @if (filteredProposals().length === 0) {
               <tr>
-                <td colspan="6" class="px-4 py-10 text-center">
+                <td colspan="7" class="px-4 py-10 text-center">
                   <div class="w-11 h-11 rounded-[11px] bg-surface flex items-center justify-center mx-auto mb-3">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                   </div>

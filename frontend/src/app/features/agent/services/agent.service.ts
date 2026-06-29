@@ -32,6 +32,8 @@ export interface RenewalReminderDto {
   policyNumber: string;
   customerId: string;
   customerName: string;
+  customerEmail: string;
+  customerPhone: string;
   dueDate: string;
   amountDue: number;
   daysUntilDue: number;
@@ -51,7 +53,11 @@ export interface AgentProfileDto {
   agentId: string;
   userId: string;
   email: string;
+  salutation: string;
+  firstName: string;
+  lastName: string;
   fullName: string;
+  phone: string;
   agentCode: string;
   agentType: string;
   licenseNumber: string;
@@ -92,6 +98,10 @@ export class AgentService {
 
   getMyProposals(): Observable<ProposalDto[]> {
     return this.http.get<ProposalDto[]>('/api/v1/proposals/my');
+  }
+
+  getProposalById(id: string): Observable<ProposalDto> {
+    return this.http.get<ProposalDto>(`/api/v1/proposals/${id}`);
   }
 
   submitProposal(req: SubmitProposalRequest): Observable<ProposalDto> {

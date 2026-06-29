@@ -1,8 +1,10 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Router } from '@angular/router';
 import { AgentService, RenewalReminderDto } from '../services/agent.service';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination';
+import { ToastService } from '../../../shared/components/toast/toast.service';
 
 @Component({
   selector: 'app-agent-renewal-list',
@@ -12,6 +14,8 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 })
 export class AgentRenewalListComponent implements OnInit {
   private agentService = inject(AgentService);
+  private router = inject(Router);
+  private toast = inject(ToastService);
 
   loading = signal(true);
   renewals = signal<RenewalReminderDto[]>([]);
@@ -45,5 +49,22 @@ export class AgentRenewalListComponent implements OnInit {
 
   formatDate(dateStr: string): string {
     return new Date(dateStr).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  sendReminder(renewal: RenewalReminderDto): void {
+    if (!renewal.customerEmail) {
+      this.toast.warning('Customer email is not available for this renewal.');
+      return;
+    }
+
+    const subject = encodeURIComponent(`Renewal reminder for ${renewal.policyNumber}`);
+    const body = encodeURIComponent(
+      `Dear ${renewal.customerName},\n\nYour SpeedClaim policy ${renewal.policyNumber} is due for renewal on ${this.formatDate(renewal.dueDate)}. The premium due is INR ${renewal.amountDue}.\n\nPlease log in to SpeedClaim to complete the renewal.\n\nRegards,\nSpeedClaim`
+    );
+    window.location.href = `mailto:${renewal.customerEmail}?subject=${subject}&body=${body}`;
+  }
+
+  viewDetails(renewal: RenewalReminderDto): void {
+    this.router.navigate(['/agent/policies'], { queryParams: { policyId: renewal.policyId } });
   }
 }
