@@ -95,6 +95,8 @@ public class GrievanceService : IGrievanceService
     {
         var grievance = await _unitOfWork.Grievances.GetByIdAsync(grievanceId);
         if (grievance == null) throw new NotFoundException("Grievance not found.");
+        if (IsTerminal(grievance.Status))
+            throw new ValidationException("Resolved or closed grievances cannot be reassigned.");
 
         grievance.AssignedToId = officerId;
         grievance.Status = GrievanceStatus.InProgress;
@@ -108,6 +110,8 @@ public class GrievanceService : IGrievanceService
     {
         var grievance = await _unitOfWork.Grievances.GetByIdAsync(grievanceId);
         if (grievance == null) throw new NotFoundException("Grievance not found.");
+        if (IsTerminal(grievance.Status))
+            throw new ValidationException("Resolved or closed grievances cannot be updated.");
 
         grievance.Status = request.Status;
         
@@ -125,6 +129,11 @@ public class GrievanceService : IGrievanceService
 
         _unitOfWork.Grievances.Update(grievance);
         await _unitOfWork.CompleteAsync();
+    }
+
+    private static bool IsTerminal(GrievanceStatus status)
+    {
+        return status == GrievanceStatus.Resolved || status == GrievanceStatus.Closed;
     }
 
     private static GrievanceDto MapToDto(Grievance g)

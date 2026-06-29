@@ -450,22 +450,24 @@ export interface SavedCardDto {
 export interface GrievanceDto {
   id: string;
   grievanceNumber: string;
+  customerId: string;
+  policyId?: string;
+  claimId?: string;
   category: GrievanceCategory;
   description: string;
   status: GrievanceStatus;
-  relatedPolicyId?: string;
-  relatedClaimId?: string;
   assignedToId?: string;
   resolutionNotes?: string;
+  resolvedAt?: string;
   createdAt: string;
   updatedAt?: string;
 }
 
 export interface RaiseGrievanceRequest {
+  policyId?: string;
+  claimId?: string;
   category: GrievanceCategory;
   description: string;
-  relatedPolicyId?: string;
-  relatedClaimId?: string;
 }
 
 export interface NotificationDto {

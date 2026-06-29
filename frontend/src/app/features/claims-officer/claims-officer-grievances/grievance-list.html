@@ -32,7 +32,7 @@
             <tr class="border-b border-line hover:bg-surface transition-colors">
               <td class="px-4 py-3.5 text-xs font-semibold text-primary sc-numeric whitespace-nowrap">{{ g.grievanceNumber }}</td>
               <td class="px-4 py-3.5 text-xs font-semibold text-primary sc-numeric whitespace-nowrap">
-                {{ g.relatedClaimId ? 'Claim #' + g.relatedClaimId : g.relatedPolicyId ? 'Policy #' + g.relatedPolicyId : '—' }}
+                {{ g.claimId ? 'Claim #' + g.claimId : g.policyId ? 'Policy #' + g.policyId : '—' }}
               </td>
               <td class="px-4 py-3.5 text-[13px] text-body max-w-[200px] truncate">{{ g.description }}</td>
               <td class="px-4 py-3.5">

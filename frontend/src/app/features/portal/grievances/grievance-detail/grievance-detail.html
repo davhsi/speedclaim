@@ -32,6 +32,23 @@
         </div>
       </div>
 
+      @if (grievance()!.claimId || grievance()!.policyId) {
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-[18px] mb-5">
+          @if (grievance()!.claimId) {
+            <div>
+              <div class="text-xs text-muted mb-0.5">Related claim</div>
+              <div class="text-[15px] font-semibold text-primary sc-numeric">{{ grievance()!.claimId }}</div>
+            </div>
+          }
+          @if (grievance()!.policyId) {
+            <div>
+              <div class="text-xs text-muted mb-0.5">Related policy</div>
+              <div class="text-[15px] font-semibold text-primary sc-numeric">{{ grievance()!.policyId }}</div>
+            </div>
+          }
+        </div>
+      }
+
       <div class="pt-5 border-t border-line">
         <div class="text-xs text-muted mb-2">Description</div>
         <p class="text-sm text-body leading-relaxed">{{ grievance()!.description }}</p>

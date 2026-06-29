@@ -53,10 +53,14 @@ export class GrievanceDetailComponent implements OnInit {
     return map[cat] ?? cat;
   }
 
+  isTerminal(g: GrievanceDto): boolean {
+    return g.status === 'Resolved' || g.status === 'Closed';
+  }
+
   onAssignToSelf(): void {
     const g = this.grievance();
     const user = this.authService.currentUser();
-    if (!g || !user) return;
+    if (!g || !user || this.isTerminal(g)) return;
     this.claimsService.assignGrievance(g.id, { assignedToId: user.id }).subscribe({
       next: () => {
         this.toast.success('Grievance assigned to you');
@@ -68,7 +72,7 @@ export class GrievanceDetailComponent implements OnInit {
 
   onUpdateStatus(): void {
     const g = this.grievance();
-    if (!g) return;
+    if (!g || this.isTerminal(g)) return;
     this.claimsService.updateGrievanceStatus(g.id, {
       status: this.selectedStatus,
       resolutionNotes: this.notes || undefined,
@@ -83,7 +87,7 @@ export class GrievanceDetailComponent implements OnInit {
 
   onSaveNotes(): void {
     const g = this.grievance();
-    if (!g || !this.notes.trim()) return;
+    if (!g || this.isTerminal(g) || !this.notes.trim()) return;
     this.claimsService.updateGrievanceStatus(g.id, {
       status: g.status,
       resolutionNotes: this.notes,

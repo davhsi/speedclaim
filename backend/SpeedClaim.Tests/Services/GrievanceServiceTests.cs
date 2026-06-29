@@ -217,6 +217,19 @@ public class GrievanceServiceTests
     }
 
     [Test]
+    public void AssignGrievanceAsync_ResolvedGrievance_ThrowsValidationException()
+    {
+        var grievanceId = Guid.NewGuid();
+        var grievance = new Grievance { Id = grievanceId, Status = GrievanceStatus.Resolved };
+        _mockGrievanceRepo.Setup(r => r.GetByIdAsync(grievanceId)).ReturnsAsync(grievance);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() =>
+            _grievanceService.AssignGrievanceAsync(grievanceId, Guid.NewGuid()));
+
+        _mockGrievanceRepo.Verify(r => r.Update(It.IsAny<Grievance>()), Times.Never);
+    }
+
+    [Test]
     public async Task UpdateGrievanceStatusAsync_ToClosed_SetsResolvedAt()
     {
         var grievanceId = Guid.NewGuid();
@@ -236,6 +249,19 @@ public class GrievanceServiceTests
 
         Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() =>
             _grievanceService.UpdateGrievanceStatusAsync(Guid.NewGuid(), new UpdateGrievanceStatusRequest(GrievanceStatus.Resolved, null)));
+    }
+
+    [Test]
+    public void UpdateGrievanceStatusAsync_ClosedGrievance_ThrowsValidationException()
+    {
+        var grievanceId = Guid.NewGuid();
+        var grievance = new Grievance { Id = grievanceId, Status = GrievanceStatus.Closed };
+        _mockGrievanceRepo.Setup(r => r.GetByIdAsync(grievanceId)).ReturnsAsync(grievance);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() =>
+            _grievanceService.UpdateGrievanceStatusAsync(grievanceId, new UpdateGrievanceStatusRequest(GrievanceStatus.Open, null)));
+
+        _mockGrievanceRepo.Verify(r => r.Update(It.IsAny<Grievance>()), Times.Never);
     }
 
     [Test]
