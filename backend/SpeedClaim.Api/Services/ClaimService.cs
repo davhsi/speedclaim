@@ -402,7 +402,9 @@ public class ClaimService : IClaimService
     public async Task<IEnumerable<ClaimDto>> GetAssignedMotorClaimsAsync(Guid surveyorId)
     {
         var surveyorRecordId = await ResolveSurveyorIdAsync(surveyorId);
-        var claims = await _unitOfWork.Claims.FindAsync(c => c.SurveyorId == surveyorRecordId);
+        var claims = await _unitOfWork.Claims.FindAsync(c =>
+            c.SurveyorId == surveyorRecordId &&
+            (c.ClaimType == ClaimType.Accident || c.ClaimType == ClaimType.Theft || c.ClaimType == ClaimType.NaturalDamage));
         return claims.Select(MapToDto);
     }
 
@@ -445,6 +447,29 @@ public class ClaimService : IClaimService
         };
 
         await _unitOfWork.SubmittedDocuments.AddAsync(doc);
+
+        if (request.Photos != null)
+        {
+            var photoIndex = 1;
+            foreach (var photo in request.Photos.Where(p => p != null && p.Length > 0).Take(10))
+            {
+                using var photoStream = photo.OpenReadStream();
+                var photoPath = await _storageService.UploadFileAsync(photoStream, photo.FileName, $"claims/{claimId}/survey/photos");
+                await _unitOfWork.SubmittedDocuments.AddAsync(new SubmittedDocument
+                {
+                    Id = Guid.NewGuid(),
+                    EntityType = EntityType.Claim,
+                    EntityId = claimId,
+                    DocumentKey = $"SurveyPhoto{photoIndex}",
+                    OriginalFilename = photo.FileName,
+                    StoredFilename = photoPath.Split('/').Last(),
+                    FilePath = photoPath,
+                    UploadedBy = surveyorId,
+                    UploadedAt = DateTime.UtcNow
+                });
+                photoIndex++;
+            }
+        }
         
         // Update MotorClaimDetail if present
         var motorDetail = await _unitOfWork.MotorClaimDetails.FirstOrDefaultAsync(m => m.ClaimId == claimId);

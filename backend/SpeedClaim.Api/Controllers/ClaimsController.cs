@@ -242,7 +242,7 @@ public class ClaimsController : BaseApiController
 
     /// <summary>Upload a survey inspection report for a motor or property claim</summary>
     /// <param name="id">Claim ID</param>
-    [Authorize(Roles = "Surveyor,ClaimsOfficer")]
+    [Authorize(Roles = "Surveyor")]
     [HttpPost("{id}/survey-report")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]

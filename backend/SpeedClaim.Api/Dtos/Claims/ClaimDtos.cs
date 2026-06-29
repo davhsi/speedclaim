@@ -71,5 +71,6 @@ public record SubmitSurveyReportRequest(
     decimal EstimatedRepairCost,
     DateTime SurveyDate,
     string Remarks,
-    IFormFile ReportDocument
+    IFormFile ReportDocument,
+    List<IFormFile>? Photos = null
 );

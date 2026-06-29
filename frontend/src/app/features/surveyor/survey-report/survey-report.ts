@@ -34,13 +34,14 @@ export class SurveyReportComponent implements OnInit {
   notes = '';
 
   photos = signal<File[]>([]);
-  docs = signal<File[]>([]);
+  reportDocument = signal<File | null>(null);
 
   dmgTypeErr = signal('');
   descErr = signal('');
   costErr = signal('');
   driveableErr = signal('');
   photoErr = signal('');
+  reportDocumentErr = signal('');
 
   submitting = signal(false);
   showSuccess = signal(false);
@@ -86,8 +87,8 @@ export class SurveyReportComponent implements OnInit {
   onDocChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files?.length) {
-      const files = Array.from(input.files);
-      this.docs.update(prev => [...prev, ...files].slice(0, 5));
+      this.reportDocument.set(input.files[0]);
+      this.reportDocumentErr.set('');
     }
     input.value = '';
   }
@@ -96,8 +97,8 @@ export class SurveyReportComponent implements OnInit {
     this.photos.update(prev => prev.filter((_, i) => i !== index));
   }
 
-  removeDoc(index: number): void {
-    this.docs.update(prev => prev.filter((_, i) => i !== index));
+  removeDoc(): void {
+    this.reportDocument.set(null);
   }
 
   selectDamageType(type: DamageType): void {
@@ -122,6 +123,8 @@ export class SurveyReportComponent implements OnInit {
     else this.driveableErr.set('');
     if (this.photos().length === 0) { this.photoErr.set('Please upload at least one damage photo.'); ok = false; }
     else this.photoErr.set('');
+    if (!this.reportDocument()) { this.reportDocumentErr.set('Please upload the survey report document.'); ok = false; }
+    else this.reportDocumentErr.set('');
     return ok;
   }
 
@@ -149,13 +152,14 @@ export class SurveyReportComponent implements OnInit {
       this.notes ? `Notes: ${this.notes}` : '',
     ].filter(Boolean).join('\n');
 
-    const firstPhoto = this.photos()[0];
+    const reportDocument = this.reportDocument();
+    if (!reportDocument) return;
 
     this.surveyorService.submitSurveyReport(c.id.toString(), {
       estimatedRepairCost: parseFloat(this.cost),
       surveyDate: new Date().toISOString(),
       remarks,
-      reportDocument: firstPhoto,
+      reportDocument,
       photos: this.photos(),
     }).subscribe({
       next: () => {

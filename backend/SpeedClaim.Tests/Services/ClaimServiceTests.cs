@@ -483,13 +483,16 @@ public class ClaimServiceTests
         var surveyorId = Guid.NewGuid();
         var claims = new List<Claim>
         {
-            new Claim { Id = Guid.NewGuid(), SurveyorId = surveyorId, ClaimType = ClaimType.Accident, Status = ClaimStatus.UnderReview }
+            new Claim { Id = Guid.NewGuid(), SurveyorId = surveyorId, ClaimType = ClaimType.Accident, Status = ClaimStatus.UnderReview },
+            new Claim { Id = Guid.NewGuid(), SurveyorId = surveyorId, ClaimType = ClaimType.Health, Status = ClaimStatus.UnderReview }
         };
-        _mockClaimRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Claim, bool>>>())).ReturnsAsync(claims);
+        _mockClaimRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Claim, bool>>>()))
+            .ReturnsAsync((Expression<Func<Claim, bool>> predicate) => claims.Where(predicate.Compile()).ToList());
 
         var result = await _claimService.GetAssignedMotorClaimsAsync(surveyorId);
 
         Assert.That(result.Count(), Is.EqualTo(1));
+        Assert.That(result.Single().ClaimType, Is.EqualTo(ClaimType.Accident.ToString()));
     }
 
     [Test]
@@ -706,6 +709,42 @@ public class ClaimServiceTests
 
         Assert.That(result, Is.EqualTo("/storage/report.pdf"));
         _mockDocRepo.Verify(r => r.AddAsync(It.IsAny<SubmittedDocument>()), Times.Once);
+    }
+
+    [Test]
+    public async Task SubmitSurveyReportAsync_WithPhotos_UploadsReportAndPhotos()
+    {
+        var claimId = Guid.NewGuid();
+        var surveyorId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, SurveyorId = surveyorId, CustomerId = Guid.NewGuid(), Status = ClaimStatus.UnderReview, ClaimNumber = "CLM-001", PolicyId = Guid.NewGuid() };
+
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+        var mockMotorRepo = new Mock<IRepository<MotorClaimDetail>>();
+        mockMotorRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<MotorClaimDetail, bool>>>())).ReturnsAsync((MotorClaimDetail?)null);
+        _mockUnitOfWork.Setup(u => u.MotorClaimDetails).Returns(mockMotorRepo.Object);
+
+        var reportFile = new Mock<IFormFile>();
+        reportFile.Setup(f => f.FileName).Returns("report.pdf");
+        reportFile.Setup(f => f.Length).Returns(2048);
+        reportFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream(new byte[] { 1, 2, 3 }));
+
+        var photoFile = new Mock<IFormFile>();
+        photoFile.Setup(f => f.FileName).Returns("damage.jpg");
+        photoFile.Setup(f => f.Length).Returns(1024);
+        photoFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream(new byte[] { 4, 5, 6 }));
+
+        var mockStorage = new Mock<IStorageService>();
+        mockStorage.SetupSequence(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync("/storage/report.pdf")
+            .ReturnsAsync("/storage/damage.jpg");
+        var svc = new ClaimService(_mockUnitOfWork.Object, mockStorage.Object, new Mock<INotificationService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ClaimService>>());
+
+        var request = new SubmitSurveyReportRequest(5000m, DateTime.UtcNow.AddDays(-1), "minor damage", reportFile.Object, new List<IFormFile> { photoFile.Object });
+        await svc.SubmitSurveyReportAsync(claimId, surveyorId, request);
+
+        mockStorage.Verify(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), "report.pdf", $"claims/{claimId}/survey"), Times.Once);
+        mockStorage.Verify(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), "damage.jpg", $"claims/{claimId}/survey/photos"), Times.Once);
+        _mockDocRepo.Verify(r => r.AddAsync(It.IsAny<SubmittedDocument>()), Times.Exactly(2));
     }
 
     [Test]
