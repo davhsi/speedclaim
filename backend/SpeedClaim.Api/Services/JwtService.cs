@@ -18,7 +18,7 @@ public class JwtService : IJwtService
         _configuration = configuration;
     }
 
-    public string GenerateAccessToken(User user)
+    public string GenerateAccessToken(User user, Guid sessionId)
     {
         var jwtSettings = _configuration.GetSection("JwtSettings");
         var secretKey = jwtSettings["Secret"] ?? throw new InvalidOperationException("JWT Secret not configured");
@@ -37,6 +37,7 @@ public class JwtService : IJwtService
         var identityClaims = new List<System.Security.Claims.Claim>(claims);
         identityClaims.Add(new System.Security.Claims.Claim(ClaimTypes.Role, roleCode));
         identityClaims.Add(new System.Security.Claims.Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
+        identityClaims.Add(new System.Security.Claims.Claim(JwtRegisteredClaimNames.Sid, sessionId.ToString()));
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

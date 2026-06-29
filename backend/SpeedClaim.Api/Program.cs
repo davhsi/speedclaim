@@ -13,6 +13,7 @@ using SpeedClaim.Api.Exceptions;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Repositories;
 using SpeedClaim.Api.Services;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.RateLimiting;
 using Stripe;
@@ -62,6 +63,25 @@ builder.Services.AddAuthentication(options =>
     };
     options.Events = new JwtBearerEvents
     {
+        OnTokenValidated = async context =>
+        {
+            var sessionClaim = context.Principal?.FindFirst("sid")?.Value
+                ?? context.Principal?.FindFirst(ClaimTypes.Sid)?.Value;
+            var userIdClaim = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (!Guid.TryParse(sessionClaim, out var sessionId) || !Guid.TryParse(userIdClaim, out var userId))
+            {
+                context.Fail("Invalid session");
+                return;
+            }
+
+            var unitOfWork = context.HttpContext.RequestServices.GetRequiredService<IUnitOfWork>();
+            var session = await unitOfWork.Sessions.GetByIdAsync(sessionId);
+            if (session == null || session.UserId != userId || session.IsRevoked || session.ExpiresAt <= DateTime.UtcNow)
+            {
+                context.Fail("Invalid session");
+            }
+        },
         OnChallenge = async context =>
         {
             context.HandleResponse();

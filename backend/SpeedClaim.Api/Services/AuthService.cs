@@ -207,7 +207,6 @@ public class AuthService : IAuthService
         user.FailedLoginAttempts = 0;
         user.LockedUntil = null;
 
-        var accessToken = _jwtService.GenerateAccessToken(user);
         var rawRefreshToken = _jwtService.GenerateRefreshToken();
 
         var session = new Session
@@ -219,6 +218,8 @@ public class AuthService : IAuthService
             IpAddress = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "Unknown",
             UserAgent = _httpContextAccessor.HttpContext?.Request.Headers.UserAgent.ToString() ?? "Unknown"
         };
+
+        var accessToken = _jwtService.GenerateAccessToken(user, session.Id);
 
         await _unitOfWork.Sessions.AddAsync(session);
         user.LastLoginAt = DateTime.UtcNow;
@@ -253,7 +254,6 @@ public class AuthService : IAuthService
         if (user == null || !user.IsActive)
             throw new ForbiddenException("User inactive or not found");
 
-        var newAccessToken = _jwtService.GenerateAccessToken(user);
         var newRawRefreshToken = _jwtService.GenerateRefreshToken();
 
         session.IsRevoked = true;
@@ -265,6 +265,8 @@ public class AuthService : IAuthService
             RefreshTokenHash = BCrypt.Net.BCrypt.HashPassword(newRawRefreshToken),
             ExpiresAt = DateTime.UtcNow.AddDays(7)
         };
+        var newAccessToken = _jwtService.GenerateAccessToken(user, newSession.Id);
+
         await _unitOfWork.Sessions.AddAsync(newSession);
         await _unitOfWork.CompleteAsync();
 
@@ -348,6 +350,11 @@ public class AuthService : IAuthService
         var user = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == email);
         if (user == null) return; // silent success to prevent email enumeration
 
+        var existingTokens = await _unitOfWork.UserTokens.FindAsync(
+            t => t.UserId == user.Id && t.TokenType == TokenType.PasswordReset && !t.IsUsed);
+        foreach (var token in existingTokens ?? Array.Empty<UserToken>())
+            token.IsUsed = true;
+
         var rawToken = _jwtService.GenerateRefreshToken();
         var userToken = new UserToken
         {
@@ -382,7 +389,12 @@ public class AuthService : IAuthService
         userToken.IsUsed = true;
         var user = await _unitOfWork.Users.GetByIdAsync(userToken.UserId);
         if (user != null)
+        {
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            user.FailedLoginAttempts = 0;
+            user.LockedUntil = null;
+            await RevokeActiveSessionsAsync(user.Id);
+        }
 
         await _unitOfWork.CompleteAsync();
     }
@@ -393,7 +405,20 @@ public class AuthService : IAuthService
         if (user == null) throw new NotFoundException("User not found");
 
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+        user.FailedLoginAttempts = 0;
+        user.LockedUntil = null;
+        await RevokeActiveSessionsAsync(user.Id);
         await _unitOfWork.CompleteAsync();
+    }
+
+    private async Task RevokeActiveSessionsAsync(Guid userId)
+    {
+        var activeSessions = await _unitOfWork.Sessions.FindAsync(s => s.UserId == userId && !s.IsRevoked);
+        foreach (var session in activeSessions ?? Array.Empty<Session>())
+        {
+            session.IsRevoked = true;
+            session.UpdatedAt = DateTimeOffset.UtcNow;
+        }
     }
 
     public async Task<RegistrationResponse> RegisterAgentAsync(RegisterAgentRequest request, string adminId)

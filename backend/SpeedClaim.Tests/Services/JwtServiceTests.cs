@@ -46,7 +46,8 @@ public class JwtServiceTests
             Role = UserRole.Customer
         };
 
-        var token = _jwtService.GenerateAccessToken(user);
+        var sessionId = Guid.NewGuid();
+        var token = _jwtService.GenerateAccessToken(user, sessionId);
 
         Assert.That(token, Is.Not.Null.And.Not.Empty);
         var handler = new JwtSecurityTokenHandler();
@@ -54,6 +55,7 @@ public class JwtServiceTests
         Assert.That(jwt.Issuer, Is.EqualTo("SpeedClaimApi"));
         Assert.That(jwt.Claims.First(c => c.Type == JwtRegisteredClaimNames.Email).Value, Is.EqualTo("test@example.com"));
         Assert.That(jwt.Claims.Any(c => c.Type == ClaimTypes.Role && c.Value == "Customer"), Is.True);
+        Assert.That(jwt.Claims.Any(c => c.Type == JwtRegisteredClaimNames.Sid && c.Value == sessionId.ToString()), Is.True);
     }
 
     [Test]
@@ -69,7 +71,7 @@ public class JwtServiceTests
             KycRecord = new KycRecord { KycStatus = KycStatus.Approved }
         };
 
-        var token = _jwtService.GenerateAccessToken(user);
+        var token = _jwtService.GenerateAccessToken(user, Guid.NewGuid());
 
         var handler = new JwtSecurityTokenHandler();
         var jwt = handler.ReadJwtToken(token);

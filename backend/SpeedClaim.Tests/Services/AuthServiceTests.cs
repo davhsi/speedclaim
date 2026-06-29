@@ -167,7 +167,7 @@ public class AuthServiceTests
         _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
             .ReturnsAsync(user);
         
-        _mockJwtService.Setup(j => j.GenerateAccessToken(It.IsAny<User>())).Returns("access_token");
+        _mockJwtService.Setup(j => j.GenerateAccessToken(It.IsAny<User>(), It.IsAny<Guid>())).Returns("access_token");
         _mockJwtService.Setup(j => j.GenerateRefreshToken()).Returns("refresh_token");
 
         var result = await _authService.LoginAsync(request);
@@ -212,7 +212,7 @@ public class AuthServiceTests
         var user = new User { Id = userId, IsActive = true, Email = "test@test.com", Role = UserRole.Customer };
         _mockUserRepository.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
 
-        _mockJwtService.Setup(j => j.GenerateAccessToken(It.IsAny<User>())).Returns("new_access");
+        _mockJwtService.Setup(j => j.GenerateAccessToken(It.IsAny<User>(), It.IsAny<Guid>())).Returns("new_access");
         _mockJwtService.Setup(j => j.GenerateRefreshToken()).Returns("new_refresh");
 
         var result = await _authService.RefreshTokenAsync(request);
@@ -296,12 +296,16 @@ public class AuthServiceTests
     public async Task ForgotPasswordAsync_ValidUser_Success()
     {
         var user = new User { Email = "test@test.com" };
+        var oldToken = new UserToken { IsUsed = false };
         _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
             .ReturnsAsync(user);
+        _mockUserTokenRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<UserToken, bool>>>()))
+            .ReturnsAsync(new List<UserToken> { oldToken });
         _mockJwtService.Setup(j => j.GenerateRefreshToken()).Returns("reset_token");
 
         await _authService.ForgotPasswordAsync("test@test.com");
         
+        Assert.That(oldToken.IsUsed, Is.True);
         _mockUserTokenRepository.Verify(r => r.AddAsync(It.IsAny<UserToken>()), Times.Once);
         _mockEmailService.Verify(e => e.SendPasswordResetAsync("test@test.com", It.IsAny<string>()), Times.Once);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
@@ -337,13 +341,26 @@ public class AuthServiceTests
 
         _mockUserTokenRepository.Setup(r => r.GetByIdAsync(tokenId)).ReturnsAsync(userToken);
 
-        var user = new User { Id = userId, PasswordHash = "old" };
+        var session = new Session { UserId = userId, IsRevoked = false };
+        var user = new User
+        {
+            Id = userId,
+            PasswordHash = "old",
+            FailedLoginAttempts = 5,
+            LockedUntil = DateTime.UtcNow.AddMinutes(10)
+        };
         _mockUserRepository.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
+        _mockSessionRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Session, bool>>>()))
+            .ReturnsAsync(new List<Session> { session });
 
         await _authService.ResetPasswordCustomerAsync(request);
         
         Assert.That(userToken.IsUsed, Is.True);
         Assert.That(BCrypt.Net.BCrypt.Verify("newpassword", user.PasswordHash), Is.True);
+        Assert.That(user.FailedLoginAttempts, Is.EqualTo(0));
+        Assert.That(user.LockedUntil, Is.Null);
+        Assert.That(session.IsRevoked, Is.True);
+        Assert.That(session.UpdatedAt, Is.Not.Null);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
 
@@ -359,12 +376,25 @@ public class AuthServiceTests
     [Test]
     public async Task ResetPasswordAsync_AdminReset_Success()
     {
-        var user = new User { Id = Guid.NewGuid(), PasswordHash = "old" };
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            PasswordHash = "old",
+            FailedLoginAttempts = 5,
+            LockedUntil = DateTime.UtcNow.AddMinutes(10)
+        };
+        var session = new Session { UserId = user.Id, IsRevoked = false };
         _mockUserRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(user);
+        _mockSessionRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Session, bool>>>()))
+            .ReturnsAsync(new List<Session> { session });
         
         await _authService.ResetPasswordAsync(user.Id.ToString(), "newpassword", "admin123");
         
         Assert.That(BCrypt.Net.BCrypt.Verify("newpassword", user.PasswordHash), Is.True);
+        Assert.That(user.FailedLoginAttempts, Is.EqualTo(0));
+        Assert.That(user.LockedUntil, Is.Null);
+        Assert.That(session.IsRevoked, Is.True);
+        Assert.That(session.UpdatedAt, Is.Not.Null);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
 

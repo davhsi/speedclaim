@@ -4,6 +4,6 @@ namespace SpeedClaim.Api.Interfaces;
 
 public interface IJwtService
 {
-    string GenerateAccessToken(User user);
+    string GenerateAccessToken(User user, Guid sessionId);
     string GenerateRefreshToken();
 }
