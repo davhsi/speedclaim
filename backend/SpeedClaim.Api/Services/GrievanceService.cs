@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using SpeedClaim.Api.Dtos.Common;
 using SpeedClaim.Api.Dtos.Grievances;
@@ -14,10 +15,12 @@ namespace SpeedClaim.Api.Services;
 public class GrievanceService : IGrievanceService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IEmailService _emailService;
 
-    public GrievanceService(IUnitOfWork unitOfWork)
+    public GrievanceService(IUnitOfWork unitOfWork, IEmailService emailService)
     {
         _unitOfWork = unitOfWork;
+        _emailService = emailService;
     }
 
     private async Task<Models.Customer> ResolveCustomerAsync(Guid userId)
@@ -61,6 +64,16 @@ public class GrievanceService : IGrievanceService
 
         await _unitOfWork.Grievances.AddAsync(grievance);
         await _unitOfWork.CompleteAsync();
+
+        var user = await _unitOfWork.Users.GetByIdAsync(customerId);
+        if (user != null)
+        {
+            await _emailService.SendTemplatedEmailAsync("GrievanceFiled", new Dictionary<string, string>
+            {
+                ["firstName"]       = WebUtility.HtmlEncode(user.FirstName),
+                ["grievanceNumber"] = WebUtility.HtmlEncode(grievance.GrievanceNumber)
+            }, user.Email);
+        }
 
         return MapToDto(grievance);
     }
@@ -129,6 +142,31 @@ public class GrievanceService : IGrievanceService
 
         _unitOfWork.Grievances.Update(grievance);
         await _unitOfWork.CompleteAsync();
+
+        if (request.Status == GrievanceStatus.Resolved || request.Status == GrievanceStatus.Escalated)
+        {
+            var customer = await _unitOfWork.Customers.GetByIdAsync(grievance.CustomerId);
+            if (customer != null)
+            {
+                var user = await _unitOfWork.Users.GetByIdAsync(customer.UserId);
+                if (user != null)
+                {
+                    if (request.Status == GrievanceStatus.Resolved)
+                        await _emailService.SendTemplatedEmailAsync("GrievanceResolved", new Dictionary<string, string>
+                        {
+                            ["firstName"]       = WebUtility.HtmlEncode(user.FirstName),
+                            ["grievanceNumber"] = WebUtility.HtmlEncode(grievance.GrievanceNumber),
+                            ["resolutionNotes"] = WebUtility.HtmlEncode(grievance.ResolutionNotes ?? "Your grievance has been resolved.")
+                        }, user.Email);
+                    else
+                        await _emailService.SendTemplatedEmailAsync("GrievanceEscalated", new Dictionary<string, string>
+                        {
+                            ["firstName"]       = WebUtility.HtmlEncode(user.FirstName),
+                            ["grievanceNumber"] = WebUtility.HtmlEncode(grievance.GrievanceNumber)
+                        }, user.Email);
+                }
+            }
+        }
     }
 
     private static bool IsTerminal(GrievanceStatus status)

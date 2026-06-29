@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
 using SpeedClaim.Api.Dtos.Common;
@@ -16,11 +17,13 @@ public class PolicyService : IPolicyService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IStorageService _storageService;
+    private readonly IEmailService _emailService;
 
-    public PolicyService(IUnitOfWork unitOfWork, IStorageService storageService)
+    public PolicyService(IUnitOfWork unitOfWork, IStorageService storageService, IEmailService emailService)
     {
         _unitOfWork = unitOfWork;
         _storageService = storageService;
+        _emailService = emailService;
     }
 
     // Controllers pass the authenticated User.Id (JWT sub), but Policy.CustomerId / Proposal.CustomerId
@@ -96,6 +99,16 @@ public class PolicyService : IPolicyService
         });
 
         await _unitOfWork.CompleteAsync();
+
+        var user = await _unitOfWork.Users.GetByIdAsync(customerId);
+        if (user != null)
+        {
+            await _emailService.SendTemplatedEmailAsync("PolicyCancelled", new Dictionary<string, string>
+            {
+                ["firstName"]    = WebUtility.HtmlEncode(user.FirstName),
+                ["policyNumber"] = WebUtility.HtmlEncode(policy.PolicyNumber)
+            }, user.Email);
+        }
     }
 
     public async Task<byte[]> DownloadPolicyDocumentAsync(Guid policyId, Guid customerId)
@@ -140,6 +153,15 @@ public class PolicyService : IPolicyService
 
         await _unitOfWork.Endorsements.AddAsync(endorsement);
         await _unitOfWork.CompleteAsync();
+
+        var endorsementUser = await _unitOfWork.Users.GetByIdAsync(customerId);
+        if (endorsementUser != null && policy != null)
+            await _emailService.SendTemplatedEmailAsync("EndorsementRequested", new Dictionary<string, string>
+            {
+                ["firstName"]       = WebUtility.HtmlEncode(endorsementUser.FirstName),
+                ["policyNumber"]    = WebUtility.HtmlEncode(policy.PolicyNumber ?? string.Empty),
+                ["endorsementType"] = WebUtility.HtmlEncode(request.EndorsementType.ToString())
+            }, endorsementUser.Email);
     }
 
     public async Task<IEnumerable<PolicyDto>> GetAssignedCustomerPoliciesAsync(Guid agentUserId)
@@ -200,6 +222,29 @@ public class PolicyService : IPolicyService
             NewValue = JsonSerializer.Serialize(reason), CreatedAt = DateTime.UtcNow
         });
         await _unitOfWork.CompleteAsync();
+
+        var policy = await _unitOfWork.Policies.GetByIdAsync(endorsement.PolicyId);
+        if (policy != null)
+        {
+            var customer = await _unitOfWork.Customers.GetByIdAsync(policy.CustomerId);
+            if (customer != null)
+            {
+                var user = await _unitOfWork.Users.GetByIdAsync(customer.UserId);
+                if (user != null)
+                {
+                    var templateKey = isApproved ? "EndorsementApproved" : "EndorsementRejected";
+                    var vars = new Dictionary<string, string>
+                    {
+                        ["firstName"]       = WebUtility.HtmlEncode(user.FirstName),
+                        ["policyNumber"]    = WebUtility.HtmlEncode(policy.PolicyNumber),
+                        ["endorsementType"] = WebUtility.HtmlEncode(endorsement.EndorsementType.ToString())
+                    };
+                    if (!isApproved && !string.IsNullOrWhiteSpace(reason))
+                        vars["rejectionReason"] = WebUtility.HtmlEncode(reason);
+                    await _emailService.SendTemplatedEmailAsync(templateKey, vars, user.Email);
+                }
+            }
+        }
     }
 
     private static PolicyDto MapToDto(Policy p)

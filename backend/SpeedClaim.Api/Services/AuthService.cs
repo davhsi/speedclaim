@@ -466,6 +466,12 @@ public class AuthService : IAuthService
         });
         await _unitOfWork.CompleteAsync();
 
+        await _emailService.SendTemplatedEmailAsync("AgentWelcome", new System.Collections.Generic.Dictionary<string, string>
+        {
+            ["firstName"] = System.Net.WebUtility.HtmlEncode(user.FirstName),
+            ["email"]     = System.Net.WebUtility.HtmlEncode(user.Email)
+        }, user.Email);
+
         return new RegistrationResponse(user.Email, user.Role.ToString());
     }
 

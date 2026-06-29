@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
 using SpeedClaim.Api.Dtos.Auth;
@@ -18,12 +19,14 @@ public class UserService : IUserService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IStorageService _storageService;
     private readonly IEncryptionService _encryptionService;
+    private readonly IEmailService _emailService;
 
-    public UserService(IUnitOfWork unitOfWork, IStorageService storageService, IEncryptionService encryptionService)
+    public UserService(IUnitOfWork unitOfWork, IStorageService storageService, IEncryptionService encryptionService, IEmailService emailService)
     {
         _unitOfWork = unitOfWork;
         _storageService = storageService;
         _encryptionService = encryptionService;
+        _emailService = emailService;
     }
 
     public async Task<UserDto> GetProfileAsync(string userId)
@@ -193,6 +196,13 @@ public class UserService : IUserService
         }
 
         await _unitOfWork.CompleteAsync();
+
+        var kycUser = await _unitOfWork.Users.GetByIdAsync(uid);
+        if (kycUser != null)
+            await _emailService.SendTemplatedEmailAsync("KycSubmitted", new Dictionary<string, string>
+            {
+                ["firstName"] = WebUtility.HtmlEncode(kycUser.FirstName)
+            }, kycUser.Email);
     }
 
     public async Task UploadPanAsync(string customerId, PanUploadRequest request)
@@ -226,6 +236,13 @@ public class UserService : IUserService
         }
 
         await _unitOfWork.CompleteAsync();
+
+        var kycUser = await _unitOfWork.Users.GetByIdAsync(uid);
+        if (kycUser != null)
+            await _emailService.SendTemplatedEmailAsync("KycSubmitted", new Dictionary<string, string>
+            {
+                ["firstName"] = WebUtility.HtmlEncode(kycUser.FirstName)
+            }, kycUser.Email);
     }
 
     public async Task<Guid> AddAddressAsync(string userId, SingleAddressRequest request)
@@ -415,6 +432,19 @@ public class UserService : IUserService
             Action = isApproved ? "KycApproved" : "KycRejected", NewValue = JsonSerializer.Serialize(reason), CreatedAt = DateTime.UtcNow
         });
         await _unitOfWork.CompleteAsync();
+
+        var user = await _unitOfWork.Users.GetByIdAsync(kycRecord.UserId);
+        if (user != null)
+        {
+            var templateKey = isApproved ? "KycApproved" : "KycRejected";
+            var vars = new Dictionary<string, string>
+            {
+                ["firstName"] = WebUtility.HtmlEncode(user.FirstName)
+            };
+            if (!isApproved && !string.IsNullOrWhiteSpace(reason))
+                vars["rejectionReason"] = WebUtility.HtmlEncode(reason);
+            await _emailService.SendTemplatedEmailAsync(templateKey, vars, user.Email);
+        }
     }
 
     public async Task ActivateDeactivateUserAsync(string targetUserId, bool isActive, string adminId)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -19,13 +20,15 @@ public class ProposalService : IProposalService
     private readonly INotificationService _notifications;
     private readonly IStorageService _storageService;
     private readonly ILogger<ProposalService> _logger;
+    private readonly IEmailService _emailService;
 
-    public ProposalService(IUnitOfWork unitOfWork, INotificationService notifications, IStorageService storageService, ILogger<ProposalService> logger)
+    public ProposalService(IUnitOfWork unitOfWork, INotificationService notifications, IStorageService storageService, ILogger<ProposalService> logger, IEmailService emailService)
     {
         _unitOfWork = unitOfWork;
         _notifications = notifications;
         _storageService = storageService;
         _logger = logger;
+        _emailService = emailService;
     }
 
     public async Task<GenerateQuoteResponse> GenerateQuoteAsync(GenerateQuoteRequest request)
@@ -203,6 +206,15 @@ public class ProposalService : IProposalService
         await _unitOfWork.CompleteAsync();
 
         _logger.LogInformation("Proposal submitted: {ProposalNumber} for Customer {CustomerId}, Product {ProductId}", proposal.ProposalNumber, customerId, productId);
+
+        var proposalUser = await _unitOfWork.Users.GetByIdAsync(customerRecord.UserId);
+        if (proposalUser != null)
+            await _emailService.SendTemplatedEmailAsync("ProposalSubmitted", new Dictionary<string, string>
+            {
+                ["firstName"]      = WebUtility.HtmlEncode(proposalUser.FirstName),
+                ["proposalNumber"] = WebUtility.HtmlEncode(proposal.ProposalNumber)
+            }, proposalUser.Email);
+
         return new ProposalDto(
             proposal.Id,
             proposal.ProposalNumber,
@@ -370,12 +382,13 @@ public class ProposalService : IProposalService
         proposal.ReviewedAt = DateTimeOffset.UtcNow;
         proposal.UpdatedAt = DateTimeOffset.UtcNow;
 
+        Policy? issuedPolicy = null;
         if (isApproved)
         {
             proposal.UnderwriterNotes = notes;
 
             var activationDate = DateTime.UtcNow.AddDays(7);
-            var policy = new Policy
+            issuedPolicy = new Policy
             {
                 Id = Guid.NewGuid(),
                 PolicyNumber = $"POL-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..6].ToUpper()}",
@@ -392,13 +405,13 @@ public class ProposalService : IProposalService
                 Status = PolicyStatus.Pending,
                 CreatedAt = DateTimeOffset.UtcNow
             };
-            await _unitOfWork.Policies.AddAsync(policy);
+            await _unitOfWork.Policies.AddAsync(issuedPolicy);
 
             await _unitOfWork.PremiumSchedules.AddAsync(new PremiumSchedule
             {
                 Id = Guid.NewGuid(),
                 ProposalId = proposal.Id,
-                PolicyId = policy.Id,
+                PolicyId = issuedPolicy.Id,
                 InstallmentNumber = 1,
                 DueDate = activationDate,
                 Amount = proposal.PremiumAmount,
@@ -444,6 +457,32 @@ public class ProposalService : IProposalService
                 await _notifications.CreateAsync(agent.UserId, isApproved ? "Proposal Approved" : "Proposal Rejected", agentMsg, "policy");
             }
         }
+
+        // Email customer
+        if (customer != null)
+        {
+            var user = await _unitOfWork.Users.GetByIdAsync(customer.UserId);
+            if (user != null)
+            {
+                var templateKey = isApproved ? "ProposalApproved" : "ProposalRejected";
+                var vars = new Dictionary<string, string>
+                {
+                    ["firstName"]      = WebUtility.HtmlEncode(user.FirstName),
+                    ["proposalNumber"] = WebUtility.HtmlEncode(proposal.ProposalNumber)
+                };
+                if (!isApproved && !string.IsNullOrWhiteSpace(notes))
+                    vars["rejectionReason"] = WebUtility.HtmlEncode(notes);
+                await _emailService.SendTemplatedEmailAsync(templateKey, vars, user.Email);
+
+                if (isApproved && issuedPolicy != null)
+                    await _emailService.SendTemplatedEmailAsync("PolicyIssued", new Dictionary<string, string>
+                    {
+                        ["firstName"]      = WebUtility.HtmlEncode(user.FirstName),
+                        ["proposalNumber"] = WebUtility.HtmlEncode(proposal.ProposalNumber),
+                        ["policyNumber"]   = WebUtility.HtmlEncode(issuedPolicy.PolicyNumber)
+                    }, user.Email);
+            }
+        }
     }
 
     public async Task RequestAdditionalDocumentsAsync(string proposalId, string underwriterId, string details)
@@ -462,6 +501,19 @@ public class ProposalService : IProposalService
         proposal.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _unitOfWork.CompleteAsync();
+
+        var docsCustomer = await _unitOfWork.Customers.GetByIdAsync(proposal.CustomerId);
+        if (docsCustomer != null)
+        {
+            var docsUser = await _unitOfWork.Users.GetByIdAsync(docsCustomer.UserId);
+            if (docsUser != null)
+                await _emailService.SendTemplatedEmailAsync("ProposalDocumentsPending", new Dictionary<string, string>
+                {
+                    ["firstName"]      = WebUtility.HtmlEncode(docsUser.FirstName),
+                    ["proposalNumber"] = WebUtility.HtmlEncode(proposal.ProposalNumber),
+                    ["details"]        = WebUtility.HtmlEncode(details)
+                }, docsUser.Email);
+        }
     }
 
     public async Task AddUnderwriterNotesAsync(string proposalId, string underwriterId, string notes)

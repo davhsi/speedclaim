@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -20,13 +21,15 @@ public class ClaimService : IClaimService
     private readonly IStorageService _storageService;
     private readonly INotificationService _notifications;
     private readonly ILogger<ClaimService> _logger;
+    private readonly IEmailService _emailService;
 
-    public ClaimService(IUnitOfWork unitOfWork, IStorageService storageService, INotificationService notifications, ILogger<ClaimService> logger)
+    public ClaimService(IUnitOfWork unitOfWork, IStorageService storageService, INotificationService notifications, ILogger<ClaimService> logger, IEmailService emailService)
     {
         _unitOfWork = unitOfWork;
         _storageService = storageService;
         _notifications = notifications;
         _logger = logger;
+        _emailService = emailService;
     }
 
     // Controllers pass the authenticated User.Id (JWT sub), but Claim.CustomerId is a FK to
@@ -185,6 +188,18 @@ public class ClaimService : IClaimService
         await _unitOfWork.CompleteAsync();
 
         _logger.LogInformation("Claim intimated: {ClaimNumber} for Policy {PolicyId} by Customer {CustomerId}", claim.ClaimNumber, request.PolicyId, customerId);
+
+        var user = await _unitOfWork.Users.GetByIdAsync(customerId);
+        if (user != null)
+        {
+            await _emailService.SendTemplatedEmailAsync("ClaimIntimated", new Dictionary<string, string>
+            {
+                ["firstName"]    = WebUtility.HtmlEncode(user.FirstName),
+                ["claimNumber"]  = WebUtility.HtmlEncode(claim.ClaimNumber),
+                ["policyNumber"] = WebUtility.HtmlEncode(policy.PolicyNumber)
+            }, user.Email);
+        }
+
         return MapToDto(claim);
     }
 
@@ -513,7 +528,7 @@ public class ClaimService : IClaimService
 
         _logger.LogInformation("Claim {ClaimId} status changed to {NewStatus} by {ChangedById}", claim.Id, newStatus, changedById);
 
-        // Notify the customer about claim status change
+        // Notify and email the customer about claim status change
         var customer = await _unitOfWork.Customers.GetByIdAsync(claim.CustomerId);
         if (customer != null)
         {
@@ -522,6 +537,33 @@ public class ClaimService : IClaimService
                 "Claim Status Updated",
                 $"Your claim {claim.ClaimNumber} status has changed to: {newStatus}.",
                 "claim");
+
+            var emailTemplateKey = newStatus switch
+            {
+                ClaimStatus.DocumentsPending => "ClaimDocumentsPending",
+                ClaimStatus.UnderReview      => "ClaimUnderReview",
+                ClaimStatus.PreAuthRequested => "ClaimPreAuthRequested",
+                ClaimStatus.PreAuthApproved  => "ClaimPreAuthApproved",
+                ClaimStatus.Approved         => "ClaimApproved",
+                ClaimStatus.Rejected         => "ClaimRejected",
+                _                            => null
+            };
+
+            if (emailTemplateKey != null)
+            {
+                var user = await _unitOfWork.Users.GetByIdAsync(customer.UserId);
+                if (user != null)
+                {
+                    var vars = new Dictionary<string, string>
+                    {
+                        ["firstName"]   = WebUtility.HtmlEncode(user.FirstName),
+                        ["claimNumber"] = WebUtility.HtmlEncode(claim.ClaimNumber)
+                    };
+                    if (newStatus == ClaimStatus.Rejected && !string.IsNullOrWhiteSpace(notes))
+                        vars["rejectionReason"] = WebUtility.HtmlEncode(notes);
+                    await _emailService.SendTemplatedEmailAsync(emailTemplateKey, vars, user.Email);
+                }
+            }
         }
     }
 }

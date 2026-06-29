@@ -323,11 +323,18 @@ public class FinanceService : IFinanceService
                                         PolicyDocumentGenerator.ContentType,
                                         certificate);
 
-                                    await _emailService.SendEmailAsync(
-                                        user.Email,
-                                        $"Your SpeedClaim policy is active - {policy.PolicyNumber}",
-                                        BuildPolicyActivatedEmail(user, policy, productName),
-                                        attachment);
+                                    await _emailService.SendTemplatedEmailAsync("PolicyActivated", new Dictionary<string, string>
+                                    {
+                                        ["firstName"]      = WebUtility.HtmlEncode(user.FirstName),
+                                        ["policyNumber"]   = WebUtility.HtmlEncode(policy.PolicyNumber),
+                                        ["product"]        = WebUtility.HtmlEncode(productName),
+                                        ["sumAssured"]     = $"{policy.SumAssured:0.00}",
+                                        ["premiumAmount"]  = $"{policy.PremiumAmount:0.00}",
+                                        ["frequency"]      = WebUtility.HtmlEncode(policy.PaymentFrequency),
+                                        ["startDate"]      = $"{policy.StartDate:dd MMM yyyy}",
+                                        ["endDate"]        = $"{policy.EndDate:dd MMM yyyy}",
+                                        ["status"]         = WebUtility.HtmlEncode(policy.Status.ToString()),
+                                    }, user.Email, attachment);
                                     await _notifications.CreateAsync(
                                         user.Id,
                                         "Policy Activated",
@@ -341,86 +348,35 @@ public class FinanceService : IFinanceService
                 }
             }
 
+            // Send payment confirmation email for all successful premium payments
+            if (payment.ScheduleId.HasValue)
+            {
+                var confirmedSchedule = await _unitOfWork.PremiumSchedules.GetByIdAsync(payment.ScheduleId.Value);
+                if (confirmedSchedule?.PolicyId.HasValue == true)
+                {
+                    var confirmedPolicy = await _unitOfWork.Policies.GetByIdAsync(confirmedSchedule.PolicyId.Value);
+                    if (confirmedPolicy != null)
+                    {
+                        var confirmedCustomer = await _unitOfWork.Customers.GetByIdAsync(confirmedPolicy.CustomerId);
+                        if (confirmedCustomer != null)
+                        {
+                            var confirmedUser = await _unitOfWork.Users.GetByIdAsync(confirmedCustomer.UserId);
+                            if (confirmedUser != null)
+                                await _emailService.SendTemplatedEmailAsync("PremiumPaymentConfirmed", new Dictionary<string, string>
+                                {
+                                    ["firstName"]          = WebUtility.HtmlEncode(confirmedUser.FirstName),
+                                    ["policyNumber"]       = WebUtility.HtmlEncode(confirmedPolicy.PolicyNumber),
+                                    ["installmentNumber"]  = confirmedSchedule.InstallmentNumber.ToString(),
+                                    ["amount"]             = $"{payment.Amount:0.00} {payment.Currency}"
+                                }, confirmedUser.Email);
+                        }
+                    }
+                }
+            }
+
             _logger.LogInformation("Payment {PaymentId} reconciled as Paid", payment.Id);
             await _unitOfWork.CompleteAsync();
         }
-    }
-
-    private static string BuildPolicyActivatedEmail(User user, Policy policy, string productName)
-    {
-        static string Enc(string value) => WebUtility.HtmlEncode(value);
-        var firstName = Enc(user.FirstName);
-        var policyNumber = Enc(policy.PolicyNumber);
-        var product = Enc(productName);
-        var status = Enc(policy.Status.ToString());
-        var frequency = Enc(policy.PaymentFrequency);
-        var year = DateTime.UtcNow.Year;
-
-        return $@"<!DOCTYPE html>
-<html lang=""en"">
-<head>
-    <meta charset=""UTF-8"">
-    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-    <title>Policy Activated</title>
-</head>
-<body style=""margin:0; padding:0; background-color:#F4F7FA; font-family:Arial, Helvetica, sans-serif; color:#1A2230;"">
-    <table role=""presentation"" width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""background-color:#F4F7FA; padding:28px 12px;"">
-        <tr>
-            <td align=""center"">
-                <table role=""presentation"" width=""640"" cellpadding=""0"" cellspacing=""0"" style=""max-width:640px; width:100%; background:#ffffff; border:1px solid #E2E6EB; border-radius:14px; overflow:hidden;"">
-                    <tr>
-                        <td style=""background:#0F6E8C; padding:24px 30px;"">
-                            <div style=""font-size:22px; font-weight:700; color:#ffffff;"">SpeedClaim</div>
-                            <div style=""font-size:13px; color:#D8EEF5; margin-top:4px;"">Insurance policy services</div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style=""padding:30px;"">
-                            <p style=""margin:0 0 10px; font-size:14px; color:#1F9D6B; font-weight:700;"">Policy activated</p>
-                            <h1 style=""margin:0 0 14px; font-size:25px; line-height:1.25; color:#1A2230;"">Your cover is now active</h1>
-                            <p style=""margin:0 0 24px; font-size:15px; line-height:1.65; color:#3C4654;"">Dear {firstName}, your policy has been activated successfully. A PDF copy of your policy certificate is attached to this email for your records.</p>
-
-                            <table role=""presentation"" width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""border-collapse:collapse; border:1px solid #E2E6EB; border-radius:10px; overflow:hidden;"">
-                                <tr>
-                                    <td style=""padding:13px 16px; background:#F7F9FA; font-size:12px; color:#6B7685; width:38%;"">Policy number</td>
-                                    <td style=""padding:13px 16px; font-size:14px; font-weight:700; color:#1A2230;"">{policyNumber}</td>
-                                </tr>
-                                <tr>
-                                    <td style=""padding:13px 16px; background:#F7F9FA; font-size:12px; color:#6B7685;"">Product</td>
-                                    <td style=""padding:13px 16px; font-size:14px; color:#1A2230;"">{product}</td>
-                                </tr>
-                                <tr>
-                                    <td style=""padding:13px 16px; background:#F7F9FA; font-size:12px; color:#6B7685;"">Coverage amount</td>
-                                    <td style=""padding:13px 16px; font-size:14px; color:#1A2230;"">{policy.SumAssured:0.00} INR</td>
-                                </tr>
-                                <tr>
-                                    <td style=""padding:13px 16px; background:#F7F9FA; font-size:12px; color:#6B7685;"">Premium</td>
-                                    <td style=""padding:13px 16px; font-size:14px; color:#1A2230;"">{policy.PremiumAmount:0.00} INR / {frequency}</td>
-                                </tr>
-                                <tr>
-                                    <td style=""padding:13px 16px; background:#F7F9FA; font-size:12px; color:#6B7685;"">Policy period</td>
-                                    <td style=""padding:13px 16px; font-size:14px; color:#1A2230;"">{policy.StartDate:dd MMM yyyy} - {policy.EndDate:dd MMM yyyy}</td>
-                                </tr>
-                                <tr>
-                                    <td style=""padding:13px 16px; background:#F7F9FA; font-size:12px; color:#6B7685;"">Status</td>
-                                    <td style=""padding:13px 16px; font-size:14px; font-weight:700; color:#1F9D6B;"">{status}</td>
-                                </tr>
-                            </table>
-
-                            <p style=""margin:24px 0 0; font-size:13px; line-height:1.55; color:#6B7685;"">Please review the attached certificate and keep it with your insurance records. Contact SpeedClaim support if any detail looks incorrect.</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style=""padding:18px 30px; background:#F7F9FA; border-top:1px solid #E2E6EB;"">
-                            <p style=""margin:0; font-size:12px; line-height:1.5; color:#6B7685;"">This is a system-generated message from SpeedClaim. © {year} SpeedClaim.</p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>";
     }
 
     public async Task ReconcileByStripeIntentAsync(string paymentIntentId, string? chargeId = null)
@@ -458,16 +414,37 @@ public class FinanceService : IFinanceService
         if (payment == null) throw new NotFoundException("Payment not found");
 
         payment.Status = PaymentStatus.Refunded;
-        
+
+        PremiumSchedule? overdueSchedule = null;
         if (payment.ScheduleId.HasValue)
         {
-            var schedule = await _unitOfWork.PremiumSchedules.GetByIdAsync(payment.ScheduleId.Value);
-            if (schedule != null)
-            {
-                schedule.Status = PremiumScheduleStatus.Overdue; // Or Unpaid depending on business logic
-            }
+            overdueSchedule = await _unitOfWork.PremiumSchedules.GetByIdAsync(payment.ScheduleId.Value);
+            if (overdueSchedule != null)
+                overdueSchedule.Status = PremiumScheduleStatus.Overdue;
         }
         await _unitOfWork.CompleteAsync();
+
+        if (overdueSchedule != null)
+        {
+            var customer = await _unitOfWork.Customers.GetByIdAsync(payment.CustomerId);
+            if (customer != null)
+            {
+                var user = await _unitOfWork.Users.GetByIdAsync(customer.UserId);
+                var overduePolicy = overdueSchedule.PolicyId.HasValue
+                    ? await _unitOfWork.Policies.GetByIdAsync(overdueSchedule.PolicyId.Value)
+                    : null;
+                if (user != null && overduePolicy != null)
+                {
+                    await _emailService.SendTemplatedEmailAsync("PremiumOverdue", new Dictionary<string, string>
+                    {
+                        ["firstName"]    = WebUtility.HtmlEncode(user.FirstName),
+                        ["policyNumber"] = WebUtility.HtmlEncode(overduePolicy.PolicyNumber),
+                        ["amount"]       = $"{overdueSchedule.Amount:0.00}",
+                        ["dueDate"]      = $"{overdueSchedule.DueDate:dd MMM yyyy}"
+                    }, user.Email);
+                }
+            }
+        }
     }
 
     public async Task ProcessClaimPayoutAsync(string claimId, string financeOfficerId)
@@ -523,6 +500,21 @@ public class FinanceService : IFinanceService
         });
 
         await _unitOfWork.CompleteAsync();
+
+        var claimCustomer = await _unitOfWork.Customers.GetByIdAsync(claim.CustomerId);
+        if (claimCustomer != null)
+        {
+            var claimUser = await _unitOfWork.Users.GetByIdAsync(claimCustomer.UserId);
+            if (claimUser != null)
+            {
+                await _emailService.SendTemplatedEmailAsync("ClaimSettled", new Dictionary<string, string>
+                {
+                    ["firstName"]    = WebUtility.HtmlEncode(claimUser.FirstName),
+                    ["claimNumber"]  = WebUtility.HtmlEncode(claim.ClaimNumber),
+                    ["payoutAmount"] = $"{claim.ClaimAmountApproved ?? 0:0.00}"
+                }, claimUser.Email);
+            }
+        }
     }
 
     public async Task MarkClaimFinanciallySettledAsync(string claimId, string financeOfficerId)
@@ -554,6 +546,21 @@ public class FinanceService : IFinanceService
         });
 
         await _unitOfWork.CompleteAsync();
+
+        var settledCustomer = await _unitOfWork.Customers.GetByIdAsync(claim.CustomerId);
+        if (settledCustomer != null)
+        {
+            var settledUser = await _unitOfWork.Users.GetByIdAsync(settledCustomer.UserId);
+            if (settledUser != null)
+            {
+                await _emailService.SendTemplatedEmailAsync("ClaimSettled", new Dictionary<string, string>
+                {
+                    ["firstName"]    = WebUtility.HtmlEncode(settledUser.FirstName),
+                    ["claimNumber"]  = WebUtility.HtmlEncode(claim.ClaimNumber),
+                    ["payoutAmount"] = $"{claim.ClaimAmountApproved ?? 0:0.00}"
+                }, settledUser.Email);
+            }
+        }
     }
 
     public async Task<IEnumerable<AgentCommissionDto>> GetPendingCommissionsAsync()
@@ -619,6 +626,24 @@ public class FinanceService : IFinanceService
         commission.Status = "PAID";
         commission.PaidAt = DateTimeOffset.UtcNow;
         await _unitOfWork.CompleteAsync();
+
+        var commAgent = await _unitOfWork.Agents.GetByIdAsync(commission.AgentId);
+        if (commAgent != null)
+        {
+            var commUser = await _unitOfWork.Users.GetByIdAsync(commAgent.UserId);
+            if (commUser != null)
+            {
+                var commPolicy = commission.PolicyId != Guid.Empty
+                    ? await _unitOfWork.Policies.GetByIdAsync(commission.PolicyId)
+                    : null;
+                await _emailService.SendTemplatedEmailAsync("CommissionCredited", new Dictionary<string, string>
+                {
+                    ["firstName"]        = WebUtility.HtmlEncode(commUser.FirstName),
+                    ["policyNumber"]     = WebUtility.HtmlEncode(commPolicy?.PolicyNumber ?? "N/A"),
+                    ["commissionAmount"] = $"{commission.CommissionAmount:0.00}"
+                }, commUser.Email);
+            }
+        }
     }
 
     public async Task<IEnumerable<OverduePolicyDto>> GetOverduePoliciesAsync()
