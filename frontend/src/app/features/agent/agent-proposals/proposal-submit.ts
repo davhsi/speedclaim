@@ -69,7 +69,7 @@ export class AgentProposalSubmitComponent implements OnInit {
         this.products.set(products);
 
         if (customers.length > 0) {
-          this.selectedCustomerId = customers[0].id;
+          this.selectedCustomerId = customers[0].customerId ?? customers[0].id;
           const cust = customers[0];
           this.proposerForm.fullName = cust.fullName;
         }

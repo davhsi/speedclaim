@@ -42,7 +42,7 @@
         <select [(ngModel)]="selectedCustomerId" class="h-[42px]">
           <option [ngValue]="null" disabled>Select a customer...</option>
           @for (c of customers(); track c.id) {
-            <option [ngValue]="c.id">{{ c.fullName }} · ID {{ c.id }}</option>
+            <option [ngValue]="c.customerId ?? c.id">{{ c.fullName }} · ID {{ c.customerId ?? c.id }}</option>
           }
         </select>
       </div>
@@ -106,7 +106,7 @@
           <div>
             <div class="text-[13px] font-medium mb-1" style="color: var(--color-primary-dark);">Estimated premium</div>
             <div class="text-[32px] font-bold sc-numeric leading-none" style="color: var(--color-primary-dark);">
-              {{ quoteResult()!.totalPremium | money }}<span class="text-sm font-medium">/yr</span>
+              {{ quoteResult()!.premiumAmount | money }}<span class="text-sm font-medium">/yr</span>
             </div>
             <div class="text-xs mt-1.5" style="color: var(--color-primary-dark);">
               Inclusive of 18% GST · {{ quoteResult()!.sumAssured | money }} cover
@@ -114,7 +114,7 @@
           </div>
           <div class="text-right">
             <div class="text-xs text-muted mb-1">Agent discount applied</div>
-            <div class="text-[13px] font-semibold text-ink">Commission estimate: {{ quoteResult()!.basePremium * 0.05 | money }}</div>
+            <div class="text-[13px] font-semibold text-ink">Commission estimate: {{ quoteResult()!.premiumAmount * 0.05 | money }}</div>
           </div>
         </div>
       }
@@ -136,7 +136,7 @@
     <!-- Step 4: Documents -->
     @if (currentStep === 3) {
       <div class="text-[15px] font-semibold text-ink mb-1">Document checklist</div>
-      <p class="text-[13px] text-muted mb-5">Ensure you have the following documents ready. KYC documents can be uploaded via <a routerLink="/agent/customer-kyc" class="text-primary font-medium hover:underline">Customer KYC</a> after the proposal is approved.</p>
+      <p class="text-[13px] text-muted mb-5">Ensure KYC is approved before submission. KYC documents can be uploaded via <a routerLink="/agent/customer-kyc" class="text-primary font-medium hover:underline">Customer KYC</a> before creating this proposal.</p>
 
       <div class="text-[11px] font-semibold uppercase tracking-widest text-muted mb-2.5">KYC documents</div>
       @for (doc of kycDocs; track doc.label) {

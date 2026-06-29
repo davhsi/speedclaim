@@ -80,6 +80,20 @@ public class ProposalService : IProposalService
         if (customerRecord == null) throw new NotFoundException("Customer not found");
         if (!isAgent && customerRecord.UserId != uId)
             throw new ForbiddenException("You can only submit proposals for your own customer profile.");
+
+        Agent? agent = null;
+        if (isAgent)
+        {
+            agent = await _unitOfWork.Agents.FirstOrDefaultAsync(a => a.UserId == uId);
+            if (agent == null)
+                throw new NotFoundException("Agent not found.");
+
+            var assignedProposal = await _unitOfWork.Proposals.FirstOrDefaultAsync(p =>
+                p.AgentId == agent.Id && p.CustomerId == customerId);
+            if (assignedProposal == null)
+                throw new ForbiddenException("Customer is not assigned to this agent.");
+        }
+
         if (!customerRecord.DateOfBirth.HasValue)
             throw new ValidationException("Customer date of birth is required before submitting a proposal.");
 
@@ -107,13 +121,9 @@ public class ProposalService : IProposalService
             CreatedAt = DateTimeOffset.UtcNow
         };
 
-        if (isAgent)
+        if (agent != null)
         {
-            var agent = await _unitOfWork.Agents.FirstOrDefaultAsync(a => a.UserId == uId);
-            if (agent != null)
-            {
-                proposal.AgentId = agent.Id;
-            }
+            proposal.AgentId = agent.Id;
         }
 
         if (request.HealthDetail != null)

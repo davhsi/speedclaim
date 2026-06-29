@@ -238,14 +238,18 @@ public class ProposalServiceTests
     public async Task SubmitProposalAsync_AsAgent_Success()
     {
         var userId = Guid.NewGuid();
-        var customerId = Guid.NewGuid().ToString();
+        var customerGuid = Guid.NewGuid();
+        var customerId = customerGuid.ToString();
         var productId = Guid.NewGuid().ToString();
         var agent = new Agent { Id = Guid.NewGuid() };
 
         var product = ActiveProduct();
         _mockProductRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(product);
         _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync(agent);
+        _mockProposalRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Proposal, bool>>>()))
+            .ReturnsAsync(new Proposal { AgentId = agent.Id, CustomerId = customerGuid });
         _mockProposalRepo.Setup(r => r.AddAsync(It.IsAny<Proposal>())).Returns(Task.CompletedTask);
+        SetupCustomer(customerGuid, Guid.NewGuid());
         SetupRate();
 
         var request = new SubmitProposalRequest(customerId, productId, 100000, 10, 2500, "Monthly", 
@@ -256,6 +260,28 @@ public class ProposalServiceTests
 
         Assert.That(result.AgentId, Is.EqualTo(agent.Id));
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public void SubmitProposalAsync_AsAgentForUnassignedCustomer_ThrowsForbiddenException()
+    {
+        var userId = Guid.NewGuid();
+        var customerGuid = Guid.NewGuid();
+        var productId = Guid.NewGuid().ToString();
+        var agent = new Agent { Id = Guid.NewGuid() };
+
+        _mockProductRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(ActiveProduct());
+        _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync(agent);
+        _mockProposalRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Proposal, bool>>>()))
+            .ReturnsAsync((Proposal?)null);
+        SetupCustomer(customerGuid, Guid.NewGuid());
+
+        var request = new SubmitProposalRequest(customerGuid.ToString(), productId, 100000, 10, 2500, "Monthly",
+            null, null, null,
+            new List<string>(), new List<NomineeDto>());
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() =>
+            _proposalService.SubmitProposalAsync(userId.ToString(), request, true));
     }
 
     [Test]
