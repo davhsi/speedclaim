@@ -280,6 +280,10 @@ export class AdminUsersComponent implements OnInit {
     const parts = name.trim().split(/\s+/);
     const firstName = parts[0];
     const lastName = parts.length > 1 ? parts.slice(1).join(' ') : '';
+    if (!lastName) {
+      this.toastService.warning('Please enter the full name — first and last name are required (e.g., "Rajesh Kumar").');
+      return;
+    }
 
     this.actionInFlight.set(true);
     this.inviteError.set(null);
@@ -290,7 +294,7 @@ export class AdminUsersComponent implements OnInit {
         this.loadData();
       },
       error: (err) => {
-        this.inviteError.set(err?.error?.message ?? 'Failed to send invite. The email may already be registered.');
+        this.inviteError.set(err?.error?.detail ?? err?.error?.message ?? 'Failed to send invite. The email may already be registered.');
         this.actionInFlight.set(false);
       },
     });

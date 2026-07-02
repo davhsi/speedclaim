@@ -314,7 +314,6 @@ export interface PolicyDto {
   healthDetail?: object;
   vehicleDetail?: object;
   lifeDetail?: object;
-  createdAt: string;
 }
 
 export interface PolicyStatusHistoryDto {
@@ -509,6 +508,8 @@ export interface PaymentSummaryDto {
   premiums: number;
   claimsPaid: number;
   netInflow: number;
+  successfulPayments: number;
+  failedPayments: number;
 }
 
 export interface OverduePolicyDto {
@@ -523,8 +524,8 @@ export interface OverduePolicyDto {
 
 export interface FinancePaymentRecordDto {
   id: string;
-  paymentNumber?: string;
   policyId?: string;
+  proposalId?: string;
   policyNumber?: string;
   customerId: string;
   customerName: string;
@@ -534,6 +535,7 @@ export interface FinancePaymentRecordDto {
   status: string;
   createdAt: string;
   paidAt?: string;
+  receiptUrl?: string;
   stripePaymentIntentId?: string;
 }
 
