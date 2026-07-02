@@ -226,6 +226,6 @@ export class SurveyReportComponent implements OnInit {
   }
 
   private isSurveyReportLocked(status: string): boolean {
-    return ['Approved', 'PayoutProcessed', 'Rejected', 'Settled', 'Withdrawn'].includes(status);
+    return ['Approved', 'Rejected', 'Settled', 'Withdrawn'].includes(status);
   }
 }

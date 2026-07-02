@@ -73,7 +73,7 @@ export class SurveyorClaimsComponent implements OnInit {
   }
 
   mapSurveyStatus(claim: ClaimDto): string {
-    if (claim.status === 'Settled' || claim.status === 'Approved' || claim.status === 'PayoutProcessed') return 'Submitted';
+    if (claim.status === 'Settled' || claim.status === 'Approved' || claim.status === 'Withdrawn') return 'Submitted';
     if (claim.status === 'Rejected') return 'Submitted';
     const intimated = new Date(claim.intimationDate);
     const now = new Date();

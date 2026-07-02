@@ -83,7 +83,6 @@ export interface AuthUserDto {
 }
 
 export interface UserDto extends AuthUserDto {
-  gender: Gender;
   dateOfBirth?: string;
   customerId?: string;
   isEmailVerified: boolean;
@@ -338,10 +337,11 @@ export interface PolicyNomineeDto {
 }
 
 export interface UpdateNomineeRequest {
-  name?: string;
-  relationship?: Relationship;
-  sharePercentage?: number;
-  dateOfBirth?: string;
+  fullName: string;
+  relationship: Relationship;
+  sharePercentage: number;
+  dateOfBirth: string;
+  isMinor: boolean;
   appointeeName?: string;
 }
 

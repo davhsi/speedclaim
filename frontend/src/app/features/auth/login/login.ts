@@ -72,6 +72,7 @@ export class LoginComponent implements OnInit {
         this.loading.set(false);
         this.toast.success('Welcome back!');
         const roleRoutes: Record<string, string> = {
+          Admin: '/admin',
           Agent: '/agent',
           ClaimsOfficer: '/claims-officer',
           FinanceOfficer: '/finance-officer',

@@ -608,6 +608,7 @@ public class ClaimService : IClaimService
                 ClaimStatus.Approved         => "ClaimApproved",
                 ClaimStatus.Rejected         => "ClaimRejected",
                 ClaimStatus.Settled          => "ClaimSettled",
+                ClaimStatus.Withdrawn        => "ClaimWithdrawn",
                 _                            => null
             };
 

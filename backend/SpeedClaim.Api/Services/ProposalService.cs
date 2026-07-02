@@ -608,5 +608,24 @@ public class ProposalService : IProposalService
             CreatedAt = DateTime.UtcNow
         });
         await _unitOfWork.CompleteAsync();
+
+        var notifyUserId = customer?.UserId ?? uId;
+        await _notifications.CreateAsync(
+            notifyUserId,
+            "Proposal Withdrawn",
+            $"Your proposal {proposal.ProposalNumber} has been withdrawn.",
+            "policy");
+
+        var ownerUser = await _unitOfWork.Users.GetByIdAsync(notifyUserId);
+        if (ownerUser != null)
+        {
+            await _emailService.SendTemplatedEmailAsync("ProposalWithdrawn",
+                new Dictionary<string, string>
+                {
+                    ["firstName"]      = System.Net.WebUtility.HtmlEncode(ownerUser.FirstName),
+                    ["proposalNumber"] = System.Net.WebUtility.HtmlEncode(proposal.ProposalNumber),
+                },
+                ownerUser.Email);
+        }
     }
 }

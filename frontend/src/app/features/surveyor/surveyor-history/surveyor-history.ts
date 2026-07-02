@@ -22,7 +22,7 @@ export class SurveyorHistoryComponent implements OnInit {
 
   submittedClaims = computed(() =>
     this.claims().filter(c =>
-      c.status === 'Settled' || c.status === 'Approved' || c.status === 'PayoutProcessed' || c.status === 'Rejected'
+      c.status === 'Settled' || c.status === 'Approved' || c.status === 'Withdrawn' || c.status === 'Rejected'
     )
   );
 

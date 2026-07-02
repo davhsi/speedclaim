@@ -119,4 +119,8 @@ export class AgentService {
   getCommissions(): Observable<AgentCommissionDto[]> {
     return this.http.get<AgentCommissionDto[]>('/api/v1/agents/commissions');
   }
+
+  withdrawProposal(id: string): Observable<ApiMessage> {
+    return this.http.put<ApiMessage>(`/api/v1/proposals/${id}/withdraw`, {});
+  }
 }

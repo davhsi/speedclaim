@@ -49,6 +49,8 @@ const TEMPLATE_DUMMIES: Record<string, Record<string, string>> = {
   CommissionCredited: { firstName: 'Priya', policyNumber: 'POL-2026-00001', commissionAmount: '6,250.00' },
   PolicyIssued: { firstName: 'Arjun', proposalNumber: 'PRO-2026-00001', policyNumber: 'POL-2026-00001' },
   GrievanceEscalated: { firstName: 'Arjun', grievanceNumber: 'GRV-2026-00001' },
+  ClaimWithdrawn: { firstName: 'Arjun', claimNumber: 'CLM-2026-00001' },
+  ProposalWithdrawn: { firstName: 'Arjun', proposalNumber: 'PRO-2026-00001' },
 };
 
 @Component({

@@ -9,7 +9,6 @@ export type ClaimStatus =
   | 'PreAuthApproved'
   | 'UnderReview'
   | 'Approved'
-  | 'PayoutProcessed'
   | 'Rejected'
   | 'Settled'
   | 'Withdrawn';

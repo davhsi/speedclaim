@@ -85,6 +85,7 @@ export class StatusBadgeComponent {
       Rejected: 'bg-danger', Cancelled: 'bg-danger', Failed: 'bg-danger', Overdue: 'bg-danger',
       Lapsed: 'bg-danger', Withdrawn: 'bg-danger', Escalated: 'bg-danger',
       Assigned: 'bg-info', PreAuthApproved: 'bg-info', DocumentsPending: 'bg-info',
+      Draft: 'bg-muted', Expired: 'bg-muted', Closed: 'bg-muted', Claimed: 'bg-muted',
     };
     return map[s] ?? 'bg-muted';
   });
