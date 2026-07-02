@@ -16,13 +16,22 @@ export class TokenService {
 
   getRefreshToken(): string | null {
     if (!this.isBrowser) return null;
-    return localStorage.getItem('sc_refresh_token');
+    return localStorage.getItem('sc_refresh_token') ?? sessionStorage.getItem('sc_refresh_token');
   }
 
-  setTokens(accessToken: string, refreshToken: string): void {
+  setTokens(accessToken: string, refreshToken: string, persistent?: boolean): void {
     this.accessToken = accessToken;
     if (this.isBrowser) {
-      localStorage.setItem('sc_refresh_token', refreshToken);
+      // When persistence isn't specified (e.g. silent refresh), keep the token
+      // in whichever storage it currently lives in.
+      persistent ??= localStorage.getItem('sc_refresh_token') !== null;
+      if (persistent) {
+        localStorage.setItem('sc_refresh_token', refreshToken);
+        sessionStorage.removeItem('sc_refresh_token');
+      } else {
+        sessionStorage.setItem('sc_refresh_token', refreshToken);
+        localStorage.removeItem('sc_refresh_token');
+      }
     }
   }
 
@@ -30,6 +39,7 @@ export class TokenService {
     this.accessToken = null;
     if (this.isBrowser) {
       localStorage.removeItem('sc_refresh_token');
+      sessionStorage.removeItem('sc_refresh_token');
     }
   }
 

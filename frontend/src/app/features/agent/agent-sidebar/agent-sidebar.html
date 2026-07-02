@@ -4,14 +4,12 @@
 <aside
   class="fixed top-0 left-0 h-full z-50 flex flex-col w-60 transition-transform duration-200 ease-out"
   [class]="collapsed() ? '-translate-x-full lg:translate-x-0' : 'translate-x-0'"
-  [style.background]="'#12202F'"
-  style="border-right: 1px solid #0A3040;"
+  [style.background]="'var(--color-sidebar)'"
+  style="border-right: 1px solid rgba(255,255,255,.07);"
 >
   <!-- Logo -->
   <div class="flex items-center gap-[9px] px-4 py-[18px] shrink-0" style="border-bottom: 1px solid rgba(255,255,255,.1);">
-    <div class="w-[30px] h-[30px] rounded-lg bg-primary flex items-center justify-center shrink-0">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-    </div>
+    <img src="/brand/speedclaim-mark.svg" alt="" class="w-[30px] h-[30px] rounded-lg shrink-0" />
     <span class="text-[15px] font-bold text-white">SpeedClaim</span>
     <button class="ml-auto lg:hidden text-white/60 hover:text-white" (click)="toggle.emit()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -39,8 +37,12 @@
 
   <!-- User Footer -->
   <div class="px-3 py-3 flex items-center gap-2.5" style="border-top: 1px solid rgba(255,255,255,.1);">
-    <a routerLink="/agent/profile" class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold shrink-0 cursor-pointer">
-      {{ userInitials() }}
+    <a routerLink="/agent/profile" class="w-8 h-8 rounded-full bg-gold text-sidebar flex items-center justify-center text-xs font-bold shrink-0 cursor-pointer overflow-hidden">
+      @if (userAvatar()) {
+        <img [src]="userAvatar()" alt="Profile" class="w-full h-full object-cover" />
+      } @else {
+        {{ userInitials() }}
+      }
     </a>
     <a routerLink="/agent/profile" class="flex-1 min-w-0 cursor-pointer">
       <div class="text-[13px] font-semibold text-white truncate">{{ userName() }}</div>

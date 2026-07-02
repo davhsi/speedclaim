@@ -56,6 +56,16 @@
     }
   </div>
 
+  <!-- Remember me -->
+  <div class="flex items-center mt-1 mb-1">
+    <label class="flex items-center gap-2 cursor-pointer select-none">
+      <input type="checkbox" formControlName="rememberMe"
+             class="w-4 h-4 rounded cursor-pointer"
+             style="accent-color: var(--color-primary)" />
+      <span class="text-[13px] text-body">Remember me</span>
+    </label>
+  </div>
+
   <button
     type="submit"
     [disabled]="loading()"

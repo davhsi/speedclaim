@@ -1,6 +1,6 @@
 import { Component, signal, inject, PLATFORM_ID, OnInit } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
+import { RouterOutlet, RouterLink, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs';
 import { FinanceOfficerSidebarComponent } from '../finance-officer-sidebar/finance-officer-sidebar';
 import { AuthService } from '../../../core/services/auth.service';
@@ -12,7 +12,7 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 @Component({
   selector: 'app-finance-officer-layout',
   standalone: true,
-  imports: [RouterOutlet, FinanceOfficerSidebarComponent, TimeAgoPipe],
+  imports: [RouterOutlet, RouterLink, FinanceOfficerSidebarComponent, TimeAgoPipe],
   templateUrl: './finance-officer-layout.html',
 })
 export class FinanceOfficerLayoutComponent implements OnInit {
@@ -25,6 +25,7 @@ export class FinanceOfficerLayoutComponent implements OnInit {
   sidebarCollapsed = signal(true);
   pageTitle = signal('Dashboard');
   notifPanelOpen = signal(false);
+  profileMenuOpen = signal(false);
   payoutBadge = signal(0);
   commissionBadge = signal(0);
 
@@ -73,7 +74,22 @@ export class FinanceOfficerLayoutComponent implements OnInit {
   }
 
   toggleNotifPanel(): void {
+    this.profileMenuOpen.set(false);
     this.notifPanelOpen.update(v => !v);
+  }
+
+  toggleProfileMenu(): void {
+    this.notifPanelOpen.set(false);
+    this.profileMenuOpen.update(v => !v);
+  }
+
+  logout(): void {
+    this.authService.logout();
+  }
+
+  userName(): string {
+    const u = this.authService.currentUser();
+    return u ? `${u.firstName} ${u.lastName}` : '';
   }
 
   onMarkAllRead(): void {

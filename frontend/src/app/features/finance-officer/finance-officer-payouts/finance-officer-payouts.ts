@@ -45,6 +45,7 @@ export class FinanceOfficerPayoutsComponent implements OnInit {
 
   private loadClaims(): void {
     const statuses: string[] = ['Approved', 'Settled'];
+    let remaining = statuses.length;
     for (const status of statuses) {
       this.financeService.getClaimsForPayout(status as any).subscribe({
         next: (res) => {
@@ -53,9 +54,13 @@ export class FinanceOfficerPayoutsComponent implements OnInit {
             const newClaims = res.data.filter(c => !existing.has(c.id));
             return [...list, ...newClaims];
           });
-          this.loading.set(false);
+          remaining -= 1;
+          if (remaining === 0) this.loading.set(false);
         },
-      error: () => this.loading.set(false),
+        error: () => {
+          remaining -= 1;
+          if (remaining === 0) this.loading.set(false);
+        },
       });
     }
   }

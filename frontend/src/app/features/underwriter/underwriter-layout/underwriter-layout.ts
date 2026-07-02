@@ -1,6 +1,6 @@
 import { Component, signal, inject, PLATFORM_ID, OnInit } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
+import { RouterOutlet, RouterLink, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs';
 import { UnderwriterSidebarComponent } from '../underwriter-sidebar/underwriter-sidebar';
 import { AuthService } from '../../../core/services/auth.service';
@@ -11,7 +11,7 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 @Component({
   selector: 'app-underwriter-layout',
   standalone: true,
-  imports: [RouterOutlet, UnderwriterSidebarComponent, TimeAgoPipe],
+  imports: [RouterOutlet, RouterLink, UnderwriterSidebarComponent, TimeAgoPipe],
   templateUrl: './underwriter-layout.html',
 })
 export class UnderwriterLayoutComponent implements OnInit {
@@ -23,6 +23,7 @@ export class UnderwriterLayoutComponent implements OnInit {
   sidebarCollapsed = signal(true);
   pageTitle = signal('Dashboard');
   notifPanelOpen = signal(false);
+  profileMenuOpen = signal(false);
 
   private pageTitles: [string, string][] = [
     ['/underwriter/proposals/', 'Proposal review'],
@@ -59,7 +60,22 @@ export class UnderwriterLayoutComponent implements OnInit {
   }
 
   toggleNotifPanel(): void {
+    this.profileMenuOpen.set(false);
     this.notifPanelOpen.update(v => !v);
+  }
+
+  toggleProfileMenu(): void {
+    this.notifPanelOpen.set(false);
+    this.profileMenuOpen.update(v => !v);
+  }
+
+  logout(): void {
+    this.authService.logout();
+  }
+
+  userName(): string {
+    const u = this.authService.currentUser();
+    return u ? `${u.firstName} ${u.lastName}` : '';
   }
 
   onMarkAllRead(): void {

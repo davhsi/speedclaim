@@ -32,8 +32,20 @@ export class AdminUsersComponent implements OnInit {
   selectedUser = signal<UserDto | null>(null);
   selectedRole = signal('');
   resetPwSent = signal(false);
+  resetPwForm = { newPassword: '' };
   actionInFlight = signal(false);
   inviteForm = { name: '', email: '', role: 'Surveyor' };
+  inviteSuccess = signal(false);
+  inviteError = signal<string | null>(null);
+
+  selectedIds = signal<Set<string>>(new Set());
+  showBulkConfirm = signal(false);
+  bulkDeactivating = signal(false);
+  selectedCount = computed(() => this.selectedIds().size);
+  allPageSelected = computed(() => {
+    const eligible = this.paginatedUsers().filter(u => this.canToggleStatus(u) && u.isActive);
+    return eligible.length > 0 && eligible.every(u => this.selectedIds().has(u.id));
+  });
 
   filteredUsers = computed(() => {
     let list = this.allUsers();
@@ -161,11 +173,14 @@ export class AdminUsersComponent implements OnInit {
   openResetPwModal(user: UserDto): void {
     this.selectedUser.set(user);
     this.resetPwSent.set(false);
+    this.resetPwForm = { newPassword: '' };
     this.activeModal.set('resetPw');
   }
 
   openInviteModal(): void {
     this.inviteForm = { name: '', email: '', role: 'Surveyor' };
+    this.inviteSuccess.set(false);
+    this.inviteError.set(null);
     this.activeModal.set('invite');
   }
 
@@ -232,8 +247,13 @@ export class AdminUsersComponent implements OnInit {
   confirmResetPw(): void {
     const u = this.selectedUser();
     if (!u || this.actionInFlight()) return;
+    const pw = this.resetPwForm.newPassword.trim();
+    if (!pw || pw.length < 8) {
+      this.toastService.warning('Password must be at least 8 characters.');
+      return;
+    }
     this.actionInFlight.set(true);
-    this.adminService.resetPassword(u.id, { newPassword: 'TempPass@123' }).subscribe({
+    this.adminService.resetPassword(u.id, { newPassword: pw }).subscribe({
       next: () => {
         this.resetPwSent.set(true);
         this.toastService.success('Password reset for ' + u.email);
@@ -247,8 +267,9 @@ export class AdminUsersComponent implements OnInit {
   }
 
   submitInvite(): void {
+    const name = this.inviteForm.name.trim();
     const email = this.inviteForm.email.trim();
-    if (!this.inviteForm.name.trim() || !email) {
+    if (!name || !email) {
       this.toastService.warning('Please enter a name and email.');
       return;
     }
@@ -256,11 +277,76 @@ export class AdminUsersComponent implements OnInit {
       this.toastService.warning('Please enter a valid email address.');
       return;
     }
-    this.toastService.success('Invite sent to ' + email);
-    this.closeModal();
+    const parts = name.split(/\s+/);
+    const firstName = parts[0];
+    const lastName = parts.length > 1 ? parts.slice(1).join(' ') : parts[0];
+
+    this.actionInFlight.set(true);
+    this.inviteError.set(null);
+    this.adminService.inviteUser({ firstName, lastName, email, role: this.inviteForm.role }).subscribe({
+      next: () => {
+        this.inviteSuccess.set(true);
+        this.actionInFlight.set(false);
+        this.loadData();
+      },
+      error: (err) => {
+        this.inviteError.set(err?.error?.message ?? 'Failed to send invite. The email may already be registered.');
+        this.actionInFlight.set(false);
+      },
+    });
   }
 
   prevPage(): void { this.currentPage.update(p => Math.max(1, p - 1)); }
   nextPage(): void { this.currentPage.update(p => Math.min(this.totalPages(), p + 1)); }
   min(a: number, b: number): number { return Math.min(a, b); }
+
+  isSelected(id: string): boolean { return this.selectedIds().has(id); }
+
+  toggleSelectUser(user: UserDto): void {
+    if (!this.canToggleStatus(user) || !user.isActive) return;
+    this.selectedIds.update(prev => {
+      const next = new Set(prev);
+      if (next.has(user.id)) next.delete(user.id); else next.add(user.id);
+      return next;
+    });
+  }
+
+  toggleSelectAll(): void {
+    const eligible = this.paginatedUsers().filter(u => this.canToggleStatus(u) && u.isActive);
+    const allSel = eligible.every(u => this.selectedIds().has(u.id));
+    this.selectedIds.update(prev => {
+      const next = new Set(prev);
+      if (allSel) eligible.forEach(u => next.delete(u.id));
+      else eligible.forEach(u => next.add(u.id));
+      return next;
+    });
+  }
+
+  clearSelection(): void { this.selectedIds.set(new Set()); }
+
+  bulkDeactivate(): void {
+    if (this.bulkDeactivating()) return;
+    const ids = Array.from(this.selectedIds());
+    const users = this.allUsers().filter(u => ids.includes(u.id) && u.isActive && this.canToggleStatus(u));
+    if (!users.length) { this.clearSelection(); this.showBulkConfirm.set(false); return; }
+    this.bulkDeactivating.set(true);
+    let done = 0, failed = 0;
+    for (const u of users) {
+      this.adminService.toggleUserStatus(u.id, false).subscribe({
+        next: () => {
+          this.allUsers.update(list => list.map(usr => usr.id === u.id ? { ...usr, isActive: false } : usr));
+          if (++done + failed === users.length) this.finishBulk(done, failed);
+        },
+        error: () => { if (done + ++failed === users.length) this.finishBulk(done, failed); },
+      });
+    }
+  }
+
+  private finishBulk(done: number, failed: number): void {
+    this.bulkDeactivating.set(false);
+    this.showBulkConfirm.set(false);
+    this.clearSelection();
+    if (done > 0) this.toastService.warning(`${done} user${done > 1 ? 's' : ''} deactivated`);
+    if (failed > 0) this.toastService.error(`${failed} user${failed > 1 ? 's' : ''} could not be deactivated`);
+  }
 }

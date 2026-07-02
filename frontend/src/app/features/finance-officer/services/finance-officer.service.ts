@@ -65,7 +65,7 @@ export class FinanceOfficerService {
     return this.http.get('/api/v1/payments/reports/export', { params, responseType: 'blob' });
   }
 
-  updateProfile(payload: { name: string; email: string; phone: string }): Observable<ApiMessage> {
-    return this.http.put<ApiMessage>('/api/v1/users/profile', payload);
+  updateProfile(payload: { firstName: string; lastName: string; phone: string; salutation?: string; maritalStatus?: string }): Observable<ApiMessage> {
+    return this.http.patch<ApiMessage>('/api/v1/users/profile', payload);
   }
 }

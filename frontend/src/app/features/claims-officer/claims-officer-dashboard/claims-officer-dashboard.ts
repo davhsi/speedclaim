@@ -49,12 +49,15 @@ export class ClaimsOfficerDashboardComponent implements OnInit {
       next: (res) => this.activeClaimsCount.set(res.totalRecords),
     });
 
-    this.claimsService.getAllClaims(1, 1, 'PreAuthRequested' as any).subscribe({
-      next: (res) => this.surveyorPendingCount.set(res.totalRecords),
+    this.claimsService.getAllClaims(1, 100, 'UnderReview').subscribe({
+      next: (res) => this.surveyorPendingCount.set(res.data.filter(c => !!c.surveyorId).length),
     });
 
-    this.claimsService.getAllGrievances(1, 1).subscribe({
-      next: (res) => this.openGrievancesCount.set(res.totalRecords),
+    this.claimsService.getAllGrievances(1, 100).subscribe({
+      next: (res) => {
+        const openStatuses = new Set(['Open', 'InProgress', 'Escalated']);
+        this.openGrievancesCount.set(res.data.filter(g => openStatuses.has(g.status)).length);
+      },
     });
   }
 
@@ -70,17 +73,17 @@ export class ClaimsOfficerDashboardComponent implements OnInit {
   }
 
   getTypeBgClass(type: string): string {
-    const map: Record<string, string> = { Motor: 'bg-info-bg', Health: 'bg-success-bg', Life: 'bg-warning-bg', Accident: 'bg-info-bg', Theft: 'bg-danger-bg', NaturalDamage: 'bg-warning-bg' };
+    const map: Record<string, string> = { Health: 'bg-success-bg', Death: 'bg-surface-alt', Maturity: 'bg-surface-alt', Accident: 'bg-info-bg', Theft: 'bg-danger-bg', NaturalDamage: 'bg-warning-bg' };
     return map[type] ?? 'bg-surface';
   }
 
   getTypeFgClass(type: string): string {
-    const map: Record<string, string> = { Motor: 'text-info', Health: 'text-success', Life: 'text-warning', Accident: 'text-info', Theft: 'text-danger', NaturalDamage: 'text-warning' };
+    const map: Record<string, string> = { Health: 'text-success', Death: 'text-muted', Maturity: 'text-muted', Accident: 'text-info', Theft: 'text-danger', NaturalDamage: 'text-warning' };
     return map[type] ?? 'text-muted';
   }
 
   getTypeAbbr(type: string): string {
-    const map: Record<string, string> = { Motor: 'MOT', Health: 'HLT', Life: 'LFE', Accident: 'ACC', Theft: 'THF', NaturalDamage: 'NAT' };
+    const map: Record<string, string> = { Health: 'HLT', Death: 'DTH', Maturity: 'MAT', Accident: 'ACC', Theft: 'THF', NaturalDamage: 'NAT' };
     return map[type] ?? type.substring(0, 3).toUpperCase();
   }
 

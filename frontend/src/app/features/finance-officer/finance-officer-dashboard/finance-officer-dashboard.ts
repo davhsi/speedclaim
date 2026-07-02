@@ -35,8 +35,13 @@ export class FinanceOfficerDashboardComponent implements OnInit {
     this.financeService.getAllPaymentRecords().subscribe({
       next: (records) => {
         this.recentPayments.set(records.slice(0, 5));
+        const now = new Date();
         const paid = records
           .filter(r => r.status === 'Paid' || r.status === 'Reconciled')
+          .filter(r => {
+            const paidDate = new Date(r.paidAt ?? r.createdAt);
+            return paidDate.getFullYear() === now.getFullYear() && paidDate.getMonth() === now.getMonth();
+          })
           .reduce((sum, r) => sum + r.amount, 0);
         this.totalPaid.set(this.moneyPipe.transform(paid));
       },

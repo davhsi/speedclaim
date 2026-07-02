@@ -62,6 +62,6 @@ export class SurveyorLayoutComponent implements OnInit {
 
   notifIconColor(type: string): string {
     const m: Record<string, string> = { Warning: '#D9920A', Success: '#1F9D6B', Error: '#D14343' };
-    return m[type] ?? '#0F6E8C';
+    return m[type] ?? '#091520';
   }
 }

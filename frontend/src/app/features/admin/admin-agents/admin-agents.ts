@@ -230,7 +230,22 @@ export class AdminAgentsComponent implements OnInit {
   }
 
   saveBranch(): void {
-    this.toastService.success('Branch updated');
-    this.closeModal();
+    const br = this.selectedBranch();
+    if (!br) return;
+    this.adminService.updateBranch(br.id.toString(), {
+      name: this.branchForm.name,
+      city: this.branchForm.city,
+      state: this.branchForm.state,
+      address: this.branchForm.address,
+      phone: this.branchForm.phone,
+      email: this.branchForm.email,
+    }).subscribe({
+      next: updated => {
+        this.branches.update(list => list.map(b => b.id === br.id ? updated : b));
+        this.toastService.success('Branch updated');
+        this.closeModal();
+      },
+      error: () => this.toastService.error('Failed to update branch'),
+    });
   }
 }

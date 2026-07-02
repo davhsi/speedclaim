@@ -10,6 +10,7 @@ import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loa
   standalone: true,
   imports: [DatePipe, PaginationComponent, SkeletonLoaderComponent],
   templateUrl: './surveyor-history.html',
+  host: { class: 'flex-1 min-h-0 flex flex-col' },
 })
 export class SurveyorHistoryComponent implements OnInit {
   private surveyorService = inject(SurveyorService);

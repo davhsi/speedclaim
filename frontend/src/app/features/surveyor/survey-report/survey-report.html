@@ -2,6 +2,7 @@
   <!-- Header -->
   <div class="bg-primary px-4 pt-3 pb-4 shrink-0 flex items-center gap-2.5">
     <button class="w-[34px] h-[34px] rounded-full bg-white/[.14] border-none cursor-pointer flex items-center justify-center shrink-0"
+            aria-label="Go back to claims list"
             (click)="goBack()">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="15 18 9 12 15 6"/>
@@ -75,7 +76,7 @@
         <!-- Damage description -->
         <div class="mb-3.5">
           <div class="text-[13px] font-semibold text-ink mb-[7px]">Damage description <span class="text-danger">*</span></div>
-          <textarea [(ngModel)]="desc" placeholder="Describe visible damage — panels, components, frame, fluids…"
+          <textarea [(ngModel)]="desc" (ngModelChange)="saveDraft()" placeholder="Describe visible damage — panels, components, frame, fluids…"
                     rows="4"
                     class="w-full px-3 py-[11px] rounded-[10px] text-sm text-ink bg-white resize-none outline-none leading-relaxed transition-colors"
                     [class]="descErr() ? 'border-[1.5px] border-danger' : 'border-[1.5px] border-line focus:border-primary'"></textarea>
@@ -89,7 +90,7 @@
           <div class="text-[13px] font-semibold text-ink mb-[7px]">Estimated repair cost <span class="text-danger">*</span></div>
           <div class="relative">
             <span class="absolute left-[13px] top-1/2 -translate-y-1/2 text-[15px] font-semibold text-muted pointer-events-none">₹</span>
-            <input type="number" [(ngModel)]="cost" placeholder="0.00"
+            <input type="number" [(ngModel)]="cost" (ngModelChange)="saveDraft()" placeholder="0.00"
                    class="w-full h-12 pl-[30px] pr-3 rounded-[10px] text-[15px] font-semibold text-ink bg-white outline-none sc-numeric transition-colors"
                    [class]="costErr() ? 'border-[1.5px] border-danger' : 'border-[1.5px] border-line focus:border-primary'" />
           </div>
@@ -103,7 +104,7 @@
           <div class="text-[13px] font-semibold text-ink mb-[7px]">Pre-accident market value <span class="text-[11px] font-normal text-muted">(IDV)</span></div>
           <div class="relative">
             <span class="absolute left-[13px] top-1/2 -translate-y-1/2 text-[15px] font-semibold text-muted pointer-events-none">₹</span>
-            <input type="number" [(ngModel)]="pav" placeholder="0.00"
+            <input type="number" [(ngModel)]="pav" (ngModelChange)="saveDraft()" placeholder="0.00"
                    class="w-full h-12 pl-[30px] pr-3 border-[1.5px] border-line rounded-[10px] text-[15px] font-semibold text-ink bg-white outline-none sc-numeric" />
           </div>
         </div>
@@ -141,14 +142,14 @@
         <!-- Recommended workshop -->
         <div class="mb-3.5">
           <div class="text-[13px] font-semibold text-ink mb-[7px]">Recommended workshop</div>
-          <input type="text" [(ngModel)]="workshop" placeholder="e.g. Mahindra First Choice, Koramangala"
+          <input type="text" [(ngModel)]="workshop" (ngModelChange)="saveDraft()" placeholder="e.g. Mahindra First Choice, Koramangala"
                  class="w-full h-[46px] px-[13px] border-[1.5px] border-line rounded-[10px] text-sm text-ink bg-white outline-none" />
         </div>
 
         <!-- Surveyor notes -->
         <div class="mb-1.5">
           <div class="text-[13px] font-semibold text-ink mb-[7px]">Surveyor observations</div>
-          <textarea [(ngModel)]="notes" placeholder="Additional notes, discrepancies, or context for the claims officer…"
+          <textarea [(ngModel)]="notes" (ngModelChange)="saveDraft()" placeholder="Additional notes, discrepancies, or context for the claims officer…"
                     rows="3"
                     class="w-full px-3 py-[11px] border-[1.5px] border-line rounded-[10px] text-sm text-ink bg-white resize-none outline-none leading-relaxed"></textarea>
         </div>
@@ -193,6 +194,7 @@
                     </svg>
                   </div>
                   <button class="absolute -top-1 -right-1 w-[17px] h-[17px] rounded-full bg-danger border-none cursor-pointer flex items-center justify-center p-0"
+                          [attr.aria-label]="'Remove photo ' + (i + 1)"
                           (click)="removePhoto(i); $event.stopPropagation()">
                     <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round">
                       <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -239,6 +241,7 @@
                 </svg>
                 <span class="text-xs font-medium text-ink flex-1 min-w-0 truncate">{{ d.name }}</span>
                 <button class="bg-transparent border-none cursor-pointer text-muted flex p-0 shrink-0"
+                        aria-label="Remove document"
                         (click)="removeDoc()">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                     <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>

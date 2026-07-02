@@ -109,7 +109,7 @@ export class ClaimFileComponent implements OnInit {
           });
         }
       },
-      error: () => { this.submitting.set(false); },
+      error: () => { this.submitting.set(false); this.toast.error('Failed to file claim. Please try again.'); },
     });
   }
 

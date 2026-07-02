@@ -13,6 +13,7 @@ type DamageType = '' | 'Partial loss' | 'Total loss' | 'Third party' | 'Theft';
   standalone: true,
   imports: [FormsModule, DatePipe],
   templateUrl: './survey-report.html',
+  host: { class: 'flex-1 min-h-0 flex flex-col' },
 })
 export class SurveyReportComponent implements OnInit {
   @ViewChild('photoInput') photoInput!: ElementRef<HTMLInputElement>;
@@ -48,6 +49,39 @@ export class SurveyReportComponent implements OnInit {
 
   damageTypes: DamageType[] = ['Partial loss', 'Total loss', 'Third party', 'Theft'];
 
+  private get draftKey(): string { return `survey_draft_${this.claim()?.id ?? 'unknown'}`; }
+
+  saveDraft(): void {
+    const c = this.claim();
+    if (!c) return;
+    try {
+      localStorage.setItem(this.draftKey, JSON.stringify({
+        dmgType: this.dmgType(), desc: this.desc, cost: this.cost,
+        pav: this.pav, driveable: this.driveable(), workshop: this.workshop, notes: this.notes,
+      }));
+    } catch { /* storage full or unavailable */ }
+  }
+
+  private loadDraft(): void {
+    try {
+      const raw = localStorage.getItem(this.draftKey);
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      if (d.dmgType) this.dmgType.set(d.dmgType);
+      this.desc = d.desc ?? '';
+      this.cost = d.cost ?? '';
+      this.pav = d.pav ?? '';
+      if (d.driveable !== null && d.driveable !== undefined) this.driveable.set(d.driveable);
+      this.workshop = d.workshop ?? '';
+      this.notes = d.notes ?? '';
+      if (Object.values(d).some(v => v)) this.toastService.success('Draft restored — pick up where you left off.');
+    } catch { /* corrupted draft */ }
+  }
+
+  private clearDraft(): void {
+    try { localStorage.removeItem(this.draftKey); } catch { /* noop */ }
+  }
+
   ngOnInit(): void {
     const claimId = this.route.snapshot.params['id'];
     this.surveyorService.getAssignedClaims().subscribe({
@@ -65,6 +99,7 @@ export class SurveyReportComponent implements OnInit {
         }
 
         this.claim.set(found);
+        this.loadDraft();
       },
       error: () => this.router.navigate(['/surveyor/claims']),
     });
@@ -104,11 +139,13 @@ export class SurveyReportComponent implements OnInit {
   selectDamageType(type: DamageType): void {
     this.dmgType.set(type);
     this.dmgTypeErr.set('');
+    this.saveDraft();
   }
 
   setDriveable(value: boolean): void {
     this.driveable.set(value);
     this.driveableErr.set('');
+    this.saveDraft();
   }
 
   validate(): boolean {
@@ -164,6 +201,7 @@ export class SurveyReportComponent implements OnInit {
     }).subscribe({
       next: () => {
         this.submitting.set(false);
+        this.clearDraft();
         this.showSuccess.set(true);
       },
       error: () => {

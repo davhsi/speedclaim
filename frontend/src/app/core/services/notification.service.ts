@@ -20,7 +20,7 @@ export class NotificationService {
     );
   }
 
-  markAsRead(id: number): Observable<ApiMessage> {
+  markAsRead(id: string): Observable<ApiMessage> {
     return this.http.patch<ApiMessage>(`${this.apiUrl}/${id}/read`, {}).pipe(
       tap(() => {
         this.notifications.update(list =>

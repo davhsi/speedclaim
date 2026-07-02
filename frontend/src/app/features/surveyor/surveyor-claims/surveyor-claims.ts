@@ -15,6 +15,7 @@ type Tab = 'all' | 'pending' | 'overdue' | 'submitted';
   standalone: true,
   imports: [DatePipe, PaginationComponent, SkeletonLoaderComponent],
   templateUrl: './surveyor-claims.html',
+  host: { class: 'flex-1 min-h-0 flex flex-col' },
 })
 export class SurveyorClaimsComponent implements OnInit {
   layout = inject(SurveyorLayoutComponent);

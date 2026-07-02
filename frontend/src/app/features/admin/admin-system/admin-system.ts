@@ -1,9 +1,42 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 import { AdminService } from '../services/admin.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { SystemConfigDto, AuditLogDto, NotificationDto, EmailTemplateDto } from '../../../core/models/api.models';
+
+// Sample values substituted when previewing a template in the admin panel.
+// Unknown placeholders fall back to [variableName] so the admin can see what's missing.
+const TEMPLATE_DUMMIES: Record<string, Record<string, string>> = {
+  EmailVerification: { verifyUrl: '#' },
+  PasswordReset: { resetUrl: '#' },
+  PolicyActivated: {
+    firstName: 'Arjun',
+    policyNumber: 'POL-2026-00001',
+    product: 'SpeedCare Platinum Health',
+    sumAssured: '5,00,000.00',
+    premiumAmount: '12,500.00',
+    frequency: 'Monthly',
+    startDate: '01 Jul 2026',
+    endDate: '30 Jun 2027',
+    status: 'Active',
+  },
+  KycApproved: { firstName: 'Arjun' },
+  KycRejected: { firstName: 'Arjun', rejectionReason: 'Aadhaar image is blurry and unreadable.' },
+  ProposalApproved: { firstName: 'Arjun', proposalNumber: 'PRO-2026-00001' },
+  ProposalRejected: { firstName: 'Arjun', proposalNumber: 'PRO-2026-00001', rejectionReason: 'Applicant does not meet the minimum health criteria for this product.' },
+  ClaimApproved: { firstName: 'Arjun', claimNumber: 'CLM-2026-00001' },
+  ClaimRejected: { firstName: 'Arjun', claimNumber: 'CLM-2026-00001', rejectionReason: 'Damage pre-dates the policy effective date.' },
+  ClaimSettled: { firstName: 'Arjun', claimNumber: 'CLM-2026-00001', payoutAmount: '45,000.00' },
+  PolicyCancelled: { firstName: 'Arjun', policyNumber: 'POL-2026-00001' },
+  ClaimIntimated: { firstName: 'Arjun', claimNumber: 'CLM-2026-00001', policyNumber: 'POL-2026-00001' },
+  EndorsementApproved: { firstName: 'Arjun', policyNumber: 'POL-2026-00001', endorsementType: 'SumAssuredChange' },
+  EndorsementRejected: { firstName: 'Arjun', policyNumber: 'POL-2026-00001', endorsementType: 'SumAssuredChange', rejectionReason: 'Requested sum assured exceeds the maximum limit for this product.' },
+  GrievanceFiled: { firstName: 'Arjun', grievanceNumber: 'GRV-2026-00001' },
+  GrievanceResolved: { firstName: 'Arjun', grievanceNumber: 'GRV-2026-00001', resolutionNotes: 'We have reviewed your concern and issued a full refund of the duplicate charge.' },
+  PremiumOverdue: { firstName: 'Arjun', policyNumber: 'POL-2026-00001', amount: '12,500.00', dueDate: '01 Jun 2026' },
+};
 
 @Component({
   selector: 'app-admin-system',
@@ -14,6 +47,7 @@ import { SystemConfigDto, AuditLogDto, NotificationDto, EmailTemplateDto } from 
 export class AdminSystemComponent implements OnInit {
   private adminService = inject(AdminService);
   private toastService = inject(ToastService);
+  private sanitizer = inject(DomSanitizer);
 
   activeTab = signal<'configs' | 'audit' | 'notifications' | 'templates'>('configs');
 
@@ -23,13 +57,24 @@ export class AdminSystemComponent implements OnInit {
   configSavingKey = signal<string | null>(null);
 
   auditLogs = signal<AuditLogDto[]>([]);
+  auditTotal = signal(0);
+  auditTotalPages = signal(0);
+  auditPage = signal(1);
+  auditPageSize = signal(25);
+  auditSearch = signal('');
+  auditFrom = signal('');
+  auditTo = signal('');
+  expandedLogId = signal<string | null>(null);
+
   notifLogs = signal<NotificationDto[]>([]);
   templates = signal<EmailTemplateDto[]>([]);
 
-  activeModal = signal<'editTemplate' | null>(null);
+  activeModal = signal<'editTemplate' | 'previewTemplate' | null>(null);
   templateForm = { templateKey: '', subject: '', bodyHtml: '' };
   selectedTemplate = signal<EmailTemplateDto | null>(null);
   templateSaving = signal(false);
+
+  previewHtml = signal<SafeHtml>('');
 
   tabs = [
     { key: 'configs' as const, label: 'Configuration' },
@@ -54,7 +99,103 @@ export class AdminSystemComponent implements OnInit {
   }
 
   private loadAuditLogs(): void {
-    this.adminService.getAuditLogs().subscribe({ next: l => this.auditLogs.set(l) });
+    this.adminService.getAuditLogs(
+      this.auditPage(), this.auditPageSize(),
+      this.auditSearch() || undefined,
+      this.auditFrom() || undefined,
+      this.auditTo() || undefined
+    ).subscribe({
+      next: r => {
+        this.auditLogs.set(r.data);
+        this.auditTotal.set(r.totalRecords);
+        this.auditTotalPages.set(r.totalPages);
+      }
+    });
+  }
+
+  applyAuditFilter(): void {
+    this.auditPage.set(1);
+    this.expandedLogId.set(null);
+    this.loadAuditLogs();
+  }
+
+  clearAuditFilter(): void {
+    this.auditSearch.set('');
+    this.auditFrom.set('');
+    this.auditTo.set('');
+    this.auditPage.set(1);
+    this.expandedLogId.set(null);
+    this.loadAuditLogs();
+  }
+
+  auditPageChange(delta: number): void {
+    const next = this.auditPage() + delta;
+    if (next < 1 || next > this.auditTotalPages()) return;
+    this.auditPage.set(next);
+    this.expandedLogId.set(null);
+    this.loadAuditLogs();
+  }
+
+  auditGoToPage(page: number): void {
+    if (page < 1 || page > this.auditTotalPages()) return;
+    this.auditPage.set(page);
+    this.expandedLogId.set(null);
+    this.loadAuditLogs();
+  }
+
+  toggleLogExpand(id: string): void {
+    this.expandedLogId.set(this.expandedLogId() === id ? null : id);
+  }
+
+  auditActionCategory(action: string): string {
+    const map: Record<string, string> = {
+      UserLoggedIn: 'security', UserLoggedOut: 'security', EmailVerified: 'security',
+      PasswordReset: 'security', PasswordResetByAdmin: 'security',
+      UserRoleChanged: 'admin', UserActivated: 'admin', UserDeactivated: 'admin',
+      AgentActivated: 'admin', AgentDeactivated: 'admin',
+      AgentBranchAssigned: 'admin', AgentLicenseUpdated: 'admin',
+      AadhaarUploaded: 'kyc', PanUploaded: 'kyc', KycApproved: 'kyc', KycRejected: 'kyc',
+      ClaimIntimated: 'claim', ClaimStatusChanged: 'claim',
+      ClaimPayoutProcessed: 'claim', ClaimFinanciallySettled: 'claim',
+      PolicyCancelled: 'policy', EndorsementRequested: 'policy',
+      EndorsementApproved: 'policy', EndorsementRejected: 'policy',
+      PaymentReconciled: 'financial', RefundProcessed: 'financial', CommissionApproved: 'financial',
+      CustomerRegistered: 'registration', AgentRegistered: 'registration',
+      GrievanceRaised: 'grievance', GrievanceAssigned: 'grievance',
+      GrievanceStatusChanged: 'grievance', GrievanceResolved: 'grievance',
+      ProfileUpdated: 'profile', AvatarUploaded: 'profile',
+      SystemConfigCreated: 'config', SystemConfigUpdated: 'config',
+      EmailTemplateCreated: 'config', EmailTemplateUpdated: 'config',
+      ProductCreated: 'config', ProductActivated: 'config', ProductDeactivated: 'config',
+      PremiumRatesUpdated: 'config', ProposalApproved: 'policy', ProposalRejected: 'policy',
+    };
+    return map[action] ?? 'system';
+  }
+
+  auditBadgeStyle(action: string): { bg: string; fg: string; border: string } {
+    const styles: Record<string, { bg: string; fg: string; border: string }> = {
+      security:     { bg: '#FEF0F0', fg: '#C41E3A', border: '#FCA5A5' },
+      admin:        { bg: '#F3E8FF', fg: '#7C3AED', border: '#C4B5FD' },
+      kyc:          { bg: '#FFFBEB', fg: '#B45309', border: '#FCD34D' },
+      claim:        { bg: '#EFF6FF', fg: '#1D4ED8', border: '#BFDBFE' },
+      policy:       { bg: '#F0FDF4', fg: '#15803D', border: '#86EFAC' },
+      financial:    { bg: '#FFF7ED', fg: '#C2410C', border: '#FDBA74' },
+      registration: { bg: '#ECFDF5', fg: '#065F46', border: '#6EE7B7' },
+      grievance:    { bg: '#EEF2FF', fg: '#4338CA', border: '#A5B4FC' },
+      profile:      { bg: '#F8FAFC', fg: '#475569', border: '#CBD5E1' },
+      config:       { bg: '#F1F5F9', fg: '#334155', border: '#CBD5E1' },
+      system:       { bg: '#F8FAFC', fg: '#94A3B8', border: '#E2E8F0' },
+    };
+    return styles[this.auditActionCategory(action)] ?? styles['system'];
+  }
+
+  formatJson(raw?: string): string {
+    if (!raw) return '';
+    try { return JSON.stringify(JSON.parse(raw), null, 2); } catch { return raw; }
+  }
+
+  hasJsonDetail(log: AuditLogDto): boolean {
+    return !!(log.oldValue || log.newValue);
   }
 
   private loadNotifLogs(): void {
@@ -118,6 +259,21 @@ export class AdminSystemComponent implements OnInit {
     this.selectedTemplate.set(tpl);
     this.templateForm = { templateKey: tpl.templateKey, subject: tpl.subject, bodyHtml: tpl.bodyHtml };
     this.activeModal.set('editTemplate');
+  }
+
+  openPreviewModal(tpl: EmailTemplateDto): void {
+    this.selectedTemplate.set(tpl);
+    const dummies = { year: new Date().getFullYear().toString(), ...(TEMPLATE_DUMMIES[tpl.templateKey] ?? {}) };
+    let subject = tpl.subject;
+    let body = tpl.bodyHtml;
+    for (const [key, value] of Object.entries(dummies)) {
+      subject = subject.replaceAll(`{{${key}}}`, value);
+      body = body.replaceAll(`{{${key}}}`, value);
+    }
+    // Show any remaining unknown placeholders as [variableName]
+    body = body.replace(/\{\{(\w+)\}\}/g, '[$1]');
+    this.previewHtml.set(this.sanitizer.bypassSecurityTrustHtml(body));
+    this.activeModal.set('previewTemplate');
   }
 
   closeModal(): void {

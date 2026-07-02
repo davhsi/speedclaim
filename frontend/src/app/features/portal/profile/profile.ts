@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProfileService } from './services/profile.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -9,6 +9,7 @@ import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialo
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 import { postalCodeValidator, phoneValidator } from '../../../shared/validators/input.validators';
+import { AppSelectComponent } from '../../../shared/components/app-select/app-select';
 
 const AADHAAR_PATTERN = /^\d{12}$/;
 const PAN_PATTERN = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
@@ -16,7 +17,7 @@ const PAN_PATTERN = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [FormsModule, ReactiveFormsModule, StatusBadgeComponent, FileUploadComponent, ConfirmDialogComponent, DateFormatPipe],
+  imports: [FormsModule, ReactiveFormsModule, StatusBadgeComponent, FileUploadComponent, ConfirmDialogComponent, DateFormatPipe, AppSelectComponent],
   templateUrl: './profile.html',
 })
 export class ProfileComponent implements OnInit {
@@ -33,6 +34,11 @@ export class ProfileComponent implements OnInit {
   showMemberForm = signal(false);
   deleteConfirm = signal<{ type: string; id: string } | null>(null);
   tabs = ['Personal Info', 'Family Members', 'KYC'];
+  maritalStatuses = ['Single', 'Married', 'Divorced', 'Widowed'];
+
+  avatarPreview = signal<string | null>(null);
+  avatarUploading = signal(false);
+  @ViewChild('avatarInput') avatarInput!: ElementRef<HTMLInputElement>;
 
   aadhaarNum = signal('');
   panNum = signal('');
@@ -52,12 +58,15 @@ export class ProfileComponent implements OnInit {
   aadhaarValid = computed(() => AADHAAR_PATTERN.test(this.aadhaarNum().trim()));
   panValid = computed(() => PAN_PATTERN.test(this.panNum().trim().toUpperCase()));
 
+  kycApproved = computed(() => this.profile()?.kycApproved ?? false);
+
   profileForm = this.fb.group({
     firstName: ['', Validators.required],
     lastName: ['', Validators.required],
     email: [{ value: '', disabled: true }],
     phone: ['', [Validators.required, phoneValidator()]],
     maritalStatus: ['Single'],
+    dateOfBirth: [''],
   });
 
   addressForm = this.fb.group({
@@ -71,11 +80,12 @@ export class ProfileComponent implements OnInit {
   });
 
   memberForm = this.fb.group({
-    name: ['', Validators.required],
+    firstName: ['', Validators.required],
+    lastName: ['', Validators.required],
     dateOfBirth: ['', Validators.required],
     relationship: ['Spouse', Validators.required],
     gender: ['Male', Validators.required],
-    salutationTitle: ['Mr'],
+    salutation: ['Mr'],
   });
 
   userInitials(): string {
@@ -84,10 +94,45 @@ export class ProfileComponent implements OnInit {
     return (u.firstName.charAt(0) + u.lastName.charAt(0)).toUpperCase();
   }
 
+  avatarUrl(): string | null {
+    return this.avatarPreview() ?? this.profile()?.avatarUrl ?? null;
+  }
+
+  onAvatarSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => this.avatarPreview.set(reader.result as string);
+    reader.readAsDataURL(file);
+
+    this.avatarUploading.set(true);
+    this.profileService.uploadAvatar(file).subscribe({
+      next: (res) => {
+        this.avatarUploading.set(false);
+        this.avatarPreview.set(null);
+        this.profile.update(p => p ? { ...p, avatarUrl: res.avatarUrl } : p);
+        this.authService.patchCurrentUser({ avatarUrl: res.avatarUrl });
+        this.toast.success('Profile picture updated');
+      },
+      error: () => {
+        this.avatarUploading.set(false);
+        this.avatarPreview.set(null);
+        this.toast.error('Upload failed');
+      },
+    });
+  }
+
   ngOnInit(): void {
     this.profileService.getProfile().subscribe(p => {
       this.profile.set(p);
-      this.profileForm.patchValue(p);
+      this.profileForm.patchValue({ ...p, dateOfBirth: p.dateOfBirth ?? '' });
+      if (p.kycApproved) {
+        this.profileForm.get('firstName')?.disable();
+        this.profileForm.get('lastName')?.disable();
+        this.profileForm.get('dateOfBirth')?.disable();
+      }
     });
     this.profileService.getFamilyMembers().subscribe(m => this.familyMembers.set(m));
     this.profileService.getKyc().subscribe({ next: k => this.kyc.set(k), error: () => {} });
@@ -147,12 +192,12 @@ export class ProfileComponent implements OnInit {
       this.toast.warning('Please correct the highlighted fields before saving.');
       return;
     }
-    this.profileService.addFamilyMember(this.memberForm.getRawValue() as any).subscribe({
+    this.profileService.addFamilyMember({ ...this.memberForm.getRawValue(), isDependent: true } as any).subscribe({
       next: member => {
         this.familyMembers.update(m => [...m, member]);
         this.toast.success('Family member added');
         this.showMemberForm.set(false);
-        this.memberForm.reset({ relationship: 'Spouse', gender: 'Male', salutationTitle: 'Mr' });
+        this.memberForm.reset({ relationship: 'Spouse', gender: 'Male', salutation: 'Mr' });
       },
       error: () => this.toast.error('Failed to add member'),
     });

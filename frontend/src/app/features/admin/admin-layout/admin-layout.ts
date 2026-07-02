@@ -25,6 +25,7 @@ export class AdminLayoutComponent implements OnInit {
   sidebarCollapsed = signal(true);
   pageTitle = signal('User management');
   notifPanelOpen = signal(false);
+  profileMenuOpen = signal(false);
   userCount = signal(0);
   agentCount = signal(0);
   productCount = signal(0);
@@ -72,7 +73,22 @@ export class AdminLayoutComponent implements OnInit {
   }
 
   toggleNotifPanel(): void {
+    this.profileMenuOpen.set(false);
     this.notifPanelOpen.update(v => !v);
+  }
+
+  toggleProfileMenu(): void {
+    this.notifPanelOpen.set(false);
+    this.profileMenuOpen.update(v => !v);
+  }
+
+  logout(): void {
+    this.authService.logout();
+  }
+
+  userName(): string {
+    const u = this.authService.currentUser();
+    return u ? `${u.firstName} ${u.lastName}` : '';
   }
 
   onMarkAllRead(): void {

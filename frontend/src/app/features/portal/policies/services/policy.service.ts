@@ -38,7 +38,7 @@ export class PolicyService {
   }
 
   updateNominee(nomineeId: string, req: UpdateNomineeRequest): Observable<ApiMessage> {
-    return this.http.put<ApiMessage>(`${this.api}/nominees/${nomineeId}`, req);
+    return this.http.patch<ApiMessage>(`${this.api}/nominees/${nomineeId}`, req);
   }
 
   cancelPolicy(id: string): Observable<ApiMessage> {

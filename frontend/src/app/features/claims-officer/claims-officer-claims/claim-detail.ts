@@ -1,12 +1,13 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge';
 import { TimelineComponent, TimelineItem } from '../../../shared/components/timeline/timeline';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 import { ClaimsOfficerService, SurveyorDto } from '../services/claims-officer.service';
-import { ClaimDto, ClaimStatusHistoryDto } from '../../../core/models/api.models';
+import { ClaimDto, ClaimStatusHistoryDto, SubmittedDocumentDto } from '../../../core/models/api.models';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 
@@ -25,12 +26,14 @@ export class ClaimDetailComponent implements OnInit {
   private claimsService = inject(ClaimsOfficerService);
   private authService = inject(AuthService);
   private toast = inject(ToastService);
+  private sanitizer = inject(DomSanitizer);
 
   claim = signal<ClaimDto | null>(null);
   timelineItems = signal<TimelineItem[]>([]);
   surveyors = signal<SurveyorDto[]>([]);
   modalType = signal<ModalType>(null);
   actionInFlight = signal(false);
+  previewDoc = signal<SubmittedDocumentDto | null>(null);
 
   modalAmount = '';
   modalNotes = '';
@@ -259,6 +262,26 @@ export class ClaimDetailComponent implements OnInit {
 
   private showToast(message: string, type: ToastType): void {
     this.toast[type](message);
+  }
+
+  openPreview(doc: SubmittedDocumentDto): void { this.previewDoc.set(doc); }
+  closePreview(): void { this.previewDoc.set(null); }
+
+  isImage(doc: SubmittedDocumentDto): boolean {
+    const ext = doc.documentName?.split('.').pop()?.toLowerCase() ?? '';
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'].includes(ext);
+  }
+
+  isPdf(doc: SubmittedDocumentDto): boolean {
+    return doc.documentName?.toLowerCase().endsWith('.pdf') ?? false;
+  }
+
+  docRawUrl(doc: SubmittedDocumentDto): string {
+    return '/' + doc.filePath;
+  }
+
+  safePreviewUrl(doc: SubmittedDocumentDto): SafeResourceUrl {
+    return this.sanitizer.bypassSecurityTrustResourceUrl('/' + doc.filePath);
   }
 
   getTypePillClass(type: string): string {

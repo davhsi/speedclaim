@@ -7,6 +7,7 @@ import { ClaimDto } from '../../../core/models/api.models';
   selector: 'app-surveyor-profile',
   standalone: true,
   templateUrl: './surveyor-profile.html',
+  host: { class: 'flex-1 min-h-0 flex flex-col' },
 })
 export class SurveyorProfileComponent implements OnInit {
   private authService = inject(AuthService);

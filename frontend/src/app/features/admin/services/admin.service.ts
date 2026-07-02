@@ -40,6 +40,10 @@ export class AdminService {
     return this.http.post<ApiMessage>(`/api/v1/auth/admin/reset-password/${userId}`, req);
   }
 
+  inviteUser(req: { firstName: string; lastName: string; email: string; role: string }): Observable<ApiMessage> {
+    return this.http.post<ApiMessage>('/api/v1/auth/admin/invite-user', req);
+  }
+
   // ── Agents ──
 
   getAgentProfiles(): Observable<AgentProfileDto[]> {
@@ -54,12 +58,16 @@ export class AdminService {
     return this.http.post<BranchDto>('/api/v1/agents/branches', req);
   }
 
+  updateBranch(branchId: string, req: CreateBranchRequest): Observable<BranchDto> {
+    return this.http.patch<BranchDto>(`/api/v1/agents/branches/${branchId}`, req);
+  }
+
   assignAgentToBranch(agentId: string, branchId: string): Observable<ApiMessage> {
     return this.http.put<ApiMessage>(`/api/v1/agents/${agentId}/branch/${branchId}`, {});
   }
 
   updateAgentLicense(agentId: string, req: UpdateAgentLicenseRequest): Observable<ApiMessage> {
-    return this.http.put<ApiMessage>(`/api/v1/agents/${agentId}/license`, req);
+    return this.http.patch<ApiMessage>(`/api/v1/agents/${agentId}/license`, req);
   }
 
   toggleAgentStatus(agentId: string, isActive: boolean): Observable<ApiMessage> {
@@ -90,7 +98,7 @@ export class AdminService {
   }
 
   updateProductRates(productId: string, rates: PremiumRateDto[]): Observable<ApiMessage> {
-    return this.http.put<ApiMessage>(`/api/v1/products/${productId}/rates`, { rates });
+    return this.http.patch<ApiMessage>(`/api/v1/products/${productId}/rates`, { rates });
   }
 
   getProductDocuments(productId: string): Observable<DocumentRequirementResponseDto[]> {
@@ -98,7 +106,7 @@ export class AdminService {
   }
 
   updateProductDocuments(productId: string, requirements: DocumentRequirementUpdateDto[]): Observable<ApiMessage> {
-    return this.http.put<ApiMessage>(`/api/v1/products/${productId}/documents`, { requirements });
+    return this.http.patch<ApiMessage>(`/api/v1/products/${productId}/documents`, { requirements });
   }
 
   toggleProductStatus(productId: string, isActive: boolean): Observable<ApiMessage> {
@@ -112,11 +120,15 @@ export class AdminService {
   }
 
   updateSystemConfig(req: UpdateSystemConfigRequest): Observable<ApiMessage> {
-    return this.http.put<ApiMessage>('/api/v1/system/configs', req);
+    return this.http.patch<ApiMessage>('/api/v1/system/configs', req);
   }
 
-  getAuditLogs(): Observable<AuditLogDto[]> {
-    return this.http.get<AuditLogDto[]>('/api/v1/system/audit-logs');
+  getAuditLogs(page = 1, pageSize = 25, search?: string, from?: string, to?: string): Observable<PagedResponse<AuditLogDto>> {
+    let params = new HttpParams().set('page', page).set('pageSize', pageSize);
+    if (search) params = params.set('search', search);
+    if (from) params = params.set('from', from);
+    if (to) params = params.set('to', to);
+    return this.http.get<PagedResponse<AuditLogDto>>('/api/v1/system/audit-logs', { params });
   }
 
   getNotificationLogs(): Observable<NotificationDto[]> {
@@ -128,7 +140,7 @@ export class AdminService {
   }
 
   saveEmailTemplate(req: ManageEmailTemplateRequest): Observable<ApiMessage> {
-    return this.http.put<ApiMessage>('/api/v1/system/email-templates', req);
+    return this.http.patch<ApiMessage>('/api/v1/system/email-templates', req);
   }
 
 }

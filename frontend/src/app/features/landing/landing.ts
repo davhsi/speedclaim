@@ -1,6 +1,6 @@
-import { Component, AfterViewInit, PLATFORM_ID, inject } from '@angular/core';
+import { Component, AfterViewInit, PLATFORM_ID, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { SafeHtmlPipe } from '../../shared/pipes/safe-html.pipe';
 
 @Component({
@@ -11,8 +11,15 @@ import { SafeHtmlPipe } from '../../shared/pipes/safe-html.pipe';
 })
 export class LandingComponent implements AfterViewInit {
   private platformId = inject(PLATFORM_ID);
+  private router = inject(Router);
 
   readonly year = new Date().getFullYear();
+  quoteType = signal<'Health' | 'Motor' | 'Life'>('Health');
+  readonly quoteTypes = ['Health', 'Motor', 'Life'] as const;
+
+  startQuote(): void {
+    this.router.navigate(['/auth/register'], { queryParams: { type: this.quoteType() } });
+  }
 
   readonly stats = [
     { value: '2.8', unit: ' days', label: 'Average claim settlement', footnote: 'Industry average: 23 days' },

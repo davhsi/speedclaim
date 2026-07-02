@@ -71,14 +71,25 @@
         <!-- Documents -->
         @if (c.documents && c.documents.length > 0) {
           <div class="bg-white border border-line rounded-card shadow-sm p-5 mb-4">
-            <h3 class="text-sm font-semibold text-ink mb-3">Documents</h3>
+            <h3 class="text-sm font-semibold text-ink mb-3">Documents <span class="text-muted font-normal">({{ c.documents.length }})</span></h3>
             @for (doc of c.documents; track doc.id) {
               <div class="flex items-center gap-3 py-2.5 border-b border-surface last:border-0">
                 <div class="w-8 h-8 rounded-lg bg-info-bg flex items-center justify-center shrink-0">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-info"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-info" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                 </div>
-                <div class="flex-1 text-[13px] font-medium text-ink">{{ doc.documentName }}</div>
-                <span class="text-[10px] font-semibold uppercase tracking-wide px-2.5 py-0.5 rounded-full bg-success-bg text-success border border-success-border">Uploaded</span>
+                <div class="flex-1 text-[13px] font-medium text-ink min-w-0 truncate">{{ doc.documentName }}</div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <button (click)="openPreview(doc)"
+                    class="h-7 px-2.5 text-[11px] font-semibold text-primary bg-primary-light border border-primary/25 rounded-md cursor-pointer hover:bg-primary/10 transition-colors"
+                    [attr.aria-label]="'Preview ' + doc.documentName">
+                    Preview
+                  </button>
+                  <a [href]="docRawUrl(doc)" target="_blank" download
+                    class="h-7 px-2.5 text-[11px] font-semibold text-body bg-white border border-line rounded-md cursor-pointer hover:bg-surface transition-colors flex items-center no-underline"
+                    [attr.aria-label]="'Download ' + doc.documentName">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  </a>
+                </div>
               </div>
             }
           </div>
@@ -179,6 +190,56 @@
   } @else {
     <div class="bg-white border border-line rounded-card p-12 text-center">
       <p class="text-sm text-muted">Loading claim details...</p>
+    </div>
+  }
+
+  <!-- Document Preview Lightbox -->
+  @if (previewDoc(); as doc) {
+    <div class="fixed inset-0 z-[500] bg-black/75 flex items-center justify-center p-4" (click)="closePreview()" role="dialog" [attr.aria-label]="'Preview: ' + doc.documentName">
+      <div class="relative bg-white rounded-card shadow-modal w-full max-w-3xl max-h-[92vh] flex flex-col" (click)="$event.stopPropagation()">
+        <!-- Lightbox header -->
+        <div class="flex items-center justify-between px-5 py-3 border-b border-line shrink-0 gap-3">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-7 h-7 rounded-lg bg-info-bg flex items-center justify-center shrink-0">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2D7FF9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <span class="text-[13px] font-semibold text-ink truncate">{{ doc.documentName }}</span>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <a [href]="docRawUrl(doc)" target="_blank" download
+              class="h-8 px-3 text-[12px] font-semibold text-body border border-line bg-white rounded-lg flex items-center gap-1.5 cursor-pointer hover:bg-surface transition-colors no-underline">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download
+            </a>
+            <button (click)="closePreview()" aria-label="Close preview" class="w-8 h-8 rounded-lg border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface transition-colors">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Lightbox content -->
+        <div class="flex-1 min-h-0 overflow-hidden bg-[#1A1A1A] rounded-b-card flex items-center justify-center">
+          @if (isImage(doc)) {
+            <div class="overflow-auto w-full h-full flex items-center justify-center p-4" style="max-height: calc(92vh - 57px);">
+              <img [src]="docRawUrl(doc)" [alt]="doc.documentName" class="max-w-full max-h-full object-contain rounded-lg shadow-lg" />
+            </div>
+          } @else if (isPdf(doc)) {
+            <iframe [src]="safePreviewUrl(doc)" class="w-full border-0 rounded-b-card" style="height: calc(92vh - 57px);" [title]="doc.documentName"></iframe>
+          } @else {
+            <div class="text-center py-16 px-8">
+              <div class="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center mx-auto mb-4">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </div>
+              <p class="text-white/70 text-sm mb-4">This file type cannot be previewed in the browser.</p>
+              <a [href]="docRawUrl(doc)" target="_blank" download
+                class="inline-flex items-center gap-2 h-10 px-5 bg-white text-ink text-[13px] font-semibold rounded-lg no-underline hover:bg-white/90 transition-opacity">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download file
+              </a>
+            </div>
+          }
+        </div>
+      </div>
     </div>
   }
 

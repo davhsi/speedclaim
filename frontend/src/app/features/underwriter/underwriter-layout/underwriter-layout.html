@@ -1,19 +1,20 @@
+<a href="#main-content" class="skip-link">Skip to main content</a>
 <div class="min-h-screen flex bg-surface">
   <app-underwriter-sidebar [collapsed]="sidebarCollapsed()" (toggle)="toggleSidebar()" />
   <div class="flex-1 flex flex-col min-h-screen transition-[margin] duration-200 lg:ml-[244px]">
     <!-- Topbar -->
     <header class="h-14 shrink-0 bg-white border-b border-line flex items-center gap-3 px-6 sticky top-0 z-20">
-      <button class="lg:hidden bg-transparent border-none cursor-pointer text-muted p-1 flex" (click)="toggleSidebar()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      <button class="lg:hidden bg-transparent border-none cursor-pointer text-muted p-1 flex" (click)="toggleSidebar()" aria-label="Open navigation menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
       <div class="flex-1 text-[15px] font-semibold text-ink">{{ pageTitle() }}</div>
 
       <!-- Notifications bell -->
       <div class="relative">
-        <button (click)="toggleNotifPanel()" class="relative bg-transparent border-none cursor-pointer text-muted p-2 flex">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <button (click)="toggleNotifPanel()" class="relative bg-transparent border-none cursor-pointer text-muted p-2 flex" [attr.aria-label]="notifService.unreadCount() > 0 ? 'Notifications, ' + notifService.unreadCount() + ' unread' : 'Notifications'">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
           @if (notifService.unreadCount() > 0) {
-            <span class="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-danger border-[1.5px] border-white flex items-center justify-center text-[9px] font-bold text-white">{{ notifService.unreadCount() }}</span>
+            <span class="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-danger border-[1.5px] border-white flex items-center justify-center text-[9px] font-bold text-white" aria-hidden="true">{{ notifService.unreadCount() }}</span>
           }
         </button>
 
@@ -49,13 +50,40 @@
         }
       </div>
 
-      <div (click)="navigateTo('/underwriter/profile')" class="w-[30px] h-[30px] rounded-full bg-primary text-white flex items-center justify-center text-[11px] font-bold cursor-pointer">
-        {{ userInitials() }}
+      <!-- Profile dropdown -->
+      <div class="relative">
+        <button (click)="toggleProfileMenu()"
+                class="w-[30px] h-[30px] rounded-full bg-primary text-white flex items-center justify-center text-[11px] font-bold cursor-pointer border-none select-none">
+          {{ userInitials() }}
+        </button>
+        @if (profileMenuOpen()) {
+          <div class="fixed inset-0 z-40" (click)="profileMenuOpen.set(false)"></div>
+          <div class="absolute top-[calc(100%+8px)] right-0 w-[200px] bg-white border border-line rounded-card shadow-dropdown z-50 overflow-hidden animate-sc-fade-fast">
+            <div class="px-4 py-3 border-b border-line">
+              <div class="text-[13px] font-semibold text-ink truncate">{{ userName() }}</div>
+              <div class="text-[11px] text-muted">Underwriter</div>
+            </div>
+            <a routerLink="/underwriter/profile" (click)="profileMenuOpen.set(false)"
+               class="flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-body hover:bg-surface transition-colors no-underline">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+              My profile
+            </a>
+            <button (click)="logout()"
+                    class="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-danger hover:bg-danger-bg transition-colors border-none border-t border-line bg-transparent cursor-pointer">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              Sign out
+            </button>
+          </div>
+        }
       </div>
     </header>
 
     <!-- Content -->
-    <main class="flex-1 overflow-y-auto p-3 sm:p-6">
+    <main id="main-content" class="flex-1 overflow-y-auto p-3 sm:p-6">
       <div class="max-w-[1300px] mx-auto">
         <router-outlet />
       </div>

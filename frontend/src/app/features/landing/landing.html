@@ -4,9 +4,7 @@
   <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-line">
     <div class="max-w-6xl mx-auto px-5 lg:px-8 h-16 flex items-center justify-between">
       <a routerLink="/" class="flex items-center gap-2.5 no-underline group">
-        <div class="w-8 h-8 rounded-[9px] bg-primary flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        </div>
+        <img src="/brand/speedclaim-mark.svg" alt="" class="w-8 h-8 rounded-[9px] shrink-0 transition-transform group-hover:scale-105" />
         <span style="font-family: var(--font-display); font-weight: 700;" class="text-[17px] text-ink tracking-tight">SpeedClaim</span>
       </a>
 
@@ -22,7 +20,7 @@
           Sign in
         </a>
         <a routerLink="/auth/register"
-           class="h-9 px-5 text-[13px] font-semibold text-white bg-amber-500 hover:bg-amber-600 rounded-full flex items-center transition-colors no-underline shadow-sm">
+           class="h-9 px-5 text-[13px] font-semibold text-white bg-[#F5A623] hover:bg-[#D4891A] rounded-full flex items-center transition-colors no-underline shadow-sm">
           Get started
         </a>
       </div>
@@ -52,17 +50,38 @@
             not weeks, not months, not "we'll get back to you."
           </p>
 
-          <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3">
+          <div class="flex flex-col items-center lg:items-start gap-3 mb-6">
             <a routerLink="/auth/register"
-               class="w-full sm:w-auto h-12 px-8 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[15px] rounded-full flex items-center justify-center transition-colors no-underline"
+               class="w-full sm:w-auto h-12 px-8 bg-[#F5A623] hover:bg-[#D4891A] text-white font-bold text-[15px] rounded-full flex items-center justify-center transition-colors no-underline"
                style="box-shadow: 0 4px 20px rgba(245,158,11,0.3);">
               Protect my family
-              <svg class="ml-2 shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              <svg class="ml-2 shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </a>
-            <a routerLink="/auth/login"
-               class="w-full sm:w-auto h-12 px-8 border-2 border-primary/25 text-primary font-semibold text-[15px] rounded-full flex items-center justify-center hover:bg-primary/5 transition-colors no-underline">
-              Sign in to your account
-            </a>
+            <p class="text-sm text-muted">
+              Already have an account?
+              <a routerLink="/auth/login" class="text-primary font-medium hover:underline no-underline">Sign in</a>
+            </p>
+          </div>
+
+          <!-- Quick Quote Estimator -->
+          <div class="bg-white/85 backdrop-blur-sm border border-line rounded-[14px] p-4 shadow-sm max-w-[460px] mx-auto lg:mx-0 sc-reveal sc-reveal-d1">
+            <div class="text-[10.5px] font-bold text-muted uppercase tracking-widest mb-3">Get a quick estimate — it's free</div>
+            <div class="flex gap-2 mb-3">
+              @for (t of quoteTypes; track t) {
+                <button (click)="quoteType.set(t)"
+                  class="flex-1 h-10 rounded-[10px] text-[12.5px] font-semibold cursor-pointer transition-all border-2"
+                  [class]="quoteType() === t
+                    ? 'border-primary bg-primary text-white'
+                    : 'border-line bg-white text-body hover:border-primary/40'">
+                  {{ t }}
+                </button>
+              }
+            </div>
+            <button (click)="startQuote()"
+              class="w-full h-10 bg-ink text-white text-[13px] font-semibold rounded-[10px] border-none cursor-pointer hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+              See my {{ quoteType() }} premium →
+            </button>
+            <p class="text-[10.5px] text-muted text-center mt-2.5">No credit card · No spam · 2-minute setup</p>
           </div>
         </div>
 
@@ -100,9 +119,7 @@
               <!-- App header -->
               <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px 8px; border-bottom: 1px solid #F0F2F4;">
                 <div style="display: flex; align-items: center; gap: 7px;">
-                  <div style="width: 26px; height: 26px; background: #0F6E8C; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                  </div>
+                  <img src="/brand/speedclaim-mark.svg" alt="" style="width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;">
                   <span style="font-size: 13px; font-weight: 700; color: #1A2230; font-family: var(--font-display);">SpeedClaim</span>
                 </div>
                 <div style="position: relative; width: 30px; height: 30px; background: #F7F9FA; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
@@ -438,9 +455,7 @@
                 <div style="background: rgba(255,255,255,0.10); backdrop-filter: blur(16px); border-radius: 16px; padding: 14px 14px 16px; border: 1px solid rgba(255,255,255,0.09); text-align: left; margin-bottom: 28px;">
                   <!-- App row -->
                   <div style="display: flex; align-items: center; gap: 9px; margin-bottom: 10px;">
-                    <div style="width: 26px; height: 26px; background: #0F6E8C; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    </div>
+                    <img src="/brand/speedclaim-mark.svg" alt="" style="width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;">
                     <span style="font-size: 11.5px; font-weight: 700; color: rgba(255,255,255,0.85); flex: 1;">SpeedClaim</span>
                     <span style="font-size: 10px; color: rgba(255,255,255,0.3);">now</span>
                   </div>
@@ -488,7 +503,7 @@
       </p>
       <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
         <a routerLink="/auth/register"
-           class="w-full sm:w-auto h-12 px-8 bg-amber-400 hover:bg-amber-300 text-ink font-bold text-[15px] rounded-full flex items-center justify-center transition-colors no-underline"
+           class="w-full sm:w-auto h-12 px-8 bg-[#F5A623] hover:bg-[#E09A1F] text-white font-bold text-[15px] rounded-full flex items-center justify-center transition-colors no-underline"
            style="box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
           Protect my family now
           <svg class="ml-2 shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
@@ -507,9 +522,7 @@
       <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div>
           <a routerLink="/" class="flex items-center gap-2 no-underline mb-2">
-            <div class="w-7 h-7 rounded-[7px] bg-primary flex items-center justify-center shrink-0">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            </div>
+            <img src="/brand/speedclaim-mark.svg" alt="" class="w-7 h-7 rounded-[7px] shrink-0" />
             <span style="font-family: var(--font-display); font-weight: 700;" class="text-[15px] text-white">SpeedClaim</span>
           </a>
           <p class="text-[12px] leading-relaxed" style="color: #6B7280; max-width: 210px;">

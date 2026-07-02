@@ -7,12 +7,10 @@
 >
   <!-- Logo -->
   <div class="flex items-center gap-2.5 px-4 py-[18px] border-b border-line shrink-0">
-    <div class="w-[30px] h-[30px] rounded-lg bg-primary flex items-center justify-center shrink-0">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-    </div>
+    <img src="/brand/speedclaim-mark.svg" alt="" class="w-[30px] h-[30px] rounded-lg shrink-0" />
     <span class="text-[15px] font-bold text-ink">SpeedClaim</span>
-    <button class="ml-auto lg:hidden text-muted hover:text-ink" (click)="toggle.emit()">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <button class="ml-auto lg:hidden text-muted hover:text-ink" (click)="toggle.emit()" aria-label="Close navigation menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
         <path d="M18 6L6 18M6 6l12 12"/>
       </svg>
     </button>
@@ -23,7 +21,7 @@
     <!-- Get a Quote CTA -->
     <a
       routerLink="/quote"
-      class="flex items-center justify-center gap-[7px] bg-accent text-white text-[13px] font-semibold h-10 rounded-control cursor-pointer mb-3.5 hover:bg-accent-dark transition-colors"
+      class="flex items-center justify-center gap-[7px] bg-[#F5A623] hover:bg-[#D4891A] text-white text-[13px] font-semibold h-10 rounded-control cursor-pointer mb-3.5 transition-colors"
       (click)="onNavClick()"
     >
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -56,8 +54,12 @@
 
   <!-- User Footer -->
   <div class="px-3 py-3 border-t border-line flex items-center gap-2.5">
-    <div class="w-8 h-8 rounded-full bg-primary-light text-primary flex items-center justify-center text-xs font-bold shrink-0">
-      {{ userInitials() }}
+    <div class="w-8 h-8 rounded-full shrink-0 overflow-hidden bg-primary-light text-primary flex items-center justify-center text-xs font-bold">
+      @if (userAvatar()) {
+        <img [src]="userAvatar()" alt="Profile" class="w-full h-full object-cover" />
+      } @else {
+        {{ userInitials() }}
+      }
     </div>
     <div class="flex-1 min-w-0">
       <div class="text-[13px] font-semibold text-ink truncate">{{ userName() }}</div>

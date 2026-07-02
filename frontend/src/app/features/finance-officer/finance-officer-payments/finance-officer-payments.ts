@@ -33,6 +33,7 @@ export class FinanceOfficerPaymentsComponent implements OnInit {
   dialogMessage = signal('');
   dialogConfirmLabel = signal('');
   dialogVariant = signal<'danger' | 'default'>('default');
+  actionInFlight = signal(false);
 
   filteredRecords = computed(() => {
     const q = this.searchQuery.toLowerCase();
@@ -83,26 +84,35 @@ export class FinanceOfficerPaymentsComponent implements OnInit {
 
   onConfirm(): void {
     const target = this.dialogTarget();
-    if (!target) return;
+    if (!target || this.actionInFlight()) return;
+    this.actionInFlight.set(true);
 
     if (this.dialogAction() === 'reconcile') {
       this.financeService.reconcilePayment(target.id).subscribe({
         next: () => {
           this.allRecords.update(list => list.map(p => p.id === target.id ? { ...p, status: 'Paid', paidAt: new Date().toISOString() } : p));
           this.toast.success(`Payment PAY-${target.id} reconciled successfully`);
+          this.dialogTarget.set(null);
+          this.actionInFlight.set(false);
         },
-        error: () => this.toast.error('Failed to reconcile payment'),
+        error: () => {
+          this.toast.error('Failed to reconcile payment');
+          this.actionInFlight.set(false);
+        },
       });
     } else {
       this.financeService.refundPayment(target.id).subscribe({
         next: () => {
           this.allRecords.update(list => list.map(p => p.id === target.id ? { ...p, status: 'Refunded' } : p));
           this.toast.success(`Refund of ${this.moneyPipe.transform(target.amount)} initiated for ${target.customerName}`);
+          this.dialogTarget.set(null);
+          this.actionInFlight.set(false);
         },
-        error: () => this.toast.error('Failed to process refund'),
+        error: () => {
+          this.toast.error('Failed to process refund');
+          this.actionInFlight.set(false);
+        },
       });
     }
-
-    this.dialogTarget.set(null);
   }
 }

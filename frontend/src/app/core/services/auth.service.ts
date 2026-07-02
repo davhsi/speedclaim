@@ -22,10 +22,10 @@ export class AuthService {
   isLoading = signal(false);
   initialized = signal(false);
 
-  login(req: LoginRequest): Observable<AuthResponse> {
+  login(req: LoginRequest, rememberMe = false): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/login`, req).pipe(
       tap(res => {
-        this.tokenService.setTokens(res.accessToken, res.refreshToken);
+        this.tokenService.setTokens(res.accessToken, res.refreshToken, rememberMe);
         this.currentUser.set(res.user);
       }),
     );
@@ -73,6 +73,11 @@ export class AuthService {
 
   resetPassword(req: ResetPasswordRequest): Observable<ApiMessage> {
     return this.http.post<ApiMessage>(`${this.apiUrl}/reset-password`, req);
+  }
+
+  patchCurrentUser(patch: Partial<AuthUserDto>): void {
+    const u = this.currentUser();
+    if (u) this.currentUser.set({ ...u, ...patch });
   }
 
   initFromStorage(): Observable<AuthResponse | null> {

@@ -118,31 +118,63 @@ export class AgentProposalSubmitComponent implements OnInit {
     const product = this.products().find(p => p.domain.toUpperCase() === this.selectedType?.toUpperCase());
     if (!product) return;
 
+    let age = 35;
+    let sumAssured = product.minSumAssured;
+    let tenureYears = product.minTenureYears;
+
+    if (this.selectedType === 'Health') {
+      age = this.healthForm.eldestAge;
+      sumAssured = this.parseMoney(this.healthForm.sumAssured) || product.minSumAssured;
+      tenureYears = 1;
+    } else if (this.selectedType === 'Motor') {
+      sumAssured = this.parseMoney(this.motorForm.idv) || product.minSumAssured;
+      tenureYears = 1;
+    } else if (this.selectedType === 'Life') {
+      age = this.lifeForm.age;
+      sumAssured = this.parseMoney(this.lifeForm.sumAssured) || product.minSumAssured;
+      tenureYears = this.parseTerm(this.lifeForm.term) || product.minTenureYears;
+    }
+
+    // Clamp to product limits
+    sumAssured = Math.max(product.minSumAssured, Math.min(product.maxSumAssured, sumAssured));
+    tenureYears = Math.max(product.minTenureYears, Math.min(product.maxTenureYears, tenureYears));
+
     this.agentService.generateQuote({
       productId: product.id,
-      age: 38,
-      sumAssured: product.minSumAssured,
-      tenureYears: product.minTenureYears,
+      age,
+      sumAssured,
+      tenureYears,
     }).subscribe({
       next: res => this.quoteResult.set(res),
+      error: () => this.toast.error('Failed to calculate quote. Please check the values and try again.'),
     });
+  }
+
+  private parseMoney(val: string): number {
+    return parseInt(val.replace(/[₹,\s]/g, ''), 10) || 0;
+  }
+
+  private parseTerm(val: string): number {
+    return parseInt(val, 10) || 0;
   }
 
   private submitProposal(): void {
     const product = this.products().find(p => p.domain.toUpperCase() === this.selectedType?.toUpperCase());
-    if (!product || !this.selectedCustomerId) return;
+    const quote = this.quoteResult();
+    if (!product || !this.selectedCustomerId || !quote) return;
 
     this.agentService.submitProposal({
       productId: product.id,
       customerId: this.selectedCustomerId,
-      sumAssured: product.minSumAssured,
-      tenureYears: product.minTenureYears,
-      premiumAmount: this.quoteResult()?.premiumAmount ?? product.minSumAssured * 0.01,
+      sumAssured: quote.sumAssured,
+      tenureYears: quote.tenureYears,
+      premiumAmount: quote.premiumAmount,
       paymentFrequency: 'Annually',
       customerMemberIds: [],
       nominees: [],
     }).subscribe({
       next: () => this.router.navigate(['/agent/proposals']),
+      error: () => this.toast.error('Failed to submit proposal. Please try again.'),
     });
   }
 

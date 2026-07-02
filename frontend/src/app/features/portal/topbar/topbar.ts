@@ -1,4 +1,4 @@
-import { Component, inject, output } from '@angular/core';
+import { Component, inject, output, signal } from '@angular/core';
 import { Router, RouterLink, NavigationEnd } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, filter } from 'rxjs';
@@ -17,6 +17,7 @@ export class TopbarComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
   notifService = inject(NotificationService);
+  profileMenuOpen = signal(false);
 
   private routeTitleMap: Record<string, string> = {
     '/dashboard': 'Dashboard',
@@ -47,6 +48,19 @@ export class TopbarComponent {
   userInitial(): string {
     const u = this.authService.currentUser();
     return u ? u.firstName.charAt(0).toUpperCase() : '?';
+  }
+
+  avatarUrl(): string | null {
+    return this.authService.currentUser()?.avatarUrl ?? null;
+  }
+
+  userName(): string {
+    const u = this.authService.currentUser();
+    return u ? `${u.firstName} ${u.lastName}` : '';
+  }
+
+  logout(): void {
+    this.authService.logout();
   }
 
   private deriveTitleFromPath(path: string): string {

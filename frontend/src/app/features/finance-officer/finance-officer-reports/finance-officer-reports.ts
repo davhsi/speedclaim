@@ -20,11 +20,31 @@ export class FinanceOfficerReportsComponent implements OnInit {
   summary = signal<PaymentSummaryDto | null>(null);
   exporting = signal(false);
 
-  summaryPeriod = 'Jun 2026';
-  exportFrom = '2026-01-01';
-  exportTo = '2026-06-30';
+  summaryPeriod = this.formatPeriod(new Date());
+  exportFrom = this.formatDateInput(this.startOfCurrentHalfYear(new Date()));
+  exportTo = this.formatDateInput(new Date());
 
-  periods = ['Jun 2026', 'May 2026', 'Apr 2026', 'Mar 2026'];
+  periods = Array.from({ length: 4 }, (_, i) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - i);
+    return this.formatPeriod(d);
+  });
+
+  private formatPeriod(date: Date): string {
+    return date.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+  }
+
+  private formatDateInput(date: Date): string {
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  private startOfCurrentHalfYear(date: Date): Date {
+    const startMonth = date.getMonth() < 6 ? 0 : 6;
+    return new Date(date.getFullYear(), startMonth, 1);
+  }
 
   ngOnInit(): void {
     this.financeService.getOverduePolicies().subscribe({

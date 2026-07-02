@@ -16,7 +16,7 @@ export class ProfileService {
   }
 
   updateProfile(dto: Partial<UserDto>): Observable<ApiMessage> {
-    return this.http.put<ApiMessage>(`${this.api}/profile`, dto);
+    return this.http.patch<ApiMessage>(`${this.api}/profile`, dto);
   }
 
   addAddress(req: SingleAddressRequest): Observable<ApiMessage> {
@@ -24,7 +24,7 @@ export class ProfileService {
   }
 
   updateAddress(id: string, req: SingleAddressRequest): Observable<ApiMessage> {
-    return this.http.put<ApiMessage>(`${this.api}/addresses/${id}`, req);
+    return this.http.patch<ApiMessage>(`${this.api}/addresses/${id}`, req);
   }
 
   deleteAddress(id: string): Observable<ApiMessage> {
@@ -40,7 +40,7 @@ export class ProfileService {
   }
 
   updateFamilyMember(id: string, req: UpdateFamilyMemberRequest): Observable<ApiMessage> {
-    return this.http.put<ApiMessage>(`${this.api}/family/${id}`, req);
+    return this.http.patch<ApiMessage>(`${this.api}/family/${id}`, req);
   }
 
   deleteFamilyMember(id: string): Observable<ApiMessage> {
@@ -63,5 +63,11 @@ export class ProfileService {
     fd.append('frontDocument', file);
     fd.append('panNumber', panNumber);
     return this.http.post<KycRecordDto>(`${this.api}/kyc/pan`, fd);
+  }
+
+  uploadAvatar(file: File): Observable<{ avatarUrl: string }> {
+    const fd = new FormData();
+    fd.append('file', file);
+    return this.http.post<{ avatarUrl: string }>(`${this.api}/profile/avatar`, fd);
   }
 }

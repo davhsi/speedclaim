@@ -19,9 +19,10 @@ interface NavItem {
   styles: `
     :host { display: contents; }
     .ad-active {
-      background: rgba(15, 110, 140, 0.22) !important;
-      color: #7DD3E8 !important;
-      font-weight: 600;
+      background: rgba(245, 166, 35, 0.16) !important;
+      color: #F5A623 !important;
+      font-weight: 700;
+      box-shadow: inset 3px 0 0 #F5A623;
     }
   `,
 })
@@ -46,6 +47,10 @@ export class AdminSidebarComponent {
     const u = this.authService.currentUser();
     if (!u) return '?';
     return (u.firstName.charAt(0) + u.lastName.charAt(0)).toUpperCase();
+  }
+
+  userAvatar(): string | null {
+    return this.authService.currentUser()?.avatarUrl ?? null;
   }
 
   userName(): string {

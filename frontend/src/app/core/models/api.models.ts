@@ -72,24 +72,26 @@ export interface RegistrationResponse {
 export interface AuthUserDto {
   id: string;
   email: string;
-  salutationTitle: Salutation;
+  salutation: Salutation;
   firstName: string;
   lastName: string;
   fullName: string;
   phone: string;
   role: UserRole;
   maritalStatus: MaritalStatus;
+  avatarUrl?: string;
 }
 
 export interface UserDto extends AuthUserDto {
   gender: Gender;
-  dateOfBirth: string;
+  dateOfBirth?: string;
   customerId?: string;
   isEmailVerified: boolean;
   isActive: boolean;
   createdAt: string;
   permanentAddress?: AddressDto;
   currentAddress?: AddressDto;
+  kycApproved: boolean;
 }
 
 export interface AddressDto {
@@ -115,32 +117,34 @@ export interface SingleAddressRequest {
 
 export interface FamilyMemberDto {
   id: string;
-  name: string;
+  salutation: Salutation;
+  firstName: string;
+  lastName: string;
+  fullName: string;
   dateOfBirth: string;
-  relationship: Relationship;
   gender: Gender;
-  salutationTitle: Salutation;
-  appointeeName?: string;
-  phone?: string;
-  email?: string;
+  relationship: Relationship;
+  isDependent: boolean;
 }
 
 export interface AddFamilyMemberRequest {
-  name: string;
+  salutation: Salutation;
+  firstName: string;
+  lastName: string;
   dateOfBirth: string;
-  relationship: Relationship;
   gender: Gender;
-  salutationTitle: Salutation;
-  appointeeName?: string;
+  relationship: Relationship;
+  isDependent: boolean;
 }
 
 export interface UpdateFamilyMemberRequest {
-  name?: string;
-  dateOfBirth?: string;
-  relationship?: Relationship;
-  gender?: Gender;
-  salutationTitle?: Salutation;
-  appointeeName?: string;
+  salutation: Salutation;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  gender: Gender;
+  relationship: Relationship;
+  isDependent: boolean;
 }
 
 export interface KycRecordDto {
@@ -275,16 +279,17 @@ export interface ProposalMemberDto {
 }
 
 export interface NomineeDto {
-  id: number;
+  id: string;
   name: string;
   relationship: Relationship;
   sharePercentage: number;
   dateOfBirth: string;
+  isMinor?: boolean;
   appointeeName?: string;
 }
 
 export interface SubmittedDocumentDto {
-  id: number;
+  id: string;
   documentKey: string;
   documentName: string;
   filePath: string;
@@ -471,7 +476,7 @@ export interface RaiseGrievanceRequest {
 }
 
 export interface NotificationDto {
-  id: number;
+  id: string;
   title: string;
   message: string;
   type: NotificationType;

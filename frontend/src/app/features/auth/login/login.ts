@@ -1,8 +1,11 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+
+const SAVED_EMAIL_KEY = 'sc_saved_email';
 
 @Component({
   selector: 'app-login',
@@ -10,11 +13,12 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './login.html',
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
   private toast = inject(ToastService);
+  private platformId = inject(PLATFORM_ID);
 
   loading = signal(false);
   errorMessage = signal('');
@@ -28,7 +32,18 @@ export class LoginComponent {
   form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required],
+    rememberMe: [false],
   });
+
+  ngOnInit(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      const savedEmail = localStorage.getItem(SAVED_EMAIL_KEY);
+      if (savedEmail) {
+        this.form.controls.email.setValue(savedEmail);
+        this.form.controls.rememberMe.setValue(true);
+      }
+    }
+  }
 
   onSubmit(): void {
     if (this.form.invalid) {
@@ -42,7 +57,17 @@ export class LoginComponent {
     this.showRegisterLink.set(false);
     this.resendSuccess.set(false);
 
-    this.authService.login(this.form.getRawValue()).subscribe({
+    const { email, password, rememberMe } = this.form.getRawValue();
+
+    if (isPlatformBrowser(this.platformId)) {
+      if (rememberMe) {
+        localStorage.setItem(SAVED_EMAIL_KEY, email);
+      } else {
+        localStorage.removeItem(SAVED_EMAIL_KEY);
+      }
+    }
+
+    this.authService.login({ email, password }, rememberMe).subscribe({
       next: (res) => {
         this.loading.set(false);
         this.toast.success('Welcome back!');
@@ -63,7 +88,7 @@ export class LoginComponent {
         } else if (err.status === 422) {
           this.errorMessage.set(err.error?.detail || 'Please verify your email address before signing in.');
           this.showResendVerification.set(true);
-          this.lastEmail = this.form.getRawValue().email;
+          this.lastEmail = email;
         } else if (err.status === 0) {
           this.errorMessage.set('Unable to connect. Please check your internet connection.');
         } else {

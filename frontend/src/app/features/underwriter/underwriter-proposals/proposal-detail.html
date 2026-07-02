@@ -25,6 +25,19 @@
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             Risk facts
           </div>
+          @if (riskFlags().length > 0) {
+            <div class="flex flex-wrap gap-2 mb-3.5">
+              @for (flag of riskFlags(); track flag.label) {
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold rounded-full border"
+                      [style.color]="flag.color"
+                      [style.background]="flag.bg"
+                      [style.border-color]="flag.border">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" [attr.stroke]="flag.color" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                  {{ flag.label }}
+                </span>
+              }
+            </div>
+          }
           <div class="grid grid-cols-2 border border-line rounded-lg overflow-hidden">
             <div class="p-[11px_14px] border-b border-r border-line">
               <div class="text-[11px] font-semibold text-muted uppercase tracking-wide mb-1">Sum assured</div>

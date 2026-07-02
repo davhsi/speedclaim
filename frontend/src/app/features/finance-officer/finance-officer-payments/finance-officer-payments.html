@@ -88,7 +88,8 @@
     [message]="dialogMessage()"
     [confirmLabel]="dialogConfirmLabel()"
     [variant]="dialogVariant()"
+    [disabled]="actionInFlight()"
     (confirmed)="onConfirm()"
-    (cancelled)="dialogTarget.set(null)"
+    (cancelled)="!actionInFlight() && dialogTarget.set(null)"
   />
 }

@@ -21,20 +21,20 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label class="block text-[13px] font-medium text-body mb-1.5">Salutation</label>
-          <select formControlName="salutationTitle">
-            <option value="" disabled>Select</option>
-            @for (s of salutations; track s) { <option [value]="s">{{ s }}</option> }
-          </select>
+          <app-select formControlName="salutationTitle"
+                      [options]="salutations"
+                      placeholder="Select">
+          </app-select>
           @if (form.controls.salutationTitle.touched && form.controls.salutationTitle.errors?.['required']) {
             <p class="text-xs text-danger mt-0.5">Select a salutation.</p>
           }
         </div>
         <div>
           <label class="block text-[13px] font-medium text-body mb-1.5">Gender</label>
-          <select formControlName="gender">
-            <option value="" disabled>Select</option>
-            @for (g of genders; track g) { <option [value]="g">{{ g }}</option> }
-          </select>
+          <app-select formControlName="gender"
+                      [options]="genders"
+                      placeholder="Select">
+          </app-select>
           @if (form.controls.gender.touched && form.controls.gender.errors?.['required']) {
             <p class="text-xs text-danger mt-0.5">Select a gender.</p>
           }
@@ -89,10 +89,10 @@
       </div>
       <div>
         <label class="block text-[13px] font-medium text-body mb-1.5">Marital status</label>
-          <select formControlName="maritalStatus">
-            <option value="" disabled>Select</option>
-            @for (m of maritalStatuses; track m) { <option [value]="m">{{ m }}</option> }
-          </select>
+          <app-select formControlName="maritalStatus"
+                      [options]="maritalStatuses"
+                      placeholder="Select">
+          </app-select>
           @if (form.controls.maritalStatus.touched && form.controls.maritalStatus.errors?.['required']) {
             <p class="text-xs text-danger mt-0.5">Select a marital status.</p>
           }
@@ -199,10 +199,11 @@
           </div>
           <div>
             <label class="block text-[13px] font-medium text-body mb-1.5">State</label>
-            <select formControlName="state">
-              <option value="" disabled>Select state</option>
-              @for (state of states; track state) { <option [value]="state">{{ state }}</option> }
-            </select>
+            <app-select formControlName="state"
+                        [options]="states"
+                        placeholder="Select state"
+                        [searchable]="true">
+            </app-select>
             @if (form.controls.permanentAddress.controls.state.touched && form.controls.permanentAddress.controls.state.errors?.['required']) {
               <p class="text-xs text-danger mt-0.5">Select a state.</p>
             }
@@ -256,10 +257,11 @@
             </div>
             <div>
               <label class="block text-[13px] font-medium text-body mb-1.5">State</label>
-              <select formControlName="state">
-                <option value="" disabled>Select state</option>
-                @for (state of states; track state) { <option [value]="state">{{ state }}</option> }
-              </select>
+              <app-select formControlName="state"
+                          [options]="states"
+                          placeholder="Select state"
+                          [searchable]="true">
+              </app-select>
               @if (form.controls.currentAddress.controls.state.touched && form.controls.currentAddress.controls.state.errors?.['required']) {
                 <p class="text-xs text-danger mt-0.5">Select a state.</p>
               }

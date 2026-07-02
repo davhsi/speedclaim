@@ -85,7 +85,7 @@ export class AgentService {
   }
 
   updateProfile(req: { salutation: string; firstName: string; lastName: string; phone: string }): Observable<ApiMessage> {
-    return this.http.put<ApiMessage>('/api/v1/agents/profile', req);
+    return this.http.patch<ApiMessage>('/api/v1/agents/profile', req);
   }
 
   getRenewals(): Observable<RenewalReminderDto[]> {

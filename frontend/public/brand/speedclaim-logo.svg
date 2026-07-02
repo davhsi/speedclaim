@@ -1,8 +1,12 @@
-<svg width="220" height="56" viewBox="0 0 220 56" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SpeedClaim">
-  <rect width="220" height="56" rx="12" fill="#ffffff"/>
-  <path d="M28 8L46 15V28C46 39.5 38.5 46.2 28 50C17.5 46.2 10 39.5 10 28V15L28 8Z" fill="#0F6E8C"/>
-  <path d="M19 28.5L25.2 34.7L37.5 21.8" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M46 15V28C46 39.5 38.5 46.2 28 50V8L46 15Z" fill="#1F9D6B" fill-opacity=".22"/>
-  <text x="58" y="25" fill="#1A2230" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="-.3">SpeedClaim</text>
-  <text x="59" y="41" fill="#6B7685" font-family="Inter, Arial, sans-serif" font-size="10.5" font-weight="600" letter-spacing=".8">INSURANCE</text>
+<svg width="226" height="56" viewBox="0 0 226 56" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SpeedClaim Insurance">
+  <rect width="226" height="56" rx="12" fill="#FFFFFF"/>
+  <g transform="translate(6 4) scale(.75)">
+    <rect width="64" height="64" rx="14" fill="#091520"/>
+    <text x="24" y="50" font-family="'Impact','Arial Black','Helvetica Neue',Arial,sans-serif"
+          font-size="46" font-weight="900" font-style="italic"
+          fill="#FFFFFF" text-anchor="middle">S</text>
+    <line x1="42" y1="52" x2="53" y2="13" stroke="#F5A623" stroke-width="6.5" stroke-linecap="round"/>
+  </g>
+  <text x="64" y="26" fill="#1A2230" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800">SpeedClaim</text>
+  <text x="65" y="42" fill="#6B7685" font-family="Inter, Arial, sans-serif" font-size="10.5" font-weight="700" letter-spacing=".8">INSURANCE</text>
 </svg>

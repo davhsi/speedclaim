@@ -5,6 +5,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { passwordStrengthValidator, matchPasswordValidator } from '../../../shared/validators/password.validator';
 import { aadhaarValidator, panValidator, postalCodeValidator, phoneValidator, minAgeValidator } from '../../../shared/validators/input.validators';
+import { AppSelectComponent } from '../../../shared/components/app-select/app-select';
 
 const INDIAN_STATES = [
   'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat',
@@ -19,7 +20,7 @@ const INDIAN_STATES = [
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, AppSelectComponent],
   templateUrl: './register.html',
   styles: `
     :host { display: block; }

@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge';
@@ -26,6 +26,16 @@ export class ClaimListComponent implements OnInit {
   totalPages = signal(1);
   totalRecords = signal(0);
   loading = signal(false);
+  filteredClaims = computed(() => {
+    const q = this.searchQuery.trim().toLowerCase();
+    if (!q) return this.claims();
+    return this.claims().filter(claim =>
+      claim.claimNumber.toLowerCase().includes(q) ||
+      (claim.customerName ?? '').toLowerCase().includes(q) ||
+      (claim.policyNumber ?? '').toLowerCase().includes(q) ||
+      claim.id.toLowerCase().includes(q)
+    );
+  });
 
   typeFilter = '';
   statusFilter = '';
@@ -41,6 +51,10 @@ export class ClaimListComponent implements OnInit {
   onFilterChange(): void {
     this.currentPage.set(1);
     this.loadClaims();
+  }
+
+  onSearchChange(): void {
+    this.currentPage.set(1);
   }
 
   onPageChange(page: number): void {
@@ -67,7 +81,8 @@ export class ClaimListComponent implements OnInit {
     const map: Record<string, string> = {
       Motor: 'bg-info-bg text-info',
       Health: 'bg-success-bg text-success',
-      Life: 'bg-warning-bg text-warning',
+      Death: 'bg-surface-alt text-muted',
+      Maturity: 'bg-surface-alt text-muted',
       Accident: 'bg-info-bg text-info',
       Theft: 'bg-danger-bg text-danger',
       NaturalDamage: 'bg-warning-bg text-warning',

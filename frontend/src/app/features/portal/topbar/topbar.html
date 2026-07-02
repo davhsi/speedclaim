@@ -1,14 +1,12 @@
 <header class="h-14 shrink-0 bg-white border-b border-line flex items-center gap-3 px-5 sticky top-0 z-20">
   <!-- Mobile: Logo -->
   <div class="flex items-center gap-2 flex-1 lg:hidden">
-    <button class="p-1.5 rounded-control hover:bg-surface-alt text-muted mr-1" (click)="menuToggle.emit()">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <button class="p-1.5 rounded-control hover:bg-surface-alt text-muted mr-1" (click)="menuToggle.emit()" aria-label="Open navigation menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
         <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
       </svg>
     </button>
-    <div class="w-7 h-7 rounded-[7px] bg-primary flex items-center justify-center">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-    </div>
+    <img src="/brand/speedclaim-mark.svg" alt="" class="w-7 h-7 rounded-[7px]" />
     <span class="text-[15px] font-bold text-ink">SpeedClaim</span>
   </div>
 
@@ -16,7 +14,7 @@
   <div class="hidden lg:flex flex-1 text-[15px] font-semibold text-ink">{{ pageTitle() }}</div>
 
   <!-- Right: Bell + Avatar -->
-  <a routerLink="/notifications" class="relative p-2 text-body hover:text-ink transition-colors">
+  <a routerLink="/notifications" class="relative p-2 text-body hover:text-ink transition-colors" [attr.aria-label]="notifService.unreadCount() > 0 ? 'Notifications, ' + notifService.unreadCount() + ' unread' : 'Notifications'">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
     @if (notifService.unreadCount() > 0) {
       <span class="absolute top-[5px] right-[5px] min-w-[15px] h-[15px] bg-danger text-white text-[9px] font-bold rounded-full flex items-center justify-center px-[3px] border-[1.5px] border-white">
@@ -24,7 +22,38 @@
       </span>
     }
   </a>
-  <a routerLink="/profile" class="w-[30px] h-[30px] rounded-full bg-primary-light text-primary flex items-center justify-center text-[11px] font-bold cursor-pointer">
-    {{ userInitial() }}
-  </a>
+  <!-- Profile dropdown -->
+  <div class="relative">
+    <button (click)="profileMenuOpen.update(v => !v)"
+            class="w-[30px] h-[30px] rounded-full overflow-hidden bg-primary-light text-primary flex items-center justify-center text-[11px] font-bold cursor-pointer border-none select-none">
+      @if (avatarUrl()) {
+        <img [src]="avatarUrl()!" alt="" class="w-full h-full object-cover" />
+      } @else {
+        {{ userInitial() }}
+      }
+    </button>
+    @if (profileMenuOpen()) {
+      <div class="fixed inset-0 z-40" (click)="profileMenuOpen.set(false)"></div>
+      <div class="absolute top-[calc(100%+8px)] right-0 w-[200px] bg-white border border-line rounded-card shadow-dropdown z-50 overflow-hidden animate-sc-fade-fast">
+        <div class="px-4 py-3 border-b border-line">
+          <div class="text-[13px] font-semibold text-ink truncate">{{ userName() }}</div>
+          <div class="text-[11px] text-muted">Customer</div>
+        </div>
+        <a routerLink="/profile" (click)="profileMenuOpen.set(false)"
+           class="flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-body hover:bg-surface transition-colors no-underline">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+          My profile
+        </a>
+        <button (click)="logout()"
+                class="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-danger hover:bg-danger-bg transition-colors border-none border-t border-line bg-transparent cursor-pointer">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          Sign out
+        </button>
+      </div>
+    }
+  </div>
 </header>

@@ -26,6 +26,7 @@ export class FinanceOfficerCommissionsComponent implements OnInit {
 
   dialogTarget = signal<AgentCommissionDto | null>(null);
   dialogMessage = signal('');
+  actionInFlight = signal(false);
 
   pendingCount = computed(() => this.allCommissions().filter(c => c.status === 'Pending').length);
   pendingTotal = computed(() => {
@@ -65,16 +66,20 @@ export class FinanceOfficerCommissionsComponent implements OnInit {
 
   onConfirmApprove(): void {
     const target = this.dialogTarget();
-    if (!target) return;
+    if (!target || this.actionInFlight()) return;
+    this.actionInFlight.set(true);
 
     this.financeService.approveCommission(target.id).subscribe({
       next: () => {
         this.allCommissions.update(list => list.map(c => c.id === target.id ? { ...c, status: 'Paid' } : c));
         this.toast.success(`Commission of ${this.moneyPipe.transform(target.commissionAmount)} approved and paid to ${target.agentName}`);
+        this.dialogTarget.set(null);
+        this.actionInFlight.set(false);
       },
-      error: () => this.toast.error('Failed to approve commission'),
+      error: () => {
+        this.toast.error('Failed to approve commission');
+        this.actionInFlight.set(false);
+      },
     });
-
-    this.dialogTarget.set(null);
   }
 }

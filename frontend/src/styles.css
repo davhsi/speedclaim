@@ -5,41 +5,47 @@
   --font-mono: "JetBrains Mono", "Cascadia Code", "Fira Code", "Courier New", monospace;
   --font-display: "Plus Jakarta Sans", "Inter", sans-serif;
 
-  --color-primary: #0F6E8C;
-  --color-primary-dark: #0A5469;
-  --color-primary-hover: #0D6280;
-  --color-primary-light: #E6F4F8;
-  --color-primary-muted: #B3D9E6;
+  --color-primary: #091520;
+  --color-primary-dark: #050B11;
+  --color-primary-hover: #111E2B;
+  --color-primary-light: #EEF0F3;
+  --color-primary-muted: #C9CED6;
 
-  --color-accent: #F2784B;
-  --color-accent-dark: #D45E2F;
-  --color-accent-hover: #E06840;
-  --color-accent-light: #FEF0EA;
+  --color-accent: #F5A623;
+  --color-accent-dark: #C4801A;
+  --color-accent-hover: #E09A1F;
+  --color-accent-light: #FFF4DE;
 
-  --color-ink: #1A2230;
-  --color-body: #3C4654;
-  --color-muted: #6B7685;
-  --color-line: #E2E6EB;
-  --color-surface: #F7F9FA;
-  --color-surface-alt: #EEF1F4;
+  --color-ink: #111827;
+  --color-body: #374151;
+  --color-muted: #6B7280;
+  --color-line: #E5E7EB;
+  --color-surface: #F6F7F9;
+  --color-surface-alt: #ECEFF3;
 
   --color-success: #1F9D6B;
   --color-success-bg: #E8F7F1;
   --color-success-border: #B2E4CE;
 
-  --color-warning: #D9920A;
-  --color-warning-bg: #FEF6E6;
-  --color-warning-border: #FAD88A;
+  --color-warning: #9A6700;
+  --color-warning-bg: #FFF4DE;
+  --color-warning-border: #FAD78A;
 
   --color-danger: #D14343;
   --color-danger-bg: #FBE9E9;
   --color-danger-border: #F5B4B4;
 
-  --color-info: #2D7FF9;
-  --color-info-bg: #E8F0FE;
-  --color-info-border: #B0CCFC;
+  --color-info: #0F6E8C;
+  --color-info-bg: #E6F4F8;
+  --color-info-border: #B3D9E6;
 
-  --color-sidebar: #12202F;
+  --color-gold: #F5A623;
+  --color-gold-dark: #C4801A;
+  --color-gold-hover: #E09A1F;
+  --color-gold-light: #FFF4DE;
+  --color-gold-muted: #FAD78A;
+
+  --color-sidebar: #091520;
 
   --radius-sm: 4px;
   --radius-control: 8px;
@@ -47,13 +53,13 @@
   --radius-modal: 16px;
   --radius-full: 999px;
 
-  --shadow-xs: 0 1px 2px rgba(26, 34, 48, 0.05);
-  --shadow-sm: 0 1px 4px rgba(26, 34, 48, 0.08);
-  --shadow-md: 0 4px 12px rgba(26, 34, 48, 0.10);
-  --shadow-lg: 0 8px 24px rgba(26, 34, 48, 0.12);
-  --shadow-dropdown: 0 4px 16px rgba(26, 34, 48, 0.12);
-  --shadow-modal: 0 16px 48px rgba(26, 34, 48, 0.18);
-  --shadow-focus: 0 0 0 3px rgba(15, 110, 140, 0.25);
+  --shadow-xs: 0 1px 2px rgba(9, 21, 32, 0.05);
+  --shadow-sm: 0 1px 4px rgba(9, 21, 32, 0.08);
+  --shadow-md: 0 4px 12px rgba(9, 21, 32, 0.10);
+  --shadow-lg: 0 8px 24px rgba(9, 21, 32, 0.12);
+  --shadow-dropdown: 0 4px 16px rgba(9, 21, 32, 0.12);
+  --shadow-modal: 0 16px 48px rgba(9, 21, 32, 0.18);
+  --shadow-focus: 0 0 0 3px rgba(245, 166, 35, 0.28);
 }
 
 @layer base {
@@ -111,6 +117,41 @@
     outline: none;
     border-color: var(--color-primary);
     box-shadow: var(--shadow-focus);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  [role="button"]:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  .skip-link {
+    position: absolute;
+    top: -100%;
+    left: 8px;
+    z-index: 9999;
+    background: var(--color-primary);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 0 0 6px 6px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: top 0s;
+  }
+
+  .skip-link:focus {
+    top: 0;
+    outline: 2px solid white;
+    outline-offset: 2px;
   }
 
   input.ng-invalid.ng-touched,

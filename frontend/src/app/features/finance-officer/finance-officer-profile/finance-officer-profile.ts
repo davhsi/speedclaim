@@ -36,10 +36,6 @@ export class FinanceOfficerProfileComponent implements OnInit {
     return (u.firstName.charAt(0) + u.lastName.charAt(0)).toUpperCase();
   }
 
-  branch(): string {
-    return 'Head Office';
-  }
-
   onLogout(): void {
     this.authService.logout();
   }
@@ -63,13 +59,28 @@ export class FinanceOfficerProfileComponent implements OnInit {
 
   onSave(): void {
     if (this.saving()) return;
+    const [firstName, ...lastNameParts] = this.profileName.trim().split(/\s+/).filter(Boolean);
+    if (!firstName || lastNameParts.length === 0) {
+      this.toast.error('Enter both first and last name');
+      return;
+    }
+
+    const currentUser = this.authService.currentUser();
     this.saving.set(true);
     this.financeService.updateProfile({
-      name: this.profileName,
-      email: this.profileEmail,
+      firstName,
+      lastName: lastNameParts.join(' '),
       phone: this.profilePhone,
+      salutation: currentUser?.salutation ?? 'Mr',
+      maritalStatus: currentUser?.maritalStatus ?? 'Single',
     }).subscribe({
       next: () => {
+        this.authService.patchCurrentUser({
+          firstName,
+          lastName: lastNameParts.join(' '),
+          fullName: `${firstName} ${lastNameParts.join(' ')}`,
+          phone: this.profilePhone,
+        });
         this.toast.success('Profile updated successfully');
         this.saving.set(false);
       },

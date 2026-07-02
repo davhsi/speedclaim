@@ -1,6 +1,6 @@
 import { Component, signal, inject, PLATFORM_ID, OnInit } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
+import { RouterOutlet, RouterLink, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs';
 import { ClaimsOfficerSidebarComponent } from '../claims-officer-sidebar/claims-officer-sidebar';
 import { AuthService } from '../../../core/services/auth.service';
@@ -11,7 +11,7 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 @Component({
   selector: 'app-claims-officer-layout',
   standalone: true,
-  imports: [RouterOutlet, ClaimsOfficerSidebarComponent, TimeAgoPipe],
+  imports: [RouterOutlet, RouterLink, ClaimsOfficerSidebarComponent, TimeAgoPipe],
   templateUrl: './claims-officer-layout.html',
 })
 export class ClaimsOfficerLayoutComponent implements OnInit {
@@ -23,6 +23,7 @@ export class ClaimsOfficerLayoutComponent implements OnInit {
   sidebarCollapsed = signal(true);
   pageTitle = signal('Dashboard');
   notifPanelOpen = signal(false);
+  profileMenuOpen = signal(false);
 
   private pageTitles: [string, string][] = [
     ['/claims-officer/claims/', 'Claim detail'],
@@ -56,7 +57,22 @@ export class ClaimsOfficerLayoutComponent implements OnInit {
   }
 
   toggleNotifPanel(): void {
+    this.profileMenuOpen.set(false);
     this.notifPanelOpen.update(v => !v);
+  }
+
+  toggleProfileMenu(): void {
+    this.notifPanelOpen.set(false);
+    this.profileMenuOpen.update(v => !v);
+  }
+
+  logout(): void {
+    this.authService.logout();
+  }
+
+  userName(): string {
+    const u = this.authService.currentUser();
+    return u ? `${u.firstName} ${u.lastName}` : '';
   }
 
   onMarkAllRead(): void {

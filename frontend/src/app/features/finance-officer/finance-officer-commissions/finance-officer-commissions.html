@@ -77,7 +77,8 @@
     title="Approve commission"
     [message]="dialogMessage()"
     confirmLabel="Approve & pay"
+    [disabled]="actionInFlight()"
     (confirmed)="onConfirmApprove()"
-    (cancelled)="dialogTarget.set(null)"
+    (cancelled)="!actionInFlight() && dialogTarget.set(null)"
   />
 }

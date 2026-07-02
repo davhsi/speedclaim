@@ -1,0 +1,68 @@
+<button
+  type="button"
+  class="sc-trigger"
+  [class.is-open]="isOpen()"
+  [class.is-invalid]="isInvalid"
+  [disabled]="isDisabled"
+  (click)="toggle()"
+  [attr.aria-expanded]="isOpen()"
+  aria-haspopup="listbox"
+>
+  <span [style.color]="displayValue ? '' : 'var(--color-muted)'">
+    {{ displayValue || placeholder }}
+  </span>
+  <svg class="sc-chevron" [class.rotated]="isOpen()"
+       width="14" height="14" viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" stroke-width="2.5"
+       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <polyline points="6 9 12 15 18 9"/>
+  </svg>
+</button>
+
+@if (isOpen()) {
+  <div class="sc-panel" role="listbox" [attr.aria-label]="placeholder">
+
+    @if (searchable) {
+      <div class="sc-search">
+        <input
+          #searchInput
+          type="text"
+          [ngModel]="query()"
+          (ngModelChange)="query.set($event)"
+          placeholder="Search…"
+          autocomplete="off"
+          (click)="$event.stopPropagation()"
+          aria-label="Search options"
+        />
+      </div>
+    }
+
+    <div class="sc-list">
+      @for (opt of filtered(); track opt) {
+        <button
+          type="button"
+          class="sc-option"
+          [class.is-selected]="opt === displayValue"
+          (click)="pick(opt)"
+          role="option"
+          [attr.aria-selected]="opt === displayValue"
+        >
+          @if (opt === displayValue) {
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="3"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          } @else {
+            <span style="width:13px; display:inline-block;"></span>
+          }
+          {{ opt }}
+        </button>
+      }
+      @if (filtered().length === 0) {
+        <div class="sc-empty">No results for "{{ query() }}"</div>
+      }
+    </div>
+
+  </div>
+}

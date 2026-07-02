@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { DatePipe } from '@angular/common';
 import { PaymentService } from '../services/payment.service';
 import { PaymentRecordDto } from '../../../../core/models/api.models';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge';
@@ -10,19 +10,30 @@ import { DateFormatPipe } from '../../../../shared/pipes/date-format.pipe';
 @Component({
   selector: 'app-payment-history',
   standalone: true,
-  imports: [StatusBadgeComponent, EmptyStateComponent, MoneyPipe, DateFormatPipe],
+  imports: [StatusBadgeComponent, EmptyStateComponent, MoneyPipe, DateFormatPipe, DatePipe],
   templateUrl: './payment-history.html',
 })
 export class PaymentHistoryComponent implements OnInit {
   private paymentService = inject(PaymentService);
   payments = signal<PaymentRecordDto[]>([]);
   loading = signal(true);
+  receipt = signal<PaymentRecordDto | null>(null);
 
   ngOnInit(): void {
     this.paymentService.getHistory().subscribe({
       next: data => { this.payments.set(data); this.loading.set(false); },
       error: () => this.loading.set(false),
     });
+  }
+
+  openReceipt(p: PaymentRecordDto): void { this.receipt.set(p); }
+  closeReceipt(): void { this.receipt.set(null); }
+
+  printReceipt(): void { window.print(); }
+
+  receiptRef(p: PaymentRecordDto): string {
+    const id = p.stripePaymentIntentId ?? p.id;
+    return id.slice(-12).toUpperCase();
   }
 
   formatPaymentType(type: string): string {

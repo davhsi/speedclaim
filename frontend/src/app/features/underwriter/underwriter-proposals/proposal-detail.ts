@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog';
@@ -25,6 +25,25 @@ export class ProposalDetailComponent implements OnInit {
 
   proposal = signal<ProposalDto | null>(null);
   product = signal<ProductDto | null>(null);
+
+  riskFlags = computed(() => {
+    const p = this.proposal();
+    if (!p) return [];
+    const flags: { label: string; color: string; bg: string; border: string }[] = [];
+    const sa = p.sumAssured ?? 0;
+    if (sa >= 10_000_000) {
+      flags.push({ label: `Very high value · ${this.formatCr(sa)}`, color: '#D14343', bg: '#FBE9E9', border: '#F5B4B4' });
+    } else if (sa >= 2_500_000) {
+      flags.push({ label: `High value · ${this.formatL(sa)}`, color: '#D9920A', bg: '#FEF6E6', border: '#FAD88A' });
+    }
+    if ((p.tenureYears ?? 0) >= 20) {
+      flags.push({ label: `Long tenure · ${p.tenureYears} years`, color: '#0F6E8C', bg: '#E6F4F8', border: '#B3D9E6' });
+    }
+    return flags;
+  });
+
+  private formatL(amount: number): string { return (amount / 100_000).toFixed(0) + 'L'; }
+  private formatCr(amount: number): string { return (amount / 10_000_000).toFixed(1) + 'Cr'; }
   showDialog = signal<'approve' | 'reject' | 'docs' | null>(null);
   actionInFlight = signal(false);
   notes = '';

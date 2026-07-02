@@ -23,9 +23,10 @@ interface NavItem {
   styles: `
     :host { display: contents; }
     .active-link {
-      background: var(--color-primary-light) !important;
-      color: var(--color-primary) !important;
-      font-weight: 600;
+      background: var(--color-gold-light) !important;
+      color: var(--color-gold-dark) !important;
+      font-weight: 700;
+      box-shadow: inset 3px 0 0 var(--color-gold);
     }
   `,
 })
@@ -68,6 +69,10 @@ export class SidebarComponent {
     const u = this.authService.currentUser();
     if (!u) return '?';
     return (u.firstName.charAt(0) + u.lastName.charAt(0)).toUpperCase();
+  }
+
+  userAvatar(): string | null {
+    return this.authService.currentUser()?.avatarUrl ?? null;
   }
 
   userName(): string {

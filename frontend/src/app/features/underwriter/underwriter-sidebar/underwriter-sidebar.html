@@ -4,13 +4,11 @@
 <aside
   class="fixed top-0 left-0 h-full z-50 flex flex-col w-[244px] transition-transform duration-200 ease-out"
   [class]="collapsed() ? '-translate-x-full lg:translate-x-0' : 'translate-x-0'"
-  style="background: #12202F; border-right: 1px solid rgba(255,255,255,.08);"
+  style="background: var(--color-sidebar); border-right: 1px solid rgba(255,255,255,.07);"
 >
   <!-- Logo -->
   <div class="flex items-center gap-[10px] px-4 py-[18px] shrink-0" style="border-bottom: 1px solid rgba(255,255,255,.08);">
-    <div class="w-[30px] h-[30px] rounded-lg bg-primary flex items-center justify-center shrink-0">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-    </div>
+    <img src="/brand/speedclaim-mark.svg" alt="" class="w-[30px] h-[30px] rounded-lg shrink-0" />
     <div>
       <div class="text-sm font-bold text-white leading-tight">SpeedClaim</div>
       <div class="text-[10px] font-semibold mt-px" style="color: rgba(255,255,255,.45); letter-spacing: .06em;">UNDERWRITER</div>
@@ -39,8 +37,12 @@
 
   <!-- User Footer -->
   <div class="px-3 py-3 flex items-center gap-2.5" style="border-top: 1px solid rgba(255,255,255,.08);">
-    <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold shrink-0">
-      {{ userInitials() }}
+    <div class="w-8 h-8 rounded-full bg-gold text-sidebar flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden">
+      @if (userAvatar()) {
+        <img [src]="userAvatar()" alt="Profile" class="w-full h-full object-cover" />
+      } @else {
+        {{ userInitials() }}
+      }
     </div>
     <div class="flex-1 min-w-0">
       <div class="text-[13px] font-semibold text-white truncate">{{ userName() }}</div>

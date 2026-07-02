@@ -32,7 +32,7 @@ export class AgentDashboardComponent implements OnInit {
   dashboard = signal<AgentDashboardDto | null>(null);
   renewals = signal<RenewalReminderDto[]>([]);
   pendingProposals = 0;
-  newCustomersThisMonth = 3;
+  newCustomersThisMonth = 0;
 
   recentActivity: ActivityItem[] = [];
 
@@ -41,13 +41,20 @@ export class AgentDashboardComponent implements OnInit {
       dashboard: this.agentService.getDashboard(),
       renewals: this.agentService.getRenewals(),
       proposals: this.agentService.getMyProposals(),
+      customers: this.agentService.getCustomers(),
     }).subscribe({
-      next: ({ dashboard, renewals, proposals }) => {
+      next: ({ dashboard, renewals, proposals, customers }) => {
         this.dashboard.set(dashboard);
         this.renewals.set(renewals);
         this.pendingProposals = proposals.filter(p =>
           p.status === 'Submitted' || p.status === 'UnderReview',
         ).length;
+
+        const now = new Date();
+        this.newCustomersThisMonth = customers.filter(c => {
+          const d = new Date(c.createdAt);
+          return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+        }).length;
 
         this.recentActivity = this.buildActivity(renewals, proposals);
         this.loading.set(false);

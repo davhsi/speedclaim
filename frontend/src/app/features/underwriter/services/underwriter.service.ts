@@ -50,7 +50,7 @@ export class UnderwriterService {
   }
 
   updateNotes(id: string, notes: string): Observable<ApiMessage> {
-    return this.http.put<ApiMessage>(`/api/v1/proposals/${id}/notes`, { notes });
+    return this.http.patch<ApiMessage>(`/api/v1/proposals/${id}/notes`, { notes });
   }
 
   // ── KYC ──
@@ -94,7 +94,7 @@ export class UnderwriterService {
 
   // ── Profile ──
   updateProfile(data: { firstName: string; lastName: string; phone: string }): Observable<ApiMessage> {
-    return this.http.put<ApiMessage>('/api/v1/users/profile', data);
+    return this.http.patch<ApiMessage>('/api/v1/users/profile', data);
   }
 
   requestPasswordReset(email: string): Observable<ApiMessage> {
