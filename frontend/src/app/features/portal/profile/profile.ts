@@ -35,6 +35,7 @@ export class ProfileComponent implements OnInit {
   deleteConfirm = signal<{ type: string; id: string } | null>(null);
   tabs = ['Personal Info', 'Family Members', 'KYC'];
   maritalStatuses = ['Single', 'Married', 'Divorced', 'Widowed'];
+  salutations = ['Mr', 'Mrs', 'Ms', 'Dr', 'Prof'];
 
   avatarPreview = signal<string | null>(null);
   avatarUploading = signal(false);
@@ -61,6 +62,7 @@ export class ProfileComponent implements OnInit {
   kycApproved = computed(() => this.profile()?.kycApproved ?? false);
 
   profileForm = this.fb.group({
+    salutation: ['Mr'],
     firstName: ['', Validators.required],
     lastName: ['', Validators.required],
     email: [{ value: '', disabled: true }],
