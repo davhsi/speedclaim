@@ -14,8 +14,12 @@
     <div class="bg-white border border-line rounded-card shadow-sm p-6 mb-5 space-y-3.5" [formGroup]="memberForm">
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         <div>
-          <label class="block text-xs text-muted mb-1.5">Full name</label>
-          <input formControlName="name" class="h-[42px]" placeholder="e.g., Priya Sharma" />
+          <label class="block text-xs text-muted mb-1.5">First name</label>
+          <input formControlName="firstName" class="h-[42px]" placeholder="e.g., Priya" />
+        </div>
+        <div>
+          <label class="block text-xs text-muted mb-1.5">Last name</label>
+          <input formControlName="lastName" class="h-[42px]" placeholder="e.g., Sharma" />
         </div>
         <div>
           <label class="block text-xs text-muted mb-1.5">Date of birth</label>
@@ -53,10 +57,10 @@
     @for (m of members(); track m.id) {
       <div class="flex items-center gap-3.5 px-[18px] py-4 border-b border-line last:border-0">
         <div class="w-10 h-10 rounded-full bg-primary-light text-primary flex items-center justify-center text-[13px] font-bold shrink-0">
-          {{ m.name.charAt(0) }}
+          {{ m.fullName.charAt(0) }}
         </div>
         <div class="flex-1 min-w-0">
-          <div class="text-sm font-semibold text-ink">{{ m.name }}</div>
+          <div class="text-sm font-semibold text-ink">{{ m.fullName }}</div>
           <div class="text-xs text-muted sc-numeric">{{ m.relationship }} · {{ m.dateOfBirth | dateFormat }} · {{ m.gender }}</div>
         </div>
         <span

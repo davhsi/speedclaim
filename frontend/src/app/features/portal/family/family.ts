@@ -22,11 +22,12 @@ export class FamilyComponent implements OnInit {
   deleteTarget = signal<string | null>(null);
 
   memberForm = this.fb.group({
-    name: ['', Validators.required],
+    firstName: ['', Validators.required],
+    lastName: ['', Validators.required],
     dateOfBirth: ['', Validators.required],
     relationship: ['Spouse', Validators.required],
     gender: ['Male', Validators.required],
-    salutationTitle: ['Mr'],
+    salutation: ['Mr'],
   });
 
   ngOnInit(): void {
@@ -34,12 +35,13 @@ export class FamilyComponent implements OnInit {
   }
 
   addMember(): void {
-    this.profileService.addFamilyMember(this.memberForm.getRawValue() as AddFamilyMemberRequest).subscribe({
+    const v = this.memberForm.getRawValue();
+    this.profileService.addFamilyMember({ ...v, isDependent: true } as AddFamilyMemberRequest).subscribe({
       next: member => {
         this.members.update(m => [...m, member]);
         this.toast.success('Family member added');
         this.showForm.set(false);
-        this.memberForm.reset({ relationship: 'Spouse', gender: 'Male', salutationTitle: 'Mr' });
+        this.memberForm.reset({ relationship: 'Spouse', gender: 'Male', salutation: 'Mr' });
       },
       error: () => this.toast.error('Failed to add member'),
     });
