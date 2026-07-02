@@ -63,31 +63,40 @@
         <div class="text-[15px] font-semibold text-ink mb-2">Nominees</div>
         <p class="text-sm text-muted mb-4">Add at least one nominee. Shares must total 100%.</p>
         @for (n of nominees.controls; track $index; let i = $index) {
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-surface rounded-[10px] mb-3" [formGroup]="nominees.at(i)">
-            <div>
-              <label class="block text-xs text-muted mb-1">Name</label>
-              <input formControlName="name" placeholder="Full name" class="h-[42px]" />
-            </div>
-            <div>
-              <label class="block text-xs text-muted mb-1">Relationship</label>
-              <select formControlName="relationship" class="h-[42px]">
-                <option value="Spouse">Spouse</option><option value="Son">Son</option><option value="Daughter">Daughter</option>
-                <option value="Father">Father</option><option value="Mother">Mother</option><option value="Other">Other</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs text-muted mb-1">Share %</label>
-              <input type="number" formControlName="sharePercentage" placeholder="%" class="h-[42px] sc-numeric" />
-            </div>
-            <div>
-              <label class="block text-xs text-muted mb-1">DOB</label>
-              <div class="flex items-center gap-2">
-                <input type="date" formControlName="dateOfBirth" class="h-[42px] flex-1" />
-                <button class="text-danger hover:text-red-700 shrink-0 p-1" (click)="nominees.removeAt(i)">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
+          <div class="p-4 bg-surface rounded-[10px] mb-3" [formGroup]="nominees.at(i)">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div>
+                <label class="block text-xs text-muted mb-1">Name</label>
+                <input formControlName="name" placeholder="Full name" class="h-[42px]" />
+              </div>
+              <div>
+                <label class="block text-xs text-muted mb-1">Relationship</label>
+                <select formControlName="relationship" class="h-[42px]">
+                  <option value="Spouse">Spouse</option><option value="Son">Son</option><option value="Daughter">Daughter</option>
+                  <option value="Father">Father</option><option value="Mother">Mother</option><option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-muted mb-1">Share %</label>
+                <input type="number" formControlName="sharePercentage" placeholder="%" class="h-[42px] sc-numeric" />
+              </div>
+              <div>
+                <label class="block text-xs text-muted mb-1">DOB</label>
+                <div class="flex items-center gap-2">
+                  <input type="date" formControlName="dateOfBirth" class="h-[42px] flex-1" />
+                  <button class="text-danger hover:text-red-700 shrink-0 p-1" (click)="nominees.removeAt(i)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
               </div>
             </div>
+            @if (isMinorNominee(i)) {
+              <div class="mt-3">
+                <label class="block text-xs text-muted mb-1">Appointee name <span class="text-danger">*</span></label>
+                <input formControlName="appointeeName" placeholder="Guardian / appointee full name" class="h-[42px]" />
+                <p class="text-[11px] text-muted mt-1">Required because this nominee is a minor (under 18).</p>
+              </div>
+            }
           </div>
         }
         <button class="text-[13px] text-primary font-semibold hover:underline" (click)="addNominee()">+ Add Nominee</button>

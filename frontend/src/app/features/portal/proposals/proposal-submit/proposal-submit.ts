@@ -67,17 +67,25 @@ export class ProposalSubmitComponent implements OnInit {
       relationship: ['Spouse', Validators.required],
       sharePercentage: [100, [Validators.required, Validators.min(1), Validators.max(100)]],
       dateOfBirth: ['', Validators.required],
+      appointeeName: [''],
     });
   }
 
   addNominee(): void { this.nominees.push(this.createNomineeGroup()); }
+
+  isMinorNominee(index: number): boolean {
+    return this.isMinor(this.nominees.at(index).get('dateOfBirth')?.value ?? '');
+  }
 
   get totalShares(): number {
     return this.nominees.controls.reduce((sum, g) => sum + (Number(g.get('sharePercentage')?.value) || 0), 0);
   }
 
   get nomineesValid(): boolean {
-    return this.nominees.valid && this.nominees.length > 0 && this.totalShares === 100;
+    if (!this.nominees.valid || this.nominees.length === 0 || this.totalShares !== 100) return false;
+    return this.nominees.controls.every((_, i) =>
+      !this.isMinorNominee(i) || !!this.nominees.at(i).get('appointeeName')?.value?.trim()
+    );
   }
 
   onDocSelected(key: string, file: File): void { this.uploadedFiles.set(key, file); }
@@ -133,6 +141,7 @@ export class ProposalSubmitComponent implements OnInit {
         sharePercentage: n.sharePercentage!,
         dateOfBirth: n.dateOfBirth!,
         isMinor: this.isMinor(n.dateOfBirth!),
+        appointeeName: n.appointeeName?.trim() || undefined,
       })),
     };
     this.proposalService.submit(req).subscribe({
