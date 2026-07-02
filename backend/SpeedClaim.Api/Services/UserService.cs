@@ -44,6 +44,8 @@ public class UserService : IUserService
 
         string maritalStatus = "Single";
         Guid? customerId = null;
+        DateOnly? dateOfBirth = null;
+        bool kycApproved = false;
         if (user.Role == UserRole.Customer)
         {
             var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == uid);
@@ -51,7 +53,10 @@ public class UserService : IUserService
             {
                 customerId = customer.Id;
                 maritalStatus = customer.MaritalStatus.ToString();
+                dateOfBirth = customer.DateOfBirth;
             }
+            var kycRecord = await _unitOfWork.KycRecords.FirstOrDefaultAsync(k => k.UserId == uid);
+            kycApproved = kycRecord?.KycStatus == KycStatus.Approved;
         }
 
         return new UserDto(
@@ -69,21 +74,38 @@ public class UserService : IUserService
             user.IsActive,
             user.CreatedAt,
             permanentAddressDto,
-            currentAddressDto
+            currentAddressDto,
+            user.AvatarUrl,
+            dateOfBirth,
+            kycApproved
         );
     }
 
-    public async Task UpdateProfileAsync(string userId, UserDto request)
+    public async Task UpdateProfileAsync(string userId, UpdateProfileRequest request)
     {
         var uid = Guid.Parse(userId);
         var user = await _unitOfWork.Users.GetByIdAsync(uid);
         if (user == null) throw new NotFoundException("User not found");
 
-        user.FirstName = request.FirstName;
-        user.LastName = request.LastName;
+        var kycRecord = await _unitOfWork.KycRecords.FirstOrDefaultAsync(k => k.UserId == uid);
+        bool kycApproved = kycRecord?.KycStatus == KycStatus.Approved;
+
+        var oldSnapshot = new Dictionary<string, object?>();
+        var newSnapshot = new Dictionary<string, object?>();
+
+        if (!kycApproved) { oldSnapshot["firstName"] = user.FirstName; oldSnapshot["lastName"] = user.LastName; }
+        oldSnapshot["phone"] = user.Phone;
+        oldSnapshot["salutation"] = user.Salutation.ToString();
+
+        if (!kycApproved)
+        {
+            user.FirstName = request.FirstName;
+            user.LastName = request.LastName;
+        }
+
         user.Phone = request.Phone;
-        
-        if (Enum.TryParse<Salutation>(request.Salutation, out var salutation))
+
+        if (!string.IsNullOrEmpty(request.Salutation) && Enum.TryParse<Salutation>(request.Salutation, out var salutation))
         {
             user.Salutation = salutation;
         }
@@ -91,13 +113,72 @@ public class UserService : IUserService
         if (user.Role == UserRole.Customer)
         {
             var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == uid);
-            if (customer != null && Enum.TryParse<MaritalStatus>(request.MaritalStatus, out var maritalStatus))
+            if (customer != null)
             {
-                customer.MaritalStatus = maritalStatus;
+                oldSnapshot["dateOfBirth"] = $"{customer.DateOfBirth:O}";
+                oldSnapshot["maritalStatus"] = customer.MaritalStatus.ToString();
+
+                if (!kycApproved && request.DateOfBirth.HasValue)
+                    customer.DateOfBirth = request.DateOfBirth.Value;
+                if (Enum.TryParse<MaritalStatus>(request.MaritalStatus, out var maritalStatus))
+                    customer.MaritalStatus = maritalStatus;
+
+                newSnapshot["dateOfBirth"] = $"{customer.DateOfBirth:O}";
+                newSnapshot["maritalStatus"] = customer.MaritalStatus.ToString();
             }
         }
 
+        if (!kycApproved) { newSnapshot["firstName"] = user.FirstName; newSnapshot["lastName"] = user.LastName; }
+        newSnapshot["phone"] = user.Phone;
+        if (!string.IsNullOrEmpty(request.Salutation) && Enum.TryParse<Salutation>(request.Salutation, out var sal))
+            newSnapshot["salutation"] = sal.ToString();
+        else
+            newSnapshot["salutation"] = user.Salutation.ToString();
+
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = uid,
+            EntityType = "User",
+            EntityId = uid,
+            Action = "ProfileUpdated",
+            OldValue = JsonSerializer.Serialize(oldSnapshot),
+            NewValue = JsonSerializer.Serialize(newSnapshot),
+            CreatedAt = DateTime.UtcNow
+        });
+
         await _unitOfWork.CompleteAsync();
+    }
+
+    public async Task<string> UploadAvatarAsync(string userId, Microsoft.AspNetCore.Http.IFormFile file)
+    {
+        var uid = Guid.Parse(userId);
+        var user = await _unitOfWork.Users.GetByIdAsync(uid);
+        if (user == null) throw new NotFoundException("User not found");
+
+        if (user.AvatarUrl != null)
+            await _storageService.DeleteFileAsync(user.AvatarUrl);
+
+        using var stream = file.OpenReadStream();
+        var relativePath = await _storageService.UploadFileAsync(stream, file.FileName, "avatars");
+
+        user.AvatarUrl = relativePath;
+        user.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = uid,
+            EntityType = "User",
+            EntityId = uid,
+            Action = "AvatarUploaded",
+            NewValue = JsonSerializer.Serialize(new { avatarUrl = relativePath }),
+            CreatedAt = DateTime.UtcNow
+        });
+
+        await _unitOfWork.CompleteAsync();
+
+        return $"/{relativePath}";
     }
 
     private async Task<Guid> ResolveCustomerRecordIdAsync(Guid userId)
@@ -195,6 +276,11 @@ public class UserService : IUserService
             record.AadhaarDocumentKeyBack = backKey;
         }
 
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = uid, EntityType = "KycRecord", EntityId = record.Id,
+            Action = "AadhaarUploaded", CreatedAt = DateTime.UtcNow
+        });
         await _unitOfWork.CompleteAsync();
 
         var kycUser = await _unitOfWork.Users.GetByIdAsync(uid);
@@ -235,6 +321,11 @@ public class UserService : IUserService
             record.PanDocumentKeyBack = backKey;
         }
 
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = uid, EntityType = "KycRecord", EntityId = record.Id,
+            Action = "PanUploaded", CreatedAt = DateTime.UtcNow
+        });
         await _unitOfWork.CompleteAsync();
 
         var kycUser = await _unitOfWork.Users.GetByIdAsync(uid);
@@ -375,7 +466,16 @@ public class UserService : IUserService
         if (user.Role == UserRole.Admin && parsedRole != UserRole.Admin && !await HasOtherActiveAdminAsync(uid))
             throw new ConflictException("At least one active admin must remain.");
 
+        var oldRole = user.Role;
         user.Role = parsedRole;
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = adminUid, EntityType = "User", EntityId = uid,
+            Action = "UserRoleChanged",
+            OldValue = JsonSerializer.Serialize(oldRole.ToString()),
+            NewValue = JsonSerializer.Serialize(parsedRole.ToString()),
+            CreatedAt = DateTime.UtcNow
+        });
         await _unitOfWork.CompleteAsync();
     }
 
@@ -461,6 +561,12 @@ public class UserService : IUserService
             throw new ConflictException("At least one active admin must remain.");
 
         user.IsActive = isActive;
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = adminUid, EntityType = "User", EntityId = uid,
+            Action = isActive ? "UserActivated" : "UserDeactivated",
+            CreatedAt = DateTime.UtcNow
+        });
         await _unitOfWork.CompleteAsync();
     }
 

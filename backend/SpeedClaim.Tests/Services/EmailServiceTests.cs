@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -105,6 +106,18 @@ public class EmailServiceTests
     [Test]
     public async Task SendEmailVerificationAsync_CallsSendEmail()
     {
+        var mockTemplateRepo = new Mock<IRepository<EmailTemplate>>();
+        mockTemplateRepo
+            .Setup(r => r.SingleOrDefaultAsync(It.IsAny<Expression<Func<EmailTemplate, bool>>>()))
+            .ReturnsAsync(new EmailTemplate
+            {
+                TemplateKey = "EmailVerification",
+                Subject = "Verify Your SpeedClaim Account",
+                BodyHtml = "<p>Click <a href=\"{{verifyUrl}}\">here</a> to verify. &copy; {{year}}</p>",
+                IsActive = true
+            });
+        _mockUnitOfWork.Setup(u => u.EmailTemplates).Returns(mockTemplateRepo.Object);
+
         await _emailService.SendEmailVerificationAsync("recipient@test.com", "token123");
 
         _mockSmtpClient.Verify(c => c.SendAsync(It.IsAny<MimeMessage>(), It.IsAny<CancellationToken>(), It.IsAny<MailKit.ITransferProgress>()), Times.Once);
@@ -113,8 +126,33 @@ public class EmailServiceTests
     [Test]
     public async Task SendPasswordResetAsync_CallsSendEmail()
     {
+        var mockTemplateRepo = new Mock<IRepository<EmailTemplate>>();
+        mockTemplateRepo
+            .Setup(r => r.SingleOrDefaultAsync(It.IsAny<Expression<Func<EmailTemplate, bool>>>()))
+            .ReturnsAsync(new EmailTemplate
+            {
+                TemplateKey = "PasswordReset",
+                Subject = "Reset Your SpeedClaim Password",
+                BodyHtml = "<p>Click <a href=\"{{resetUrl}}\">here</a> to reset. &copy; {{year}}</p>",
+                IsActive = true
+            });
+        _mockUnitOfWork.Setup(u => u.EmailTemplates).Returns(mockTemplateRepo.Object);
+
         await _emailService.SendPasswordResetAsync("recipient@test.com", "token123");
 
         _mockSmtpClient.Verify(c => c.SendAsync(It.IsAny<MimeMessage>(), It.IsAny<CancellationToken>(), It.IsAny<MailKit.ITransferProgress>()), Times.Once);
+    }
+
+    [Test]
+    public void SendEmailVerificationAsync_MissingTemplate_Throws()
+    {
+        var mockTemplateRepo = new Mock<IRepository<EmailTemplate>>();
+        mockTemplateRepo
+            .Setup(r => r.SingleOrDefaultAsync(It.IsAny<Expression<Func<EmailTemplate, bool>>>()))
+            .ReturnsAsync((EmailTemplate?)null);
+        _mockUnitOfWork.Setup(u => u.EmailTemplates).Returns(mockTemplateRepo.Object);
+
+        Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _emailService.SendEmailVerificationAsync("recipient@test.com", "token123"));
     }
 }

@@ -52,7 +52,7 @@ public class UserServiceTests
         _mockEncryptionService.Setup(e => e.Decrypt(It.IsAny<string>())).Returns<string>(s => s);
         _mockEncryptionService.Setup(e => e.Mask(It.IsAny<string>())).Returns<string>(s => s);
 
-        _userService = new UserService(_mockUnitOfWork.Object, new Mock<IStorageService>().Object, _mockEncryptionService.Object);
+        _userService = new UserService(_mockUnitOfWork.Object, new Mock<IStorageService>().Object, _mockEncryptionService.Object, new Mock<IEmailService>().Object);
     }
 
     [Test]
@@ -78,9 +78,8 @@ public class UserServiceTests
     [Test]
     public void UpdateProfileAsync_UserNotFound_ThrowsException()
     {
-        var address = new AddressDto("123 St", null, "City", "State", "12345", "Country");
-        var request = new UserDto(Guid.NewGuid(), "test@test.com", "Mr", "Jane", "Doe", "Jane Doe", "0987654321", "Customer", "Single", null, true, true, DateTimeOffset.UtcNow, address, address);
-        
+        var request = new UpdateProfileRequest("Jane", "Doe", "0987654321", "Mr", "Single");
+
         _mockUserRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((User?)null);
         var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _userService.UpdateProfileAsync(Guid.NewGuid().ToString(), request));
         Assert.That(ex.Message, Is.EqualTo("User not found"));
@@ -91,8 +90,7 @@ public class UserServiceTests
     {
         var userId = Guid.NewGuid();
         var user = new User { Id = userId, FirstName = "Old", LastName = "Name" };
-        var address = new AddressDto("123 St", null, "City", "State", "12345", "Country");
-        var request = new UserDto(userId, "test@test.com", "Mr", "Jane", "Doe", "Jane Doe", "0987654321", "Customer", "Single", null, true, true, DateTimeOffset.UtcNow, address, address);
+        var request = new UpdateProfileRequest("Jane", "Doe", "0987654321", "Mr", "Single");
 
         _mockUserRepository.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
         await _userService.UpdateProfileAsync(userId.ToString(), request);
@@ -325,8 +323,8 @@ public class UserServiceTests
         _mockUserRepository.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
         _mockCustomerRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>())).ReturnsAsync(customer);
 
-        var dto = new UserDto(userId, "x@test.com", "Mr", "X", "Y", "X Y", "9999", "Customer", "Married", null, true, true, DateTimeOffset.UtcNow, null, null);
-        await _userService.UpdateProfileAsync(userId.ToString(), dto);
+        var request = new UpdateProfileRequest("X", "Y", "9999", "Mr", "Married");
+        await _userService.UpdateProfileAsync(userId.ToString(), request);
 
         Assert.That(customer.MaritalStatus, Is.EqualTo(MaritalStatus.Married));
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
@@ -348,7 +346,7 @@ public class UserServiceTests
         mockBack.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
 
         var mockStorage = new Mock<IStorageService>();
-        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object);
+        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object, new Mock<IEmailService>().Object);
 
         await svc.UploadAadhaarAsync(customerId.ToString(), new AadhaarUploadRequest(null, "123456789012", mockFront.Object, mockBack.Object));
 
@@ -453,7 +451,7 @@ public class UserServiceTests
         mockFile.Setup(f => f.FileName).Returns("front.jpg");
         mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
         var mockStorage = new Mock<IStorageService>();
-        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object);
+        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object, new Mock<IEmailService>().Object);
 
         await svc.UploadAadhaarAsync(customerId.ToString(), new AadhaarUploadRequest(null, "123456789012", mockFile.Object, null));
 
@@ -473,7 +471,7 @@ public class UserServiceTests
         mockFile.Setup(f => f.FileName).Returns("front.jpg");
         mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
         var mockStorage = new Mock<IStorageService>();
-        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object);
+        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object, new Mock<IEmailService>().Object);
 
         await svc.UploadAadhaarAsync(customerId.ToString(), new AadhaarUploadRequest(null, "123456789012", mockFile.Object, null));
 
@@ -703,7 +701,7 @@ public class UserServiceTests
         mockFile.Setup(f => f.FileName).Returns("front.jpg");
         mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
         var mockStorage = new Mock<IStorageService>();
-        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object);
+        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object, new Mock<IEmailService>().Object);
 
         await svc.UploadAadhaarAsync(customerId.ToString(), new AadhaarUploadRequest(null, "123456789012", mockFile.Object, null));
 
@@ -758,7 +756,7 @@ public class UserServiceTests
         mockFile.Setup(f => f.FileName).Returns("front.jpg");
         mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
         var mockStorage = new Mock<IStorageService>();
-        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object);
+        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object, new Mock<IEmailService>().Object);
 
         await svc.UploadPanAsync(customerId.ToString(), new PanUploadRequest(null, "ABCDE1234F", mockFile.Object, null));
 

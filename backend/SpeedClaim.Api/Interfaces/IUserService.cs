@@ -11,7 +11,8 @@ public interface IUserService
 {
     // Customer
     Task<UserDto> GetProfileAsync(string userId);
-    Task UpdateProfileAsync(string userId, UserDto request);
+    Task UpdateProfileAsync(string userId, UpdateProfileRequest request);
+    Task<string> UploadAvatarAsync(string userId, Microsoft.AspNetCore.Http.IFormFile file);
     Task<FamilyMemberDto> AddFamilyMemberAsync(string customerId, AddFamilyMemberRequest request);
     Task UpdateFamilyMemberAsync(string memberId, string customerId, UpdateFamilyMemberRequest request);
     Task<IEnumerable<FamilyMemberDto>> GetFamilyMembersAsync(string customerId);

@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SpeedClaim.Api.Dtos.Auth;
 using SpeedClaim.Api.Dtos.Common;
@@ -40,14 +41,29 @@ public class UsersController : BaseApiController
 
     /// <summary>Update the authenticated user's profile (name, phone, marital status, salutation)</summary>
     [Authorize]
-    [HttpPut("profile")]
+    [HttpPatch("profile")]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
-    public async Task<IActionResult> UpdateProfile([FromBody] UserDto request)
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         await _userService.UpdateProfileAsync(userId, request);
         return Ok(new { message = "Profile updated successfully." });
+    }
+
+    /// <summary>Upload or replace the authenticated user's profile picture</summary>
+    [Authorize]
+    [HttpPost("profile/avatar")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> UploadAvatar(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest(new { message = "No file provided." });
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        var avatarUrl = await _userService.UploadAvatarAsync(userId, file);
+        return Ok(new { avatarUrl });
     }
 
     #endregion
@@ -79,7 +95,7 @@ public class UsersController : BaseApiController
     /// <summary>Update an existing family member's details</summary>
     /// <param name="memberId">Family member ID</param>
     [Authorize(Roles = "Customer")]
-    [HttpPut("family/{memberId}")]
+    [HttpPatch("family/{memberId}")]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> UpdateFamilyMember(string memberId, [FromBody] UpdateFamilyMemberRequest request)
@@ -175,7 +191,7 @@ public class UsersController : BaseApiController
     /// <summary>Update an existing address</summary>
     /// <param name="addressId">Address ID</param>
     [Authorize(Roles = "Customer")]
-    [HttpPut("addresses/{addressId}")]
+    [HttpPatch("addresses/{addressId}")]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> UpdateAddress(string addressId, [FromBody] SingleAddressRequest request)

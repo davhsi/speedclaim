@@ -17,5 +17,8 @@ public record UserDto(
     bool IsActive,
     DateTimeOffset CreatedAt,
     SpeedClaim.Api.Dtos.Common.AddressDto? PermanentAddress,
-    SpeedClaim.Api.Dtos.Common.AddressDto? CurrentAddress
+    SpeedClaim.Api.Dtos.Common.AddressDto? CurrentAddress,
+    string? AvatarUrl = null,
+    DateOnly? DateOfBirth = null,
+    bool KycApproved = false
 );

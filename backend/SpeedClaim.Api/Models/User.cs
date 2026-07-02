@@ -20,6 +20,7 @@ public class User
     public DateTime? LastLoginAt { get; set; }
     public int FailedLoginAttempts { get; set; } = 0;
     public DateTime? LockedUntil { get; set; }
+    public string? AvatarUrl { get; set; }
     public bool IsDeleted { get; set; } = false;
     public DateTimeOffset? DeletedAt { get; set; }
     

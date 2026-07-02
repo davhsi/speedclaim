@@ -11,5 +11,13 @@ public record AuthUserDto(
     string FullName,
     string Phone,
     string Role,
-    string MaritalStatus
+    string MaritalStatus,
+    string? AvatarUrl = null
+);
+
+public record AdminInviteUserRequest(
+    string FirstName,
+    string LastName,
+    string Email,
+    string Role
 );

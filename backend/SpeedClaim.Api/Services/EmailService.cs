@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -106,19 +107,20 @@ public class EmailService : IEmailService
         }
     }
 
+    public async Task SendTemplatedEmailAsync(string templateKey, Dictionary<string, string> variables, string to, EmailAttachment? attachment = null)
+    {
+        var (subject, body) = await LoadAndRenderAsync(templateKey, variables);
+        await SendEmailCoreAsync(to, subject, body, attachment);
+    }
+
     public async Task SendEmailVerificationAsync(string to, string token)
     {
         var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:4200";
         var verifyUrl = $"{frontendUrl}/auth/verify-email?token={Uri.EscapeDataString(token)}";
-
-        var subject = "Verify Your SpeedClaim Account";
-        var body = BuildEmailTemplate(
-            heading: "Verify your email",
-            message: "Welcome to SpeedClaim! Please verify your email address to activate your account and start managing your insurance policies.",
-            buttonText: "Verify Email",
-            buttonUrl: verifyUrl,
-            footnote: "This link expires in 24 hours. If you didn't create an account, you can safely ignore this email."
-        );
+        var (subject, body) = await LoadAndRenderAsync("EmailVerification", new Dictionary<string, string>
+        {
+            ["verifyUrl"] = verifyUrl
+        });
         await SendEmailAsync(to, subject, body);
     }
 
@@ -126,68 +128,37 @@ public class EmailService : IEmailService
     {
         var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:4200";
         var resetUrl = $"{frontendUrl}/auth/reset-password?token={Uri.EscapeDataString(token)}";
-
-        var subject = "Reset Your SpeedClaim Password";
-        var body = BuildEmailTemplate(
-            heading: "Reset your password",
-            message: "We received a request to reset your password. Click the button below to choose a new one.",
-            buttonText: "Reset Password",
-            buttonUrl: resetUrl,
-            footnote: "This link expires in 1 hour. If you didn't request a password reset, you can safely ignore this email."
-        );
+        var (subject, body) = await LoadAndRenderAsync("PasswordReset", new Dictionary<string, string>
+        {
+            ["resetUrl"] = resetUrl
+        });
         await SendEmailAsync(to, subject, body);
     }
 
-    private static string BuildEmailTemplate(string heading, string message, string buttonText, string buttonUrl, string footnote)
+    // Loads a template from the DB by key, substitutes {{variable}} placeholders, and returns
+    // the rendered (subject, body) pair. Always injects {{year}} automatically.
+    // Throws InvalidOperationException if the template key is missing or inactive — this is
+    // intentional: a missing template means missing seed data, not a runtime user error.
+    private async Task<(string subject, string body)> LoadAndRenderAsync(
+        string templateKey, Dictionary<string, string> variables)
     {
-        var year = DateTime.UtcNow.Year;
-        return $@"<!DOCTYPE html>
-<html lang=""en"">
-<head>
-    <meta charset=""UTF-8"">
-    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-    <title>{heading}</title>
-</head>
-<body style=""margin:0; padding:0; background-color:#F7F9FA; font-family:Arial, 'Helvetica Neue', Helvetica, sans-serif;"">
-    <table role=""presentation"" width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""background-color:#F7F9FA; padding:32px 16px;"">
-        <tr>
-            <td align=""center"">
-                <table role=""presentation"" width=""480"" cellpadding=""0"" cellspacing=""0"" style=""max-width:480px; width:100%; background-color:#ffffff; border-radius:12px; overflow:hidden;"">
-                    <tr>
-                        <td style=""background:linear-gradient(160deg, #0F6E8C 0%, #0A3040 100%); padding:28px 32px; text-align:center;"">
-                            <span style=""font-size:20px; font-weight:700; color:#ffffff; letter-spacing:-0.3px;"">SpeedClaim</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style=""padding:32px;"">
-                            <h1 style=""margin:0 0 16px; font-size:22px; font-weight:600; color:#1A2230;"">{heading}</h1>
-                            <p style=""margin:0 0 28px; font-size:15px; line-height:1.6; color:#3C4654;"">{message}</p>
-                            <table role=""presentation"" cellpadding=""0"" cellspacing=""0"" width=""100%"">
-                                <tr>
-                                    <td align=""center"">
-                                        <table role=""presentation"" cellpadding=""0"" cellspacing=""0"">
-                                            <tr>
-                                                <td style=""background-color:#0F6E8C; border-radius:8px;"">
-                                                    <a href=""{buttonUrl}"" target=""_blank"" style=""display:inline-block; padding:14px 36px; font-size:14px; font-weight:600; color:#ffffff; text-decoration:none;"">{buttonText}</a>
-                                                </td>
-                                            </tr>
-                                        </table>
-                                    </td>
-                                </tr>
-                            </table>
-                            <p style=""margin:28px 0 0; font-size:13px; line-height:1.5; color:#6B7685;"">{footnote}</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style=""padding:20px 32px; border-top:1px solid #E2E6EB; text-align:center;"">
-                            <p style=""margin:0; font-size:12px; color:#6B7685;"">&copy; {year} SpeedClaim. All rights reserved.</p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>";
+        var template = await _unitOfWork.EmailTemplates
+            .SingleOrDefaultAsync(t => t.TemplateKey == templateKey && t.IsActive);
+
+        if (template is null)
+            throw new InvalidOperationException(
+                $"Email template '{templateKey}' is missing or inactive. Run database migrations to seed default templates.");
+
+        variables["year"] = DateTime.UtcNow.Year.ToString();
+
+        var subject = template.Subject;
+        var body = template.BodyHtml;
+        foreach (var (key, value) in variables)
+        {
+            subject = subject.Replace("{{" + key + "}}", value);
+            body = body.Replace("{{" + key + "}}", value);
+        }
+
+        return (subject, body);
     }
 }
