@@ -132,7 +132,8 @@ public class AgentService : IAgentService
             agent.CommissionRate,
             agent.IsActive,
             branch?.Name,
-            branch?.City
+            branch?.City,
+            agent.BranchId
         );
     }
 
@@ -336,7 +337,8 @@ public class AgentService : IAgentService
                 agent.CommissionRate,
                 agent.IsActive,
                 branch?.Name,
-                branch?.City
+                branch?.City,
+                agent.BranchId
             ));
         }
 

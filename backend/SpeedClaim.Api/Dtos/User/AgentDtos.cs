@@ -50,7 +50,8 @@ public record AgentProfileDto(
     decimal CommissionRate,
     bool IsActive,
     string? BranchName,
-    string? BranchCity
+    string? BranchCity,
+    Guid? BranchId = null
 );
 
 public record UpdateAgentProfileRequest(
