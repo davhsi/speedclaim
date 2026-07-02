@@ -36,13 +36,13 @@ export class SurveyorProfileComponent implements OnInit {
   totalClaims = computed(() => this.claims().length);
   submittedCount = computed(() =>
     this.claims().filter(c =>
-      c.status === 'Settled' || c.status === 'Approved' || c.status === 'PayoutProcessed'
+      c.status === 'Settled' || c.status === 'Approved'
     ).length
   );
   overdueCount = computed(() => {
     const now = new Date();
     return this.claims().filter(c => {
-      if (c.status === 'Settled' || c.status === 'Approved' || c.status === 'PayoutProcessed') return false;
+      if (c.status === 'Settled' || c.status === 'Approved') return false;
       const intimated = new Date(c.intimationDate);
       return Math.floor((now.getTime() - intimated.getTime()) / 86400000) > 7;
     }).length;

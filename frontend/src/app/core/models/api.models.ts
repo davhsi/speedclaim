@@ -319,19 +319,21 @@ export interface PolicyDto {
 }
 
 export interface PolicyStatusHistoryDto {
-  id: number;
+  id: string;
+  policyId: string;
   status: PolicyStatus;
   changedAt: string;
   remarks?: string;
-  changedBy?: string;
+  changedById: string;
 }
 
 export interface PolicyNomineeDto {
-  id: number;
-  name: string;
+  id: string;
+  fullName: string;
   relationship: Relationship;
   sharePercentage: number;
   dateOfBirth: string;
+  isMinor: boolean;
   appointeeName?: string;
 }
 
@@ -344,16 +346,17 @@ export interface UpdateNomineeRequest {
 }
 
 export interface EndorsementDto {
-  id: number;
-  policyId: number;
+  id: string;
+  policyId: string;
   endorsementType: EndorsementType;
   status: EndorsementStatus;
   description: string;
   oldValue?: string;
   newValue?: string;
-  createdAt: string;
+  requestedById: string;
+  reviewedById?: string;
   reviewedAt?: string;
-  reviewRemarks?: string;
+  createdAt: string;
 }
 
 export interface RequestEndorsementRequest {
@@ -650,8 +653,8 @@ export interface PremiumRateDto {
 }
 
 export interface DocumentRequirementResponseDto {
-  id: number;
-  productId: number;
+  id: string;
+  productId?: string;
   entityType: string;
   domain: string;
   documentKey: string;
@@ -687,7 +690,7 @@ export interface UpdateSystemConfigRequest {
 }
 
 export interface EmailTemplateDto {
-  id: number;
+  id: string;
   templateKey: string;
   subject: string;
   bodyHtml: string;

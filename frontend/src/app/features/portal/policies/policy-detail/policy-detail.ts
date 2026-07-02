@@ -66,7 +66,7 @@ export class PolicyDetailComponent implements OnInit {
     this.policyService.getEndorsements(id).subscribe(e => this.endorsements.set(e));
     this.policyService.getSchedule(id).subscribe({ next: s => this.schedules.set(s), error: () => {} });
     this.policyService.getHistory(id).subscribe(h =>
-      this.historyItems.set(h.map(i => ({ status: i.status, date: i.changedAt, remarks: i.remarks, changedBy: i.changedBy }))),
+      this.historyItems.set(h.map(i => ({ status: i.status, date: i.changedAt, remarks: i.remarks }))),
     );
   }
 
