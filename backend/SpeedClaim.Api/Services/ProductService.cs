@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using SpeedClaim.Api.Dtos.Catalog;
 using SpeedClaim.Api.Exceptions;
@@ -74,6 +75,13 @@ public class ProductService : IProductService
         };
 
         await _unitOfWork.InsuranceProducts.AddAsync(product);
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = Guid.Parse(adminId), EntityType = "InsuranceProduct", EntityId = product.Id,
+            Action = "ProductCreated",
+            NewValue = JsonSerializer.Serialize(new { productName = product.ProductName, domain = product.Domain }),
+            CreatedAt = DateTime.UtcNow
+        });
         await _unitOfWork.CompleteAsync();
 
         return MapProduct(product);
@@ -125,6 +133,13 @@ public class ProductService : IProductService
             };
             await _unitOfWork.PremiumRateTables.AddAsync(rate);
         }
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = Guid.Parse(adminId), EntityType = "InsuranceProduct", EntityId = pId,
+            Action = "PremiumRatesUpdated",
+            NewValue = JsonSerializer.Serialize(new { productId = pId, rateCount = request.Rates.Count() }),
+            CreatedAt = DateTime.UtcNow
+        });
 
         await _unitOfWork.CompleteAsync();
     }
@@ -187,6 +202,13 @@ public class ProductService : IProductService
 
         product.IsActive = isActive;
         product.UpdatedAt = DateTimeOffset.UtcNow;
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = Guid.Parse(adminId), EntityType = "InsuranceProduct", EntityId = pId,
+            Action = isActive ? "ProductActivated" : "ProductDeactivated",
+            NewValue = JsonSerializer.Serialize(new { productName = product.ProductName }),
+            CreatedAt = DateTime.UtcNow
+        });
 
         await _unitOfWork.CompleteAsync();
     }

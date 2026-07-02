@@ -84,6 +84,22 @@ public class ClaimService : IClaimService
         return status is ClaimStatus.Intimated or ClaimStatus.DocumentsPending;
     }
 
+    private static bool CanTransitionClaimStatus(ClaimStatus current, ClaimStatus next)
+    {
+        if (current == next) return true;
+
+        return current switch
+        {
+            ClaimStatus.Intimated => next is ClaimStatus.UnderReview or ClaimStatus.DocumentsPending,
+            ClaimStatus.DocumentsPending => next is ClaimStatus.UnderReview,
+            ClaimStatus.UnderReview => next is ClaimStatus.DocumentsPending or ClaimStatus.PreAuthRequested or ClaimStatus.Approved or ClaimStatus.Rejected,
+            ClaimStatus.PreAuthRequested => next is ClaimStatus.PreAuthApproved or ClaimStatus.DocumentsPending or ClaimStatus.Rejected,
+            ClaimStatus.PreAuthApproved => next is ClaimStatus.UnderReview or ClaimStatus.DocumentsPending or ClaimStatus.Approved or ClaimStatus.Rejected,
+            ClaimStatus.Approved => next is ClaimStatus.Settled,
+            _ => false
+        };
+    }
+
     private static string NormalizeDocumentKey(string documentType)
     {
         var key = documentType?.Trim();
@@ -105,7 +121,18 @@ public class ClaimService : IClaimService
             throw new ForbiddenException($"Only the assigned claims officer can {action} this claim.");
     }
 
-    private ClaimDto MapToDto(Claim claim)
+    private static SubmittedDocumentDto MapDocumentToDto(SubmittedDocument doc)
+    {
+        return new SubmittedDocumentDto(
+            doc.Id,
+            doc.DocumentKey,
+            string.IsNullOrWhiteSpace(doc.OriginalFilename) ? doc.DocumentKey : doc.OriginalFilename,
+            doc.FilePath,
+            doc.UploadedAt
+        );
+    }
+
+    private ClaimDto MapToDto(Claim claim, IEnumerable<SubmittedDocument>? documents = null)
     {
         var user = claim.Customer?.User;
         var customerName = user != null ? $"{user.FirstName} {user.LastName}".Trim() : null;
@@ -130,7 +157,8 @@ public class ClaimService : IClaimService
             claim.CreatedAt,
             claim.UpdatedAt,
             customerName,
-            claim.Policy?.PolicyNumber
+            claim.Policy?.PolicyNumber,
+            documents?.OrderByDescending(d => d.UploadedAt).Select(MapDocumentToDto).ToList()
         );
     }
 
@@ -185,6 +213,13 @@ public class ClaimService : IClaimService
 
         await _unitOfWork.Claims.AddAsync(claim);
         await _unitOfWork.ClaimStatusHistories.AddAsync(history);
+        await _unitOfWork.AuditLogs.AddAsync(new Models.AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = customerId, EntityType = "Claim", EntityId = claim.Id,
+            Action = "ClaimIntimated",
+            NewValue = JsonSerializer.Serialize(new { claimNumber = claim.ClaimNumber, policyId = claim.PolicyId }),
+            CreatedAt = DateTime.UtcNow
+        });
         await _unitOfWork.CompleteAsync();
 
         _logger.LogInformation("Claim intimated: {ClaimNumber} for Policy {PolicyId} by Customer {CustomerId}", claim.ClaimNumber, request.PolicyId, customerId);
@@ -263,7 +298,7 @@ public class ClaimService : IClaimService
             c.CustomerId == customerRecordId &&
             (!status.HasValue || c.Status == status.Value) &&
             (!claimType.HasValue || c.ClaimType == claimType.Value));
-        return claims.Select(MapToDto);
+        return claims.Select(claim => MapToDto(claim));
     }
 
     public async Task<ClaimDto> GetClaimByIdAsync(Guid claimId, Guid? customerId = null)
@@ -273,7 +308,10 @@ public class ClaimService : IClaimService
             throw new NotFoundException("Claim not found.");
         if (customerId.HasValue && claim.CustomerId != await ResolveCustomerIdAsync(customerId.Value))
             throw new ForbiddenException("Access denied to this claim.");
-        return MapToDto(claim);
+
+        var documents = await _unitOfWork.SubmittedDocuments.FindAsync(d =>
+            d.EntityType == EntityType.Claim && d.EntityId == claimId);
+        return MapToDto(claim, documents);
     }
 
     public async Task<IEnumerable<ClaimStatusHistoryDto>> GetClaimHistoryAsync(Guid claimId, Guid? customerId = null)
@@ -302,7 +340,7 @@ public class ClaimService : IClaimService
         var (items, total) = await _unitOfWork.Claims.GetPagedAsync(page, pageSize, c =>
             (!status.HasValue || c.Status == status.Value) &&
             (!claimType.HasValue || c.ClaimType == claimType.Value));
-        return new PagedResponse<ClaimDto>(items.Select(MapToDto), page, pageSize, total);
+        return new PagedResponse<ClaimDto>(items.Select(claim => MapToDto(claim)), page, pageSize, total);
     }
 
     public async Task AssignClaimAsync(Guid claimId, Guid officerId)
@@ -312,6 +350,9 @@ public class ClaimService : IClaimService
 
         if (IsClaimActionLocked(claim.Status))
             throw new ConflictException($"Claim cannot be assigned while it is {claim.Status}.");
+
+        if (claim.AssignedOfficerId.HasValue && claim.AssignedOfficerId.Value != officerId)
+            throw new ConflictException("Claim is already assigned to another officer.");
 
         claim.AssignedOfficerId = officerId;
         claim.UpdatedAt = DateTimeOffset.UtcNow;
@@ -323,6 +364,11 @@ public class ClaimService : IClaimService
     {
         var claim = await _unitOfWork.Claims.GetByIdAsync(claimId);
         if (claim == null) throw new NotFoundException("Claim not found.");
+
+        EnsureAssignedOfficer(claim, officerId, "update status for");
+
+        if (!CanTransitionClaimStatus(claim.Status, status))
+            throw new ConflictException($"Claim status cannot move from {claim.Status} to {status}.");
 
         await UpdateClaimStatusInternalAsync(claim, status, officerId, notes);
     }
@@ -420,7 +466,7 @@ public class ClaimService : IClaimService
         var claims = await _unitOfWork.Claims.FindAsync(c =>
             c.SurveyorId == surveyorRecordId &&
             (c.ClaimType == ClaimType.Accident || c.ClaimType == ClaimType.Theft || c.ClaimType == ClaimType.NaturalDamage));
-        return claims.Select(MapToDto);
+        return claims.Select(claim => MapToDto(claim));
     }
 
     public async Task<string> SubmitSurveyReportAsync(Guid claimId, Guid surveyorId, SubmitSurveyReportRequest request)

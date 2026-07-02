@@ -38,7 +38,7 @@ public static class PolicyDocumentGenerator
     {
         c.FillRect(0, 706, 612, 86, 0.06, 0.43, 0.55);
         c.FillRect(0, 706, 612, 10, 0.12, 0.62, 0.42);
-        c.DrawShieldLogo(56, 746, 28);
+        c.DrawSpeedClaimLogo(56, 742, 36);
         c.Text("SpeedClaim", 94, 755, 22, "F2", 1, 1, 1);
         c.Text("Insurance policy services", 96, 736, 10, "F1", 0.82, 0.94, 0.97);
         c.Text("Policy Certificate", 410, 754, 18, "F2", 1, 1, 1);
@@ -182,12 +182,22 @@ public static class PolicyDocumentGenerator
             _content.AppendLine($"q {F(r)} {F(g)} {F(b)} RG 1 w {F(x1)} {F(y1)} m {F(x2)} {F(y2)} l S Q");
         }
 
-        public void DrawShieldLogo(double x, double y, double size)
+        public void DrawSpeedClaimLogo(double x, double y, double size)
         {
-            var half = size / 2;
-            _content.AppendLine($"q 1 1 1 rg {F(x)} {F(y)} m {F(x + half)} {F(y + size * .28)} l {F(x + size)} {F(y)} l {F(x + size * .88)} {F(y - size * .56)} l {F(x + half)} {F(y - size * .88)} l {F(x + size * .12)} {F(y - size * .56)} l h f Q");
-            _content.AppendLine($"q 0.06 0.43 0.55 rg {F(x + 3)} {F(y - 2)} m {F(x + half)} {F(y + size * .18)} l {F(x + size - 3)} {F(y - 2)} l {F(x + size * .80)} {F(y - size * .50)} l {F(x + half)} {F(y - size * .75)} l {F(x + size * .20)} {F(y - size * .50)} l h f Q");
-            _content.AppendLine($"q 1 1 1 RG 3 w {F(x + size * .27)} {F(y - size * .29)} m {F(x + size * .43)} {F(y - size * .45)} l {F(x + size * .73)} {F(y - size * .16)} l S Q");
+            FillRect(x, y, size, size, 0.04, 0.19, 0.25);
+            _content.AppendLine(
+                $"q 1 1 1 RG {F(size * .11)} w 1 J " +
+                $"{F(x + size * .24)} {F(y + size * .36)} m " +
+                $"{F(x + size * .32)} {F(y + size * .12)} {F(x + size * .80)} {F(y + size * .13)} {F(x + size * .73)} {F(y + size * .45)} c " +
+                $"{F(x + size * .67)} {F(y + size * .69)} {F(x + size * .27)} {F(y + size * .53)} {F(x + size * .37)} {F(y + size * .78)} c " +
+                $"{F(x + size * .44)} {F(y + size * .92)} {F(x + size * .64)} {F(y + size * .87)} {F(x + size * .73)} {F(y + size * .77)} c S Q");
+            _content.AppendLine(
+                $"q 0.13 0.78 0.53 RG {F(size * .09)} w 1 J 1 j " +
+                $"{F(x + size * .23)} {F(y + size * .35)} m " +
+                $"{F(x + size * .36)} {F(y + size * .20)} l " +
+                $"{F(x + size * .73)} {F(y + size * .58)} l S Q");
+            _content.AppendLine($"q 0.47 0.87 0.95 RG {F(size * .06)} w 1 J {F(x + size * .76)} {F(y + size * .83)} m {F(x + size * .92)} {F(y + size * .83)} l S Q");
+            _content.AppendLine($"q 0.47 0.87 0.95 RG {F(size * .06)} w 1 J {F(x + size * .82)} {F(y + size * .70)} m {F(x + size * .94)} {F(y + size * .70)} l S Q");
         }
 
         public override string ToString() => _content.ToString();

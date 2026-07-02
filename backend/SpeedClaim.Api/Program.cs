@@ -80,6 +80,14 @@ builder.Services.AddAuthentication(options =>
             if (session == null || session.UserId != userId || session.IsRevoked || session.ExpiresAt <= DateTime.UtcNow)
             {
                 context.Fail("Invalid session");
+                return;
+            }
+
+            var user = await unitOfWork.Users.GetByIdAsync(userId);
+            var tokenRole = context.Principal?.FindFirst(ClaimTypes.Role)?.Value;
+            if (user == null || !user.IsActive || user.Role.ToString() != tokenRole)
+            {
+                context.Fail("Invalid user");
             }
         },
         OnChallenge = async context =>

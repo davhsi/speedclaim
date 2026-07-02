@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using ClosedXML.Excel;
@@ -374,6 +375,15 @@ public class FinanceService : IFinanceService
                 }
             }
 
+            Guid.TryParse(financeOfficerId, out var reconcileOfficerGuid);
+            await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+            {
+                Id = Guid.NewGuid(), UserId = reconcileOfficerGuid == Guid.Empty ? (Guid?)null : reconcileOfficerGuid,
+                EntityType = "PremiumPayment", EntityId = payment.Id,
+                Action = "PaymentReconciled",
+                NewValue = JsonSerializer.Serialize(new { amount = payment.Amount, currency = payment.Currency }),
+                CreatedAt = DateTime.UtcNow
+            });
             _logger.LogInformation("Payment {PaymentId} reconciled as Paid", payment.Id);
             await _unitOfWork.CompleteAsync();
         }
@@ -422,6 +432,15 @@ public class FinanceService : IFinanceService
             if (overdueSchedule != null)
                 overdueSchedule.Status = PremiumScheduleStatus.Overdue;
         }
+        Guid.TryParse(financeOfficerId, out var refundOfficerGuid);
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = refundOfficerGuid == Guid.Empty ? (Guid?)null : refundOfficerGuid,
+            EntityType = "PremiumPayment", EntityId = payment.Id,
+            Action = "RefundProcessed",
+            NewValue = JsonSerializer.Serialize(new { amount = payment.Amount }),
+            CreatedAt = DateTime.UtcNow
+        });
         await _unitOfWork.CompleteAsync();
 
         if (overdueSchedule != null)
@@ -498,6 +517,13 @@ public class FinanceService : IFinanceService
             Notes = $"Payout initiated via Stripe PaymentIntent: {intent.Id}",
             ChangedAt = DateTimeOffset.UtcNow
         });
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = Guid.Parse(financeOfficerId), EntityType = "Claim", EntityId = cId,
+            Action = "ClaimPayoutProcessed",
+            NewValue = JsonSerializer.Serialize(new { claimNumber = claim.ClaimNumber, amount = claim.ClaimAmountApproved, stripeIntentId = intent.Id }),
+            CreatedAt = DateTime.UtcNow
+        });
 
         await _unitOfWork.CompleteAsync();
 
@@ -543,6 +569,13 @@ public class FinanceService : IFinanceService
             ChangedById = Guid.Parse(financeOfficerId),
             Notes = "Marked as financially settled by Finance Officer.",
             ChangedAt = DateTimeOffset.UtcNow
+        });
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = Guid.Parse(financeOfficerId), EntityType = "Claim", EntityId = cId,
+            Action = "ClaimFinanciallySettled",
+            NewValue = JsonSerializer.Serialize(new { claimNumber = claim.ClaimNumber }),
+            CreatedAt = DateTime.UtcNow
         });
 
         await _unitOfWork.CompleteAsync();
@@ -625,6 +658,13 @@ public class FinanceService : IFinanceService
 
         commission.Status = "PAID";
         commission.PaidAt = DateTimeOffset.UtcNow;
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = Guid.Parse(financeOfficerId), EntityType = "AgentCommission", EntityId = cid,
+            Action = "CommissionApproved",
+            NewValue = JsonSerializer.Serialize(new { commissionAmount = commission.CommissionAmount }),
+            CreatedAt = DateTime.UtcNow
+        });
         await _unitOfWork.CompleteAsync();
 
         var commAgent = await _unitOfWork.Agents.GetByIdAsync(commission.AgentId);

@@ -95,7 +95,7 @@ public class PoliciesController : BaseApiController
     /// <summary>Update nominee details (name, relationship, share percentage) on a policy</summary>
     /// <param name="nomineeId">Nominee ID</param>
     [Authorize(Roles = "Customer")]
-    [HttpPut("nominees/{nomineeId}")]
+    [HttpPatch("nominees/{nomineeId}")]
     [ProducesResponseType(200)]
     [ProducesResponseType(403)]
     [ProducesResponseType(404)]

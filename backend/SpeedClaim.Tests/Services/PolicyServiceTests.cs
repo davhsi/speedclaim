@@ -27,7 +27,7 @@ public class PolicyServiceTests
         _mockUnitOfWork = new Mock<IUnitOfWork>() { DefaultValue = DefaultValue.Mock };
         _mockStorageService = new Mock<IStorageService>();
 
-        _policyService = new PolicyService(_mockUnitOfWork.Object, _mockStorageService.Object);
+        _policyService = new PolicyService(_mockUnitOfWork.Object, _mockStorageService.Object, new Mock<IEmailService>().Object);
     }
 
     [Test]

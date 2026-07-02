@@ -33,6 +33,7 @@ public class ProductServiceTests
         _mockUnitOfWork.Setup(u => u.InsuranceProducts).Returns(_mockProductRepo.Object);
         _mockUnitOfWork.Setup(u => u.PremiumRateTables).Returns(_mockRateRepo.Object);
         _mockUnitOfWork.Setup(u => u.DocumentRequirements).Returns(_mockDocReqRepo.Object);
+        _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
         _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
 
         _productService = new ProductService(_mockUnitOfWork.Object);

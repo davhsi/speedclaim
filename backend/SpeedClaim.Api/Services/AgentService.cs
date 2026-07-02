@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using SpeedClaim.Api.Dtos.Auth;
 using SpeedClaim.Api.Dtos.Common;
@@ -215,6 +216,28 @@ public class AgentService : IAgentService
         return new BranchDto(branch.Id, branch.Name, branch.City, branch.State, branch.Address, branch.Phone, branch.Email, branch.IsActive);
     }
 
+    public async Task<BranchDto> UpdateBranchAsync(string branchId, CreateBranchRequest request, string adminId)
+    {
+        if (!Guid.TryParse(branchId, out var bId))
+            throw new NotFoundException("Branch not found");
+
+        var branch = await _unitOfWork.Branches.GetByIdAsync(bId)
+            ?? throw new NotFoundException("Branch not found");
+
+        branch.Name = request.Name;
+        branch.City = request.City;
+        branch.State = request.State;
+        branch.Address = request.Address;
+        branch.Phone = request.Phone;
+        branch.Email = request.Email;
+        branch.UpdatedAt = DateTimeOffset.UtcNow;
+
+        _unitOfWork.Branches.Update(branch);
+        await _unitOfWork.CompleteAsync();
+
+        return new BranchDto(branch.Id, branch.Name, branch.City, branch.State, branch.Address, branch.Phone, branch.Email, branch.IsActive);
+    }
+
     public async Task<IEnumerable<BranchDto>> GetBranchesAsync()
     {
         var branches = await _unitOfWork.Branches.GetAllAsync();
@@ -234,6 +257,13 @@ public class AgentService : IAgentService
 
         agent.BranchId = bId;
         agent.UpdatedAt = DateTimeOffset.UtcNow;
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = Guid.Parse(adminId), EntityType = "Agent", EntityId = agent.Id,
+            Action = "AgentBranchAssigned",
+            NewValue = JsonSerializer.Serialize(new { branchId = bId, branchName = branch.Name }),
+            CreatedAt = DateTime.UtcNow
+        });
 
         await _unitOfWork.CompleteAsync();
     }
@@ -247,6 +277,13 @@ public class AgentService : IAgentService
         agent.LicenseNumber = request.LicenseNumber;
         agent.LicenseExpiry = request.LicenseExpiry;
         agent.UpdatedAt = DateTimeOffset.UtcNow;
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = Guid.Parse(adminId), EntityType = "Agent", EntityId = agent.Id,
+            Action = "AgentLicenseUpdated",
+            NewValue = JsonSerializer.Serialize(new { licenseNumber = request.LicenseNumber, licenseExpiry = request.LicenseExpiry }),
+            CreatedAt = DateTime.UtcNow
+        });
 
         await _unitOfWork.CompleteAsync();
     }
@@ -259,6 +296,12 @@ public class AgentService : IAgentService
 
         agent.IsActive = isActive;
         agent.UpdatedAt = DateTimeOffset.UtcNow;
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = Guid.Parse(adminId), EntityType = "Agent", EntityId = agent.Id,
+            Action = isActive ? "AgentActivated" : "AgentDeactivated",
+            CreatedAt = DateTime.UtcNow
+        });
 
         await _unitOfWork.CompleteAsync();
     }

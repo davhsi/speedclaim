@@ -43,6 +43,7 @@ public class FinanceServiceTests
         _mockUnitOfWork.Setup(u => u.Policies).Returns(new Mock<IPolicyRepository>().Object);
         _mockUnitOfWork.Setup(u => u.Agents).Returns(new Mock<IRepository<Agent>>().Object);
         _mockUnitOfWork.Setup(u => u.InsuranceProducts).Returns(new Mock<IRepository<InsuranceProduct>>().Object);
+        _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
 
         _financeService = new FinanceService(_mockUnitOfWork.Object, _mockStripeWrapper.Object, _mockConfig.Object, _mockEmailService.Object, new Mock<INotificationService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<FinanceService>>());
     }

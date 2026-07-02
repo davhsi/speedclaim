@@ -113,15 +113,15 @@ public class SystemServiceTests
         var actorId = Guid.NewGuid();
         var logs = new List<AuditLog>
         {
-            new AuditLog { Id = Guid.NewGuid(), Action = "Test", UserId = actorId },
-            new AuditLog { Id = Guid.NewGuid(), Action = "SystemAction", UserId = null }
+            new AuditLog { Id = Guid.NewGuid(), Action = "Test", UserId = actorId, CreatedAt = DateTime.UtcNow },
+            new AuditLog { Id = Guid.NewGuid(), Action = "SystemAction", UserId = null, CreatedAt = DateTime.UtcNow.AddMinutes(-5) }
         };
         _mockUnitOfWork.Setup(u => u.AuditLogs.GetAllAsync()).ReturnsAsync(logs);
 
         var users = new List<User> { new User { Id = actorId, FirstName = "Davish", LastName = "Official" } };
         _mockUnitOfWork.Setup(u => u.Users.GetAllAsync()).ReturnsAsync(users);
 
-        var result = (await _systemService.GetAuditLogsAsync()).ToList();
+        var result = (await _systemService.GetAuditLogsAsync(1, 20, null, null, null)).Data.ToList();
 
         Assert.That(result.Count, Is.EqualTo(2));
         Assert.That(result[0].Action, Is.EqualTo("Test"));

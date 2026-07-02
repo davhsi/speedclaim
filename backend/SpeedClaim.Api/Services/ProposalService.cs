@@ -308,6 +308,29 @@ public class ProposalService : IProposalService
             if (!isOwner) throw new ForbiddenException("Access denied to this proposal.");
         }
 
+        var proposalMembers = await _unitOfWork.ProposalMembers.FindAsync(m => m.ProposalId == pId);
+        var memberDtos = new List<ProposalMemberDto>();
+        foreach (var member in proposalMembers)
+        {
+            var customerMember = await _unitOfWork.CustomerMembers.GetByIdAsync(member.CustomerMemberId);
+            if (customerMember != null)
+                memberDtos.Add(new ProposalMemberDto(member.Id, member.CustomerMemberId, customerMember.FullName, customerMember.Relationship.ToString()));
+        }
+
+        var nominees = (await _unitOfWork.Nominees.FindAsync(n => n.ProposalId == pId))
+            .Select(n => new ProposalNomineeDto(n.Id, n.FullName, n.Relationship, n.SharePercentage, n.DateOfBirth, n.IsMinor, n.AppointeeName))
+            .ToList();
+
+        var documents = (await _unitOfWork.SubmittedDocuments.FindAsync(d => d.EntityType == EntityType.Proposal && d.EntityId == pId))
+            .OrderByDescending(d => d.UploadedAt)
+            .Select(d => new SpeedClaim.Api.Dtos.Claims.SubmittedDocumentDto(
+                d.Id,
+                d.DocumentKey,
+                string.IsNullOrWhiteSpace(d.OriginalFilename) ? d.DocumentKey : d.OriginalFilename,
+                d.FilePath,
+                d.UploadedAt))
+            .ToList();
+
         return new ProposalDto(
             proposal.Id,
             proposal.ProposalNumber,
@@ -320,7 +343,12 @@ public class ProposalService : IProposalService
             proposal.PremiumAmount,
             proposal.PaymentFrequency,
             proposal.CreatedAt,
-            proposal.Product?.ProductName
+            proposal.Product?.ProductName,
+            proposal.Product?.Domain,
+            proposal.UnderwriterNotes,
+            memberDtos,
+            nominees,
+            documents
         );
     }
 

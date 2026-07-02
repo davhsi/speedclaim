@@ -97,6 +97,13 @@ public class PolicyService : IPolicyService
             ChangedById = customerId,
             ChangedAt = DateTimeOffset.UtcNow
         });
+        await _unitOfWork.AuditLogs.AddAsync(new Models.AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = customerId, EntityType = "Policy", EntityId = policyId,
+            Action = "PolicyCancelled",
+            NewValue = JsonSerializer.Serialize(new { policyNumber = policy.PolicyNumber }),
+            CreatedAt = DateTime.UtcNow
+        });
 
         await _unitOfWork.CompleteAsync();
 
@@ -152,6 +159,13 @@ public class PolicyService : IPolicyService
         };
 
         await _unitOfWork.Endorsements.AddAsync(endorsement);
+        await _unitOfWork.AuditLogs.AddAsync(new Models.AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = customerId, EntityType = "Endorsement", EntityId = endorsement.Id,
+            Action = "EndorsementRequested",
+            NewValue = JsonSerializer.Serialize(new { type = request.EndorsementType.ToString(), policyId }),
+            CreatedAt = DateTime.UtcNow
+        });
         await _unitOfWork.CompleteAsync();
 
         var endorsementUser = await _unitOfWork.Users.GetByIdAsync(customerId);

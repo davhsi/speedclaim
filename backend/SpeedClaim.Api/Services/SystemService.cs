@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using SpeedClaim.Api.Dtos.Common;
 using SpeedClaim.Api.Dtos.SystemManagement;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Models;
@@ -71,29 +72,33 @@ public class SystemService : ISystemService
         ));
     }
 
-    public async Task<IEnumerable<AuditLogDto>> GetAuditLogsAsync()
+    public async Task<PagedResponse<AuditLogDto>> GetAuditLogsAsync(int page, int pageSize, string? search, DateTime? from, DateTime? to)
     {
-        var logs = await _unitOfWork.AuditLogs.GetAllAsync();
-
-        // Resolve actor user ids to display names so the UI shows "Davish Official"
-        // instead of a raw GUID. Build a single lookup rather than querying per row.
+        var allLogs = (await _unitOfWork.AuditLogs.GetAllAsync()).OrderByDescending(l => l.CreatedAt);
         var users = await _unitOfWork.Users.GetAllAsync();
         var nameById = users.ToDictionary(u => u.Id, u => $"{u.FirstName} {u.LastName}".Trim());
 
-        // Since we don't have pagination yet, we might want to order it descending and take top 100 or something in real app.
-        // For now, we return all as per existing repo method signature.
-        return logs.Select(l => new AuditLogDto(
-            l.Id,
-            l.EntityType,
-            l.EntityId,
-            l.Action,
-            l.OldValue,
-            l.NewValue,
-            l.UserId,
-            l.UserId.HasValue && nameById.TryGetValue(l.UserId.Value, out var name) ? name : null,
-            l.IpAddress,
-            l.CreatedAt
-        ));
+        var dtos = allLogs.Select(l => new AuditLogDto(
+            l.Id, l.EntityType, l.EntityId, l.Action, l.OldValue, l.NewValue, l.UserId,
+            l.UserId.HasValue && nameById.TryGetValue(l.UserId.Value, out var n) ? n : null,
+            l.IpAddress, l.CreatedAt));
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLower();
+            dtos = dtos.Where(l =>
+                l.Action.ToLower().Contains(term) ||
+                l.EntityType.ToLower().Contains(term) ||
+                (l.UserName != null && l.UserName.ToLower().Contains(term)));
+        }
+        if (from.HasValue)
+            dtos = dtos.Where(l => l.CreatedAt >= from.Value);
+        if (to.HasValue)
+            dtos = dtos.Where(l => l.CreatedAt < to.Value.AddDays(1));
+
+        var total = dtos.Count();
+        var paged = dtos.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+        return new PagedResponse<AuditLogDto>(paged, page, pageSize, total);
     }
 
     public async Task<IEnumerable<NotificationDto>> GetNotificationsAndEmailLogsAsync()

@@ -30,7 +30,7 @@ public class SystemController : BaseApiController
     }
 
     /// <summary>Create or update a system configuration value</summary>
-    [HttpPut("configs")]
+    [HttpPatch("configs")]
     [ProducesResponseType(200)]
     public async Task<IActionResult> UpdateConfig([FromBody] UpdateSystemConfigRequest request)
     {
@@ -46,9 +46,14 @@ public class SystemController : BaseApiController
     /// <summary>Get the full audit log of admin and system actions</summary>
     [HttpGet("audit-logs")]
     [ProducesResponseType(200)]
-    public async Task<IActionResult> GetAuditLogs()
+    public async Task<IActionResult> GetAuditLogs(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 25,
+        [FromQuery] string? search = null,
+        [FromQuery] DateTime? from = null,
+        [FromQuery] DateTime? to = null)
     {
-        var result = await _systemService.GetAuditLogsAsync();
+        var result = await _systemService.GetAuditLogsAsync(page, pageSize, search, from, to);
         return Ok(result);
     }
 
@@ -75,7 +80,7 @@ public class SystemController : BaseApiController
     }
 
     /// <summary>Create or update an email template by key</summary>
-    [HttpPut("email-templates")]
+    [HttpPatch("email-templates")]
     [ProducesResponseType(200)]
     public async Task<IActionResult> ManageEmailTemplates([FromBody] ManageEmailTemplateRequest request)
     {

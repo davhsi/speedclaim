@@ -38,8 +38,11 @@ public class GrievanceServiceTests
         _mockUnitOfWork.Setup(u => u.Customers).Returns(_mockCustomerRepo.Object);
         _mockUnitOfWork.Setup(u => u.Policies).Returns(_mockPolicyRepo.Object);
         _mockUnitOfWork.Setup(u => u.Claims).Returns(_mockClaimRepo.Object);
+        _mockUnitOfWork.Setup(u => u.Users).Returns(new Mock<IUserRepository>().Object);
+        _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
+        _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
 
-        _grievanceService = new GrievanceService(_mockUnitOfWork.Object);
+        _grievanceService = new GrievanceService(_mockUnitOfWork.Object, new Mock<IEmailService>().Object);
     }
 
     [Test]

@@ -141,5 +141,19 @@ public class AuthController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>Admin — invite a staff user (Underwriter, ClaimsOfficer, FinanceOfficer, Surveyor, Admin)</summary>
+    /// <remarks>Creates the account as active and sends a password-reset link so the user sets their own password.</remarks>
+    [Authorize(Roles = "Admin")]
+    [HttpPost("admin/invite-user")]
+    [ProducesResponseType(typeof(RegistrationResponse), 200)]
+    [ProducesResponseType(409)]
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> InviteUser([FromBody] AdminInviteUserRequest request)
+    {
+        var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        var result = await _authService.InviteStaffUserAsync(request, adminId);
+        return Ok(result);
+    }
+
     #endregion
 }

@@ -56,18 +56,21 @@ public class ClaimServiceTests
         _mockUnitOfWork.Setup(u => u.SubmittedDocuments).Returns(_mockDocRepo.Object);
         _mockDocRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<SubmittedDocument, bool>>>()))
             .ReturnsAsync((SubmittedDocument?)null);
+        _mockDocRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<SubmittedDocument, bool>>>()))
+            .ReturnsAsync(Array.Empty<SubmittedDocument>());
         _mockStorage.Setup(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync("uploads/claims/doc.pdf");
         _mockUnitOfWork.Setup(u => u.Customers).Returns(new Mock<IRepository<Customer>>().Object);
         _mockUnitOfWork.Setup(u => u.Surveyors).Returns(new Mock<IRepository<Surveyor>>().Object);
         _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
+        _mockUnitOfWork.Setup(u => u.Users).Returns(new Mock<IUserRepository>().Object);
 
         var mockKycRepo = new Mock<IRepository<KycRecord>>();
         mockKycRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>()))
             .ReturnsAsync(new KycRecord { KycStatus = KycStatus.Approved, AadhaarNumber = "ENC", PanNumber = "ENC" });
         _mockUnitOfWork.Setup(u => u.KycRecords).Returns(mockKycRepo.Object);
 
-        _claimService = new ClaimService(_mockUnitOfWork.Object, _mockStorage.Object, new Mock<INotificationService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ClaimService>>());
+        _claimService = new ClaimService(_mockUnitOfWork.Object, _mockStorage.Object, new Mock<INotificationService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ClaimService>>(), new Mock<IEmailService>().Object);
     }
 
     [Test]
@@ -405,7 +408,7 @@ public class ClaimServiceTests
     {
         var claimId = Guid.NewGuid();
         var officerId = Guid.NewGuid();
-        var claim = new Claim { Id = claimId, CustomerId = Guid.NewGuid(), ClaimType = ClaimType.Health, Status = ClaimStatus.Intimated };
+        var claim = new Claim { Id = claimId, CustomerId = Guid.NewGuid(), ClaimType = ClaimType.Health, Status = ClaimStatus.Intimated, AssignedOfficerId = officerId };
         _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
         _mockUnitOfWork.Setup(u => u.Customers.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Customer?)null);
 
@@ -683,6 +686,30 @@ public class ClaimServiceTests
     }
 
     [Test]
+    public void AssignClaimAsync_ClaimAssignedToAnotherOfficer_ThrowsConflictException()
+    {
+        var claimId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, CustomerId = Guid.NewGuid(), Status = ClaimStatus.Intimated, AssignedOfficerId = Guid.NewGuid(), ClaimNumber = "CLM-001", PolicyId = Guid.NewGuid() };
+
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _claimService.AssignClaimAsync(claimId, Guid.NewGuid()));
+    }
+
+    [Test]
+    public void UpdateClaimStatusAsync_UnassignedClaim_ThrowsForbiddenException()
+    {
+        var claimId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, CustomerId = Guid.NewGuid(), ClaimType = ClaimType.Health, Status = ClaimStatus.Intimated };
+
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() =>
+            _claimService.UpdateClaimStatusAsync(claimId, ClaimStatus.UnderReview, Guid.NewGuid(), "Reviewing"));
+    }
+
+    [Test]
     public async Task SubmitSurveyReportAsync_ValidClaim_UploadsReport()
     {
         var claimId = Guid.NewGuid();
@@ -702,7 +729,7 @@ public class ClaimServiceTests
         var mockStorage = new Mock<IStorageService>();
         mockStorage.Setup(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync("/storage/report.pdf");
-        var svc = new ClaimService(_mockUnitOfWork.Object, mockStorage.Object, new Mock<INotificationService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ClaimService>>());
+        var svc = new ClaimService(_mockUnitOfWork.Object, mockStorage.Object, new Mock<INotificationService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ClaimService>>(), new Mock<IEmailService>().Object);
 
         var request = new SubmitSurveyReportRequest(5000m, DateTime.UtcNow.AddDays(-1), "minor damage", mockFile.Object);
         var result = await svc.SubmitSurveyReportAsync(claimId, surveyorId, request);
@@ -737,7 +764,7 @@ public class ClaimServiceTests
         mockStorage.SetupSequence(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync("/storage/report.pdf")
             .ReturnsAsync("/storage/damage.jpg");
-        var svc = new ClaimService(_mockUnitOfWork.Object, mockStorage.Object, new Mock<INotificationService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ClaimService>>());
+        var svc = new ClaimService(_mockUnitOfWork.Object, mockStorage.Object, new Mock<INotificationService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ClaimService>>(), new Mock<IEmailService>().Object);
 
         var request = new SubmitSurveyReportRequest(5000m, DateTime.UtcNow.AddDays(-1), "minor damage", reportFile.Object, new List<IFormFile> { photoFile.Object });
         await svc.SubmitSurveyReportAsync(claimId, surveyorId, request);
@@ -793,16 +820,17 @@ public class ClaimServiceTests
         var claimId = Guid.NewGuid();
         var customerId = Guid.NewGuid();
         var userId = Guid.NewGuid();
-        var claim = new Claim { Id = claimId, CustomerId = customerId, Status = ClaimStatus.Intimated, ClaimNumber = "CLM-001", PolicyId = Guid.NewGuid() };
+        var officerId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, CustomerId = customerId, Status = ClaimStatus.Intimated, AssignedOfficerId = officerId, ClaimNumber = "CLM-001", PolicyId = Guid.NewGuid() };
         var customer = new Customer { Id = customerId, UserId = userId };
 
         _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
         _mockUnitOfWork.Setup(u => u.Customers.GetByIdAsync(customerId)).ReturnsAsync(customer);
 
         var mockNotif = new Mock<INotificationService>();
-        var svc = new ClaimService(_mockUnitOfWork.Object, new Mock<IStorageService>().Object, mockNotif.Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ClaimService>>());
+        var svc = new ClaimService(_mockUnitOfWork.Object, new Mock<IStorageService>().Object, mockNotif.Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ClaimService>>(), new Mock<IEmailService>().Object);
 
-        await svc.UpdateClaimStatusAsync(claimId, ClaimStatus.UnderReview, Guid.NewGuid(), "reviewing");
+        await svc.UpdateClaimStatusAsync(claimId, ClaimStatus.UnderReview, officerId, "reviewing");
 
         mockNotif.Verify(n => n.CreateAsync(userId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
@@ -913,7 +941,7 @@ public class ClaimServiceTests
         mockStorage.Setup(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync("/storage/survey.pdf");
 
-        var svc = new ClaimService(_mockUnitOfWork.Object, mockStorage.Object, new Mock<INotificationService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ClaimService>>());
+        var svc = new ClaimService(_mockUnitOfWork.Object, mockStorage.Object, new Mock<INotificationService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ClaimService>>(), new Mock<IEmailService>().Object);
 
         var request = new SubmitSurveyReportRequest(12000m, DateTime.UtcNow.AddDays(-2), "heavy damage", mockFile.Object);
         await svc.SubmitSurveyReportAsync(claimId, surveyorId, request);

@@ -19,27 +19,49 @@ public partial class SpeedClaimDbContext
         return base.SaveChanges();
     }
 
+    // Internal infrastructure entities — too noisy; semantic audit entries already cover
+    // the meaningful events (UserLoggedIn/Out, ClaimStatusChanged, etc.).
+    private static readonly HashSet<Type> _auditExclusions = new()
+    {
+        typeof(Session),
+        typeof(UserToken),
+        typeof(ProcessedWebhookEvent),
+        typeof(Notification),
+        typeof(EmailLog),
+        typeof(ClaimStatusHistory),
+        typeof(PolicyStatusHistory),
+        typeof(PremiumSchedule),
+        typeof(PremiumPayment),
+        // Customer changes are captured by the ProfileUpdated semantic entry with human-readable field names
+        typeof(Customer),
+    };
+
     private void OnBeforeSaveChanges()
     {
         ChangeTracker.DetectChanges();
 
         var auditEntries = new List<AuditEntry>();
-        var userIdString = _httpContextAccessor?.HttpContext?.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var httpContext = _httpContextAccessor?.HttpContext;
+        var userIdString = httpContext?.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         Guid? userId = null;
         if (Guid.TryParse(userIdString, out var parsedUserId))
         {
             userId = parsedUserId;
         }
+        var ipAddress = httpContext?.Connection?.RemoteIpAddress?.ToString();
 
         foreach (var entry in ChangeTracker.Entries())
         {
             if (entry.Entity is AuditLog || entry.State == EntityState.Detached || entry.State == EntityState.Unchanged)
+                continue;
+            if (_auditExclusions.Contains(entry.Entity.GetType()))
                 continue;
 
             var auditEntry = new AuditEntry(entry)
             {
                 TableName = entry.Metadata.GetTableName() ?? entry.Entity.GetType().Name,
                 UserId = userId,
+                IpAddress = ipAddress,
                 Action = entry.State.ToString()
             };
 
@@ -90,6 +112,7 @@ public class AuditEntry
 
     public EntityEntry Entry { get; }
     public Guid? UserId { get; set; }
+    public string? IpAddress { get; set; }
     public string TableName { get; set; } = string.Empty;
     public string Action { get; set; } = string.Empty;
     public Dictionary<string, object?> KeyValues { get; } = new Dictionary<string, object?>();
@@ -101,6 +124,7 @@ public class AuditEntry
         var audit = new AuditLog
         {
             UserId = UserId,
+            IpAddress = IpAddress,
             EntityType = TableName,
             Action = Action,
             CreatedAt = DateTime.UtcNow,

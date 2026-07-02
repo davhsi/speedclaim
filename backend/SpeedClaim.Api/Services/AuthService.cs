@@ -301,7 +301,14 @@ public class AuthService : IAuthService
         userToken.IsUsed = true;
         var user = await _unitOfWork.Users.GetByIdAsync(userToken.UserId);
         if (user != null)
+        {
             user.IsEmailVerified = true;
+            await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+            {
+                Id = Guid.NewGuid(), UserId = user.Id, EntityType = "User", EntityId = user.Id,
+                Action = "EmailVerified", CreatedAt = DateTime.UtcNow
+            });
+        }
 
         await _unitOfWork.CompleteAsync();
     }
@@ -341,6 +348,11 @@ public class AuthService : IAuthService
         var activeSessions = await _unitOfWork.Sessions.FindAsync(s => s.UserId == uid && !s.IsRevoked);
         foreach (var session in activeSessions)
             session.IsRevoked = true;
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = uid, EntityType = "User", EntityId = uid,
+            Action = "UserLoggedOut", CreatedAt = DateTime.UtcNow
+        });
         await _unitOfWork.CompleteAsync();
         _logger.LogInformation("User logged out: {UserId}", userId);
     }
@@ -394,6 +406,11 @@ public class AuthService : IAuthService
             user.FailedLoginAttempts = 0;
             user.LockedUntil = null;
             await RevokeActiveSessionsAsync(user.Id);
+            await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+            {
+                Id = Guid.NewGuid(), UserId = user.Id, EntityType = "User", EntityId = user.Id,
+                Action = "PasswordReset", CreatedAt = DateTime.UtcNow
+            });
         }
 
         await _unitOfWork.CompleteAsync();
@@ -408,6 +425,13 @@ public class AuthService : IAuthService
         user.FailedLoginAttempts = 0;
         user.LockedUntil = null;
         await RevokeActiveSessionsAsync(user.Id);
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = Guid.Parse(adminId), EntityType = "User", EntityId = user.Id,
+            Action = "PasswordResetByAdmin",
+            NewValue = JsonSerializer.Serialize(new { targetEmail = user.Email }),
+            CreatedAt = DateTime.UtcNow
+        });
         await _unitOfWork.CompleteAsync();
     }
 
@@ -475,6 +499,48 @@ public class AuthService : IAuthService
         return new RegistrationResponse(user.Email, user.Role.ToString());
     }
 
+    public async Task<RegistrationResponse> InviteStaffUserAsync(AdminInviteUserRequest request, string adminId)
+    {
+        var existing = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+        if (existing != null)
+            throw new ConflictException("Email already registered");
+
+        if (!Enum.TryParse<UserRole>(request.Role, ignoreCase: true, out var role)
+            || role == UserRole.Customer || role == UserRole.Agent)
+            throw new ValidationException("Only staff roles can be invited: Underwriter, ClaimsOfficer, FinanceOfficer, Surveyor, or Admin.");
+
+        var user = new User
+        {
+            Email = request.Email,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString()),
+            Role = role,
+            IsEmailVerified = true,
+            IsActive = true,
+            FirstName = request.FirstName,
+            LastName = request.LastName,
+            Phone = "0000000000",
+            Salutation = Salutation.Mr
+        };
+
+        await _unitOfWork.Users.AddAsync(user);
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = Guid.TryParse(adminId, out var aid) ? aid : Guid.Empty,
+            EntityType = "User",
+            EntityId = user.Id,
+            Action = "StaffInvited",
+            NewValue = JsonSerializer.Serialize(new { user.Email, Role = user.Role.ToString() }),
+            CreatedAt = DateTime.UtcNow
+        });
+        await _unitOfWork.CompleteAsync();
+
+        // Send a password-reset link so the invited user sets their own password on first login
+        await ForgotPasswordAsync(request.Email);
+
+        return new RegistrationResponse(user.Email, user.Role.ToString());
+    }
+
     // --- helpers ---
 
     private static bool TryParsePayload(string payload, out Guid id, out string rawToken)
@@ -498,6 +564,7 @@ public class AuthService : IAuthService
             $"{user.FirstName} {user.LastName}",
             user.Phone,
             user.Role.ToString(),
-            user.Customer?.MaritalStatus.ToString() ?? "Single"
+            user.Customer?.MaritalStatus.ToString() ?? "Single",
+            user.AvatarUrl != null ? $"/{user.AvatarUrl}" : null
         );
 }

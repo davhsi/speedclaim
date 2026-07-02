@@ -142,7 +142,7 @@ public class ProposalsController : BaseApiController
     /// <summary>Underwriter — append internal review notes to a proposal</summary>
     /// <param name="id">Proposal ID</param>
     [Authorize(Roles = "Underwriter")]
-    [HttpPut("{id}/notes")]
+    [HttpPatch("{id}/notes")]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> AddNotes(string id, [FromBody] AddUnderwriterNotesRequest request)

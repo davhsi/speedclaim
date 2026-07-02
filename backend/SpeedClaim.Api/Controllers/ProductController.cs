@@ -83,7 +83,7 @@ public class ProductsController : BaseApiController
     /// <remarks>All existing rates for the product are removed and replaced with the new set.</remarks>
     /// <param name="id">Product ID</param>
     [Authorize(Roles = "Admin")]
-    [HttpPut("{id}/rates")]
+    [HttpPatch("{id}/rates")]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> UpdateRates(string id, [FromBody] UpdatePremiumRatesRequest request)
@@ -109,7 +109,7 @@ public class ProductsController : BaseApiController
     /// <summary>Admin — configure the document requirements for a product (replaces existing)</summary>
     /// <param name="id">Product ID</param>
     [Authorize(Roles = "Admin")]
-    [HttpPut("{id}/documents")]
+    [HttpPatch("{id}/documents")]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> ConfigureDocuments(string id, [FromBody] UpdateDocumentRequirementsRequest request)

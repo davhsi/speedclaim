@@ -82,7 +82,29 @@ public record ProposalDto(
     decimal PremiumAmount,
     string PaymentFrequency,
     DateTimeOffset CreatedAt,
-    string? ProductName = null
+    string? ProductName = null,
+    string? Domain = null,
+    string? UnderwriterNotes = null,
+    List<ProposalMemberDto>? Members = null,
+    List<ProposalNomineeDto>? Nominees = null,
+    List<SpeedClaim.Api.Dtos.Claims.SubmittedDocumentDto>? Documents = null
+);
+
+public record ProposalMemberDto(
+    Guid Id,
+    Guid FamilyMemberId,
+    string Name,
+    string Relationship
+);
+
+public record ProposalNomineeDto(
+    Guid Id,
+    string Name,
+    string Relationship,
+    decimal SharePercentage,
+    DateOnly DateOfBirth,
+    bool IsMinor,
+    string? AppointeeName
 );
 
 public record ApproveRejectProposalRequest(

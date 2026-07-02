@@ -19,6 +19,7 @@ public interface IAgentService
 
     // Admin - Branch & Agent Management
     Task<BranchDto> CreateBranchAsync(CreateBranchRequest request, string adminId);
+    Task<BranchDto> UpdateBranchAsync(string branchId, CreateBranchRequest request, string adminId);
     Task<IEnumerable<BranchDto>> GetBranchesAsync();
     Task AssignAgentToBranchAsync(string agentId, string branchId, string adminId);
     Task UpdateAgentLicenseAsync(string agentId, UpdateAgentLicenseRequest request, string adminId);

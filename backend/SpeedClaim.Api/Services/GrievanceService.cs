@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Text.Json;
 using System.Threading.Tasks;
 using SpeedClaim.Api.Dtos.Common;
 using SpeedClaim.Api.Dtos.Grievances;
@@ -63,6 +64,13 @@ public class GrievanceService : IGrievanceService
         };
 
         await _unitOfWork.Grievances.AddAsync(grievance);
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = customerId, EntityType = "Grievance", EntityId = grievance.Id,
+            Action = "GrievanceRaised",
+            NewValue = JsonSerializer.Serialize(new { grievanceNumber = grievance.GrievanceNumber, category = grievance.Category.ToString() }),
+            CreatedAt = DateTime.UtcNow
+        });
         await _unitOfWork.CompleteAsync();
 
         var user = await _unitOfWork.Users.GetByIdAsync(customerId);
@@ -114,6 +122,13 @@ public class GrievanceService : IGrievanceService
         grievance.AssignedToId = officerId;
         grievance.Status = GrievanceStatus.InProgress;
         grievance.UpdatedAt = DateTimeOffset.UtcNow;
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = officerId, EntityType = "Grievance", EntityId = grievanceId,
+            Action = "GrievanceAssigned",
+            NewValue = JsonSerializer.Serialize(new { officerId }),
+            CreatedAt = DateTime.UtcNow
+        });
 
         _unitOfWork.Grievances.Update(grievance);
         await _unitOfWork.CompleteAsync();
@@ -126,8 +141,9 @@ public class GrievanceService : IGrievanceService
         if (IsTerminal(grievance.Status))
             throw new ValidationException("Resolved or closed grievances cannot be updated.");
 
+        var oldGrievanceStatus = grievance.Status;
         grievance.Status = request.Status;
-        
+
         if (request.ResolutionNotes != null)
         {
             grievance.ResolutionNotes = request.ResolutionNotes;
@@ -139,6 +155,14 @@ public class GrievanceService : IGrievanceService
         }
 
         grievance.UpdatedAt = DateTimeOffset.UtcNow;
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = grievance.AssignedToId, EntityType = "Grievance", EntityId = grievanceId,
+            Action = request.Status == GrievanceStatus.Resolved ? "GrievanceResolved" : "GrievanceStatusChanged",
+            OldValue = JsonSerializer.Serialize(oldGrievanceStatus.ToString()),
+            NewValue = JsonSerializer.Serialize(request.Status.ToString()),
+            CreatedAt = DateTime.UtcNow
+        });
 
         _unitOfWork.Grievances.Update(grievance);
         await _unitOfWork.CompleteAsync();

@@ -61,7 +61,7 @@ public class AgentsController : BaseApiController
 
     /// <summary>Update the authenticated agent's own contact details (name, phone)</summary>
     [Authorize(Roles = "Agent")]
-    [HttpPut("profile")]
+    [HttpPatch("profile")]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateAgentProfileRequest request)
@@ -139,6 +139,19 @@ public class AgentsController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>Admin — update an existing branch office</summary>
+    /// <param name="branchId">Branch ID</param>
+    [Authorize(Roles = "Admin")]
+    [HttpPatch("branches/{branchId}")]
+    [ProducesResponseType(typeof(BranchDto), 200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> UpdateBranch(string branchId, [FromBody] CreateBranchRequest request)
+    {
+        var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        var result = await _agentService.UpdateBranchAsync(branchId, request, adminId);
+        return Ok(result);
+    }
+
     /// <summary>Admin — get all branch offices</summary>
     [Authorize(Roles = "Admin")]
     [HttpGet("branches")]
@@ -167,7 +180,7 @@ public class AgentsController : BaseApiController
     /// <summary>Admin — update an agent's license number and expiry date</summary>
     /// <param name="agentId">Agent user ID</param>
     [Authorize(Roles = "Admin")]
-    [HttpPut("{agentId}/license")]
+    [HttpPatch("{agentId}/license")]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> UpdateAgentLicense(string agentId, [FromBody] UpdateAgentLicenseRequest request)

@@ -53,9 +53,26 @@ public class ProposalServiceTests
         _mockUnitOfWork.Setup(u => u.Policies).Returns(new Mock<IPolicyRepository>().Object);
         _mockUnitOfWork.Setup(u => u.PremiumSchedules).Returns(new Mock<IRepository<PremiumSchedule>>().Object);
         _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
+        _mockUnitOfWork.Setup(u => u.Users).Returns(new Mock<IUserRepository>().Object);
+
+        var mockProposalMemberRepo = new Mock<IRepository<ProposalMember>>();
+        mockProposalMemberRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<ProposalMember, bool>>>()))
+            .ReturnsAsync(new List<ProposalMember>());
+        _mockUnitOfWork.Setup(u => u.ProposalMembers).Returns(mockProposalMemberRepo.Object);
+
+        var mockNomineeRepo = new Mock<IRepository<Nominee>>();
+        mockNomineeRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Nominee, bool>>>()))
+            .ReturnsAsync(new List<Nominee>());
+        _mockUnitOfWork.Setup(u => u.Nominees).Returns(mockNomineeRepo.Object);
+
+        var mockSubmittedDocRepo = new Mock<ISubmittedDocumentRepository>();
+        mockSubmittedDocRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<SubmittedDocument, bool>>>()))
+            .ReturnsAsync(new List<SubmittedDocument>());
+        _mockUnitOfWork.Setup(u => u.SubmittedDocuments).Returns(mockSubmittedDocRepo.Object);
+
         _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
 
-        _proposalService = new ProposalService(_mockUnitOfWork.Object, new Mock<INotificationService>().Object, new Mock<IStorageService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ProposalService>>());
+        _proposalService = new ProposalService(_mockUnitOfWork.Object, new Mock<INotificationService>().Object, new Mock<IStorageService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ProposalService>>(), new Mock<IEmailService>().Object);
     }
 
     private static InsuranceProduct ActiveProduct(string domain = "Health") => new()
@@ -522,7 +539,7 @@ public class ProposalServiceTests
             .ReturnsAsync(new List<SubmittedDocument>());
         _mockUnitOfWork.Setup(u => u.SubmittedDocuments).Returns(mockDocRepo.Object);
 
-        var proposalServiceWithStorage = new ProposalService(_mockUnitOfWork.Object, new Mock<INotificationService>().Object, mockStorageService.Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ProposalService>>());
+        var proposalServiceWithStorage = new ProposalService(_mockUnitOfWork.Object, new Mock<INotificationService>().Object, mockStorageService.Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ProposalService>>(), new Mock<IEmailService>().Object);
 
         var mockFile = new Mock<Microsoft.AspNetCore.Http.IFormFile>();
         mockFile.Setup(f => f.FileName).Returns("doc.pdf");
@@ -601,7 +618,7 @@ public class ProposalServiceTests
         mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
         var mockStorage = new Mock<IStorageService>();
         mockStorage.Setup(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync("/path/id.pdf");
-        var svc = new ProposalService(_mockUnitOfWork.Object, new Mock<INotificationService>().Object, mockStorage.Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ProposalService>>());
+        var svc = new ProposalService(_mockUnitOfWork.Object, new Mock<INotificationService>().Object, mockStorage.Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ProposalService>>(), new Mock<IEmailService>().Object);
 
         await svc.UploadDocumentAsync(proposalId.ToString(), agentUserId.ToString(), "ID_PROOF", mockFile.Object);
 
@@ -626,7 +643,7 @@ public class ProposalServiceTests
         _mockCustomerRepo.Setup(r => r.GetByIdAsync(customerId)).ReturnsAsync(customer);
 
         var mockNotif = new Mock<INotificationService>();
-        var svc = new ProposalService(_mockUnitOfWork.Object, mockNotif.Object, new Mock<IStorageService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ProposalService>>());
+        var svc = new ProposalService(_mockUnitOfWork.Object, mockNotif.Object, new Mock<IStorageService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ProposalService>>(), new Mock<IEmailService>().Object);
 
         await svc.ApproveOrRejectProposalAsync(proposalId.ToString(), Guid.NewGuid().ToString(), true, "Looks good");
 
@@ -655,7 +672,7 @@ public class ProposalServiceTests
         _mockAgentRepo.Setup(r => r.GetByIdAsync(agentId)).ReturnsAsync(agent);
 
         var mockNotif = new Mock<INotificationService>();
-        var svc = new ProposalService(_mockUnitOfWork.Object, mockNotif.Object, new Mock<IStorageService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ProposalService>>());
+        var svc = new ProposalService(_mockUnitOfWork.Object, mockNotif.Object, new Mock<IStorageService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ProposalService>>(), new Mock<IEmailService>().Object);
 
         await svc.ApproveOrRejectProposalAsync(proposalId.ToString(), Guid.NewGuid().ToString(), true, "All checks passed");
 

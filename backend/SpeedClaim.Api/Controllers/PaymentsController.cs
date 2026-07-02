@@ -115,6 +115,7 @@ public class PaymentsController : BaseApiController
     /// <param name="paymentId">Payment ID</param>
     [Authorize(Roles = "FinanceOfficer")]
     [HttpPut("{paymentId}/reconcile")]
+    [Idempotent]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> ReconcilePayment(string paymentId)
@@ -158,6 +159,7 @@ public class PaymentsController : BaseApiController
     /// <param name="claimId">Claim ID</param>
     [Authorize(Roles = "FinanceOfficer")]
     [HttpPut("claims/{claimId}/settle")]
+    [Idempotent]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
     [ProducesResponseType(409)]

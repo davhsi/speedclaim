@@ -388,7 +388,7 @@ public class AuthServiceTests
         _mockSessionRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Session, bool>>>()))
             .ReturnsAsync(new List<Session> { session });
         
-        await _authService.ResetPasswordAsync(user.Id.ToString(), "newpassword", "admin123");
+        await _authService.ResetPasswordAsync(user.Id.ToString(), "newpassword", Guid.NewGuid().ToString());
         
         Assert.That(BCrypt.Net.BCrypt.Verify("newpassword", user.PasswordHash), Is.True);
         Assert.That(user.FailedLoginAttempts, Is.EqualTo(0));

@@ -36,7 +36,16 @@ public record ClaimDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset? UpdatedAt,
     string? CustomerName,
-    string? PolicyNumber
+    string? PolicyNumber,
+    List<SubmittedDocumentDto>? Documents = null
+);
+
+public record SubmittedDocumentDto(
+    Guid Id,
+    string DocumentKey,
+    string DocumentName,
+    string FilePath,
+    DateTime UploadedAt
 );
 
 public record ClaimStatusHistoryDto(

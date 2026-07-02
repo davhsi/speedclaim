@@ -48,6 +48,7 @@ public class AgentServiceTests
         _mockUnitOfWork.Setup(u => u.Policies).Returns(_mockPolicyRepo.Object);
         _mockUnitOfWork.Setup(u => u.AgentCommissions).Returns(_mockCommissionRepo.Object);
         _mockUnitOfWork.Setup(u => u.Claims).Returns(_mockClaimRepo.Object);
+        _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
         _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
 
         _agentService = new AgentService(_mockUnitOfWork.Object);
