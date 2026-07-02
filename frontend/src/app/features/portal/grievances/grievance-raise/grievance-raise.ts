@@ -6,11 +6,12 @@ import { ClaimDto, PolicyDto, RaiseGrievanceRequest } from '../../../../core/mod
 import { ToastService } from '../../../../shared/components/toast/toast.service';
 import { PolicyService } from '../../policies/services/policy.service';
 import { ClaimService } from '../../claims/services/claim.service';
+import { FileUploadComponent } from '../../../../shared/components/file-upload/file-upload';
 
 @Component({
   selector: 'app-grievance-raise',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, FileUploadComponent],
   templateUrl: './grievance-raise.html',
 })
 export class GrievanceRaiseComponent implements OnInit {
@@ -24,6 +25,7 @@ export class GrievanceRaiseComponent implements OnInit {
   submitting = signal(false);
   policies = signal<PolicyDto[]>([]);
   claims = signal<ClaimDto[]>([]);
+  attachedFile = signal<File | null>(null);
 
   form = this.fb.group({
     category: ['ClaimDelay', Validators.required],
@@ -35,6 +37,10 @@ export class GrievanceRaiseComponent implements OnInit {
   ngOnInit(): void {
     this.policyService.getMyPolicies().subscribe({ next: policies => this.policies.set(policies) });
     this.claimService.getMyClaims().subscribe({ next: claims => this.claims.set(claims) });
+  }
+
+  onFileSelected(file: File): void {
+    this.attachedFile.set(file);
   }
 
   submit(): void {
@@ -50,9 +56,23 @@ export class GrievanceRaiseComponent implements OnInit {
 
     this.submitting.set(true);
     this.grievanceService.raise(request).subscribe({
-      next: () => {
-        this.toast.success('Grievance submitted');
-        this.router.navigate(['/grievances']);
+      next: grievance => {
+        const file = this.attachedFile();
+        if (file) {
+          this.grievanceService.uploadAttachment(grievance.id, file).subscribe({
+            next: () => {
+              this.toast.success('Grievance submitted with attachment');
+              this.router.navigate(['/grievances']);
+            },
+            error: () => {
+              this.toast.success('Grievance submitted (attachment upload failed)');
+              this.router.navigate(['/grievances']);
+            },
+          });
+        } else {
+          this.toast.success('Grievance submitted');
+          this.router.navigate(['/grievances']);
+        }
       },
       error: () => { this.submitting.set(false); this.toast.error('Submission failed'); },
     });

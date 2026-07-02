@@ -51,7 +51,25 @@
               }
             </div>
             @if (k.aadhaarNumber) {
-              <div class="text-sm text-body sc-numeric">{{ revealed() ? k.aadhaarNumber : maskAadhaar(k.aadhaarNumber) }}</div>
+              <div class="text-sm text-body sc-numeric mb-3">{{ revealed() ? k.aadhaarNumber : maskAadhaar(k.aadhaarNumber) }}</div>
+            }
+            @if (k.aadhaarFrontPath || k.aadhaarBackPath) {
+              <div class="flex gap-2 flex-wrap">
+                @if (k.aadhaarFrontPath) {
+                  <a [href]="'/' + k.aadhaarFrontPath" target="_blank" rel="noopener"
+                     class="flex items-center gap-1.5 h-8 px-3 border border-line rounded-lg text-xs font-medium text-primary hover:bg-surface transition-colors no-underline">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    Front
+                  </a>
+                }
+                @if (k.aadhaarBackPath) {
+                  <a [href]="'/' + k.aadhaarBackPath" target="_blank" rel="noopener"
+                     class="flex items-center gap-1.5 h-8 px-3 border border-line rounded-lg text-xs font-medium text-primary hover:bg-surface transition-colors no-underline">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    Back
+                  </a>
+                }
+              </div>
             }
           </div>
 
@@ -67,7 +85,25 @@
               }
             </div>
             @if (k.panNumber) {
-              <div class="text-sm text-body sc-numeric">{{ revealed() ? k.panNumber : maskPan(k.panNumber) }}</div>
+              <div class="text-sm text-body sc-numeric mb-3">{{ revealed() ? k.panNumber : maskPan(k.panNumber) }}</div>
+            }
+            @if (k.panFrontPath || k.panBackPath) {
+              <div class="flex gap-2 flex-wrap">
+                @if (k.panFrontPath) {
+                  <a [href]="'/' + k.panFrontPath" target="_blank" rel="noopener"
+                     class="flex items-center gap-1.5 h-8 px-3 border border-line rounded-lg text-xs font-medium text-primary hover:bg-surface transition-colors no-underline">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    Front
+                  </a>
+                }
+                @if (k.panBackPath) {
+                  <a [href]="'/' + k.panBackPath" target="_blank" rel="noopener"
+                     class="flex items-center gap-1.5 h-8 px-3 border border-line rounded-lg text-xs font-medium text-primary hover:bg-surface transition-colors no-underline">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    Back
+                  </a>
+                }
+              </div>
             }
           </div>
 

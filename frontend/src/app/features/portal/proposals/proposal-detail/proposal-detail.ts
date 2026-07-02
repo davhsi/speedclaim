@@ -8,12 +8,13 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { DateFormatPipe } from '../../../../shared/pipes/date-format.pipe';
 import { SafeHtmlPipe } from '../../../../shared/pipes/safe-html.pipe';
 import { FileUploadComponent } from '../../../../shared/components/file-upload/file-upload';
+import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
 
 @Component({
   selector: 'app-proposal-detail',
   standalone: true,
-  imports: [StatusBadgeComponent, MoneyPipe, DateFormatPipe, SafeHtmlPipe, FileUploadComponent],
+  imports: [StatusBadgeComponent, MoneyPipe, DateFormatPipe, SafeHtmlPipe, FileUploadComponent, ConfirmDialogComponent],
   templateUrl: './proposal-detail.html',
 })
 export class ProposalDetailComponent implements OnInit {
@@ -26,6 +27,7 @@ export class ProposalDetailComponent implements OnInit {
   proposal = signal<ProposalDto | null>(null);
   product = signal<ProductDto | null>(null);
   loading = signal(true);
+  showWithdrawDialog = signal(false);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id') ?? '';
@@ -68,6 +70,27 @@ export class ProposalDetailComponent implements OnInit {
 
   private normalizedDomain(): string {
     return this.displayDomain().toUpperCase();
+  }
+
+  canWithdraw(): boolean {
+    const s = this.proposal()?.status;
+    return s === 'Submitted' || s === 'DocumentsPending' || s === 'UnderReview';
+  }
+
+  confirmWithdraw(): void {
+    const p = this.proposal();
+    if (!p) return;
+    this.proposalService.withdraw(p.id).subscribe({
+      next: () => {
+        this.toast.success('Proposal withdrawn');
+        this.showWithdrawDialog.set(false);
+        this.proposal.update(pr => pr ? { ...pr, status: 'Withdrawn' as typeof pr.status } : pr);
+      },
+      error: () => {
+        this.showWithdrawDialog.set(false);
+        this.toast.error('Failed to withdraw proposal');
+      },
+    });
   }
 
   onDocUpload(file: File): void {

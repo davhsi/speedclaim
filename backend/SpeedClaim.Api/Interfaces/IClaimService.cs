@@ -16,6 +16,7 @@ public interface IClaimService
     Task<IEnumerable<ClaimDto>> GetMyClaimsAsync(Guid customerId, ClaimStatus? status = null, ClaimType? claimType = null);
     Task<ClaimDto> GetClaimByIdAsync(Guid claimId, Guid? customerId = null);
     Task<IEnumerable<ClaimStatusHistoryDto>> GetClaimHistoryAsync(Guid claimId, Guid? customerId = null);
+    Task WithdrawClaimAsync(Guid claimId, Guid customerId);
 
     // Claims Officer
     Task<PagedResponse<ClaimDto>> GetAllClaimsAsync(int page, int pageSize, ClaimStatus? status = null, ClaimType? claimType = null);

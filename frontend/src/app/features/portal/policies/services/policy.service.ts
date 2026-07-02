@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
   PolicyDto, PolicyStatusHistoryDto, EndorsementDto, PolicyNomineeDto,
-  RequestEndorsementRequest, UpdateNomineeRequest, ApiMessage,
+  RequestEndorsementRequest, UpdateNomineeRequest, ApiMessage, PremiumScheduleDto,
 } from '../../../../core/models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -43,6 +43,10 @@ export class PolicyService {
 
   cancelPolicy(id: string): Observable<ApiMessage> {
     return this.http.put<ApiMessage>(`${this.api}/${id}/cancel`, {});
+  }
+
+  getSchedule(id: string): Observable<PremiumScheduleDto[]> {
+    return this.http.get<PremiumScheduleDto[]>(`/api/v1/payments/schedule/${id}`);
   }
 
   downloadCertificate(id: string): Observable<Blob> {

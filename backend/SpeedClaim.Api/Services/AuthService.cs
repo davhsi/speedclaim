@@ -523,6 +523,20 @@ public class AuthService : IAuthService
         };
 
         await _unitOfWork.Users.AddAsync(user);
+
+        if (role == UserRole.Surveyor)
+        {
+            await _unitOfWork.Surveyors.AddAsync(new Models.Surveyor
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                SurveyorType = Models.Enums.SurveyorType.Internal,
+                Specialization = Models.Enums.SurveyorSpecialization.All,
+                IsActive = true,
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+        }
+
         await _unitOfWork.AuditLogs.AddAsync(new AuditLog
         {
             Id = Guid.NewGuid(),

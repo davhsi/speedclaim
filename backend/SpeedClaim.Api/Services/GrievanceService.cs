@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using SpeedClaim.Api.Dtos.Common;
 using SpeedClaim.Api.Dtos.Grievances;
 using SpeedClaim.Api.Exceptions;
@@ -17,11 +19,13 @@ public class GrievanceService : IGrievanceService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEmailService _emailService;
+    private readonly IStorageService _storageService;
 
-    public GrievanceService(IUnitOfWork unitOfWork, IEmailService emailService)
+    public GrievanceService(IUnitOfWork unitOfWork, IEmailService emailService, IStorageService storageService)
     {
         _unitOfWork = unitOfWork;
         _emailService = emailService;
+        _storageService = storageService;
     }
 
     private async Task<Models.Customer> ResolveCustomerAsync(Guid userId)
@@ -90,13 +94,13 @@ public class GrievanceService : IGrievanceService
     {
         var customer = await ResolveCustomerAsync(customerId);
         var grievances = await _unitOfWork.Grievances.FindAsync(g => g.CustomerId == customer.Id);
-        return grievances.Select(MapToDto);
+        return grievances.Select(g => MapToDto(g));
     }
 
     public async Task<PagedResponse<GrievanceDto>> GetAllGrievancesAsync(int page, int pageSize)
     {
         var (items, total) = await _unitOfWork.Grievances.GetPagedAsync(page, pageSize);
-        return new PagedResponse<GrievanceDto>(items.Select(MapToDto), page, pageSize, total);
+        return new PagedResponse<GrievanceDto>(items.Select(g => MapToDto(g)), page, pageSize, total);
     }
 
     public async Task<GrievanceDto> GetGrievanceByIdAsync(Guid id, Guid? requestingCustomerId = null)
@@ -109,7 +113,19 @@ public class GrievanceService : IGrievanceService
             if (grievance.CustomerId != customer.Id)
                 throw new ForbiddenException("You do not have access to this grievance.");
         }
-        return MapToDto(grievance);
+        string? policyNumber = null;
+        string? claimNumber = null;
+        if (grievance.PolicyId.HasValue)
+        {
+            var policy = await _unitOfWork.Policies.GetByIdAsync(grievance.PolicyId.Value);
+            policyNumber = policy?.PolicyNumber;
+        }
+        if (grievance.ClaimId.HasValue)
+        {
+            var claim = await _unitOfWork.Claims.GetByIdAsync(grievance.ClaimId.Value);
+            claimNumber = claim?.ClaimNumber;
+        }
+        return MapToDto(grievance, policyNumber, claimNumber);
     }
 
     public async Task AssignGrievanceAsync(Guid grievanceId, Guid officerId)
@@ -134,7 +150,7 @@ public class GrievanceService : IGrievanceService
         await _unitOfWork.CompleteAsync();
     }
 
-    public async Task UpdateGrievanceStatusAsync(Guid grievanceId, UpdateGrievanceStatusRequest request)
+    public async Task UpdateGrievanceStatusAsync(Guid grievanceId, UpdateGrievanceStatusRequest request, Guid actorId)
     {
         var grievance = await _unitOfWork.Grievances.GetByIdAsync(grievanceId);
         if (grievance == null) throw new NotFoundException("Grievance not found.");
@@ -157,7 +173,7 @@ public class GrievanceService : IGrievanceService
         grievance.UpdatedAt = DateTimeOffset.UtcNow;
         await _unitOfWork.AuditLogs.AddAsync(new AuditLog
         {
-            Id = Guid.NewGuid(), UserId = grievance.AssignedToId, EntityType = "Grievance", EntityId = grievanceId,
+            Id = Guid.NewGuid(), UserId = actorId, EntityType = "Grievance", EntityId = grievanceId,
             Action = request.Status == GrievanceStatus.Resolved ? "GrievanceResolved" : "GrievanceStatusChanged",
             OldValue = JsonSerializer.Serialize(oldGrievanceStatus.ToString()),
             NewValue = JsonSerializer.Serialize(request.Status.ToString()),
@@ -193,12 +209,35 @@ public class GrievanceService : IGrievanceService
         }
     }
 
+    public async Task<string> AttachDocumentAsync(Guid grievanceId, Guid customerId, IFormFile file)
+    {
+        var grievance = await _unitOfWork.Grievances.GetByIdAsync(grievanceId);
+        if (grievance == null) throw new NotFoundException("Grievance not found.");
+
+        var customer = await ResolveCustomerAsync(customerId);
+        if (grievance.CustomerId != customer.Id)
+            throw new ForbiddenException("You do not have access to this grievance.");
+
+        if (IsTerminal(grievance.Status))
+            throw new ConflictException("Attachments cannot be added to a resolved or closed grievance.");
+
+        await using var stream = file.OpenReadStream();
+        var path = await _storageService.UploadFileAsync(stream, file.FileName, $"grievances/{grievanceId}");
+
+        grievance.AttachmentPath = path;
+        grievance.UpdatedAt = DateTimeOffset.UtcNow;
+        _unitOfWork.Grievances.Update(grievance);
+        await _unitOfWork.CompleteAsync();
+
+        return path;
+    }
+
     private static bool IsTerminal(GrievanceStatus status)
     {
         return status == GrievanceStatus.Resolved || status == GrievanceStatus.Closed;
     }
 
-    private static GrievanceDto MapToDto(Grievance g)
+    private static GrievanceDto MapToDto(Grievance g, string? policyNumber = null, string? claimNumber = null)
     {
         return new GrievanceDto(
             g.Id,
@@ -206,13 +245,16 @@ public class GrievanceService : IGrievanceService
             g.CustomerId,
             g.PolicyId,
             g.ClaimId,
+            policyNumber,
+            claimNumber,
             g.Category.ToString(),
             g.Description,
             g.Status.ToString(),
             g.AssignedToId,
             g.ResolutionNotes,
             g.ResolvedAt,
-            g.CreatedAt
+            g.CreatedAt,
+            g.AttachmentPath
         );
     }
 }

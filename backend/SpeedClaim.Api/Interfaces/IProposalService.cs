@@ -13,6 +13,7 @@ public interface IProposalService
     Task<IEnumerable<ProposalDto>> GetMyProposalsAsync(string userId, bool isAgent);
     Task<ProposalDto> GetByIdAsync(string proposalId, string userId, bool isAdmin);
     Task<string> UploadDocumentAsync(string proposalId, string uploaderId, string documentType, IFormFile file);
+    Task WithdrawProposalAsync(string proposalId, string userId);
 
     // Underwriter
     Task<IEnumerable<ProposalDto>> GetAllProposalsAsync();

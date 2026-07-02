@@ -96,6 +96,21 @@ public class ProposalsController : BaseApiController
         return Ok(new { FilePath = result });
     }
 
+    /// <summary>Withdraw a proposal (customer or agent initiated). Allowed for Submitted, UnderReview, or DocumentsPending status</summary>
+    /// <param name="id">Proposal ID</param>
+    [Authorize(Roles = "Customer,Agent")]
+    [HttpPut("{id}/withdraw")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(409)]
+    public async Task<IActionResult> WithdrawProposal(string id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        await _proposalService.WithdrawProposalAsync(id, userId);
+        return Ok(new { message = "Proposal withdrawn successfully." });
+    }
+
     #endregion
 
     #region Underwriter Endpoints

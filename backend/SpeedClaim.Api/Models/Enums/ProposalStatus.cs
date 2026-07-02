@@ -7,5 +7,6 @@ public enum ProposalStatus
     UnderReview,
     DocumentsPending,
     Approved,
-    Rejected
+    Rejected,
+    Withdrawn
 }

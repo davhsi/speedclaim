@@ -12,8 +12,12 @@ export interface UnderwriterKycDto {
   kycStatus: string;
   aadhaarUploaded: boolean;
   aadhaarNumber?: string;
+  aadhaarFrontPath?: string;
+  aadhaarBackPath?: string;
   panUploaded: boolean;
   panNumber?: string;
+  panFrontPath?: string;
+  panBackPath?: string;
   rejectionReason?: string;
   createdAt: string;
 }

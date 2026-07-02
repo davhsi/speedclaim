@@ -1,23 +1,40 @@
-import { Component, inject, output, signal } from '@angular/core';
+import { Component, inject, output, signal, computed, OnInit } from '@angular/core';
 import { Router, RouterLink, NavigationEnd } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, filter } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 
 @Component({
   selector: 'app-topbar',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, TimeAgoPipe],
   templateUrl: './topbar.html',
 })
-export class TopbarComponent {
+export class TopbarComponent implements OnInit {
   menuToggle = output<void>();
 
   private authService = inject(AuthService);
   private router = inject(Router);
   notifService = inject(NotificationService);
   profileMenuOpen = signal(false);
+  notifOpen = signal(false);
+
+  recentNotifs = computed(() => this.notifService.notifications().slice(0, 5));
+
+  ngOnInit(): void {
+    this.notifService.loadNotifications().subscribe();
+  }
+
+  toggleNotif(): void { this.notifOpen.update(v => !v); }
+  closeNotif(): void { this.notifOpen.set(false); }
+
+  markReadAndNavigate(id: string): void {
+    this.notifService.markAsRead(id).subscribe();
+    this.notifOpen.set(false);
+    this.router.navigate(['/notifications']);
+  }
 
   private routeTitleMap: Record<string, string> = {
     '/dashboard': 'Dashboard',

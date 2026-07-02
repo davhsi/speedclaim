@@ -18,10 +18,6 @@ public class CreateProductRequestValidator : AbstractValidator<CreateProductRequ
             .Must(d => ValidDomains.Contains(d, StringComparer.OrdinalIgnoreCase))
             .WithMessage("Domain must be one of: Health, Life, Motor.");
 
-        RuleFor(x => x.Uin)
-            .NotEmpty().WithMessage("UIN (Unique Identification Number) is required.")
-            .MaximumLength(50).WithMessage("UIN cannot exceed 50 characters.");
-
         RuleFor(x => x.Description)
             .NotEmpty().WithMessage("Description is required.")
             .MaximumLength(2000).WithMessage("Description cannot exceed 2000 characters.");
@@ -47,6 +43,11 @@ public class CreateProductRequestValidator : AbstractValidator<CreateProductRequ
 
         RuleFor(x => x.WaitingPeriodDays)
             .GreaterThanOrEqualTo(0).WithMessage("Waiting period cannot be negative.");
+
+        RuleFor(x => x.AllowsFamilyFloater)
+            .Equal(false)
+            .When(x => !string.Equals(x.Domain, "Health", StringComparison.OrdinalIgnoreCase))
+            .WithMessage("Family floater is only available for Health products.");
 
         When(x => x.AllowsFamilyFloater, () =>
         {

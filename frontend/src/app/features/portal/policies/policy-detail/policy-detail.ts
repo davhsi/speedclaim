@@ -1,8 +1,8 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PolicyService } from '../services/policy.service';
-import { PolicyDto, PolicyStatusHistoryDto, EndorsementDto, PolicyNomineeDto, ProductDto } from '../../../../core/models/api.models';
+import { PolicyDto, PolicyStatusHistoryDto, EndorsementDto, PolicyNomineeDto, ProductDto, PremiumScheduleDto } from '../../../../core/models/api.models';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge';
 import { TimelineComponent, TimelineItem } from '../../../../shared/components/timeline/timeline';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog';
@@ -30,12 +30,19 @@ export class PolicyDetailComponent implements OnInit {
   product = signal<ProductDto | null>(null);
   nominees = signal<PolicyNomineeDto[]>([]);
   endorsements = signal<EndorsementDto[]>([]);
+  schedules = signal<PremiumScheduleDto[]>([]);
   historyItems = signal<TimelineItem[]>([]);
   loading = signal(true);
   activeTab = signal(0);
   showCancelDialog = signal(false);
   showEndorsementForm = signal(false);
-  tabs = ['Overview', 'Nominees', 'Endorsements', 'History'];
+  tabs = ['Overview', 'Nominees', 'Endorsements', 'Schedule', 'History'];
+
+  daysToExpiry = computed(() => {
+    const p = this.policy();
+    if (!p?.endDate || p.status !== 'Active') return null;
+    return Math.ceil((new Date(p.endDate).getTime() - Date.now()) / 86400000);
+  });
 
   endorsementForm = this.fb.group({
     endorsementType: ['NomineeChange', Validators.required],
@@ -57,6 +64,7 @@ export class PolicyDetailComponent implements OnInit {
     });
     this.policyService.getNominees(id).subscribe(n => this.nominees.set(n));
     this.policyService.getEndorsements(id).subscribe(e => this.endorsements.set(e));
+    this.policyService.getSchedule(id).subscribe({ next: s => this.schedules.set(s), error: () => {} });
     this.policyService.getHistory(id).subscribe(h =>
       this.historyItems.set(h.map(i => ({ status: i.status, date: i.changedAt, remarks: i.remarks, changedBy: i.changedBy }))),
     );
@@ -96,7 +104,10 @@ export class PolicyDetailComponent implements OnInit {
   }
 
   submitEndorsement(): void {
-    if (this.endorsementForm.invalid) return;
+    if (this.endorsementForm.invalid) {
+      this.endorsementForm.markAllAsTouched();
+      return;
+    }
     this.policyService.requestEndorsement(this.policy()!.id, this.endorsementForm.getRawValue() as any).subscribe({
       next: () => {
         this.toast.success('Endorsement request submitted');

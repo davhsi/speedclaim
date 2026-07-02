@@ -283,12 +283,16 @@ public class UserService : IUserService
         });
         await _unitOfWork.CompleteAsync();
 
-        var kycUser = await _unitOfWork.Users.GetByIdAsync(uid);
-        if (kycUser != null)
-            await _emailService.SendTemplatedEmailAsync("KycSubmitted", new Dictionary<string, string>
-            {
-                ["firstName"] = WebUtility.HtmlEncode(kycUser.FirstName)
-            }, kycUser.Email);
+        // Only notify when both documents are present (avoid double-email when Aadhaar is submitted first)
+        if (record.AadhaarNumber != null && record.PanNumber != null)
+        {
+            var kycUser = await _unitOfWork.Users.GetByIdAsync(uid);
+            if (kycUser != null)
+                await _emailService.SendTemplatedEmailAsync("KycSubmitted", new Dictionary<string, string>
+                {
+                    ["firstName"] = WebUtility.HtmlEncode(kycUser.FirstName)
+                }, kycUser.Email);
+        }
     }
 
     public async Task UploadPanAsync(string customerId, PanUploadRequest request)
@@ -328,12 +332,16 @@ public class UserService : IUserService
         });
         await _unitOfWork.CompleteAsync();
 
-        var kycUser = await _unitOfWork.Users.GetByIdAsync(uid);
-        if (kycUser != null)
-            await _emailService.SendTemplatedEmailAsync("KycSubmitted", new Dictionary<string, string>
-            {
-                ["firstName"] = WebUtility.HtmlEncode(kycUser.FirstName)
-            }, kycUser.Email);
+        // Only notify when both documents are present (avoid double-email when PAN is submitted first)
+        if (record.AadhaarNumber != null && record.PanNumber != null)
+        {
+            var kycUser = await _unitOfWork.Users.GetByIdAsync(uid);
+            if (kycUser != null)
+                await _emailService.SendTemplatedEmailAsync("KycSubmitted", new Dictionary<string, string>
+                {
+                    ["firstName"] = WebUtility.HtmlEncode(kycUser.FirstName)
+                }, kycUser.Email);
+        }
     }
 
     public async Task<Guid> AddAddressAsync(string userId, SingleAddressRequest request)
@@ -500,7 +508,9 @@ public class UserService : IUserService
             k.Id, k.UserId, k.KycStatus.ToString(),
             k.AadhaarNumber != null, aadhaarMasked,
             k.PanNumber != null, panMasked,
-            k.RejectionReason, k.CreatedAt);
+            k.RejectionReason, k.CreatedAt,
+            k.AadhaarDocumentKeyFront, k.AadhaarDocumentKeyBack,
+            k.PanDocumentKeyFront, k.PanDocumentKeyBack);
     }
 
     public async Task<KycRecordDto?> GetMyKycAsync(string customerId)

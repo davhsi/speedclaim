@@ -31,7 +31,7 @@ export class AdminProductsComponent implements OnInit {
   docsSubmitting = signal(false);
   statusUpdatingId = signal<string | null>(null);
 
-  createForm = { productName: '', domain: 'Motor', uin: '', description: '', minAge: 18, maxAge: 65, minSumAssured: 100000, maxSumAssured: 5000000, minTenureYears: 1, maxTenureYears: 30, waitingPeriodDays: 30, allowsFamilyFloater: false, maxFamilyMembers: 1 };
+  createForm = { productName: '', domain: 'Motor', description: '', minAge: 18, maxAge: 65, minSumAssured: 100000, maxSumAssured: 5000000, minTenureYears: 1, maxTenureYears: 30, waitingPeriodDays: 30, allowsFamilyFloater: false, maxFamilyMembers: 1 };
 
   currentPage = signal(1);
   readonly pageSize = 10;
@@ -84,8 +84,15 @@ export class AdminProductsComponent implements OnInit {
     return m[domain] ?? m['Motor'];
   }
 
+  onDomainChange(domain: string): void {
+    if (domain !== 'Health') {
+      this.createForm.allowsFamilyFloater = false;
+      this.createForm.maxFamilyMembers = 1;
+    }
+  }
+
   openCreateModal(): void {
-    this.createForm = { productName: '', domain: 'Motor', uin: '', description: '', minAge: 18, maxAge: 65, minSumAssured: 100000, maxSumAssured: 5000000, minTenureYears: 1, maxTenureYears: 30, waitingPeriodDays: 30, allowsFamilyFloater: false, maxFamilyMembers: 1 };
+    this.createForm = { productName: '', domain: 'Motor', description: '', minAge: 18, maxAge: 65, minSumAssured: 100000, maxSumAssured: 5000000, minTenureYears: 1, maxTenureYears: 30, waitingPeriodDays: 30, allowsFamilyFloater: false, maxFamilyMembers: 1 };
     this.activeModal.set('create');
   }
 
@@ -124,7 +131,6 @@ export class AdminProductsComponent implements OnInit {
   createProductInvalid(): boolean {
     const f = this.createForm;
     return !f.productName.trim()
-      || !f.uin.trim()
       || !f.description.trim()
       || f.minAge < 0
       || f.maxAge < f.minAge
@@ -140,9 +146,9 @@ export class AdminProductsComponent implements OnInit {
     if (this.createSubmitting() || this.createProductInvalid()) return;
     this.createSubmitting.set(true);
     this.adminService.createProduct(this.createForm as any).subscribe({
-      next: () => {
+      next: product => {
         this.createSubmitting.set(false);
-        this.toastService.success('Product created');
+        this.toastService.success(`Product created — ${product.uin}`);
         this.closeModal();
         this.loadProducts();
       },

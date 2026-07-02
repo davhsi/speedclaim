@@ -90,11 +90,6 @@ public class ProposalService : IProposalService
             agent = await _unitOfWork.Agents.FirstOrDefaultAsync(a => a.UserId == uId);
             if (agent == null)
                 throw new NotFoundException("Agent not found.");
-
-            var assignedProposal = await _unitOfWork.Proposals.FirstOrDefaultAsync(p =>
-                p.AgentId == agent.Id && p.CustomerId == customerId);
-            if (assignedProposal == null)
-                throw new ForbiddenException("Customer is not assigned to this agent.");
         }
 
         if (!customerRecord.DateOfBirth.HasValue)
@@ -372,7 +367,10 @@ public class ProposalService : IProposalService
         var existing = await _unitOfWork.SubmittedDocuments.FindAsync(
             d => d.EntityId == pId && d.DocumentKey == documentType);
         foreach (var old in existing)
+        {
+            await _storageService.DeleteFileAsync(old.FilePath);
             _unitOfWork.SubmittedDocuments.Delete(old);
+        }
 
         using var stream = file.OpenReadStream();
         var storedPath = await _storageService.UploadFileAsync(stream, file.FileName, $"proposals/{pId}");
@@ -400,8 +398,8 @@ public class ProposalService : IProposalService
 
         var proposal = await _unitOfWork.Proposals.GetByIdAsync(pId);
         if (proposal == null) throw new NotFoundException("Proposal not found");
-        if (proposal.Status is ProposalStatus.Approved or ProposalStatus.Rejected)
-            throw new ConflictException($"Proposal has already been {proposal.Status}.");
+        if (proposal.Status is ProposalStatus.Approved or ProposalStatus.Rejected or ProposalStatus.Withdrawn)
+            throw new ConflictException($"Proposal is already in a terminal status: {proposal.Status}.");
         if (proposal.Status is not (ProposalStatus.Submitted or ProposalStatus.UnderReview))
             throw new UnprocessableException("Only submitted or under-review proposals can receive a final decision.");
 
@@ -520,7 +518,7 @@ public class ProposalService : IProposalService
 
         var proposal = await _unitOfWork.Proposals.GetByIdAsync(pId);
         if (proposal == null) throw new NotFoundException("Proposal not found");
-        if (proposal.Status is ProposalStatus.Approved or ProposalStatus.Rejected)
+        if (proposal.Status is ProposalStatus.Approved or ProposalStatus.Rejected or ProposalStatus.Withdrawn)
             throw new ConflictException($"Documents cannot be requested for a {proposal.Status} proposal.");
 
         proposal.Status = ProposalStatus.DocumentsPending;
@@ -528,6 +526,13 @@ public class ProposalService : IProposalService
         proposal.UnderwriterNotes = $"Additional Docs Required: {details}";
         proposal.UpdatedAt = DateTimeOffset.UtcNow;
 
+        await _unitOfWork.AuditLogs.AddAsync(new Models.AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = uId, EntityType = "Proposal", EntityId = pId,
+            Action = "ProposalDocumentsRequested",
+            NewValue = JsonSerializer.Serialize(new { proposalNumber = proposal.ProposalNumber, details }),
+            CreatedAt = DateTime.UtcNow
+        });
         await _unitOfWork.CompleteAsync();
 
         var docsCustomer = await _unitOfWork.Customers.GetByIdAsync(proposal.CustomerId);
@@ -551,8 +556,9 @@ public class ProposalService : IProposalService
 
         var proposal = await _unitOfWork.Proposals.GetByIdAsync(pId);
         if (proposal == null) throw new NotFoundException("Proposal not found");
+        if (proposal.Status is ProposalStatus.Withdrawn)
+            throw new ConflictException("Notes cannot be added to a withdrawn proposal.");
 
-        // Append to existing notes if any
         var existing = proposal.UnderwriterNotes;
         proposal.UnderwriterNotes = string.IsNullOrWhiteSpace(existing)
             ? notes
@@ -561,6 +567,46 @@ public class ProposalService : IProposalService
         proposal.UnderwriterId = uId;
         proposal.UpdatedAt = DateTimeOffset.UtcNow;
 
+        await _unitOfWork.AuditLogs.AddAsync(new Models.AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = uId, EntityType = "Proposal", EntityId = pId,
+            Action = "ProposalNotesAdded",
+            NewValue = JsonSerializer.Serialize(new { proposalNumber = proposal.ProposalNumber }),
+            CreatedAt = DateTime.UtcNow
+        });
+        await _unitOfWork.CompleteAsync();
+    }
+
+    public async Task WithdrawProposalAsync(string proposalId, string userId)
+    {
+        var pId = Guid.Parse(proposalId);
+        var uId = Guid.Parse(userId);
+
+        var proposal = await _unitOfWork.Proposals.GetByIdAsync(pId);
+        if (proposal == null) throw new NotFoundException("Proposal not found.");
+
+        var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == uId);
+        var agent = await _unitOfWork.Agents.FirstOrDefaultAsync(a => a.UserId == uId);
+        bool isOwner = (customer != null && proposal.CustomerId == customer.Id)
+                    || (agent != null && proposal.AgentId == agent.Id);
+        if (!isOwner) throw new ForbiddenException("You are not the owner of this proposal.");
+
+        if (proposal.Status is ProposalStatus.Approved or ProposalStatus.Rejected or ProposalStatus.Withdrawn)
+            throw new ConflictException($"Proposal cannot be withdrawn in its current status: {proposal.Status}.");
+
+        if (proposal.Status is not (ProposalStatus.Submitted or ProposalStatus.DocumentsPending or ProposalStatus.UnderReview))
+            throw new ConflictException("Only submitted proposals can be withdrawn.");
+
+        proposal.Status = ProposalStatus.Withdrawn;
+        proposal.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _unitOfWork.AuditLogs.AddAsync(new Models.AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = uId, EntityType = "Proposal", EntityId = proposal.Id,
+            Action = "ProposalWithdrawn",
+            NewValue = JsonSerializer.Serialize(new { proposalNumber = proposal.ProposalNumber }),
+            CreatedAt = DateTime.UtcNow
+        });
         await _unitOfWork.CompleteAsync();
     }
 }

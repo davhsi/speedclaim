@@ -12,11 +12,17 @@ export class GrievanceService {
     return this.http.get<GrievanceDto[]>(`${this.api}/my`);
   }
 
-  getById(id: number): Observable<GrievanceDto> {
+  getById(id: string): Observable<GrievanceDto> {
     return this.http.get<GrievanceDto>(`${this.api}/${id}`);
   }
 
   raise(req: RaiseGrievanceRequest): Observable<GrievanceDto> {
     return this.http.post<GrievanceDto>(this.api, req);
+  }
+
+  uploadAttachment(id: string, file: File): Observable<{ filePath: string }> {
+    const fd = new FormData();
+    fd.append('file', file);
+    return this.http.post<{ filePath: string }>(`${this.api}/${id}/document`, fd);
   }
 }

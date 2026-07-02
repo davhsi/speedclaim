@@ -55,22 +55,65 @@
 
   <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
     @for (m of members(); track m.id) {
-      <div class="flex items-center gap-3.5 px-[18px] py-4 border-b border-line last:border-0">
-        <div class="w-10 h-10 rounded-full bg-primary-light text-primary flex items-center justify-center text-[13px] font-bold shrink-0">
-          {{ m.fullName.charAt(0) }}
+      @if (editTarget()?.id === m.id) {
+        <div class="px-[18px] py-4 border-b border-line last:border-0 space-y-3" [formGroup]="editForm">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs text-muted mb-1">First name</label>
+              <input formControlName="firstName" class="h-[38px]" />
+            </div>
+            <div>
+              <label class="block text-xs text-muted mb-1">Last name</label>
+              <input formControlName="lastName" class="h-[38px]" />
+            </div>
+            <div>
+              <label class="block text-xs text-muted mb-1">Date of birth</label>
+              <input type="date" formControlName="dateOfBirth" class="h-[38px]" />
+            </div>
+            <div>
+              <label class="block text-xs text-muted mb-1">Relationship</label>
+              <select formControlName="relationship" class="h-[38px]">
+                <option value="Spouse">Spouse</option>
+                <option value="Son">Son</option>
+                <option value="Daughter">Daughter</option>
+                <option value="Father">Father</option>
+                <option value="Mother">Mother</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs text-muted mb-1">Gender</label>
+              <select formControlName="gender" class="h-[38px]">
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover disabled:opacity-40" [disabled]="editForm.invalid" (click)="saveEdit()">Save</button>
+            <button class="h-9 px-4 border border-line text-[13px] font-medium text-body rounded-control hover:bg-surface-alt" (click)="cancelEdit()">Cancel</button>
+          </div>
         </div>
-        <div class="flex-1 min-w-0">
-          <div class="text-sm font-semibold text-ink">{{ m.fullName }}</div>
-          <div class="text-xs text-muted sc-numeric">{{ m.relationship }} · {{ m.dateOfBirth | dateFormat }} · {{ m.gender }}</div>
+      } @else {
+        <div class="flex items-center gap-3.5 px-[18px] py-4 border-b border-line last:border-0">
+          <div class="w-10 h-10 rounded-full bg-primary-light text-primary flex items-center justify-center text-[13px] font-bold shrink-0">
+            {{ m.fullName.charAt(0) }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-semibold text-ink">{{ m.fullName }}</div>
+            <div class="text-xs text-muted sc-numeric">{{ m.relationship }} · {{ m.dateOfBirth | dateFormat }} · {{ m.gender }}</div>
+          </div>
+          <span
+            class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border"
+            [style.background]="badgeColor(m.relationship).bg"
+            [style.color]="badgeColor(m.relationship).fg"
+            [style.border-color]="badgeColor(m.relationship).border"
+          >{{ m.relationship }}</span>
+          <button class="text-xs text-primary hover:underline shrink-0" (click)="startEdit(m)">Edit</button>
+          <button class="text-xs text-danger hover:underline shrink-0" (click)="deleteTarget.set(m.id)">Remove</button>
         </div>
-        <span
-          class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border"
-          [style.background]="badgeColor(m.relationship).bg"
-          [style.color]="badgeColor(m.relationship).fg"
-          [style.border-color]="badgeColor(m.relationship).border"
-        >{{ m.relationship }}</span>
-        <button class="text-xs text-danger hover:underline shrink-0" (click)="deleteTarget.set(m.id)">Remove</button>
-      </div>
+      }
     }
     @if (members().length === 0 && !showForm()) {
       <div class="px-[18px] py-14 text-center">

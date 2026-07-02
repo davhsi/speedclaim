@@ -37,13 +37,19 @@
           @if (grievance()!.claimId) {
             <div>
               <div class="text-xs text-muted mb-0.5">Related claim</div>
-              <div class="text-[15px] font-semibold text-primary sc-numeric">{{ grievance()!.claimId }}</div>
+              <a [routerLink]="['/claims', grievance()!.claimId]"
+                 class="text-[15px] font-semibold text-primary sc-numeric hover:underline no-underline">
+                {{ grievance()!.claimNumber ?? grievance()!.claimId }}
+              </a>
             </div>
           }
           @if (grievance()!.policyId) {
             <div>
               <div class="text-xs text-muted mb-0.5">Related policy</div>
-              <div class="text-[15px] font-semibold text-primary sc-numeric">{{ grievance()!.policyId }}</div>
+              <a [routerLink]="['/policies', grievance()!.policyId]"
+                 class="text-[15px] font-semibold text-primary sc-numeric hover:underline no-underline">
+                {{ grievance()!.policyNumber ?? grievance()!.policyId }}
+              </a>
             </div>
           }
         </div>
@@ -54,6 +60,18 @@
         <p class="text-sm text-body leading-relaxed">{{ grievance()!.description }}</p>
       </div>
     </div>
+
+    <!-- Attachment -->
+    @if (grievance()!.attachmentPath) {
+      <div class="bg-white border border-line rounded-card shadow-sm p-6 mb-5">
+        <div class="text-[13px] font-semibold text-ink mb-3">Supporting document</div>
+        <a [href]="'/' + grievance()!.attachmentPath" target="_blank" rel="noopener"
+           class="inline-flex items-center gap-2 text-[13px] font-medium text-primary hover:underline no-underline">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          View attachment
+        </a>
+      </div>
+    }
 
     <!-- Resolution -->
     @if (grievance()!.resolutionNotes) {

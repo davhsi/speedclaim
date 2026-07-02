@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SpeedClaim.Api.Context;
@@ -11,9 +12,11 @@ using SpeedClaim.Api.Context;
 namespace SpeedClaim.Api.Migrations
 {
     [DbContext(typeof(SpeedClaimDbContext))]
-    partial class SpeedClaimDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260702111353_AddGrievanceAttachmentPath")]
+    partial class AddGrievanceAttachmentPath
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -91,7 +94,7 @@ namespace SpeedClaim.Api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("addresses", (string)null);
+                    b.ToTable("addresses");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.Agent", b =>
@@ -155,7 +158,7 @@ namespace SpeedClaim.Api.Migrations
                         .IsUnique()
                         .HasDatabaseName("uq_agents_user_id");
 
-                    b.ToTable("agents", (string)null);
+                    b.ToTable("agents");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.AgentCommission", b =>
@@ -207,7 +210,7 @@ namespace SpeedClaim.Api.Migrations
 
                     b.HasIndex("PremiumPaymentId");
 
-                    b.ToTable("agent_commissions", (string)null);
+                    b.ToTable("agent_commissions");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.AuditLog", b =>
@@ -259,7 +262,7 @@ namespace SpeedClaim.Api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("audit_logs", (string)null);
+                    b.ToTable("audit_logs");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.Branch", b =>
@@ -319,7 +322,7 @@ namespace SpeedClaim.Api.Migrations
                     b.HasKey("Id")
                         .HasName("PK_branches");
 
-                    b.ToTable("branches", (string)null);
+                    b.ToTable("branches");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.Claim", b =>
@@ -433,7 +436,7 @@ namespace SpeedClaim.Api.Migrations
 
                     b.HasIndex("SurveyorId");
 
-                    b.ToTable("claims", (string)null);
+                    b.ToTable("claims");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.ClaimStatusHistory", b =>
@@ -479,7 +482,7 @@ namespace SpeedClaim.Api.Migrations
 
                     b.HasIndex("ClaimId");
 
-                    b.ToTable("claim_status_histories", (string)null);
+                    b.ToTable("claim_status_histories");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.Customer", b =>
@@ -531,7 +534,7 @@ namespace SpeedClaim.Api.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("customers", (string)null);
+                    b.ToTable("customers");
 
                     b.HasData(
                         new
@@ -607,7 +610,7 @@ namespace SpeedClaim.Api.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.ToTable("customer_members", (string)null);
+                    b.ToTable("customer_members");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.DocumentRequirement", b =>
@@ -665,7 +668,7 @@ namespace SpeedClaim.Api.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("document_requirements", (string)null);
+                    b.ToTable("document_requirements");
 
                     b.HasData(
                         new
@@ -755,7 +758,7 @@ namespace SpeedClaim.Api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("email_logs", (string)null);
+                    b.ToTable("email_logs");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.EmailTemplate", b =>
@@ -797,7 +800,7 @@ namespace SpeedClaim.Api.Migrations
                     b.HasKey("Id")
                         .HasName("PK_email_templates");
 
-                    b.ToTable("email_templates", (string)null);
+                    b.ToTable("email_templates");
 
                     b.HasData(
                         new
@@ -1019,7 +1022,7 @@ namespace SpeedClaim.Api.Migrations
 
                     b.HasIndex("ReviewedById");
 
-                    b.ToTable("endorsements", (string)null);
+                    b.ToTable("endorsements");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.Grievance", b =>
@@ -1103,7 +1106,7 @@ namespace SpeedClaim.Api.Migrations
 
                     b.HasIndex("PolicyId");
 
-                    b.ToTable("grievances", (string)null);
+                    b.ToTable("grievances");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.HealthClaimDetail", b =>
@@ -1166,7 +1169,7 @@ namespace SpeedClaim.Api.Migrations
                     b.HasIndex("ClaimId")
                         .IsUnique();
 
-                    b.ToTable("health_claim_details", (string)null);
+                    b.ToTable("health_claim_details");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.HealthDetail", b =>
@@ -1229,7 +1232,7 @@ namespace SpeedClaim.Api.Migrations
                     b.HasIndex("ProposalId")
                         .IsUnique();
 
-                    b.ToTable("health_details", (string)null);
+                    b.ToTable("health_details");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.InsuranceProduct", b =>
@@ -1322,7 +1325,7 @@ namespace SpeedClaim.Api.Migrations
                         .IsUnique()
                         .HasDatabaseName("uq_insurance_products_uin");
 
-                    b.ToTable("insurance_products", (string)null);
+                    b.ToTable("insurance_products");
 
                     b.HasData(
                         new
@@ -1433,7 +1436,7 @@ namespace SpeedClaim.Api.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("kyc_records", (string)null);
+                    b.ToTable("kyc_records");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.LifeClaimDetail", b =>
@@ -1493,7 +1496,7 @@ namespace SpeedClaim.Api.Migrations
                     b.HasIndex("ClaimId")
                         .IsUnique();
 
-                    b.ToTable("life_claim_details", (string)null);
+                    b.ToTable("life_claim_details");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.LifeDetail", b =>
@@ -1549,7 +1552,7 @@ namespace SpeedClaim.Api.Migrations
                     b.HasIndex("ProposalId")
                         .IsUnique();
 
-                    b.ToTable("life_details", (string)null);
+                    b.ToTable("life_details");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.MotorClaimDetail", b =>
@@ -1597,7 +1600,7 @@ namespace SpeedClaim.Api.Migrations
                     b.HasIndex("ClaimId")
                         .IsUnique();
 
-                    b.ToTable("motor_claim_details", (string)null);
+                    b.ToTable("motor_claim_details");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.MotorDetail", b =>
@@ -1680,7 +1683,7 @@ namespace SpeedClaim.Api.Migrations
                     b.HasIndex("ProposalId")
                         .IsUnique();
 
-                    b.ToTable("motor_details", (string)null);
+                    b.ToTable("motor_details");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.Nominee", b =>
@@ -1742,7 +1745,7 @@ namespace SpeedClaim.Api.Migrations
 
                     b.HasIndex("ProposalId");
 
-                    b.ToTable("nominees", (string)null);
+                    b.ToTable("nominees");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.Notification", b =>
@@ -1791,7 +1794,7 @@ namespace SpeedClaim.Api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("notifications", (string)null);
+                    b.ToTable("notifications");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.Policy", b =>
@@ -1891,7 +1894,7 @@ namespace SpeedClaim.Api.Migrations
                     b.HasIndex("ProposalId")
                         .IsUnique();
 
-                    b.ToTable("policies", (string)null);
+                    b.ToTable("policies");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.PolicyMember", b =>
@@ -1920,7 +1923,7 @@ namespace SpeedClaim.Api.Migrations
 
                     b.HasIndex("PolicyId");
 
-                    b.ToTable("policy_members", (string)null);
+                    b.ToTable("policy_members");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.PolicyStatusHistory", b =>
@@ -1966,7 +1969,7 @@ namespace SpeedClaim.Api.Migrations
 
                     b.HasIndex("PolicyId");
 
-                    b.ToTable("policy_status_histories", (string)null);
+                    b.ToTable("policy_status_histories");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.PremiumPayment", b =>
@@ -2061,7 +2064,7 @@ namespace SpeedClaim.Api.Migrations
                     b.HasIndex("ScheduleId")
                         .IsUnique();
 
-                    b.ToTable("premium_payments", (string)null);
+                    b.ToTable("premium_payments");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.PremiumRateTable", b =>
@@ -2104,7 +2107,7 @@ namespace SpeedClaim.Api.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("premium_rate_tables", (string)null);
+                    b.ToTable("premium_rate_tables");
 
                     b.HasData(
                         new
@@ -2194,7 +2197,7 @@ namespace SpeedClaim.Api.Migrations
 
                     b.HasIndex("ProposalId");
 
-                    b.ToTable("premium_schedules", (string)null);
+                    b.ToTable("premium_schedules");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.ProcessedWebhookEvent", b =>
@@ -2227,7 +2230,7 @@ namespace SpeedClaim.Api.Migrations
                         .IsUnique()
                         .HasDatabaseName("uq_processed_webhook_events_stripe_event_id");
 
-                    b.ToTable("processed_webhook_events", (string)null);
+                    b.ToTable("processed_webhook_events");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.Proposal", b =>
@@ -2334,7 +2337,7 @@ namespace SpeedClaim.Api.Migrations
 
                     b.HasIndex("UnderwriterId");
 
-                    b.ToTable("proposals", (string)null);
+                    b.ToTable("proposals");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.ProposalMember", b =>
@@ -2363,7 +2366,7 @@ namespace SpeedClaim.Api.Migrations
 
                     b.HasIndex("ProposalId");
 
-                    b.ToTable("proposal_members", (string)null);
+                    b.ToTable("proposal_members");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.Session", b =>
@@ -2414,7 +2417,7 @@ namespace SpeedClaim.Api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("sessions", (string)null);
+                    b.ToTable("sessions");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.StripeCustomer", b =>
@@ -2447,7 +2450,7 @@ namespace SpeedClaim.Api.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("stripe_customers", (string)null);
+                    b.ToTable("stripe_customers");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.SubmittedDocument", b =>
@@ -2510,7 +2513,7 @@ namespace SpeedClaim.Api.Migrations
                     b.HasKey("Id")
                         .HasName("PK_submitted_documents");
 
-                    b.ToTable("submitted_documents", (string)null);
+                    b.ToTable("submitted_documents");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.Surveyor", b =>
@@ -2562,7 +2565,7 @@ namespace SpeedClaim.Api.Migrations
                         .IsUnique()
                         .HasDatabaseName("uq_surveyors_user_id");
 
-                    b.ToTable("surveyors", (string)null);
+                    b.ToTable("surveyors");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.SystemConfig", b =>
@@ -2601,7 +2604,7 @@ namespace SpeedClaim.Api.Migrations
 
                     b.HasIndex("UpdatedById");
 
-                    b.ToTable("system_configs", (string)null);
+                    b.ToTable("system_configs");
 
                     b.HasData(
                         new
@@ -2740,7 +2743,7 @@ namespace SpeedClaim.Api.Migrations
                         .IsUnique()
                         .HasDatabaseName("uq_users_phone");
 
-                    b.ToTable("users", (string)null);
+                    b.ToTable("users");
 
                     b.HasData(
                         new
@@ -2811,7 +2814,7 @@ namespace SpeedClaim.Api.Migrations
                     b.HasIndex("UserId", "ConsentType")
                         .HasDatabaseName("ix_user_consents_user_type");
 
-                    b.ToTable("user_consents", (string)null);
+                    b.ToTable("user_consents");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.UserToken", b =>
@@ -2853,7 +2856,7 @@ namespace SpeedClaim.Api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("user_tokens", (string)null);
+                    b.ToTable("user_tokens");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.Address", b =>

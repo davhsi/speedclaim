@@ -277,9 +277,9 @@ export class AdminUsersComponent implements OnInit {
       this.toastService.warning('Please enter a valid email address.');
       return;
     }
-    const parts = name.split(/\s+/);
+    const parts = name.trim().split(/\s+/);
     const firstName = parts[0];
-    const lastName = parts.length > 1 ? parts.slice(1).join(' ') : parts[0];
+    const lastName = parts.length > 1 ? parts.slice(1).join(' ') : '';
 
     this.actionInFlight.set(true);
     this.inviteError.set(null);

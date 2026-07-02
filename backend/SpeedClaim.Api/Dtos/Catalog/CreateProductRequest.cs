@@ -3,7 +3,6 @@ namespace SpeedClaim.Api.Dtos.Catalog;
 public record CreateProductRequest(
     string ProductName,
     string Domain,
-    string Uin,
     string Description,
     int MinAge,
     int MaxAge,

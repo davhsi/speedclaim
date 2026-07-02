@@ -5,6 +5,7 @@ import { ClaimDto } from '../../../../core/models/api.models';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge';
 import { TimelineComponent, TimelineItem } from '../../../../shared/components/timeline/timeline';
 import { FileUploadComponent } from '../../../../shared/components/file-upload/file-upload';
+import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { DateFormatPipe } from '../../../../shared/pipes/date-format.pipe';
 import { SafeHtmlPipe } from '../../../../shared/pipes/safe-html.pipe';
@@ -13,7 +14,7 @@ import { ToastService } from '../../../../shared/components/toast/toast.service'
 @Component({
   selector: 'app-claim-detail',
   standalone: true,
-  imports: [StatusBadgeComponent, TimelineComponent, FileUploadComponent, MoneyPipe, DateFormatPipe, SafeHtmlPipe],
+  imports: [StatusBadgeComponent, TimelineComponent, FileUploadComponent, ConfirmDialogComponent, MoneyPipe, DateFormatPipe, SafeHtmlPipe],
   templateUrl: './claim-detail.html',
 })
 export class ClaimDetailComponent implements OnInit {
@@ -26,6 +27,7 @@ export class ClaimDetailComponent implements OnInit {
   timeline = signal<TimelineItem[]>([]);
   loading = signal(true);
   uploading = signal(false);
+  showWithdrawDialog = signal(false);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
@@ -74,6 +76,22 @@ export class ClaimDetailComponent implements OnInit {
       error: () => {
         this.uploading.set(false);
         this.toast.error('Upload failed');
+      },
+    });
+  }
+
+  confirmWithdraw(): void {
+    const c = this.claim();
+    if (!c) return;
+    this.claimService.withdraw(c.id).subscribe({
+      next: () => {
+        this.toast.success('Claim withdrawn successfully');
+        this.showWithdrawDialog.set(false);
+        this.claim.update(cl => cl ? { ...cl, status: 'Withdrawn' as typeof cl.status } : cl);
+      },
+      error: () => {
+        this.showWithdrawDialog.set(false);
+        this.toast.error('Failed to withdraw claim');
       },
     });
   }

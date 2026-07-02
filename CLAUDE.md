@@ -63,16 +63,16 @@ Uploaded files (KYC docs, claim docs, avatars, survey photos) live in
 # Run API (from repo root)
 dotnet run --project backend/SpeedClaim.Api
 
-# Run Angular frontend
-cd frontend && npx ng serve        # serves at http://localhost:4200
-# Use `npx ng serve` to catch compilation errors (not tsc — it misses template errors)
-# One-shot compile check (CI-style): npx ng build --configuration development
+# Run Angular frontend — plain `ng`, no npx prefix (CLI is installed globally)
+cd frontend && ng serve            # serves at http://localhost:4200
+# Use `ng serve` or `ng build` to catch compilation errors (not tsc — it misses template errors)
+# One-shot compile check (CI-style): ng build --configuration development
 
 # Run all backend tests
 dotnet test backend/SpeedClaim.Tests
 
 # Run frontend tests (Vitest)
-cd frontend && npx ng test --watch=false
+cd frontend && ng test --watch=false
 
 # EF Core migrations
 dotnet ef migrations add <MigrationName> --project backend/SpeedClaim.Api

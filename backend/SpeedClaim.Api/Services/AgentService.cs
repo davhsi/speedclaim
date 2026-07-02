@@ -357,6 +357,14 @@ public class AgentService : IAgentService
         user.Phone = request.Phone;
         user.UpdatedAt = DateTimeOffset.UtcNow;
 
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = aId, EntityType = "Agent", EntityId = aId,
+            Action = "AgentProfileUpdated",
+            NewValue = JsonSerializer.Serialize(new { firstName = request.FirstName, lastName = request.LastName, phone = request.Phone }),
+            CreatedAt = DateTime.UtcNow
+        });
+
         await _unitOfWork.CompleteAsync();
     }
 }

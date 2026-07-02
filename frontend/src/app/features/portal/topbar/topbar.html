@@ -14,14 +14,53 @@
   <div class="hidden lg:flex flex-1 text-[15px] font-semibold text-ink">{{ pageTitle() }}</div>
 
   <!-- Right: Bell + Avatar -->
-  <a routerLink="/notifications" class="relative p-2 text-body hover:text-ink transition-colors" [attr.aria-label]="notifService.unreadCount() > 0 ? 'Notifications, ' + notifService.unreadCount() + ' unread' : 'Notifications'">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-    @if (notifService.unreadCount() > 0) {
-      <span class="absolute top-[5px] right-[5px] min-w-[15px] h-[15px] bg-danger text-white text-[9px] font-bold rounded-full flex items-center justify-center px-[3px] border-[1.5px] border-white">
-        {{ notifService.unreadCount() > 9 ? '9+' : notifService.unreadCount() }}
-      </span>
+  <div class="relative">
+    <button (click)="toggleNotif()"
+            class="relative p-2 text-body hover:text-ink transition-colors bg-transparent border-none cursor-pointer"
+            [attr.aria-label]="notifService.unreadCount() > 0 ? 'Notifications, ' + notifService.unreadCount() + ' unread' : 'Notifications'">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      @if (notifService.unreadCount() > 0) {
+        <span class="absolute top-[5px] right-[5px] min-w-[15px] h-[15px] bg-danger text-white text-[9px] font-bold rounded-full flex items-center justify-center px-[3px] border-[1.5px] border-white">
+          {{ notifService.unreadCount() > 9 ? '9+' : notifService.unreadCount() }}
+        </span>
+      }
+    </button>
+    @if (notifOpen()) {
+      <div class="fixed inset-0 z-40" (click)="closeNotif()"></div>
+      <div class="absolute top-[calc(100%+6px)] right-0 w-[320px] bg-white border border-line rounded-card shadow-dropdown z-50 overflow-hidden animate-sc-fade-fast">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-line">
+          <span class="text-[13px] font-semibold text-ink">Notifications</span>
+          @if (notifService.unreadCount() > 0) {
+            <button class="text-[11px] text-primary font-medium hover:underline bg-transparent border-none cursor-pointer p-0"
+                    (click)="notifService.markAllAsRead().subscribe(); closeNotif()">
+              Mark all read
+            </button>
+          }
+        </div>
+        @if (recentNotifs().length === 0) {
+          <div class="px-4 py-8 text-center text-[13px] text-muted">No notifications yet.</div>
+        } @else {
+          @for (n of recentNotifs(); track n.id) {
+            <button (click)="markReadAndNavigate(n.id)"
+                    class="w-full text-left flex gap-3 px-4 py-3 border-b border-line last:border-0 hover:bg-surface transition-colors bg-transparent cursor-pointer"
+                    [class.bg-primary-light]="!n.isRead">
+              <div class="mt-0.5 shrink-0 w-2 h-2 rounded-full mt-[6px]"
+                   [class]="n.isRead ? 'bg-transparent' : 'bg-primary'"></div>
+              <div class="min-w-0">
+                <div class="text-[13px] font-medium text-ink truncate">{{ n.title }}</div>
+                <div class="text-xs text-muted mt-0.5 line-clamp-1">{{ n.message }}</div>
+                <div class="text-[11px] text-muted mt-1">{{ n.createdAt | timeAgo }}</div>
+              </div>
+            </button>
+          }
+          <a routerLink="/notifications" (click)="closeNotif()"
+             class="block text-center text-[12px] font-semibold text-primary py-3 hover:bg-surface transition-colors no-underline border-t border-line">
+            View all notifications
+          </a>
+        }
+      </div>
     }
-  </a>
+  </div>
   <!-- Profile dropdown -->
   <div class="relative">
     <button (click)="profileMenuOpen.update(v => !v)"

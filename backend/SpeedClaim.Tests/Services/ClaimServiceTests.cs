@@ -976,4 +976,60 @@ public class ClaimServiceTests
         Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() =>
             _claimService.UploadClaimDocumentAsync(claimId, customerId, "medical_bill", null!));
     }
+
+    [Test]
+    public async Task WithdrawClaimAsync_ValidTransition_SetsWithdrawnStatus()
+    {
+        var customerId = Guid.NewGuid();
+        var claimId = Guid.NewGuid();
+        var customerRecord = new Customer { Id = customerId, UserId = customerId };
+        var claim = new Claim { Id = claimId, CustomerId = customerId, Status = ClaimStatus.Intimated, ClaimNumber = "CLM-TEST" };
+
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+        var mockCustomerRepo = new Mock<IRepository<Customer>>();
+        mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>()))
+            .ReturnsAsync(customerRecord);
+        _mockUnitOfWork.Setup(u => u.Customers).Returns(mockCustomerRepo.Object);
+
+        await _claimService.WithdrawClaimAsync(claimId, customerId);
+
+        Assert.That(claim.Status, Is.EqualTo(ClaimStatus.Withdrawn));
+    }
+
+    [Test]
+    public void WithdrawClaimAsync_WrongCustomer_ThrowsForbiddenException()
+    {
+        var customerId = Guid.NewGuid();
+        var otherCustomerId = Guid.NewGuid();
+        var claimId = Guid.NewGuid();
+        var customerRecord = new Customer { Id = otherCustomerId, UserId = customerId };
+        var claim = new Claim { Id = claimId, CustomerId = Guid.NewGuid(), Status = ClaimStatus.Intimated, ClaimNumber = "CLM-TEST" };
+
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+        var mockCustomerRepo = new Mock<IRepository<Customer>>();
+        mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>()))
+            .ReturnsAsync(customerRecord);
+        _mockUnitOfWork.Setup(u => u.Customers).Returns(mockCustomerRepo.Object);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() =>
+            _claimService.WithdrawClaimAsync(claimId, customerId));
+    }
+
+    [Test]
+    public void WithdrawClaimAsync_TerminalStatus_ThrowsConflictException()
+    {
+        var customerId = Guid.NewGuid();
+        var claimId = Guid.NewGuid();
+        var customerRecord = new Customer { Id = customerId, UserId = customerId };
+        var claim = new Claim { Id = claimId, CustomerId = customerId, Status = ClaimStatus.Approved, ClaimNumber = "CLM-TEST" };
+
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+        var mockCustomerRepo = new Mock<IRepository<Customer>>();
+        mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>()))
+            .ReturnsAsync(customerRecord);
+        _mockUnitOfWork.Setup(u => u.Customers).Returns(mockCustomerRepo.Object);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _claimService.WithdrawClaimAsync(claimId, customerId));
+    }
 }

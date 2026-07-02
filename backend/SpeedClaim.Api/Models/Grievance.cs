@@ -20,6 +20,7 @@ public class Grievance
     
     public string? ResolutionNotes { get; set; }
     public DateTimeOffset? ResolvedAt { get; set; }
+    public string? AttachmentPath { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? UpdatedAt { get; set; }

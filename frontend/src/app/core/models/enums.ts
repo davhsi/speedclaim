@@ -14,7 +14,7 @@ export type ClaimStatus =
   | 'Settled'
   | 'Withdrawn';
 
-export type ProposalStatus = 'Draft' | 'Submitted' | 'UnderReview' | 'DocumentsPending' | 'Approved' | 'Rejected';
+export type ProposalStatus = 'Draft' | 'Submitted' | 'UnderReview' | 'DocumentsPending' | 'Approved' | 'Rejected' | 'Withdrawn';
 
 export type ClaimType = 'Death' | 'Maturity' | 'Health' | 'Accident' | 'Theft' | 'NaturalDamage';
 

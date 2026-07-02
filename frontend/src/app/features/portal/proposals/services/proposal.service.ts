@@ -29,4 +29,8 @@ export class ProposalService {
     fd.append('file', file);
     return this.http.put<ApiMessage>(`${this.api}/${proposalId}/documents/${documentKey}`, fd);
   }
+
+  withdraw(id: string): Observable<void> {
+    return this.http.put<void>(`${this.api}/${id}/withdraw`, {});
+  }
 }

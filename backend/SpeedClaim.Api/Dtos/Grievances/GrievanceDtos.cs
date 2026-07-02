@@ -9,13 +9,16 @@ public record GrievanceDto(
     Guid CustomerId,
     Guid? PolicyId,
     Guid? ClaimId,
+    string? PolicyNumber,
+    string? ClaimNumber,
     string Category,
     string Description,
     string Status,
     Guid? AssignedToId,
     string? ResolutionNotes,
     DateTimeOffset? ResolvedAt,
-    DateTimeOffset CreatedAt
+    DateTimeOffset CreatedAt,
+    string? AttachmentPath
 );
 
 public record RaiseGrievanceRequest(

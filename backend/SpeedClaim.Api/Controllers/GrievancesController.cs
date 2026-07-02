@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -46,6 +47,21 @@ public class GrievancesController : BaseApiController
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId)) return Unauthorized();
         var result = await _grievanceService.GetMyGrievancesAsync(customerId);
         return Ok(result);
+    }
+
+    /// <summary>Attach a supporting document to an existing grievance</summary>
+    /// <param name="id">Grievance ID</param>
+    [Authorize(Roles = "Customer")]
+    [HttpPost("{id}/document")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> AttachDocument(Guid id, [FromForm] UploadDocumentRequest request)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId)) return Unauthorized();
+        var path = await _grievanceService.AttachDocumentAsync(id, customerId, request.File);
+        return Ok(new { filePath = path });
     }
 
     #endregion
@@ -101,7 +117,8 @@ public class GrievancesController : BaseApiController
     [ProducesResponseType(404)]
     public async Task<IActionResult> UpdateGrievanceStatus(Guid id, [FromBody] UpdateGrievanceStatusRequest request)
     {
-        await _grievanceService.UpdateGrievanceStatusAsync(id, request);
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var actorId)) return Unauthorized();
+        await _grievanceService.UpdateGrievanceStatusAsync(id, request, actorId);
         return Ok(new { message = "Grievance status updated." });
     }
 

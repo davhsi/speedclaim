@@ -59,7 +59,11 @@ public record KycRecordDto(
     bool PanUploaded,
     string? PanNumber,
     string? RejectionReason,
-    DateTimeOffset CreatedAt
+    DateTimeOffset CreatedAt,
+    string? AadhaarFrontPath = null,
+    string? AadhaarBackPath = null,
+    string? PanFrontPath = null,
+    string? PanBackPath = null
 );
 
 public record SingleAddressRequest(

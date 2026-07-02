@@ -52,13 +52,32 @@ public class ProductService : IProductService
         return products.Select(MapProduct);
     }
 
+    private static readonly Dictionary<string, string> UinDomainCodes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Motor"] = "MO",
+        ["Health"] = "HC",
+        ["Life"] = "LI"
+    };
+
+    private async Task<string> GenerateUinAsync(string domain)
+    {
+        var code = UinDomainCodes.TryGetValue(domain, out var c) ? c : "XX";
+        var prefix = $"UIN-{code}-{DateTime.UtcNow.Year}-";
+        var existing = await _unitOfWork.InsuranceProducts.FindAsync(p => p.Uin.StartsWith(prefix));
+        var maxSequence = existing
+            .Select(p => int.TryParse(p.Uin[prefix.Length..], out var n) ? n : 0)
+            .DefaultIfEmpty(0)
+            .Max();
+        return prefix + (maxSequence + 1).ToString("D4");
+    }
+
     public async Task<ProductDto> CreateProductAsync(CreateProductRequest request, string adminId)
     {
         var product = new InsuranceProduct
         {
             ProductName = request.ProductName,
             Domain = request.Domain,
-            Uin = request.Uin,
+            Uin = await GenerateUinAsync(request.Domain),
             Description = request.Description,
             MinAge = request.MinAge,
             MaxAge = request.MaxAge,

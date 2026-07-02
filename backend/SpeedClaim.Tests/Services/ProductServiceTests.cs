@@ -36,6 +36,9 @@ public class ProductServiceTests
         _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
         _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
 
+        _mockProductRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<InsuranceProduct, bool>>>()))
+            .ReturnsAsync(new List<InsuranceProduct>());
+
         _productService = new ProductService(_mockUnitOfWork.Object);
     }
 
@@ -73,9 +76,9 @@ public class ProductServiceTests
     }
 
     [Test]
-    public async Task CreateProductAsync_ValidRequest_Success()
+    public async Task CreateProductAsync_ValidRequest_GeneratesUin()
     {
-        var request = new CreateProductRequest("Name", "Domain", "UIN-123", "Desc", 18, 65, 100000, 500000, 1, 10, 30, true, 4);
+        var request = new CreateProductRequest("Name", "Health", "Desc", 18, 65, 100000, 500000, 1, 10, 30, true, 4);
         var adminId = Guid.NewGuid();
 
         _mockProductRepo.Setup(r => r.AddAsync(It.IsAny<InsuranceProduct>())).Returns(Task.CompletedTask);
@@ -83,8 +86,26 @@ public class ProductServiceTests
         var result = await _productService.CreateProductAsync(request, adminId.ToString());
 
         Assert.That(result.ProductName, Is.EqualTo("Name"));
-        Assert.That(result.Uin, Is.EqualTo("UIN-123"));
+        Assert.That(result.Uin, Is.EqualTo($"UIN-HC-{DateTime.UtcNow.Year}-0001"));
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public async Task CreateProductAsync_ExistingUins_GeneratesNextSequence()
+    {
+        var year = DateTime.UtcNow.Year;
+        var request = new CreateProductRequest("Name", "Motor", "Desc", 18, 65, 100000, 500000, 1, 10, 0, false, 1);
+
+        _mockProductRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<InsuranceProduct, bool>>>()))
+            .ReturnsAsync(new List<InsuranceProduct>
+            {
+                new InsuranceProduct { Id = Guid.NewGuid(), Uin = $"UIN-MO-{year}-0002" },
+                new InsuranceProduct { Id = Guid.NewGuid(), Uin = $"UIN-MO-{year}-0007" }
+            });
+
+        var result = await _productService.CreateProductAsync(request, Guid.NewGuid().ToString());
+
+        Assert.That(result.Uin, Is.EqualTo($"UIN-MO-{year}-0008"));
     }
 
     [Test]

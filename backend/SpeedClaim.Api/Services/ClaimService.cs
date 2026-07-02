@@ -35,6 +35,21 @@ public class ClaimService : IClaimService
     // Controllers pass the authenticated User.Id (JWT sub), but Claim.CustomerId is a FK to
     // customers.id. Resolve the customer record from the user id; fall back to the supplied id
     // when it is already a customer id (keeps unit tests and internal callers working).
+    public async Task WithdrawClaimAsync(Guid claimId, Guid customerId)
+    {
+        var claim = await _unitOfWork.Claims.GetByIdAsync(claimId);
+        if (claim == null) throw new NotFoundException("Claim not found.");
+
+        var customerRecordId = await ResolveCustomerIdAsync(customerId);
+        if (claim.CustomerId != customerRecordId)
+            throw new ForbiddenException("You are not the owner of this claim.");
+
+        if (claim.Status is not (ClaimStatus.Intimated or ClaimStatus.DocumentsPending))
+            throw new ConflictException($"Only claims in Intimated or DocumentsPending status can be withdrawn. Current status: {claim.Status}.");
+
+        await UpdateClaimStatusInternalAsync(claim, ClaimStatus.Withdrawn, customerId, "Withdrawn by customer.");
+    }
+
     private async Task<Guid> ResolveCustomerIdAsync(Guid userId)
     {
         var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
@@ -592,6 +607,7 @@ public class ClaimService : IClaimService
                 ClaimStatus.PreAuthApproved  => "ClaimPreAuthApproved",
                 ClaimStatus.Approved         => "ClaimApproved",
                 ClaimStatus.Rejected         => "ClaimRejected",
+                ClaimStatus.Settled          => "ClaimSettled",
                 _                            => null
             };
 
@@ -607,6 +623,8 @@ public class ClaimService : IClaimService
                     };
                     if (newStatus == ClaimStatus.Rejected && !string.IsNullOrWhiteSpace(notes))
                         vars["rejectionReason"] = WebUtility.HtmlEncode(notes);
+                    if (newStatus == ClaimStatus.Settled)
+                        vars["payoutAmount"] = claim.ClaimAmountApproved?.ToString("N0") ?? "0";
                     await _emailService.SendTemplatedEmailAsync(emailTemplateKey, vars, user.Email);
                 }
             }

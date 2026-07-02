@@ -104,6 +104,21 @@ public class ClaimsController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>Withdraw a claim (customer-initiated). Only allowed for Intimated or DocumentsPending status</summary>
+    /// <param name="id">Claim ID</param>
+    [Authorize(Roles = "Customer")]
+    [HttpPut("{id}/withdraw")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(409)]
+    public async Task<IActionResult> WithdrawClaim(Guid id)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var customerId)) return Unauthorized();
+        await _claimService.WithdrawClaimAsync(id, customerId);
+        return Ok(new { message = "Claim withdrawn successfully." });
+    }
+
     #endregion
 
     #region Claims Officer Endpoints

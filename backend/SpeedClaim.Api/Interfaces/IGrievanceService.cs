@@ -13,5 +13,6 @@ public interface IGrievanceService
     Task<PagedResponse<GrievanceDto>> GetAllGrievancesAsync(int page, int pageSize);
     Task<GrievanceDto> GetGrievanceByIdAsync(Guid id, Guid? requestingCustomerId = null);
     Task AssignGrievanceAsync(Guid grievanceId, Guid officerId);
-    Task UpdateGrievanceStatusAsync(Guid grievanceId, UpdateGrievanceStatusRequest request);
+    Task UpdateGrievanceStatusAsync(Guid grievanceId, UpdateGrievanceStatusRequest request, Guid actorId);
+    Task<string> AttachDocumentAsync(Guid grievanceId, Guid customerId, Microsoft.AspNetCore.Http.IFormFile file);
 }

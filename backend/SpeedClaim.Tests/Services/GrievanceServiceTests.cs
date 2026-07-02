@@ -42,7 +42,7 @@ public class GrievanceServiceTests
         _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
         _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
 
-        _grievanceService = new GrievanceService(_mockUnitOfWork.Object, new Mock<IEmailService>().Object);
+        _grievanceService = new GrievanceService(_mockUnitOfWork.Object, new Mock<IEmailService>().Object, new Mock<IStorageService>().Object);
     }
 
     [Test]
@@ -95,7 +95,7 @@ public class GrievanceServiceTests
         var request = new UpdateGrievanceStatusRequest(GrievanceStatus.Resolved, "Refund processed");
 
         // Act
-        await _grievanceService.UpdateGrievanceStatusAsync(grievanceId, request);
+        await _grievanceService.UpdateGrievanceStatusAsync(grievanceId, request, Guid.NewGuid());
 
         // Assert
         Assert.That(grievance.Status, Is.EqualTo(GrievanceStatus.Resolved));
@@ -239,7 +239,7 @@ public class GrievanceServiceTests
         var grievance = new Grievance { Id = grievanceId, Status = GrievanceStatus.InProgress };
         _mockGrievanceRepo.Setup(r => r.GetByIdAsync(grievanceId)).ReturnsAsync(grievance);
 
-        await _grievanceService.UpdateGrievanceStatusAsync(grievanceId, new UpdateGrievanceStatusRequest(GrievanceStatus.Closed, null));
+        await _grievanceService.UpdateGrievanceStatusAsync(grievanceId, new UpdateGrievanceStatusRequest(GrievanceStatus.Closed, null), Guid.NewGuid());
 
         Assert.That(grievance.Status, Is.EqualTo(GrievanceStatus.Closed));
         Assert.That(grievance.ResolvedAt, Is.Not.Null);
@@ -251,7 +251,7 @@ public class GrievanceServiceTests
         _mockGrievanceRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Grievance?)null);
 
         Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() =>
-            _grievanceService.UpdateGrievanceStatusAsync(Guid.NewGuid(), new UpdateGrievanceStatusRequest(GrievanceStatus.Resolved, null)));
+            _grievanceService.UpdateGrievanceStatusAsync(Guid.NewGuid(), new UpdateGrievanceStatusRequest(GrievanceStatus.Resolved, null), Guid.NewGuid()));
     }
 
     [Test]
@@ -262,7 +262,7 @@ public class GrievanceServiceTests
         _mockGrievanceRepo.Setup(r => r.GetByIdAsync(grievanceId)).ReturnsAsync(grievance);
 
         Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() =>
-            _grievanceService.UpdateGrievanceStatusAsync(grievanceId, new UpdateGrievanceStatusRequest(GrievanceStatus.Open, null)));
+            _grievanceService.UpdateGrievanceStatusAsync(grievanceId, new UpdateGrievanceStatusRequest(GrievanceStatus.Open, null), Guid.NewGuid()));
 
         _mockGrievanceRepo.Verify(r => r.Update(It.IsAny<Grievance>()), Times.Never);
     }

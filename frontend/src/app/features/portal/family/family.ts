@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProfileService } from '../profile/services/profile.service';
-import { FamilyMemberDto, AddFamilyMemberRequest } from '../../../core/models/api.models';
+import { FamilyMemberDto, AddFamilyMemberRequest, UpdateFamilyMemberRequest } from '../../../core/models/api.models';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
@@ -20,8 +20,18 @@ export class FamilyComponent implements OnInit {
   members = signal<FamilyMemberDto[]>([]);
   showForm = signal(false);
   deleteTarget = signal<string | null>(null);
+  editTarget = signal<FamilyMemberDto | null>(null);
 
   memberForm = this.fb.group({
+    firstName: ['', Validators.required],
+    lastName: ['', Validators.required],
+    dateOfBirth: ['', Validators.required],
+    relationship: ['Spouse', Validators.required],
+    gender: ['Male', Validators.required],
+    salutation: ['Mr'],
+  });
+
+  editForm = this.fb.group({
     firstName: ['', Validators.required],
     lastName: ['', Validators.required],
     dateOfBirth: ['', Validators.required],
@@ -44,6 +54,34 @@ export class FamilyComponent implements OnInit {
         this.memberForm.reset({ relationship: 'Spouse', gender: 'Male', salutation: 'Mr' });
       },
       error: () => this.toast.error('Failed to add member'),
+    });
+  }
+
+  startEdit(m: FamilyMemberDto): void {
+    this.editTarget.set(m);
+    this.editForm.patchValue({
+      firstName: m.firstName, lastName: m.lastName,
+      dateOfBirth: m.dateOfBirth, relationship: m.relationship,
+      gender: m.gender, salutation: m.salutation,
+    });
+  }
+
+  cancelEdit(): void { this.editTarget.set(null); }
+
+  saveEdit(): void {
+    const target = this.editTarget();
+    if (!target || this.editForm.invalid) return;
+    const v = this.editForm.getRawValue();
+    this.profileService.updateFamilyMember(target.id, { ...v, isDependent: true } as UpdateFamilyMemberRequest).subscribe({
+      next: () => {
+        this.members.update(list => list.map(m => m.id === target.id
+          ? { ...m, ...v, fullName: `${v.firstName} ${v.lastName}` } as typeof m
+          : m,
+        ));
+        this.toast.success('Member updated');
+        this.editTarget.set(null);
+      },
+      error: () => this.toast.error('Update failed'),
     });
   }
 

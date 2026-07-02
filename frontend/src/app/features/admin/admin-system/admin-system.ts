@@ -36,6 +36,19 @@ const TEMPLATE_DUMMIES: Record<string, Record<string, string>> = {
   GrievanceFiled: { firstName: 'Arjun', grievanceNumber: 'GRV-2026-00001' },
   GrievanceResolved: { firstName: 'Arjun', grievanceNumber: 'GRV-2026-00001', resolutionNotes: 'We have reviewed your concern and issued a full refund of the duplicate charge.' },
   PremiumOverdue: { firstName: 'Arjun', policyNumber: 'POL-2026-00001', amount: '12,500.00', dueDate: '01 Jun 2026' },
+  AgentWelcome: { firstName: 'Priya', agentCode: 'AGT-2026-001', email: 'priya@example.com', tempPassword: 'TempP@ss123' },
+  KycSubmitted: { firstName: 'Arjun' },
+  ProposalSubmitted: { firstName: 'Arjun', proposalNumber: 'PRO-2026-00001', productName: 'SpeedCare Platinum Health' },
+  ProposalDocumentsPending: { firstName: 'Arjun', proposalNumber: 'PRO-2026-00001', details: 'Please upload a recent medical certificate.' },
+  PremiumPaymentConfirmed: { firstName: 'Arjun', policyNumber: 'POL-2026-00001', installmentNumber: '3', amount: '12,500.00' },
+  EndorsementRequested: { firstName: 'Arjun', policyNumber: 'POL-2026-00001', endorsementType: 'SumAssuredChange' },
+  ClaimDocumentsPending: { firstName: 'Arjun', claimNumber: 'CLM-2026-00001', details: 'Please upload the original hospital discharge summary.' },
+  ClaimUnderReview: { firstName: 'Arjun', claimNumber: 'CLM-2026-00001' },
+  ClaimPreAuthRequested: { firstName: 'Arjun', claimNumber: 'CLM-2026-00001', hospitalName: 'Apollo Hospitals' },
+  ClaimPreAuthApproved: { firstName: 'Arjun', claimNumber: 'CLM-2026-00001', approvedAmount: '80,000.00' },
+  CommissionCredited: { firstName: 'Priya', policyNumber: 'POL-2026-00001', commissionAmount: '6,250.00' },
+  PolicyIssued: { firstName: 'Arjun', proposalNumber: 'PRO-2026-00001', policyNumber: 'POL-2026-00001' },
+  GrievanceEscalated: { firstName: 'Arjun', grievanceNumber: 'GRV-2026-00001' },
 };
 
 @Component({

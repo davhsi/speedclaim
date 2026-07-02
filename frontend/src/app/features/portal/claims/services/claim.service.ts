@@ -32,4 +32,8 @@ export class ClaimService {
     fd.append('file', file);
     return this.http.put<ApiMessage>(`${this.api}/${claimId}/documents/${documentKey}`, fd);
   }
+
+  withdraw(id: string): Observable<void> {
+    return this.http.put<void>(`${this.api}/${id}/withdraw`, {});
+  }
 }

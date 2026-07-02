@@ -280,8 +280,9 @@ public class ProposalServiceTests
     }
 
     [Test]
-    public void SubmitProposalAsync_AsAgentForUnassignedCustomer_ThrowsForbiddenException()
+    public async Task SubmitProposalAsync_AsAgentForNewCustomer_Succeeds()
     {
+        // Agents can submit proposals for any KYC-approved customer, even first-time
         var userId = Guid.NewGuid();
         var customerGuid = Guid.NewGuid();
         var productId = Guid.NewGuid().ToString();
@@ -289,16 +290,16 @@ public class ProposalServiceTests
 
         _mockProductRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(ActiveProduct());
         _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync(agent);
-        _mockProposalRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Proposal, bool>>>()))
-            .ReturnsAsync((Proposal?)null);
         SetupCustomer(customerGuid, Guid.NewGuid());
+        SetupRate();
 
         var request = new SubmitProposalRequest(customerGuid.ToString(), productId, 100000, 10, 2500, "Monthly",
-            null, null, null,
+            null, new LifeDetailDto("", 0, 0, false, false), null,
             new List<string>(), new List<NomineeDto>());
 
-        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() =>
-            _proposalService.SubmitProposalAsync(userId.ToString(), request, true));
+        var result = await _proposalService.SubmitProposalAsync(userId.ToString(), request, true);
+
+        Assert.That(result.AgentId, Is.EqualTo(agent.Id));
     }
 
     [Test]
@@ -706,5 +707,60 @@ public class ProposalServiceTests
 
         Assert.That(result.Status, Is.EqualTo("Submitted"));
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public async Task WithdrawProposalAsync_ValidCustomerOwner_SetsWithdrawnStatus()
+    {
+        var userId = Guid.NewGuid();
+        var customerRecordId = Guid.NewGuid();
+        var proposalId = Guid.NewGuid();
+
+        var customer = new Customer { Id = customerRecordId, UserId = userId };
+        var proposal = new Proposal { Id = proposalId, CustomerId = customerRecordId, ProposalNumber = "PRO-001", Status = ProposalStatus.Submitted };
+
+        _mockProposalRepo.Setup(r => r.GetByIdAsync(proposalId)).ReturnsAsync(proposal);
+        _mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>())).ReturnsAsync(customer);
+        _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync((Agent?)null);
+
+        await _proposalService.WithdrawProposalAsync(proposalId.ToString(), userId.ToString());
+
+        Assert.That(proposal.Status, Is.EqualTo(ProposalStatus.Withdrawn));
+    }
+
+    [Test]
+    public void WithdrawProposalAsync_WrongCustomer_ThrowsForbiddenException()
+    {
+        var userId = Guid.NewGuid();
+        var otherCustomerId = Guid.NewGuid();
+        var proposalId = Guid.NewGuid();
+
+        var customer = new Customer { Id = otherCustomerId, UserId = userId };
+        var proposal = new Proposal { Id = proposalId, CustomerId = Guid.NewGuid(), ProposalNumber = "PRO-001", Status = ProposalStatus.Submitted };
+
+        _mockProposalRepo.Setup(r => r.GetByIdAsync(proposalId)).ReturnsAsync(proposal);
+        _mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>())).ReturnsAsync(customer);
+        _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync((Agent?)null);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() =>
+            _proposalService.WithdrawProposalAsync(proposalId.ToString(), userId.ToString()));
+    }
+
+    [Test]
+    public void WithdrawProposalAsync_ApprovedStatus_ThrowsConflictException()
+    {
+        var userId = Guid.NewGuid();
+        var customerRecordId = Guid.NewGuid();
+        var proposalId = Guid.NewGuid();
+
+        var customer = new Customer { Id = customerRecordId, UserId = userId };
+        var proposal = new Proposal { Id = proposalId, CustomerId = customerRecordId, ProposalNumber = "PRO-001", Status = ProposalStatus.Approved };
+
+        _mockProposalRepo.Setup(r => r.GetByIdAsync(proposalId)).ReturnsAsync(proposal);
+        _mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>())).ReturnsAsync(customer);
+        _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync((Agent?)null);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _proposalService.WithdrawProposalAsync(proposalId.ToString(), userId.ToString()));
     }
 }

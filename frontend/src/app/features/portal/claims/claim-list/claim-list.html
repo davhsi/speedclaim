@@ -10,6 +10,28 @@
     </button>
   </div>
 
+  <div class="flex gap-2.5 mb-4 flex-wrap">
+    <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()" class="h-9 px-3 border border-line rounded-control text-[13px] text-ink bg-white outline-none focus:border-primary">
+      <option value="">All statuses</option>
+      <option value="Intimated">Intimated</option>
+      <option value="UnderReview">Under review</option>
+      <option value="DocumentsPending">Documents pending</option>
+      <option value="PreAuthRequested">Pre-auth requested</option>
+      <option value="Approved">Approved</option>
+      <option value="Rejected">Rejected</option>
+      <option value="Settled">Settled</option>
+    </select>
+    <select [(ngModel)]="typeFilter" (ngModelChange)="onFilterChange()" class="h-9 px-3 border border-line rounded-control text-[13px] text-ink bg-white outline-none focus:border-primary">
+      <option value="">All types</option>
+      <option value="HEALTH">Health</option>
+      <option value="MOTOR">Motor</option>
+      <option value="LIFE">Life</option>
+      <option value="ACCIDENT">Accident</option>
+      <option value="DEATH">Death</option>
+      <option value="THEFT">Theft</option>
+    </select>
+  </div>
+
   @if (loading()) {
     <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
       @for (i of [1,2,3]; track i) {

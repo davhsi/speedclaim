@@ -185,6 +185,7 @@ export class SurveyReportComponent implements OnInit {
       `Damage type: ${this.dmgType()}`,
       `Description: ${this.desc}`,
       `Driveable: ${this.driveable() === true ? 'Yes' : this.driveable() === false ? 'No' : 'N/A'}`,
+      this.pav ? `Pre-accident market value: ₹${parseFloat(this.pav).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '',
       this.workshop ? `Workshop: ${this.workshop}` : '',
       this.notes ? `Notes: ${this.notes}` : '',
     ].filter(Boolean).join('\n');

@@ -39,7 +39,7 @@
       </div>
     </div>
 
-    <div class="mb-5">
+    <div class="mb-4">
       <label class="block text-[13px] font-medium mb-1.5">Description</label>
       <textarea formControlName="description" rows="5" placeholder="Describe your concern in detail (10-2000 characters)..."></textarea>
       @if (form.controls.description.touched && form.controls.description.errors) {
@@ -47,6 +47,14 @@
           @if (form.controls.description.errors['minlength']) { Minimum 10 characters required. }
           @if (form.controls.description.errors['required']) { Description is required. }
         </p>
+      }
+    </div>
+
+    <div class="mb-5">
+      <label class="block text-[13px] font-medium mb-1.5">Supporting document <span class="text-muted font-normal">(optional)</span></label>
+      <app-file-upload label="Attach a file" hint="PDF, JPG, PNG up to 10MB" (fileSelected)="onFileSelected($event)" />
+      @if (attachedFile()) {
+        <p class="text-xs text-success mt-1.5">{{ attachedFile()!.name }} selected</p>
       }
     </div>
 

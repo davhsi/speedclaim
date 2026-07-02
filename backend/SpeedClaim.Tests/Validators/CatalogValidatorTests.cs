@@ -12,7 +12,6 @@ public class CreateProductRequestValidatorTests
     private static CreateProductRequest ValidRequest() => new(
         ProductName: "SpeedShield Health Plan",
         Domain: "Health",
-        Uin: "IRDA/HLT/SC/2024/001",
         Description: "Comprehensive health insurance covering hospitalisation, day-care, and pre/post hospitalisation expenses.",
         MinAge: 18,
         MaxAge: 65,
@@ -76,17 +75,26 @@ public class CreateProductRequestValidatorTests
         _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.MaxFamilyMembers);
     }
 
+    [TestCase("Motor")]
+    [TestCase("Life")]
+    public void FamilyFloater_On_NonHealth_Domain_Fails(string domain)
+    {
+        var req = ValidRequest() with { Domain = domain, AllowsFamilyFloater = true };
+        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.AllowsFamilyFloater);
+    }
+
+    [TestCase("Motor")]
+    [TestCase("Life")]
+    public void NonHealth_Domain_Without_FamilyFloater_Passes(string domain)
+    {
+        var req = ValidRequest() with { Domain = domain, AllowsFamilyFloater = false, MaxFamilyMembers = 1 };
+        _validator.TestValidate(req).ShouldNotHaveAnyValidationErrors();
+    }
+
     [Test]
     public void Negative_WaitingPeriod_Fails()
     {
         var req = ValidRequest() with { WaitingPeriodDays = -1 };
         _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.WaitingPeriodDays);
-    }
-
-    [Test]
-    public void Empty_Uin_Fails()
-    {
-        var req = ValidRequest() with { Uin = "" };
-        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.Uin);
     }
 }

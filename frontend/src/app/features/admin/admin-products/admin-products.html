@@ -88,19 +88,14 @@
             <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Product Name</label>
             <input type="text" [(ngModel)]="createForm.productName" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
           </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Domain</label>
-              <select [(ngModel)]="createForm.domain" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary bg-white">
-                <option value="Motor">Motor</option>
-                <option value="Health">Health</option>
-                <option value="Life">Life</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">UIN</label>
-              <input type="text" [(ngModel)]="createForm.uin" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
-            </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Domain</label>
+            <select [(ngModel)]="createForm.domain" (ngModelChange)="onDomainChange($event)" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary bg-white">
+              <option value="Motor">Motor</option>
+              <option value="Health">Health</option>
+              <option value="Life">Life</option>
+            </select>
+            <p class="mt-1 text-[11px] text-muted">The UIN is generated automatically from the domain.</p>
           </div>
           <div>
             <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Description</label>
@@ -141,12 +136,14 @@
               <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Waiting Period (days)</label>
               <input type="number" [(ngModel)]="createForm.waitingPeriodDays" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
             </div>
-            <div class="flex items-end pb-1.5 gap-2">
-              <label class="flex items-center gap-2 cursor-pointer text-[13px] text-ink">
-                <input type="checkbox" [(ngModel)]="createForm.allowsFamilyFloater" class="w-4 h-4 accent-primary" />
-                Family floater
-              </label>
-            </div>
+            @if (createForm.domain === 'Health') {
+              <div class="flex items-end pb-1.5 gap-2">
+                <label class="flex items-center gap-2 cursor-pointer text-[13px] text-ink">
+                  <input type="checkbox" [(ngModel)]="createForm.allowsFamilyFloater" class="w-4 h-4 accent-primary" />
+                  Family floater
+                </label>
+              </div>
+            }
           </div>
           @if (createForm.allowsFamilyFloater) {
             <div>

@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { GrievanceService } from '../services/grievance.service';
 import { GrievanceDto } from '../../../../core/models/api.models';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge';
@@ -8,7 +8,7 @@ import { DateFormatPipe } from '../../../../shared/pipes/date-format.pipe';
 @Component({
   selector: 'app-grievance-detail',
   standalone: true,
-  imports: [StatusBadgeComponent, DateFormatPipe],
+  imports: [RouterLink, StatusBadgeComponent, DateFormatPipe],
   templateUrl: './grievance-detail.html',
 })
 export class GrievanceDetailComponent implements OnInit {
@@ -20,7 +20,7 @@ export class GrievanceDetailComponent implements OnInit {
   loading = signal(true);
 
   ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
+    const id = this.route.snapshot.paramMap.get('id') ?? '';
     this.grievanceService.getById(id).subscribe({
       next: g => { this.grievance.set(g); this.loading.set(false); },
       error: () => this.loading.set(false),

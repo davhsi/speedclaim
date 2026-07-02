@@ -458,6 +458,8 @@ export interface GrievanceDto {
   customerId: string;
   policyId?: string;
   claimId?: string;
+  policyNumber?: string;
+  claimNumber?: string;
   category: GrievanceCategory;
   description: string;
   status: GrievanceStatus;
@@ -466,6 +468,7 @@ export interface GrievanceDto {
   resolvedAt?: string;
   createdAt: string;
   updatedAt?: string;
+  attachmentPath?: string;
 }
 
 export interface RaiseGrievanceRequest {
@@ -626,7 +629,6 @@ export interface AgentProfileDto {
 export interface CreateProductRequest {
   productName: string;
   domain: string;
-  uin: string;
   description: string;
   minAge: number;
   maxAge: number;

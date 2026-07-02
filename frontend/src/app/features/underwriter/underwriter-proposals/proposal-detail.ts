@@ -116,6 +116,7 @@ export class ProposalDetailComponent implements OnInit {
       next: () => {
         this.toast.success('Document request sent to the customer.');
         this.showDialog.set(null);
+        this.uwService.getProposalById(id).subscribe({ next: p => this.proposal.set(p) });
         this.actionInFlight.set(false);
       },
       error: () => {
