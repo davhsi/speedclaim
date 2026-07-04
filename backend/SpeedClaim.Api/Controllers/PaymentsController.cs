@@ -270,6 +270,14 @@ public class PaymentsController : BaseApiController
                 await _financeService.ReconcileByStripeIntentAsync(paymentIntent.Id, paymentIntent.LatestChargeId);
             }
         }
+        else if (stripeEvent.Type == "payment_intent.payment_failed")
+        {
+            var paymentIntent = stripeEvent.Data.Object as Stripe.PaymentIntent;
+            if (paymentIntent != null)
+            {
+                await _financeService.MarkPaymentFailedByStripeIntentAsync(paymentIntent.Id);
+            }
+        }
 
         await _unitOfWork.ProcessedWebhookEvents.AddAsync(new SpeedClaim.Api.Models.ProcessedWebhookEvent
         {

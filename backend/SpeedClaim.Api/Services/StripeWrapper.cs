@@ -14,6 +14,12 @@ public class StripeWrapper : IStripeWrapper
         return await service.CreateAsync(options, requestOptions);
     }
 
+    public async Task<PaymentIntent> GetPaymentIntentAsync(string paymentIntentId)
+    {
+        var service = new PaymentIntentService();
+        return await service.GetAsync(paymentIntentId);
+    }
+
     public async Task<Customer> CreateCustomerAsync(CustomerCreateOptions options, RequestOptions? requestOptions = null)
     {
         var service = new CustomerService();
@@ -30,6 +36,12 @@ public class StripeWrapper : IStripeWrapper
     {
         var service = new ChargeService();
         return await service.GetAsync(chargeId);
+    }
+
+    public async Task<Refund> CreateRefundAsync(RefundCreateOptions options, RequestOptions? requestOptions = null)
+    {
+        var service = new RefundService();
+        return await service.CreateAsync(options, requestOptions);
     }
 
     public Event ConstructEvent(string json, string stripeSignature, string webhookSecret)

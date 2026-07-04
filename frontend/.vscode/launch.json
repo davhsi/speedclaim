@@ -8,13 +8,10 @@
       "request": "launch",
       "preLaunchTask": "npm: start",
       "url": "http://localhost:4200/"
-    },
-    {
-      "name": "ng test",
-      "type": "chrome",
-      "request": "launch",
-      "preLaunchTask": "npm: test",
-      "url": "http://localhost:9876/debug.html"
     }
+    // "ng test" debug config removed: it pointed at Karma's debug.html, which
+    // doesn't exist for this project's Vitest-based test runner. Debugging
+    // Vitest in VS Code needs a different setup (Node debugger attach or the
+    // official Vitest extension) - not re-added here since it wasn't verified.
   ]
 }

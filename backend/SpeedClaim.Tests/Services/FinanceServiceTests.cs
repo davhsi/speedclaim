@@ -598,7 +598,7 @@ public class FinanceServiceTests
         Assert.That(claim.Status, Is.EqualTo(ClaimStatus.Settled));
         Assert.That(claim.SettlementDate, Is.Not.Null);
         _mockStripeWrapper.Verify(s => s.CreatePaymentIntentAsync(It.Is<PaymentIntentCreateOptions>(
-            o => o.Amount == 50000 && o.Currency == "usd"), It.IsAny<RequestOptions>()), Times.Once);
+            o => o.Amount == 50000 && o.Currency == "inr"), It.IsAny<RequestOptions>()), Times.Once);
         mockHistoryRepo.Verify(r => r.AddAsync(It.IsAny<ClaimStatusHistory>()), Times.Once);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
@@ -1104,7 +1104,7 @@ public class FinanceServiceTests
 
         _mockStripeWrapper.Verify(s => s.CreatePaymentIntentAsync(
             It.IsAny<PaymentIntentCreateOptions>(),
-            It.Is<RequestOptions>(r => r.IdempotencyKey == $"pay-premium-{scheduleId}")),
+            It.Is<RequestOptions>(r => r.IdempotencyKey == $"pay-premium-{scheduleId}-inr")),
             Times.Once);
     }
 
@@ -1137,7 +1137,246 @@ public class FinanceServiceTests
 
         _mockStripeWrapper.Verify(s => s.CreatePaymentIntentAsync(
             It.IsAny<PaymentIntentCreateOptions>(),
-            It.Is<RequestOptions>(r => r.IdempotencyKey == $"claim-payout-{claimId}")),
+            It.Is<RequestOptions>(r => r.IdempotencyKey == $"claim-payout-{claimId}-inr")),
             Times.Once);
+    }
+
+    // --- Currency / retry-safety / failure-handling tests ---
+
+    // Arranges a payable schedule + owning customer/policy/stripe-customer so PayPremiumAsync
+    // reaches intent creation.
+    private (Guid customerId, Guid scheduleId, Guid policyId, Mock<IPremiumPaymentRepository> paymentRepo) ArrangePayableSchedule(
+        PremiumPayment? existingPayment = null)
+    {
+        var customerId = Guid.NewGuid();
+        var scheduleId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+
+        var schedule = new PremiumSchedule
+        {
+            Id = scheduleId,
+            PolicyId = policyId,
+            Amount = 2500.50m,
+            Status = PremiumScheduleStatus.Due,
+            InstallmentNumber = 1
+        };
+        _mockUnitOfWork.Setup(u => u.PremiumSchedules)
+            .Returns(Mock.Of<IRepository<PremiumSchedule>>(r =>
+                r.GetByIdAsync(scheduleId) == Task.FromResult<PremiumSchedule?>(schedule)));
+
+        var customer = new SpeedClaim.Api.Models.Customer { Id = customerId, UserId = Guid.NewGuid() };
+        _mockUnitOfWork.Setup(u => u.Customers)
+            .Returns(Mock.Of<IRepository<SpeedClaim.Api.Models.Customer>>(r =>
+                r.FirstOrDefaultAsync(It.IsAny<Expression<Func<SpeedClaim.Api.Models.Customer, bool>>>()) == Task.FromResult<SpeedClaim.Api.Models.Customer?>(customer)));
+
+        _mockUnitOfWork.Setup(u => u.Policies)
+            .Returns(Mock.Of<IPolicyRepository>(r =>
+                r.GetByIdAsync(policyId) == Task.FromResult<Policy?>(new Policy { Id = policyId, CustomerId = customerId })));
+
+        var stripeCustomer = new SpeedClaim.Api.Models.StripeCustomer { UserId = customer.UserId, StripeCustomerId = "cus_test" };
+        _mockUnitOfWork.Setup(u => u.StripeCustomers)
+            .Returns(Mock.Of<IRepository<SpeedClaim.Api.Models.StripeCustomer>>(r =>
+                r.FirstOrDefaultAsync(It.IsAny<Expression<Func<SpeedClaim.Api.Models.StripeCustomer, bool>>>()) == Task.FromResult<SpeedClaim.Api.Models.StripeCustomer?>(stripeCustomer)));
+
+        var mockPaymentRepo = new Mock<IPremiumPaymentRepository>();
+        mockPaymentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<PremiumPayment, bool>>>()))
+            .ReturnsAsync(existingPayment);
+        _mockUnitOfWork.Setup(u => u.PremiumPayments).Returns(mockPaymentRepo.Object);
+
+        _mockConfig.Setup(c => c["Stripe:PublishableKey"]).Returns("pk_test");
+        return (customerId, scheduleId, policyId, mockPaymentRepo);
+    }
+
+    [Test]
+    public async Task PayPremiumAsync_CreatesIntentInInrPaise()
+    {
+        var (customerId, scheduleId, policyId, _) = ArrangePayableSchedule();
+        _mockStripeWrapper.Setup(s => s.CreatePaymentIntentAsync(It.IsAny<PaymentIntentCreateOptions>(), It.IsAny<RequestOptions>()))
+            .ReturnsAsync(new PaymentIntent { Id = "pi_inr", ClientSecret = "secret_inr" });
+
+        await _financeService.PayPremiumAsync(customerId.ToString(), scheduleId.ToString(),
+            new CreatePaymentIntentRequest { PolicyId = policyId });
+
+        _mockStripeWrapper.Verify(s => s.CreatePaymentIntentAsync(It.Is<PaymentIntentCreateOptions>(
+            o => o.Amount == 250050 && o.Currency == "inr"), It.IsAny<RequestOptions>()), Times.Once);
+    }
+
+    [Test]
+    public void PayPremiumAsync_ExistingIntentAlreadySucceeded_ReconcilesAndThrowsConflict()
+    {
+        var existingPayment = new PremiumPayment
+        {
+            Id = Guid.NewGuid(),
+            Status = PaymentStatus.Pending,
+            StripePaymentIntentId = "pi_done",
+            ScheduleId = Guid.NewGuid()
+        };
+        var (customerId, scheduleId, policyId, paymentRepo) = ArrangePayableSchedule(existingPayment);
+        paymentRepo.Setup(r => r.GetByIntentWithScheduleAsync("pi_done")).ReturnsAsync(existingPayment);
+        paymentRepo.Setup(r => r.GetByIdAsync(existingPayment.Id)).ReturnsAsync(existingPayment);
+        _mockStripeWrapper.Setup(s => s.GetPaymentIntentAsync("pi_done"))
+            .ReturnsAsync(new PaymentIntent { Id = "pi_done", Status = "succeeded" });
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _financeService.PayPremiumAsync(customerId.ToString(), scheduleId.ToString(),
+                new CreatePaymentIntentRequest { PolicyId = policyId }));
+
+        // The stranded successful charge must be reconciled, and no second intent created
+        Assert.That(existingPayment.Status, Is.EqualTo(PaymentStatus.Paid));
+        _mockStripeWrapper.Verify(s => s.CreatePaymentIntentAsync(It.IsAny<PaymentIntentCreateOptions>(), It.IsAny<RequestOptions>()), Times.Never);
+    }
+
+    [Test]
+    public async Task PayPremiumAsync_StaleIntentLookupFails_CreatesFreshIntent()
+    {
+        var existingPayment = new PremiumPayment
+        {
+            Id = Guid.NewGuid(),
+            Status = PaymentStatus.Failed,
+            StripePaymentIntentId = "pi_stale",
+            Currency = "USD"
+        };
+        var (customerId, scheduleId, policyId, _) = ArrangePayableSchedule(existingPayment);
+        _mockStripeWrapper.Setup(s => s.GetPaymentIntentAsync("pi_stale"))
+            .ThrowsAsync(new StripeException("No such payment_intent"));
+        _mockStripeWrapper.Setup(s => s.CreatePaymentIntentAsync(It.IsAny<PaymentIntentCreateOptions>(), It.IsAny<RequestOptions>()))
+            .ReturnsAsync(new PaymentIntent { Id = "pi_fresh", ClientSecret = "secret_fresh" });
+
+        var result = await _financeService.PayPremiumAsync(customerId.ToString(), scheduleId.ToString(),
+            new CreatePaymentIntentRequest { PolicyId = policyId });
+
+        Assert.That(result.PaymentIntentId, Is.EqualTo("pi_fresh"));
+        // The reused row is re-pointed at the fresh intent and reset for the new attempt
+        Assert.That(existingPayment.StripePaymentIntentId, Is.EqualTo("pi_fresh"));
+        Assert.That(existingPayment.Status, Is.EqualTo(PaymentStatus.Pending));
+        Assert.That(existingPayment.Currency, Is.EqualTo("INR"));
+    }
+
+    [Test]
+    public async Task MarkPaymentFailedByStripeIntentAsync_PendingPayment_MarksFailed()
+    {
+        var payment = new PremiumPayment { Id = Guid.NewGuid(), Status = PaymentStatus.Pending, StripePaymentIntentId = "pi_fail" };
+        var mockPaymentRepo = new Mock<IPremiumPaymentRepository>();
+        mockPaymentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<PremiumPayment, bool>>>()))
+            .ReturnsAsync(payment);
+        _mockUnitOfWork.Setup(u => u.PremiumPayments).Returns(mockPaymentRepo.Object);
+
+        await _financeService.MarkPaymentFailedByStripeIntentAsync("pi_fail");
+
+        Assert.That(payment.Status, Is.EqualTo(PaymentStatus.Failed));
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public async Task MarkPaymentFailedByStripeIntentAsync_PaidPayment_IsNotDowngraded()
+    {
+        var payment = new PremiumPayment { Id = Guid.NewGuid(), Status = PaymentStatus.Paid, StripePaymentIntentId = "pi_paid" };
+        var mockPaymentRepo = new Mock<IPremiumPaymentRepository>();
+        mockPaymentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<PremiumPayment, bool>>>()))
+            .ReturnsAsync(payment);
+        _mockUnitOfWork.Setup(u => u.PremiumPayments).Returns(mockPaymentRepo.Object);
+
+        await _financeService.MarkPaymentFailedByStripeIntentAsync("pi_paid");
+
+        Assert.That(payment.Status, Is.EqualTo(PaymentStatus.Paid));
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Never);
+    }
+
+    [Test]
+    public void ProcessRefundAsync_PendingPayment_ThrowsUnprocessable()
+    {
+        var paymentId = Guid.NewGuid();
+        var payment = new PremiumPayment { Id = paymentId, Status = PaymentStatus.Pending };
+        var mockPaymentRepo = new Mock<IPremiumPaymentRepository>();
+        mockPaymentRepo.Setup(r => r.GetByIdAsync(paymentId)).ReturnsAsync(payment);
+        _mockUnitOfWork.Setup(u => u.PremiumPayments).Returns(mockPaymentRepo.Object);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.UnprocessableException>(() =>
+            _financeService.ProcessRefundAsync(paymentId.ToString(), Guid.NewGuid().ToString()));
+    }
+
+    [Test]
+    public void ProcessRefundAsync_AlreadyRefunded_ThrowsConflict()
+    {
+        var paymentId = Guid.NewGuid();
+        var payment = new PremiumPayment { Id = paymentId, Status = PaymentStatus.Refunded };
+        var mockPaymentRepo = new Mock<IPremiumPaymentRepository>();
+        mockPaymentRepo.Setup(r => r.GetByIdAsync(paymentId)).ReturnsAsync(payment);
+        _mockUnitOfWork.Setup(u => u.PremiumPayments).Returns(mockPaymentRepo.Object);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _financeService.ProcessRefundAsync(paymentId.ToString(), Guid.NewGuid().ToString()));
+    }
+
+    [Test]
+    public async Task ProcessRefundAsync_PaidWithStripeIntent_CreatesStripeRefund()
+    {
+        var paymentId = Guid.NewGuid();
+        var payment = new PremiumPayment { Id = paymentId, Status = PaymentStatus.Paid, StripePaymentIntentId = "pi_refund_me" };
+        var mockPaymentRepo = new Mock<IPremiumPaymentRepository>();
+        mockPaymentRepo.Setup(r => r.GetByIdAsync(paymentId)).ReturnsAsync(payment);
+        _mockUnitOfWork.Setup(u => u.PremiumPayments).Returns(mockPaymentRepo.Object);
+        _mockStripeWrapper.Setup(s => s.CreateRefundAsync(It.IsAny<RefundCreateOptions>(), It.IsAny<RequestOptions>()))
+            .ReturnsAsync(new Refund { Id = "re_test" });
+
+        await _financeService.ProcessRefundAsync(paymentId.ToString(), Guid.NewGuid().ToString());
+
+        Assert.That(payment.Status, Is.EqualTo(PaymentStatus.Refunded));
+        _mockStripeWrapper.Verify(s => s.CreateRefundAsync(
+            It.Is<RefundCreateOptions>(o => o.PaymentIntent == "pi_refund_me"),
+            It.Is<RequestOptions>(r => r.IdempotencyKey == $"refund-{paymentId}")), Times.Once);
+    }
+
+    [Test]
+    public void ProcessRefundAsync_StripeRefundFails_DoesNotMarkRefunded()
+    {
+        var paymentId = Guid.NewGuid();
+        var payment = new PremiumPayment { Id = paymentId, Status = PaymentStatus.Paid, StripePaymentIntentId = "pi_cannot_refund" };
+        var mockPaymentRepo = new Mock<IPremiumPaymentRepository>();
+        mockPaymentRepo.Setup(r => r.GetByIdAsync(paymentId)).ReturnsAsync(payment);
+        _mockUnitOfWork.Setup(u => u.PremiumPayments).Returns(mockPaymentRepo.Object);
+        _mockStripeWrapper.Setup(s => s.CreateRefundAsync(It.IsAny<RefundCreateOptions>(), It.IsAny<RequestOptions>()))
+            .ThrowsAsync(new StripeException("refund blocked"));
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.UnprocessableException>(() =>
+            _financeService.ProcessRefundAsync(paymentId.ToString(), Guid.NewGuid().ToString()));
+        Assert.That(payment.Status, Is.EqualTo(PaymentStatus.Paid));
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Never);
+    }
+
+    [Test]
+    public async Task ReconcilePaymentAsync_EmailFailure_StillCommitsReconciliation()
+    {
+        var paymentId = Guid.NewGuid();
+        var scheduleId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var payment = new PremiumPayment { Id = paymentId, Status = PaymentStatus.Pending, ScheduleId = scheduleId, Amount = 100 };
+        var schedule = new PremiumSchedule { Id = scheduleId, PolicyId = policyId, Status = PremiumScheduleStatus.Due, InstallmentNumber = 1 };
+        var policy = new Policy { Id = policyId, CustomerId = customerId, Status = PolicyStatus.Pending, PolicyNumber = "POL-1" };
+
+        var mockPaymentRepo = new Mock<IPremiumPaymentRepository>();
+        mockPaymentRepo.Setup(r => r.GetByIdAsync(paymentId)).ReturnsAsync(payment);
+        _mockUnitOfWork.Setup(u => u.PremiumPayments).Returns(mockPaymentRepo.Object);
+        _mockUnitOfWork.Setup(u => u.PremiumSchedules)
+            .Returns(Mock.Of<IRepository<PremiumSchedule>>(r => r.GetByIdAsync(scheduleId) == Task.FromResult<PremiumSchedule?>(schedule)));
+        _mockUnitOfWork.Setup(u => u.Policies)
+            .Returns(Mock.Of<IPolicyRepository>(r => r.GetByIdAsync(policyId) == Task.FromResult<Policy?>(policy)));
+        _mockUnitOfWork.Setup(u => u.Customers)
+            .Returns(Mock.Of<IRepository<SpeedClaim.Api.Models.Customer>>(r =>
+                r.GetByIdAsync(customerId) == Task.FromResult<SpeedClaim.Api.Models.Customer?>(new SpeedClaim.Api.Models.Customer { Id = customerId, UserId = userId })));
+        _mockUnitOfWork.Setup(u => u.Users)
+            .Returns(Mock.Of<IUserRepository>(r =>
+                r.GetByIdAsync(userId) == Task.FromResult<User?>(new User { Id = userId, Email = "c@test.com", FirstName = "C", LastName = "T" })));
+        _mockEmailService.Setup(e => e.SendTemplatedEmailAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<string>(), It.IsAny<EmailAttachment?>()))
+            .ThrowsAsync(new InvalidOperationException("SMTP down"));
+
+        // Must NOT throw — the charge already happened; emails are best-effort
+        await _financeService.ReconcilePaymentAsync(paymentId.ToString(), Guid.NewGuid().ToString());
+
+        Assert.That(payment.Status, Is.EqualTo(PaymentStatus.Paid));
+        Assert.That(policy.Status, Is.EqualTo(PolicyStatus.Active));
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.AtLeastOnce);
     }
 }

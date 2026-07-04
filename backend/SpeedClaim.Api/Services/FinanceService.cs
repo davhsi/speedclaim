@@ -64,6 +64,34 @@ public class FinanceService : IFinanceService
         if (policy == null || policy.CustomerId != customerRecord.Id || policy.Id != request.PolicyId)
             throw new ForbiddenException("Access denied to this premium schedule.");
 
+        // A pending payment row may already exist for this schedule from a prior attempt
+        // (e.g. the user cancelled the checkout modal and clicked Pay again, or confirmed
+        // successfully but the frontend never saw it). Check its LIVE Stripe status before
+        // doing anything else: Stripe's idempotent replay of the Create call below returns
+        // the response frozen at first creation, not the intent's current state, so it cannot
+        // be used to detect a since-succeeded payment — a live GET is required for that.
+        var existingPayment = await _unitOfWork.PremiumPayments.FirstOrDefaultAsync(p => p.ScheduleId == schedule.Id);
+        if (existingPayment != null && !string.IsNullOrEmpty(existingPayment.StripePaymentIntentId))
+        {
+            PaymentIntent? liveIntent = null;
+            try
+            {
+                liveIntent = await _stripeWrapper.GetPaymentIntentAsync(existingPayment.StripePaymentIntentId);
+            }
+            catch (StripeException ex)
+            {
+                // The stored intent id may no longer resolve (Stripe keys rotated, test data
+                // reset). That must not block a fresh payment attempt — fall through and
+                // create a new intent below.
+                _logger.LogWarning(ex, "Stored PaymentIntent {IntentId} could not be retrieved; creating a fresh intent", existingPayment.StripePaymentIntentId);
+            }
+            if (liveIntent?.Status == "succeeded")
+            {
+                await ReconcileByStripeIntentAsync(liveIntent.Id);
+                throw new ConflictException("This installment has already been paid.");
+            }
+        }
+
         var stripeCustomerRecord = await _unitOfWork.StripeCustomers.FirstOrDefaultAsync(sc => sc.UserId == customerRecord.UserId);
         if (stripeCustomerRecord == null)
         {
@@ -87,13 +115,19 @@ public class FinanceService : IFinanceService
             await _unitOfWork.StripeCustomers.AddAsync(stripeCustomerRecord);
         }
 
-        // Create PaymentIntent attached to the customer so cards are saved for renewals
+        // Create PaymentIntent attached to the customer so cards are saved for renewals.
+        // Premiums are INR: the account is a US Stripe (test) account but Stripe lets any
+        // account present in INR — the amount is in paise, matching the ₹ shown in the UI.
+        // AutomaticPaymentMethods lets Stripe offer UPI alongside card for INR (whatever's
+        // enabled in the Dashboard) — deliberately NOT setting SetupFutureUsage: nothing in
+        // this app charges off-session, and off_session filters UPI out of the offered
+        // methods since UPI doesn't support off-session reuse.
         var options = new PaymentIntentCreateOptions
         {
-            Amount = (long)(schedule.Amount * 100), // Stripe expects cents
-            Currency = "usd",
+            Amount = (long)Math.Round(schedule.Amount * 100), // Stripe expects minor units (paise)
+            Currency = "inr",
             Customer = stripeCustomerRecord.StripeCustomerId,
-            SetupFutureUsage = "off_session",
+            AutomaticPaymentMethods = new PaymentIntentAutomaticPaymentMethodsOptions { Enabled = true },
             Metadata = new Dictionary<string, string>
             {
                 { "scheduleId", schedule.Id.ToString() },
@@ -101,26 +135,42 @@ public class FinanceService : IFinanceService
             }
         };
 
+        // The currency suffix versions the key: reusing the pre-INR key with changed request
+        // params would make Stripe reject the call with idempotency_error for 24h.
         var stripeRequestOptions = new RequestOptions
         {
-            IdempotencyKey = $"pay-premium-{schedule.Id}"
+            IdempotencyKey = $"pay-premium-{schedule.Id}-inr"
         };
         var intent = await _stripeWrapper.CreatePaymentIntentAsync(options, stripeRequestOptions);
 
-        var payment = new PremiumPayment
+        // Reuse the existing row rather than inserting a second one — schedule_id is uniquely
+        // constrained, and the deterministic idempotency key above means retries against a
+        // still-open intent return the same PaymentIntent id anyway.
+        if (existingPayment != null)
         {
-            Id = Guid.NewGuid(),
-            ScheduleId = schedule.Id,
-            PolicyId = schedule.PolicyId,
-            ProposalId = schedule.ProposalId,
-            CustomerId = customerRecord.Id,
-            Amount = schedule.Amount,
-            Currency = "USD",
-            PaymentType = schedule.InstallmentNumber == 1 ? PaymentType.FirstPremium : PaymentType.Renewal,
-            Status = PaymentStatus.Pending,
-            StripePaymentIntentId = intent.Id
-        };
-        await _unitOfWork.PremiumPayments.AddAsync(payment);
+            existingPayment.Amount = schedule.Amount;
+            existingPayment.Currency = "INR";
+            existingPayment.StripePaymentIntentId = intent.Id;
+            existingPayment.Status = PaymentStatus.Pending; // a prior attempt may have Failed
+            existingPayment.UpdatedAt = DateTimeOffset.UtcNow;
+        }
+        else
+        {
+            var payment = new PremiumPayment
+            {
+                Id = Guid.NewGuid(),
+                ScheduleId = schedule.Id,
+                PolicyId = schedule.PolicyId,
+                ProposalId = schedule.ProposalId,
+                CustomerId = customerRecord.Id,
+                Amount = schedule.Amount,
+                Currency = "INR",
+                PaymentType = schedule.InstallmentNumber == 1 ? PaymentType.FirstPremium : PaymentType.Renewal,
+                Status = PaymentStatus.Pending,
+                StripePaymentIntentId = intent.Id
+            };
+            await _unitOfWork.PremiumPayments.AddAsync(payment);
+        }
         await _unitOfWork.CompleteAsync();
 
         _logger.LogInformation("Payment intent created for Customer {CustomerId}, Schedule {ScheduleId}, Amount {Amount}", customerId, scheduleId, schedule.Amount);
@@ -265,18 +315,24 @@ public class FinanceService : IFinanceService
         {
             payment.Status = PaymentStatus.Paid;
             payment.PaidAt = DateTimeOffset.UtcNow;
-            
+
+            PremiumSchedule? paidSchedule = null;
+            Policy? paidPolicy = null;
+            var policyActivated = false;
+
             if (payment.ScheduleId.HasValue)
             {
                 var schedule = await _unitOfWork.PremiumSchedules.GetByIdAsync(payment.ScheduleId.Value);
                 if (schedule != null)
                 {
+                    paidSchedule = schedule;
                     schedule.Status = PremiumScheduleStatus.Paid;
                     schedule.PaymentId = payment.Id;
 
                     if (schedule.PolicyId.HasValue)
                     {
                         var policy = await _unitOfWork.Policies.GetByIdAsync(schedule.PolicyId.Value);
+                        paidPolicy = policy;
 
                         // When the premium on an agent-sourced policy is paid, the agent earns a
                         // commission awaiting finance approval. Idempotent: at most one commission
@@ -307,69 +363,7 @@ public class FinanceService : IFinanceService
                         {
                             policy.Status = PolicyStatus.Active;
                             policy.IssuedAt = DateTimeOffset.UtcNow;
-
-                            var customer = await _unitOfWork.Customers.GetByIdAsync(policy.CustomerId);
-                            if (customer != null)
-                            {
-                                var user = await _unitOfWork.Users.GetByIdAsync(customer.UserId);
-                                if (user != null)
-                                {
-                                    var productRepo = _unitOfWork.InsuranceProducts;
-                                    var product = productRepo == null ? null : await productRepo.GetByIdAsync(policy.ProductId);
-                                    var productName = product?.ProductName ?? policy.PolicyType.ToString();
-                                    var customerName = $"{user.FirstName} {user.LastName}".Trim();
-                                    var certificate = PolicyDocumentGenerator.GenerateCertificatePdf(policy, customerName, productName);
-                                    var attachment = new EmailAttachment(
-                                        $"{policy.PolicyNumber}-certificate.pdf",
-                                        PolicyDocumentGenerator.ContentType,
-                                        certificate);
-
-                                    await _emailService.SendTemplatedEmailAsync("PolicyActivated", new Dictionary<string, string>
-                                    {
-                                        ["firstName"]      = WebUtility.HtmlEncode(user.FirstName),
-                                        ["policyNumber"]   = WebUtility.HtmlEncode(policy.PolicyNumber),
-                                        ["product"]        = WebUtility.HtmlEncode(productName),
-                                        ["sumAssured"]     = $"{policy.SumAssured:0.00}",
-                                        ["premiumAmount"]  = $"{policy.PremiumAmount:0.00}",
-                                        ["frequency"]      = WebUtility.HtmlEncode(policy.PaymentFrequency),
-                                        ["startDate"]      = $"{policy.StartDate:dd MMM yyyy}",
-                                        ["endDate"]        = $"{policy.EndDate:dd MMM yyyy}",
-                                        ["status"]         = WebUtility.HtmlEncode(policy.Status.ToString()),
-                                    }, user.Email, attachment);
-                                    await _notifications.CreateAsync(
-                                        user.Id,
-                                        "Policy Activated",
-                                        $"Your policy {policy.PolicyNumber} is now active.",
-                                        "policy"
-                                    );
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Send payment confirmation email for all successful premium payments
-            if (payment.ScheduleId.HasValue)
-            {
-                var confirmedSchedule = await _unitOfWork.PremiumSchedules.GetByIdAsync(payment.ScheduleId.Value);
-                if (confirmedSchedule?.PolicyId.HasValue == true)
-                {
-                    var confirmedPolicy = await _unitOfWork.Policies.GetByIdAsync(confirmedSchedule.PolicyId.Value);
-                    if (confirmedPolicy != null)
-                    {
-                        var confirmedCustomer = await _unitOfWork.Customers.GetByIdAsync(confirmedPolicy.CustomerId);
-                        if (confirmedCustomer != null)
-                        {
-                            var confirmedUser = await _unitOfWork.Users.GetByIdAsync(confirmedCustomer.UserId);
-                            if (confirmedUser != null)
-                                await _emailService.SendTemplatedEmailAsync("PremiumPaymentConfirmed", new Dictionary<string, string>
-                                {
-                                    ["firstName"]          = WebUtility.HtmlEncode(confirmedUser.FirstName),
-                                    ["policyNumber"]       = WebUtility.HtmlEncode(confirmedPolicy.PolicyNumber),
-                                    ["installmentNumber"]  = confirmedSchedule.InstallmentNumber.ToString(),
-                                    ["amount"]             = $"{payment.Amount:0.00} {payment.Currency}"
-                                }, confirmedUser.Email);
+                            policyActivated = true;
                         }
                     }
                 }
@@ -386,6 +380,78 @@ public class FinanceService : IFinanceService
             });
             _logger.LogInformation("Payment {PaymentId} reconciled as Paid", payment.Id);
             await _unitOfWork.CompleteAsync();
+
+            // Emails and notifications go out only AFTER the financial state is committed:
+            // the customer has already been charged, so an SMTP failure must never roll back
+            // (or block) reconciliation — it would strand a charged customer in Pending.
+            if (paidPolicy != null)
+            {
+                var customer = await _unitOfWork.Customers.GetByIdAsync(paidPolicy.CustomerId);
+                var user = customer == null ? null : await _unitOfWork.Users.GetByIdAsync(customer.UserId);
+                if (user != null)
+                {
+                    if (policyActivated)
+                    {
+                        await SendEmailBestEffortAsync(async () =>
+                        {
+                            var productRepo = _unitOfWork.InsuranceProducts;
+                            var product = productRepo == null ? null : await productRepo.GetByIdAsync(paidPolicy.ProductId);
+                            var productName = product?.ProductName ?? paidPolicy.PolicyType.ToString();
+                            var customerName = $"{user.FirstName} {user.LastName}".Trim();
+                            var certificate = PolicyDocumentGenerator.GenerateCertificatePdf(paidPolicy, customerName, productName);
+                            var attachment = new EmailAttachment(
+                                $"{paidPolicy.PolicyNumber}-certificate.pdf",
+                                PolicyDocumentGenerator.ContentType,
+                                certificate);
+
+                            await _emailService.SendTemplatedEmailAsync("PolicyActivated", new Dictionary<string, string>
+                            {
+                                ["firstName"]      = WebUtility.HtmlEncode(user.FirstName),
+                                ["policyNumber"]   = WebUtility.HtmlEncode(paidPolicy.PolicyNumber),
+                                ["product"]        = WebUtility.HtmlEncode(productName),
+                                ["sumAssured"]     = $"{paidPolicy.SumAssured:0.00}",
+                                ["premiumAmount"]  = $"{paidPolicy.PremiumAmount:0.00}",
+                                ["frequency"]      = WebUtility.HtmlEncode(paidPolicy.PaymentFrequency),
+                                ["startDate"]      = $"{paidPolicy.StartDate:dd MMM yyyy}",
+                                ["endDate"]        = $"{paidPolicy.EndDate:dd MMM yyyy}",
+                                ["status"]         = WebUtility.HtmlEncode(paidPolicy.Status.ToString()),
+                            }, user.Email, attachment);
+                        }, "PolicyActivated");
+
+                        await SendEmailBestEffortAsync(() => _notifications.CreateAsync(
+                            user.Id,
+                            "Policy Activated",
+                            $"Your policy {paidPolicy.PolicyNumber} is now active.",
+                            "policy"
+                        ), "PolicyActivated notification");
+                    }
+
+                    if (paidSchedule != null)
+                    {
+                        await SendEmailBestEffortAsync(() => _emailService.SendTemplatedEmailAsync("PremiumPaymentConfirmed", new Dictionary<string, string>
+                        {
+                            ["firstName"]          = WebUtility.HtmlEncode(user.FirstName),
+                            ["policyNumber"]       = WebUtility.HtmlEncode(paidPolicy.PolicyNumber),
+                            ["installmentNumber"]  = paidSchedule.InstallmentNumber.ToString(),
+                            ["amount"]             = $"{payment.Amount:0.00} {payment.Currency}"
+                        }, user.Email), "PremiumPaymentConfirmed");
+                    }
+                }
+            }
+        }
+    }
+
+    // Post-commit emails/notifications are best-effort by design: the underlying financial
+    // action has already been persisted, so a send failure is logged but never surfaced.
+    private async Task SendEmailBestEffortAsync(Func<Task> send, string description)
+    {
+        try
+        {
+            await send();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Best-effort send failed after commit: {Description}", description);
         }
     }
 
@@ -417,13 +483,61 @@ public class FinanceService : IFinanceService
         }
     }
 
+    public async Task MarkPaymentFailedByStripeIntentAsync(string paymentIntentId)
+    {
+        var payment = await _unitOfWork.PremiumPayments.FirstOrDefaultAsync(p => p.StripePaymentIntentId == paymentIntentId);
+        // Only a Pending attempt can fail — never downgrade a Paid payment (the failed
+        // event may arrive out of order with a later successful confirmation).
+        if (payment == null || payment.Status != PaymentStatus.Pending) return;
+
+        payment.Status = PaymentStatus.Failed;
+        payment.UpdatedAt = DateTimeOffset.UtcNow;
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = null,
+            EntityType = "PremiumPayment", EntityId = payment.Id,
+            Action = "PaymentFailed",
+            NewValue = JsonSerializer.Serialize(new { amount = payment.Amount, currency = payment.Currency, stripeIntentId = paymentIntentId }),
+            CreatedAt = DateTime.UtcNow
+        });
+        await _unitOfWork.CompleteAsync();
+        _logger.LogInformation("Payment {PaymentId} marked as Failed from Stripe intent {IntentId}", payment.Id, paymentIntentId);
+    }
+
     public async Task ProcessRefundAsync(string paymentId, string financeOfficerId)
     {
         if (!Guid.TryParse(paymentId, out var pid)) throw new ValidationException("Invalid Payment ID");
         var payment = await _unitOfWork.PremiumPayments.GetByIdAsync(pid);
         if (payment == null) throw new NotFoundException("Payment not found");
 
+        if (payment.Status == PaymentStatus.Refunded)
+            throw new ConflictException("Payment has already been refunded.");
+        if (payment.Status != PaymentStatus.Paid)
+            throw new UnprocessableException("Only paid payments can be refunded.");
+
+        // Actually return the money on Stripe's side, not just flip our local status.
+        // Manually reconciled rows may have no Stripe intent — those refund locally only.
+        if (!string.IsNullOrEmpty(payment.StripePaymentIntentId))
+        {
+            try
+            {
+                await _stripeWrapper.CreateRefundAsync(
+                    new RefundCreateOptions { PaymentIntent = payment.StripePaymentIntentId },
+                    new RequestOptions { IdempotencyKey = $"refund-{payment.Id}" });
+            }
+            catch (StripeException ex) when (ex.StripeError?.Code == "charge_already_refunded")
+            {
+                // Money already returned on Stripe's side — proceed to sync our local state.
+            }
+            catch (StripeException ex)
+            {
+                _logger.LogError(ex, "Stripe refund failed for payment {PaymentId}", payment.Id);
+                throw new UnprocessableException($"Stripe refund failed: {ex.Message}");
+            }
+        }
+
         payment.Status = PaymentStatus.Refunded;
+        payment.UpdatedAt = DateTimeOffset.UtcNow;
 
         PremiumSchedule? overdueSchedule = null;
         if (payment.ScheduleId.HasValue)
@@ -454,13 +568,13 @@ public class FinanceService : IFinanceService
                     : null;
                 if (user != null && overduePolicy != null)
                 {
-                    await _emailService.SendTemplatedEmailAsync("PremiumOverdue", new Dictionary<string, string>
+                    await SendEmailBestEffortAsync(() => _emailService.SendTemplatedEmailAsync("PremiumOverdue", new Dictionary<string, string>
                     {
                         ["firstName"]    = WebUtility.HtmlEncode(user.FirstName),
                         ["policyNumber"] = WebUtility.HtmlEncode(overduePolicy.PolicyNumber),
                         ["amount"]       = $"{overdueSchedule.Amount:0.00}",
                         ["dueDate"]      = $"{overdueSchedule.DueDate:dd MMM yyyy}"
-                    }, user.Email);
+                    }, user.Email), "PremiumOverdue");
                 }
             }
         }
@@ -477,14 +591,14 @@ public class FinanceService : IFinanceService
 
         // In sandbox mode, we create a PaymentIntent to the customer as a payout simulation.
         // In production, this would use Stripe Transfers or Payouts API.
-        var payoutAmount = (long)((claim.ClaimAmountApproved ?? 0) * 100);
+        var payoutAmount = (long)Math.Round((claim.ClaimAmountApproved ?? 0) * 100);
         if (payoutAmount <= 0)
             throw new ValidationException("Approved claim amount must be greater than zero.");
 
         var options = new PaymentIntentCreateOptions
         {
             Amount = payoutAmount,
-            Currency = "usd",
+            Currency = "inr",
             Metadata = new Dictionary<string, string>
             {
                 { "type", "claim_payout" },
@@ -496,7 +610,7 @@ public class FinanceService : IFinanceService
 
         var stripeRequestOptions = new RequestOptions
         {
-            IdempotencyKey = $"claim-payout-{cId}"
+            IdempotencyKey = $"claim-payout-{cId}-inr"
         };
         var intent = await _stripeWrapper.CreatePaymentIntentAsync(options, stripeRequestOptions);
         _logger.LogInformation("Claim payout initiated for Claim {ClaimId}, Amount {Amount}, IntentId {IntentId}", cId, payoutAmount / 100m, intent.Id);
@@ -533,12 +647,12 @@ public class FinanceService : IFinanceService
             var claimUser = await _unitOfWork.Users.GetByIdAsync(claimCustomer.UserId);
             if (claimUser != null)
             {
-                await _emailService.SendTemplatedEmailAsync("ClaimSettled", new Dictionary<string, string>
+                await SendEmailBestEffortAsync(() => _emailService.SendTemplatedEmailAsync("ClaimSettled", new Dictionary<string, string>
                 {
                     ["firstName"]    = WebUtility.HtmlEncode(claimUser.FirstName),
                     ["claimNumber"]  = WebUtility.HtmlEncode(claim.ClaimNumber),
                     ["payoutAmount"] = $"{claim.ClaimAmountApproved ?? 0:0.00}"
-                }, claimUser.Email);
+                }, claimUser.Email), "ClaimSettled");
             }
         }
     }
@@ -586,12 +700,12 @@ public class FinanceService : IFinanceService
             var settledUser = await _unitOfWork.Users.GetByIdAsync(settledCustomer.UserId);
             if (settledUser != null)
             {
-                await _emailService.SendTemplatedEmailAsync("ClaimSettled", new Dictionary<string, string>
+                await SendEmailBestEffortAsync(() => _emailService.SendTemplatedEmailAsync("ClaimSettled", new Dictionary<string, string>
                 {
                     ["firstName"]    = WebUtility.HtmlEncode(settledUser.FirstName),
                     ["claimNumber"]  = WebUtility.HtmlEncode(claim.ClaimNumber),
                     ["payoutAmount"] = $"{claim.ClaimAmountApproved ?? 0:0.00}"
-                }, settledUser.Email);
+                }, settledUser.Email), "ClaimSettled");
             }
         }
     }
@@ -676,12 +790,12 @@ public class FinanceService : IFinanceService
                 var commPolicy = commission.PolicyId != Guid.Empty
                     ? await _unitOfWork.Policies.GetByIdAsync(commission.PolicyId)
                     : null;
-                await _emailService.SendTemplatedEmailAsync("CommissionCredited", new Dictionary<string, string>
+                await SendEmailBestEffortAsync(() => _emailService.SendTemplatedEmailAsync("CommissionCredited", new Dictionary<string, string>
                 {
                     ["firstName"]        = WebUtility.HtmlEncode(commUser.FirstName),
                     ["policyNumber"]     = WebUtility.HtmlEncode(commPolicy?.PolicyNumber ?? "N/A"),
                     ["commissionAmount"] = $"{commission.CommissionAmount:0.00}"
-                }, commUser.Email);
+                }, commUser.Email), "CommissionCredited");
             }
         }
     }
