@@ -23,18 +23,15 @@
   } @else {
     <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
       @for (g of grievances(); track g.id) {
-        <div class="flex items-center gap-3.5 px-[18px] py-4 border-b border-line cursor-pointer hover:bg-surface transition-colors"
-             (click)="router.navigate(['/grievances', g.id])"
-             tabindex="0" role="button"
-             (keydown.enter)="router.navigate(['/grievances', g.id])"
-             (keydown.space)="router.navigate(['/grievances', g.id]); $event.preventDefault()">
+        <button type="button" class="w-full text-left bg-transparent border-0 flex items-center gap-3.5 px-[18px] py-4 border-b border-line cursor-pointer hover:bg-surface transition-colors"
+             (click)="router.navigate(['/grievances', g.id])">
           <div class="flex-1 min-w-0">
             <div class="text-sm font-semibold text-ink truncate">{{ g.description }}</div>
             <div class="text-xs text-muted sc-numeric">{{ g.grievanceNumber }} · {{ g.category }} · {{ g.createdAt | dateFormat }}</div>
           </div>
           <app-status-badge [status]="g.status" />
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted shrink-0 ml-1"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-        </div>
+        </button>
       }
     </div>
   }

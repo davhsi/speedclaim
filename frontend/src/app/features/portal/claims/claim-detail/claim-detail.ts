@@ -98,7 +98,12 @@ export class ClaimDetailComponent implements OnInit {
 
   private documentKeyFor(file: File): string {
     const baseName = file.name.replace(/\.[^/.]+$/, '');
-    const key = baseName.replace(/[^a-zA-Z0-9_-]+/g, '_').replace(/^_+|_+$/g, '');
+    const sanitized = baseName.replace(/[^a-zA-Z0-9_-]+/g, '_');
+    let start = 0;
+    let end = sanitized.length;
+    while (start < end && sanitized[start] === '_') start++;
+    while (end > start && sanitized[end - 1] === '_') end--;
+    const key = sanitized.slice(start, end);
     return (key || 'SUPPORTING_DOCUMENT').slice(0, 100).toUpperCase();
   }
 }

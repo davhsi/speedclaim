@@ -58,7 +58,7 @@ export class UnderwriterSidebarComponent {
   }
 
   onNavClick(): void {
-    if (typeof globalThis.window !== 'undefined' && globalThis.window.innerWidth < 1024) {
+    if (globalThis.window !== undefined && globalThis.window.innerWidth < 1024) {
       this.sidebarToggle.emit();
     }
   }

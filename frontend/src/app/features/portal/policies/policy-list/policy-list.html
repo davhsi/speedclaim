@@ -26,11 +26,8 @@
   } @else {
     <div class="grid gap-[18px]" style="grid-template-columns:repeat(auto-fill,minmax(330px,1fr))">
       @for (p of policies(); track p.id) {
-        <div class="bg-white border border-line rounded-card shadow-sm p-5 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all"
-             (click)="router.navigate(['/policies', p.id])"
-             tabindex="0" role="button"
-             (keydown.enter)="router.navigate(['/policies', p.id])"
-             (keydown.space)="router.navigate(['/policies', p.id]); $event.preventDefault()">
+        <button type="button" class="w-full text-left bg-white border border-line rounded-card shadow-sm p-5 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all"
+             (click)="router.navigate(['/policies', p.id])">
           <div class="flex items-center gap-3 mb-4">
             <div class="w-11 h-11 rounded-[11px] flex items-center justify-center shrink-0"
                  [class]="domainBgClass(p)">
@@ -52,7 +49,7 @@
               <div class="text-[15px] font-bold text-ink sc-numeric">{{ p.premiumAmount | money }}</div>
             </div>
           </div>
-        </div>
+        </button>
       }
     </div>
   }

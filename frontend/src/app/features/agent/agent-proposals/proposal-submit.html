@@ -68,31 +68,31 @@
 
       @if (selectedType === 'Health') {
         <div class="grid grid-cols-2 gap-3.5 mb-4">
-          <div><label class="block text-[13px] font-medium mb-1.5">Cover type</label><input type="text" [(ngModel)]="healthForm.coverType" /></div>
-          <div><label class="block text-[13px] font-medium mb-1.5">Members covered</label><input type="number" [(ngModel)]="healthForm.members" class="sc-numeric" /></div>
-          <div><label class="block text-[13px] font-medium mb-1.5">Sum assured</label><input type="text" [(ngModel)]="healthForm.sumAssured" class="sc-numeric" /></div>
-          <div><label class="block text-[13px] font-medium mb-1.5">Eldest member age</label><input type="number" [(ngModel)]="healthForm.eldestAge" class="sc-numeric" /></div>
-          <div><label class="block text-[13px] font-medium mb-1.5">Agent discount %</label><input type="number" [(ngModel)]="healthForm.discount" /></div>
+          <div><label for="ps-health-cover-type" class="block text-[13px] font-medium mb-1.5">Cover type</label><input id="ps-health-cover-type" type="text" [(ngModel)]="healthForm.coverType" /></div>
+          <div><label for="ps-health-members" class="block text-[13px] font-medium mb-1.5">Members covered</label><input id="ps-health-members" type="number" [(ngModel)]="healthForm.members" class="sc-numeric" /></div>
+          <div><label for="ps-health-sum-assured" class="block text-[13px] font-medium mb-1.5">Sum assured</label><input id="ps-health-sum-assured" type="text" [(ngModel)]="healthForm.sumAssured" class="sc-numeric" /></div>
+          <div><label for="ps-health-eldest-age" class="block text-[13px] font-medium mb-1.5">Eldest member age</label><input id="ps-health-eldest-age" type="number" [(ngModel)]="healthForm.eldestAge" class="sc-numeric" /></div>
+          <div><label for="ps-health-discount" class="block text-[13px] font-medium mb-1.5">Agent discount %</label><input id="ps-health-discount" type="number" [(ngModel)]="healthForm.discount" /></div>
         </div>
       }
 
       @if (selectedType === 'Motor') {
         <div class="grid grid-cols-2 gap-3.5 mb-4">
-          <div><label class="block text-[13px] font-medium mb-1.5">Vehicle make & model</label><input type="text" [(ngModel)]="motorForm.vehicleMakeModel" /></div>
-          <div><label class="block text-[13px] font-medium mb-1.5">Registration year</label><input type="number" [(ngModel)]="motorForm.regYear" class="sc-numeric" /></div>
-          <div><label class="block text-[13px] font-medium mb-1.5">Insured declared value (IDV)</label><input type="text" [(ngModel)]="motorForm.idv" class="sc-numeric" /></div>
-          <div><label class="block text-[13px] font-medium mb-1.5">No-Claim Bonus (NCB)</label><input type="text" [(ngModel)]="motorForm.ncb" /></div>
-          <div><label class="block text-[13px] font-medium mb-1.5">Agent discount %</label><input type="number" [(ngModel)]="motorForm.discount" /></div>
+          <div><label for="ps-motor-vehicle" class="block text-[13px] font-medium mb-1.5">Vehicle make & model</label><input id="ps-motor-vehicle" type="text" [(ngModel)]="motorForm.vehicleMakeModel" /></div>
+          <div><label for="ps-motor-reg-year" class="block text-[13px] font-medium mb-1.5">Registration year</label><input id="ps-motor-reg-year" type="number" [(ngModel)]="motorForm.regYear" class="sc-numeric" /></div>
+          <div><label for="ps-motor-idv" class="block text-[13px] font-medium mb-1.5">Insured declared value (IDV)</label><input id="ps-motor-idv" type="text" [(ngModel)]="motorForm.idv" class="sc-numeric" /></div>
+          <div><label for="ps-motor-ncb" class="block text-[13px] font-medium mb-1.5">No-Claim Bonus (NCB)</label><input id="ps-motor-ncb" type="text" [(ngModel)]="motorForm.ncb" /></div>
+          <div><label for="ps-motor-discount" class="block text-[13px] font-medium mb-1.5">Agent discount %</label><input id="ps-motor-discount" type="number" [(ngModel)]="motorForm.discount" /></div>
         </div>
       }
 
       @if (selectedType === 'Life') {
         <div class="grid grid-cols-2 gap-3.5 mb-4">
-          <div><label class="block text-[13px] font-medium mb-1.5">Sum assured</label><input type="text" [(ngModel)]="lifeForm.sumAssured" class="sc-numeric" /></div>
-          <div><label class="block text-[13px] font-medium mb-1.5">Policy term</label><input type="text" [(ngModel)]="lifeForm.term" /></div>
-          <div><label class="block text-[13px] font-medium mb-1.5">Customer age</label><input type="number" [(ngModel)]="lifeForm.age" class="sc-numeric" /></div>
-          <div><label class="block text-[13px] font-medium mb-1.5">Tobacco user</label><input type="text" [(ngModel)]="lifeForm.tobaccoUser" /></div>
-          <div><label class="block text-[13px] font-medium mb-1.5">Agent discount %</label><input type="number" [(ngModel)]="lifeForm.discount" /></div>
+          <div><label for="ps-life-sum-assured" class="block text-[13px] font-medium mb-1.5">Sum assured</label><input id="ps-life-sum-assured" type="text" [(ngModel)]="lifeForm.sumAssured" class="sc-numeric" /></div>
+          <div><label for="ps-life-term" class="block text-[13px] font-medium mb-1.5">Policy term</label><input id="ps-life-term" type="text" [(ngModel)]="lifeForm.term" /></div>
+          <div><label for="ps-life-age" class="block text-[13px] font-medium mb-1.5">Customer age</label><input id="ps-life-age" type="number" [(ngModel)]="lifeForm.age" class="sc-numeric" /></div>
+          <div><label for="ps-life-tobacco" class="block text-[13px] font-medium mb-1.5">Tobacco user</label><input id="ps-life-tobacco" type="text" [(ngModel)]="lifeForm.tobaccoUser" /></div>
+          <div><label for="ps-life-discount" class="block text-[13px] font-medium mb-1.5">Agent discount %</label><input id="ps-life-discount" type="number" [(ngModel)]="lifeForm.discount" /></div>
         </div>
       }
 
@@ -124,12 +124,12 @@
     @if (currentStep === 2) {
       <div class="text-[15px] font-semibold text-ink mb-4">Proposer details</div>
       <div class="grid grid-cols-2 gap-3.5">
-        <div><label class="block text-[13px] font-medium mb-1.5">Full name</label><input type="text" [(ngModel)]="proposerForm.fullName" /></div>
-        <div><label class="block text-[13px] font-medium mb-1.5">Date of birth</label><input type="date" [(ngModel)]="proposerForm.dob" class="sc-numeric" /></div>
-        <div><label class="block text-[13px] font-medium mb-1.5">Annual income</label><input type="text" [(ngModel)]="proposerForm.annualIncome" class="sc-numeric" /></div>
-        <div><label class="block text-[13px] font-medium mb-1.5">Occupation</label><input type="text" [(ngModel)]="proposerForm.occupation" /></div>
-        <div><label class="block text-[13px] font-medium mb-1.5">PAN</label><input type="text" [(ngModel)]="proposerForm.pan" class="sc-numeric" /></div>
-        <div><label class="block text-[13px] font-medium mb-1.5">Aadhaar (last 4 digits)</label><input type="text" [(ngModel)]="proposerForm.aadhaarLast4" class="sc-numeric" maxlength="4" /></div>
+        <div><label for="ps-proposer-full-name" class="block text-[13px] font-medium mb-1.5">Full name</label><input id="ps-proposer-full-name" type="text" [(ngModel)]="proposerForm.fullName" /></div>
+        <div><label for="ps-proposer-dob" class="block text-[13px] font-medium mb-1.5">Date of birth</label><input id="ps-proposer-dob" type="date" [(ngModel)]="proposerForm.dob" class="sc-numeric" /></div>
+        <div><label for="ps-proposer-income" class="block text-[13px] font-medium mb-1.5">Annual income</label><input id="ps-proposer-income" type="text" [(ngModel)]="proposerForm.annualIncome" class="sc-numeric" /></div>
+        <div><label for="ps-proposer-occupation" class="block text-[13px] font-medium mb-1.5">Occupation</label><input id="ps-proposer-occupation" type="text" [(ngModel)]="proposerForm.occupation" /></div>
+        <div><label for="ps-proposer-pan" class="block text-[13px] font-medium mb-1.5">PAN</label><input id="ps-proposer-pan" type="text" [(ngModel)]="proposerForm.pan" class="sc-numeric" /></div>
+        <div><label for="ps-proposer-aadhaar" class="block text-[13px] font-medium mb-1.5">Aadhaar (last 4 digits)</label><input id="ps-proposer-aadhaar" type="text" [(ngModel)]="proposerForm.aadhaarLast4" class="sc-numeric" maxlength="4" /></div>
       </div>
     }
 

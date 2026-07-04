@@ -629,7 +629,7 @@ function openModal(id) {
   const content = document.getElementById('modalContent');
   modal.classList.remove('hidden');
   modal.classList.add('flex');
-  modal.offsetWidth;
+  const forceReflow = modal.offsetWidth; // flush layout so the transition below animates
   modal.classList.remove('opacity-0');
   content.classList.remove('scale-95');
 }
@@ -661,8 +661,8 @@ function esc(s) {
 
 // Inline onclick="" handlers in the generated markup need these on the global object,
 // since module scripts do not leak top-level declarations onto window.
-window.closeModal = closeModal;
-window.openModal = openModal;
+globalThis.closeModal = closeModal;
+globalThis.openModal = openModal;
 
 try {
   await loadData();

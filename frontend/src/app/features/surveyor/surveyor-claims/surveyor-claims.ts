@@ -113,7 +113,11 @@ export class SurveyorClaimsComponent implements OnInit {
     const [integer, decimal] = Math.abs(value).toFixed(2).split('.');
     const lastThree = integer.slice(-3);
     const rest = integer.slice(0, -3);
-    const formatted = rest.replace(/\d(?=(\d{2})+(?!\d))/g, '$&,');
+    let formatted = '';
+    for (let i = rest.length; i > 0; i -= 2) {
+      const start = Math.max(0, i - 2);
+      formatted = rest.slice(start, i) + (formatted ? ',' + formatted : '');
+    }
     return '₹' + (formatted ? formatted + ',' : '') + lastThree + '.' + decimal;
   }
 }
