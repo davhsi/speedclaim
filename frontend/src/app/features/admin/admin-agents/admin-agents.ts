@@ -14,8 +14,8 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
   templateUrl: './admin-agents.html',
 })
 export class AdminAgentsComponent implements OnInit {
-  private adminService = inject(AdminService);
-  private toastService = inject(ToastService);
+  private readonly adminService = inject(AdminService);
+  private readonly toastService = inject(ToastService);
 
   activeTab = signal<'agents' | 'branches'>('agents');
   agents = signal<UserDto[]>([]);
@@ -97,13 +97,13 @@ export class AdminAgentsComponent implements OnInit {
 
   avatarBg(name: string): string {
     const palettes = ['#E6F4F8', '#E8F7F1', '#FEF0EA', '#EEF4FF', '#FEF6E6', '#F3E8FF'];
-    const h = name.charCodeAt(0) + (name.charCodeAt(1) || 0);
+    const h = name.codePointAt(0)! + (name.codePointAt(1) || 0);
     return palettes[h % palettes.length];
   }
 
   avatarFg(name: string): string {
     const palettes = ['#0F6E8C', '#1F9D6B', '#D45E2F', '#2D7FF9', '#D9920A', '#7C3AED'];
-    const h = name.charCodeAt(0) + (name.charCodeAt(1) || 0);
+    const h = name.codePointAt(0)! + (name.codePointAt(1) || 0);
     return palettes[h % palettes.length];
   }
 

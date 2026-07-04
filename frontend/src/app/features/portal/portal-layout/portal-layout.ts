@@ -13,8 +13,8 @@ import { SafeHtmlPipe } from '../../../shared/pipes/safe-html.pipe';
   templateUrl: './portal-layout.html',
 })
 export class PortalLayoutComponent implements OnInit {
-  private platformId = inject(PLATFORM_ID);
-  private notifService = inject(NotificationService);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly notifService = inject(NotificationService);
 
   sidebarCollapsed = signal(true);
 

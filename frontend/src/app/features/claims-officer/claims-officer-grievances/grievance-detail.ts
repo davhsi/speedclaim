@@ -16,11 +16,11 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
   templateUrl: './grievance-detail.html',
 })
 export class GrievanceDetailComponent implements OnInit {
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private claimsService = inject(ClaimsOfficerService);
-  private authService = inject(AuthService);
-  private toast = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly claimsService = inject(ClaimsOfficerService);
+  private readonly authService = inject(AuthService);
+  private readonly toast = inject(ToastService);
 
   grievance = signal<GrievanceDto | null>(null);
   actionInFlight = signal(false);

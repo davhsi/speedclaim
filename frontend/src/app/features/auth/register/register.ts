@@ -32,10 +32,10 @@ const INDIAN_STATES = [
   `,
 })
 export class RegisterComponent {
-  private fb = inject(FormBuilder);
-  private authService = inject(AuthService);
-  private router = inject(Router);
-  private toast = inject(ToastService);
+  private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly toast = inject(ToastService);
 
   loading = signal(false);
   errorMessage = signal('');
@@ -58,7 +58,7 @@ export class RegisterComponent {
     'Almost done — review and agree.',
   ];
 
-  private stepControls: string[][] = [
+  private readonly stepControls: string[][] = [
     ['salutationTitle', 'firstName', 'lastName', 'email', 'phone', 'dateOfBirth', 'gender', 'maritalStatus'],
     ['password', 'confirmPassword', 'aadhaarNumber', 'panNumber'],
     ['permanentAddress', 'currentAddress'],

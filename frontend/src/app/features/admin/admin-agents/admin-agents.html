@@ -19,7 +19,7 @@
         <div class="flex items-center gap-3 py-2">
           <div class="relative">
             <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" [ngModel]="searchQuery()" (ngModelChange)="onSearch($event)" placeholder="Search agents…" class="w-48 h-8 pl-8 pr-3 border-[1.5px] border-line rounded-[7px] text-[12.5px] text-ink bg-[#F7F9FA] outline-none" />
+            <input id="admin-agents-search" type="text" [ngModel]="searchQuery()" (ngModelChange)="onSearch($event)" placeholder="Search agents…" aria-label="Search agents" class="w-48 h-8 pl-8 pr-3 border-[1.5px] border-line rounded-[7px] text-[12.5px] text-ink bg-[#F7F9FA] outline-none" />
           </div>
           <button (click)="openRegisterModal()" class="h-8 px-3.5 bg-primary text-white text-[12.5px] font-semibold rounded-[7px] border-none cursor-pointer flex items-center gap-1.5">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -140,22 +140,22 @@
         </div>
         <div class="grid grid-cols-2 gap-3 mb-4">
           <div>
-            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">First name</label>
-            <input type="text" [(ngModel)]="regForm.firstName" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            <label for="agent-reg-first-name" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">First name</label>
+            <input id="agent-reg-first-name" type="text" [(ngModel)]="regForm.firstName" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
           <div>
-            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Last name</label>
-            <input type="text" [(ngModel)]="regForm.lastName" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            <label for="agent-reg-last-name" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Last name</label>
+            <input id="agent-reg-last-name" type="text" [(ngModel)]="regForm.lastName" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
         </div>
         <div class="grid grid-cols-2 gap-3 mb-4">
           <div>
-            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Email</label>
-            <input type="email" [(ngModel)]="regForm.email" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            <label for="agent-reg-email" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Email</label>
+            <input id="agent-reg-email" type="email" [(ngModel)]="regForm.email" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
           <div>
-            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Phone</label>
-            <input type="tel" [(ngModel)]="regForm.phone" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            <label for="agent-reg-phone" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Phone</label>
+            <input id="agent-reg-phone" type="tel" [(ngModel)]="regForm.phone" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
         </div>
         <div class="grid grid-cols-2 gap-3 mb-4">
@@ -167,28 +167,28 @@
         </div>
         <div class="grid grid-cols-2 gap-3 mb-4">
           <div>
-            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">License number</label>
-            <input type="text" [(ngModel)]="regForm.licenseNumber" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            <label for="agent-reg-license-number" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">License number</label>
+            <input id="agent-reg-license-number" type="text" [(ngModel)]="regForm.licenseNumber" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
           <div>
-            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">License expiry</label>
-            <input type="date" [(ngModel)]="regForm.licenseExpiry" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
-          </div>
-        </div>
-        <div class="grid grid-cols-2 gap-3 mb-5">
-          <div>
-            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Agency name</label>
-            <input type="text" [(ngModel)]="regForm.agencyName" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
-          </div>
-          <div>
-            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Aadhaar number</label>
-            <input type="text" [(ngModel)]="regForm.aadhaarNumber" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            <label for="agent-reg-license-expiry" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">License expiry</label>
+            <input id="agent-reg-license-expiry" type="date" [(ngModel)]="regForm.licenseExpiry" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
         </div>
         <div class="grid grid-cols-2 gap-3 mb-5">
           <div>
-            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">PAN number</label>
-            <input type="text" [(ngModel)]="regForm.panNumber" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            <label for="agent-reg-agency-name" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Agency name</label>
+            <input id="agent-reg-agency-name" type="text" [(ngModel)]="regForm.agencyName" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          </div>
+          <div>
+            <label for="agent-reg-aadhaar-number" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Aadhaar number</label>
+            <input id="agent-reg-aadhaar-number" type="text" [(ngModel)]="regForm.aadhaarNumber" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-5">
+          <div>
+            <label for="agent-reg-pan-number" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">PAN number</label>
+            <input id="agent-reg-pan-number" type="text" [(ngModel)]="regForm.panNumber" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
         </div>
         <div class="flex justify-end gap-2">
@@ -243,12 +243,12 @@
           </button>
         </div>
         <div class="mb-4">
-          <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">License number</label>
-          <input type="text" [(ngModel)]="licForm.licenseNumber" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          <label for="agent-update-license-number" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">License number</label>
+          <input id="agent-update-license-number" type="text" [(ngModel)]="licForm.licenseNumber" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
         </div>
         <div class="mb-5">
-          <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">License expiry</label>
-          <input type="date" [(ngModel)]="licForm.licenseExpiry" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          <label for="agent-update-license-expiry" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">License expiry</label>
+          <input id="agent-update-license-expiry" type="date" [(ngModel)]="licForm.licenseExpiry" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
         </div>
         <div class="flex justify-end gap-2">
           <button (click)="closeModal()" class="h-9 px-4 bg-white border-[1.5px] border-line text-[13px] font-medium text-body rounded-[7px] cursor-pointer">Cancel</button>
@@ -271,31 +271,31 @@
         </div>
         <div class="grid grid-cols-2 gap-3 mb-4">
           <div>
-            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Name</label>
-            <input type="text" [(ngModel)]="branchForm.name" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            <label for="branch-edit-name" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Name</label>
+            <input id="branch-edit-name" type="text" [(ngModel)]="branchForm.name" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
           <div>
-            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">City</label>
-            <input type="text" [(ngModel)]="branchForm.city" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            <label for="branch-edit-city" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">City</label>
+            <input id="branch-edit-city" type="text" [(ngModel)]="branchForm.city" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
         </div>
         <div class="grid grid-cols-2 gap-3 mb-4">
           <div>
-            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">State</label>
-            <input type="text" [(ngModel)]="branchForm.state" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            <label for="branch-edit-state" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">State</label>
+            <input id="branch-edit-state" type="text" [(ngModel)]="branchForm.state" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
           <div>
-            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Phone</label>
-            <input type="tel" [(ngModel)]="branchForm.phone" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            <label for="branch-edit-phone" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Phone</label>
+            <input id="branch-edit-phone" type="tel" [(ngModel)]="branchForm.phone" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
         </div>
         <div class="mb-4">
-          <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Address</label>
-          <input type="text" [(ngModel)]="branchForm.address" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          <label for="branch-edit-address" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Address</label>
+          <input id="branch-edit-address" type="text" [(ngModel)]="branchForm.address" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
         </div>
         <div class="mb-5">
-          <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Email</label>
-          <input type="email" [(ngModel)]="branchForm.email" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          <label for="branch-edit-email" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Email</label>
+          <input id="branch-edit-email" type="email" [(ngModel)]="branchForm.email" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
         </div>
         <div class="flex justify-end gap-2">
           <button (click)="closeModal()" class="h-9 px-4 bg-white border-[1.5px] border-line text-[13px] font-medium text-body rounded-[7px] cursor-pointer">Cancel</button>

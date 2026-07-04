@@ -27,8 +27,8 @@ interface NavItem {
 })
 export class ClaimsOfficerSidebarComponent {
   collapsed = input<boolean>(true);
-  toggle = output<void>();
-  private authService = inject(AuthService);
+  sidebarToggle = output<void>();
+  private readonly authService = inject(AuthService);
 
   navItems: NavItem[] = [
     { label: 'Dashboard', route: '/claims-officer/dashboard', exact: true, icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>' },
@@ -56,8 +56,8 @@ export class ClaimsOfficerSidebarComponent {
   }
 
   onNavClick(): void {
-    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-      this.toggle.emit();
+    if (typeof globalThis.window !== 'undefined' && globalThis.window.innerWidth < 1024) {
+      this.sidebarToggle.emit();
     }
   }
 }

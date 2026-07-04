@@ -14,9 +14,9 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './finance-officer-dashboard.html',
 })
 export class FinanceOfficerDashboardComponent implements OnInit {
-  private financeService = inject(FinanceOfficerService);
-  private authService = inject(AuthService);
-  private router = inject(Router);
+  private readonly financeService = inject(FinanceOfficerService);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   recentPayments = signal<FinancePaymentRecordDto[]>([]);
   totalPaid = signal('₹ 0.00');
@@ -25,7 +25,7 @@ export class FinanceOfficerDashboardComponent implements OnInit {
   pendingCommTotal = signal('₹ 0.00');
   overdueCount = signal(0);
 
-  private moneyPipe = new MoneyPipe();
+  private readonly moneyPipe = new MoneyPipe();
 
   ngOnInit(): void {
     this.loadData();

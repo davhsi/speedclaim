@@ -13,9 +13,9 @@ import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
   templateUrl: './family.html',
 })
 export class FamilyComponent implements OnInit {
-  private fb = inject(FormBuilder);
-  private profileService = inject(ProfileService);
-  private toast = inject(ToastService);
+  private readonly fb = inject(FormBuilder);
+  private readonly profileService = inject(ProfileService);
+  private readonly toast = inject(ToastService);
 
   members = signal<FamilyMemberDto[]>([]);
   showForm = signal(false);

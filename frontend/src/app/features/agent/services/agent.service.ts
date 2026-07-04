@@ -70,7 +70,7 @@ export interface AgentProfileDto {
 
 @Injectable({ providedIn: 'root' })
 export class AgentService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
   getDashboard(): Observable<AgentDashboardDto> {
     return this.http.get<AgentDashboardDto>('/api/v1/agents/dashboard');

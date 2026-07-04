@@ -5,7 +5,7 @@ import { GrievanceDto, RaiseGrievanceRequest } from '../../../../core/models/api
 
 @Injectable({ providedIn: 'root' })
 export class GrievanceService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
   private readonly api = '/api/v1/grievances';
 
   getMyGrievances(): Observable<GrievanceDto[]> {

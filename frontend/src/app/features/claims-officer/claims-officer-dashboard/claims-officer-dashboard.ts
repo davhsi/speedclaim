@@ -15,9 +15,9 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './claims-officer-dashboard.html',
 })
 export class ClaimsOfficerDashboardComponent implements OnInit {
-  private claimsService = inject(ClaimsOfficerService);
-  private authService = inject(AuthService);
-  private router = inject(Router);
+  private readonly claimsService = inject(ClaimsOfficerService);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   recentClaims = signal<ClaimDto[]>([]);
   newClaimsCount = signal(0);

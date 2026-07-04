@@ -19,20 +19,20 @@
     <!-- Fields -->
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-5">
       <div>
-        <label class="block text-[13px] font-medium text-body mb-1.5">Full name</label>
-        <input [value]="fullName()" readonly class="w-full h-[42px] px-3 border border-line rounded-lg text-sm outline-none bg-surface text-muted" />
+        <label for="claims-officer-profile-fullname" class="block text-[13px] font-medium text-body mb-1.5">Full name</label>
+        <input id="claims-officer-profile-fullname" [value]="fullName()" readonly class="w-full h-[42px] px-3 border border-line rounded-lg text-sm outline-none bg-surface text-muted" />
       </div>
       <div>
-        <label class="block text-[13px] font-medium text-body mb-1.5">Email</label>
-        <input [value]="email()" readonly class="w-full h-[42px] px-3 border border-line rounded-lg text-sm outline-none bg-surface text-muted" />
+        <label for="claims-officer-profile-email" class="block text-[13px] font-medium text-body mb-1.5">Email</label>
+        <input id="claims-officer-profile-email" [value]="email()" readonly class="w-full h-[42px] px-3 border border-line rounded-lg text-sm outline-none bg-surface text-muted" />
       </div>
       <div>
-        <label class="block text-[13px] font-medium text-body mb-1.5">Phone</label>
-        <input [value]="phone()" readonly class="w-full h-[42px] px-3 border border-line rounded-lg text-sm outline-none bg-surface text-muted" />
+        <label for="claims-officer-profile-phone" class="block text-[13px] font-medium text-body mb-1.5">Phone</label>
+        <input id="claims-officer-profile-phone" [value]="phone()" readonly class="w-full h-[42px] px-3 border border-line rounded-lg text-sm outline-none bg-surface text-muted" />
       </div>
       <div>
-        <label class="block text-[13px] font-medium text-body mb-1.5">Department</label>
-        <input value="Claims Processing" readonly class="w-full h-[42px] px-3 border border-line rounded-lg text-sm outline-none bg-surface text-muted" />
+        <label for="claims-officer-profile-department" class="block text-[13px] font-medium text-body mb-1.5">Department</label>
+        <input id="claims-officer-profile-department" value="Claims Processing" readonly class="w-full h-[42px] px-3 border border-line rounded-lg text-sm outline-none bg-surface text-muted" />
       </div>
     </div>
 

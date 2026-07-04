@@ -13,8 +13,8 @@ import { OverduePolicyDto, PaymentSummaryDto } from '../../../core/models/api.mo
   templateUrl: './finance-officer-reports.html',
 })
 export class FinanceOfficerReportsComponent implements OnInit {
-  private financeService = inject(FinanceOfficerService);
-  private toast = inject(ToastService);
+  private readonly financeService = inject(FinanceOfficerService);
+  private readonly toast = inject(ToastService);
 
   overdueList = signal<OverduePolicyDto[]>([]);
   summary = signal<PaymentSummaryDto | null>(null);
@@ -88,12 +88,12 @@ export class FinanceOfficerReportsComponent implements OnInit {
 
     this.financeService.exportPaymentReport(this.exportFrom, this.exportTo).subscribe({
       next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
+        const url = globalThis.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = `PaymentReport_${this.exportFrom}_to_${this.exportTo}.xlsx`;
         a.click();
-        window.URL.revokeObjectURL(url);
+        globalThis.URL.revokeObjectURL(url);
         this.exporting.set(false);
         this.toast.success(`Excel report downloaded · ${this.exportFrom} to ${this.exportTo}`);
       },

@@ -14,8 +14,8 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
   templateUrl: './admin-products.html',
 })
 export class AdminProductsComponent implements OnInit {
-  private adminService = inject(AdminService);
-  private toastService = inject(ToastService);
+  private readonly adminService = inject(AdminService);
+  private readonly toastService = inject(ToastService);
 
   products = signal<ProductDto[]>([]);
   loading = signal(true);
@@ -38,7 +38,7 @@ export class AdminProductsComponent implements OnInit {
 
   filteredProducts = computed(() => {
     const q = this.searchQuery().toLowerCase();
-    return !q ? this.products() : this.products().filter(p => p.productName.toLowerCase().includes(q) || p.domain.toLowerCase().includes(q));
+    return q ? this.products().filter(p => p.productName.toLowerCase().includes(q) || p.domain.toLowerCase().includes(q)) : this.products();
   });
 
   totalPages = computed(() => Math.max(1, Math.ceil(this.filteredProducts().length / this.pageSize)));

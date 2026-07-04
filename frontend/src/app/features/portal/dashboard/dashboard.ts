@@ -19,10 +19,10 @@ import { SafeHtmlPipe } from '../../../shared/pipes/safe-html.pipe';
   templateUrl: './dashboard.html',
 })
 export class DashboardComponent implements OnInit {
-  private dashService = inject(DashboardService);
-  private authService = inject(AuthService);
-  private productService = inject(ProductService);
-  private profileService = inject(ProfileService);
+  private readonly dashService = inject(DashboardService);
+  private readonly authService = inject(AuthService);
+  private readonly productService = inject(ProductService);
+  private readonly profileService = inject(ProfileService);
   notifService = inject(NotificationService);
 
   loading = signal(true);

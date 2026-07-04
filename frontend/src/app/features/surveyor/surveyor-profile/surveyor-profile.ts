@@ -10,8 +10,8 @@ import { ClaimDto } from '../../../core/models/api.models';
   host: { class: 'flex-1 min-h-0 flex flex-col' },
 })
 export class SurveyorProfileComponent implements OnInit {
-  private authService = inject(AuthService);
-  private surveyorService = inject(SurveyorService);
+  private readonly authService = inject(AuthService);
+  private readonly surveyorService = inject(SurveyorService);
 
   claims = signal<ClaimDto[]>([]);
   profile = signal<SurveyorProfileDto | null>(null);

@@ -38,8 +38,8 @@
     @if (currentStep === 0) {
       <div class="text-[15px] font-semibold text-ink mb-4">Select customer & product</div>
       <div class="mb-5">
-        <label class="block text-[13px] font-medium mb-1.5">Customer</label>
-        <select [(ngModel)]="selectedCustomerId" class="h-[42px]">
+        <label for="proposal-customer-select" class="block text-[13px] font-medium mb-1.5">Customer</label>
+        <select id="proposal-customer-select" [(ngModel)]="selectedCustomerId" class="h-[42px]">
           <option [ngValue]="null" disabled>Select a customer...</option>
           @for (c of customers(); track c.id) {
             <option [ngValue]="c.customerId ?? c.id">{{ c.fullName }} · ID {{ c.customerId ?? c.id }}</option>
@@ -49,15 +49,15 @@
       <div class="text-[13px] font-medium text-body mb-2.5">Product type</div>
       <div class="grid grid-cols-3 gap-2.5">
         @for (type of productTypes; track type) {
-          <div (click)="selectedType = type"
-               class="border-[1.5px] rounded-[10px] p-4 text-center cursor-pointer transition-colors"
+          <button type="button" (click)="selectedType = type"
+               class="border-[1.5px] rounded-[10px] p-4 text-center cursor-pointer transition-colors w-full"
                [class]="selectedType === type ? 'border-primary bg-primary-light' : 'border-line bg-white hover:border-primary-muted'">
             <div class="w-9 h-9 rounded-[9px] flex items-center justify-center mx-auto mb-2"
                  [class]="selectedType === type ? 'bg-primary text-white' : 'bg-surface text-muted'">
               <span [innerHTML]="typeIcon(type) | safeHtml"></span>
             </div>
             <div class="text-[13px] font-semibold text-ink">{{ type }}</div>
-          </div>
+          </button>
         }
       </div>
     }

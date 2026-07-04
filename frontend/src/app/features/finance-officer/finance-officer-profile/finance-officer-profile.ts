@@ -11,9 +11,9 @@ import { FinanceOfficerService } from '../services/finance-officer.service';
   templateUrl: './finance-officer-profile.html',
 })
 export class FinanceOfficerProfileComponent implements OnInit {
-  private authService = inject(AuthService);
-  private financeService = inject(FinanceOfficerService);
-  private toast = inject(ToastService);
+  private readonly authService = inject(AuthService);
+  private readonly financeService = inject(FinanceOfficerService);
+  private readonly toast = inject(ToastService);
 
   profileName = '';
   profileEmail = '';

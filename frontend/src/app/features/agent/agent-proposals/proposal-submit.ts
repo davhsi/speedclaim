@@ -25,8 +25,8 @@ interface StepDef {
   templateUrl: './proposal-submit.html',
 })
 export class AgentProposalSubmitComponent implements OnInit {
-  private agentService = inject(AgentService);
-  private router = inject(Router);
+  private readonly agentService = inject(AgentService);
+  private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
 
   customers = signal<AgentCustomerDto[]>([]);

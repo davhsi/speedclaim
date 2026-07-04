@@ -5,7 +5,7 @@ import { NotificationDto, ApiMessage } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
   private readonly apiUrl = '/api/v1/users/notifications';
 
   notifications = signal<NotificationDto[]>([]);

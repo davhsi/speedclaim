@@ -11,9 +11,9 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private http = inject(HttpClient);
-  private router = inject(Router);
-  private tokenService = inject(TokenService);
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly tokenService = inject(TokenService);
 
   private readonly apiUrl = '/api/v1/auth';
 

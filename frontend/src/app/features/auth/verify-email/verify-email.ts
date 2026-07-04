@@ -10,10 +10,10 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './verify-email.html',
 })
 export class VerifyEmailComponent implements OnInit {
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private authService = inject(AuthService);
-  private fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
+  private readonly fb = inject(FormBuilder);
 
   loading = signal(true);
   success = signal(false);

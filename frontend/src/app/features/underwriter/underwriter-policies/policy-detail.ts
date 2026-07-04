@@ -14,10 +14,10 @@ import { ProductService } from '../../portal/products/services/product.service';
   templateUrl: './policy-detail.html',
 })
 export class PolicyDetailComponent implements OnInit {
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private uwService = inject(UnderwriterService);
-  private productService = inject(ProductService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly uwService = inject(UnderwriterService);
+  private readonly productService = inject(ProductService);
 
   policy = signal<PolicyDto | null>(null);
   product = signal<ProductDto | null>(null);

@@ -27,8 +27,8 @@
       <!-- Form -->
       <div class="grid grid-cols-2 gap-3.5" [formGroup]="profileForm">
         <div>
-          <label class="block text-xs text-muted mb-1.5">Salutation</label>
-          <select formControlName="salutation" class="h-[42px]">
+          <label for="agent-profile-salutation" class="block text-xs text-muted mb-1.5">Salutation</label>
+          <select id="agent-profile-salutation" formControlName="salutation" class="h-[42px]">
             <option value="Mr">Mr</option>
             <option value="Mrs">Mrs</option>
             <option value="Ms">Ms</option>
@@ -36,36 +36,36 @@
           </select>
         </div>
         <div>
-          <label class="block text-xs text-muted mb-1.5">Email</label>
-          <input type="text" [value]="p.email" class="h-[42px] bg-surface-alt" readonly />
+          <label for="agent-profile-email" class="block text-xs text-muted mb-1.5">Email</label>
+          <input id="agent-profile-email" type="text" [value]="p.email" class="h-[42px] bg-surface-alt" readonly />
         </div>
         <div>
-          <label class="block text-xs text-muted mb-1.5">First name</label>
-          <input formControlName="firstName" class="h-[42px]" />
+          <label for="agent-profile-first-name" class="block text-xs text-muted mb-1.5">First name</label>
+          <input id="agent-profile-first-name" formControlName="firstName" class="h-[42px]" />
         </div>
         <div>
-          <label class="block text-xs text-muted mb-1.5">Last name</label>
-          <input formControlName="lastName" class="h-[42px]" />
+          <label for="agent-profile-last-name" class="block text-xs text-muted mb-1.5">Last name</label>
+          <input id="agent-profile-last-name" formControlName="lastName" class="h-[42px]" />
         </div>
         <div>
-          <label class="block text-xs text-muted mb-1.5">Phone</label>
-          <input formControlName="phone" class="h-[42px] sc-numeric" />
+          <label for="agent-profile-phone" class="block text-xs text-muted mb-1.5">Phone</label>
+          <input id="agent-profile-phone" formControlName="phone" class="h-[42px] sc-numeric" />
         </div>
         <div>
-          <label class="block text-xs text-muted mb-1.5">License number</label>
-          <input type="text" [value]="p.licenseNumber" class="h-[42px] bg-surface-alt" readonly />
+          <label for="agent-profile-license-number" class="block text-xs text-muted mb-1.5">License number</label>
+          <input id="agent-profile-license-number" type="text" [value]="p.licenseNumber" class="h-[42px] bg-surface-alt" readonly />
         </div>
         <div>
-          <label class="block text-xs text-muted mb-1.5">License expiry</label>
-          <input type="text" [value]="p.licenseExpiry | dateFormat" class="h-[42px] bg-surface-alt" readonly />
+          <label for="agent-profile-license-expiry" class="block text-xs text-muted mb-1.5">License expiry</label>
+          <input id="agent-profile-license-expiry" type="text" [value]="p.licenseExpiry | dateFormat" class="h-[42px] bg-surface-alt" readonly />
         </div>
         <div>
-          <label class="block text-xs text-muted mb-1.5">Branch</label>
-          <input type="text" [value]="p.branchName ? p.branchName + ', ' + p.branchCity : 'Not assigned'" class="h-[42px] bg-surface-alt" readonly />
+          <label for="agent-profile-branch" class="block text-xs text-muted mb-1.5">Branch</label>
+          <input id="agent-profile-branch" type="text" [value]="p.branchName ? p.branchName + ', ' + p.branchCity : 'Not assigned'" class="h-[42px] bg-surface-alt" readonly />
         </div>
         <div>
-          <label class="block text-xs text-muted mb-1.5">Commission rate</label>
-          <input type="text" [value]="p.commissionRate + '%'" class="h-[42px] bg-surface-alt" readonly />
+          <label for="agent-profile-commission-rate" class="block text-xs text-muted mb-1.5">Commission rate</label>
+          <input id="agent-profile-commission-rate" type="text" [value]="p.commissionRate + '%'" class="h-[42px] bg-surface-alt" readonly />
         </div>
       </div>
 

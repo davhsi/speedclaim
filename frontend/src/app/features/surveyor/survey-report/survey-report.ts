@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, inject, signal, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -19,10 +19,10 @@ export class SurveyReportComponent implements OnInit {
   @ViewChild('photoInput') photoInput!: ElementRef<HTMLInputElement>;
   @ViewChild('docInput') docInput!: ElementRef<HTMLInputElement>;
 
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private surveyorService = inject(SurveyorService);
-  private toastService = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly surveyorService = inject(SurveyorService);
+  private readonly toastService = inject(ToastService);
 
   claim = signal<ClaimDto | null>(null);
 
@@ -152,8 +152,8 @@ export class SurveyReportComponent implements OnInit {
     let ok = true;
     if (this.dmgType()) this.dmgTypeErr.set('');
     else { this.dmgTypeErr.set('Please choose a damage type.'); ok = false; }
-    if (!this.desc.trim()) { this.descErr.set('Please describe the damage observed.'); ok = false; }
-    else this.descErr.set('');
+    if (this.desc.trim()) this.descErr.set('');
+    else { this.descErr.set('Please describe the damage observed.'); ok = false; }
     if (!this.cost || Number.parseFloat(this.cost) <= 0) { this.costErr.set('Please enter a valid estimated repair cost.'); ok = false; }
     else this.costErr.set('');
     if (this.driveable() === null) { this.driveableErr.set('Please indicate whether the vehicle is driveable.'); ok = false; }
@@ -184,7 +184,7 @@ export class SurveyReportComponent implements OnInit {
     const remarks = [
       `Damage type: ${this.dmgType()}`,
       `Description: ${this.desc}`,
-      `Driveable: ${this.driveable() === true ? 'Yes' : this.driveable() === false ? 'No' : 'N/A'}`,
+      `Driveable: ${this.driveableLabel()}`,
       this.pav ? `Pre-accident market value: ₹${Number.parseFloat(this.pav).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '',
       this.workshop ? `Workshop: ${this.workshop}` : '',
       this.notes ? `Notes: ${this.notes}` : '',
@@ -220,9 +220,22 @@ export class SurveyReportComponent implements OnInit {
     if (value == null) return '₹ 0.00';
     const [integer, decimal] = Math.abs(value).toFixed(2).split('.');
     const lastThree = integer.slice(-3);
-    const rest = integer.slice(0, -3);
-    const formatted = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',');
+    let rest = integer.slice(0, -3);
+    const groups: string[] = [];
+    while (rest.length > 2) {
+      groups.unshift(rest.slice(-2));
+      rest = rest.slice(0, -2);
+    }
+    if (rest) groups.unshift(rest);
+    const formatted = groups.join(',');
     return '₹' + (formatted ? formatted + ',' : '') + lastThree + '.' + decimal;
+  }
+
+  private driveableLabel(): string {
+    const driveable = this.driveable();
+    if (driveable === true) return 'Yes';
+    if (driveable === false) return 'No';
+    return 'N/A';
   }
 
   private isSurveyReportLocked(status: string): boolean {

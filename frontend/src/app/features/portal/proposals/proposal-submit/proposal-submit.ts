@@ -1,6 +1,6 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { FormBuilder, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProposalService } from '../services/proposal.service';
 import { ProfileService } from '../../profile/services/profile.service';
 import { FamilyMemberDto, SubmitProposalRequest, DocumentRequirementDto, UserDto } from '../../../../core/models/api.models';
@@ -15,13 +15,13 @@ import { HttpClient } from '@angular/common/http';
   templateUrl: './proposal-submit.html',
 })
 export class ProposalSubmitComponent implements OnInit {
-  private fb = inject(FormBuilder);
-  private proposalService = inject(ProposalService);
-  private profileService = inject(ProfileService);
-  private http = inject(HttpClient);
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
-  private toast = inject(ToastService);
+  private readonly fb = inject(FormBuilder);
+  private readonly proposalService = inject(ProposalService);
+  private readonly profileService = inject(ProfileService);
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly toast = inject(ToastService);
 
   step = signal(0);
   submitting = signal(false);

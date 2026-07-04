@@ -4,7 +4,7 @@ import { StatCardComponent } from '../../../shared/components/stat-card/stat-car
 import { SafeHtmlPipe } from '../../../shared/pipes/safe-html.pipe';
 import { UnderwriterService } from '../services/underwriter.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { ProductDto, ProposalDto, EndorsementDto } from '../../../core/models/api.models';
+import { ProductDto, ProposalDto } from '../../../core/models/api.models';
 import { ProductService } from '../../portal/products/services/product.service';
 
 @Component({
@@ -14,10 +14,10 @@ import { ProductService } from '../../portal/products/services/product.service';
   templateUrl: './underwriter-dashboard.html',
 })
 export class UnderwriterDashboardComponent implements OnInit {
-  private uwService = inject(UnderwriterService);
-  private authService = inject(AuthService);
-  private productService = inject(ProductService);
-  private router = inject(Router);
+  private readonly uwService = inject(UnderwriterService);
+  private readonly authService = inject(AuthService);
+  private readonly productService = inject(ProductService);
+  private readonly router = inject(Router);
 
   pendingProposals = signal(0);
   pendingKyc = signal(0);
@@ -72,17 +72,25 @@ export class UnderwriterDashboardComponent implements OnInit {
       .slice(0, 5);
 
     this.recentActivity.set(sorted.map(p => {
-      const isApproved = p.status === 'Approved';
-      const isRejected = p.status === 'Rejected';
-      const color = isApproved ? 'var(--color-success)' : isRejected ? 'var(--color-danger)' : 'var(--color-warning)';
+      const { color, bgClass } = this.statusStyle(p.status);
       return {
         title: `Proposal ${p.proposalNumber}`,
         subtitle: `${this.productName(p)} · ${p.status}`,
         time: this.formatRelativeTime(p.createdAt),
         icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>`,
-        bgClass: isApproved ? 'bg-success-bg' : isRejected ? 'bg-danger-bg' : 'bg-warning-bg',
+        bgClass,
       };
     }));
+  }
+
+  private statusStyle(status: string): { color: string; bgClass: string } {
+    if (status === 'Approved') {
+      return { color: 'var(--color-success)', bgClass: 'bg-success-bg' };
+    }
+    if (status === 'Rejected') {
+      return { color: 'var(--color-danger)', bgClass: 'bg-danger-bg' };
+    }
+    return { color: 'var(--color-warning)', bgClass: 'bg-warning-bg' };
   }
 
   private productName(proposal: ProposalDto): string {

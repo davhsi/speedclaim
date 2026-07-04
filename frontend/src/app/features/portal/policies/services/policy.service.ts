@@ -8,7 +8,7 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class PolicyService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
   private readonly api = '/api/v1/policies';
 
   getMyPolicies(status?: string): Observable<PolicyDto[]> {

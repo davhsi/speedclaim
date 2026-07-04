@@ -197,7 +197,7 @@
   @if (previewDoc(); as doc) {
     <div class="fixed inset-0 z-[500] flex items-center justify-center p-4">
       <button type="button" [attr.aria-label]="'Close preview: ' + doc.documentName" (click)="closePreview()" class="absolute inset-0 bg-black/75 border-none cursor-default"></button>
-      <div class="relative bg-white rounded-card shadow-modal w-full max-w-3xl max-h-[92vh] flex flex-col" role="dialog" aria-modal="true" [attr.aria-label]="'Preview: ' + doc.documentName">
+      <dialog open class="relative bg-white rounded-card shadow-modal w-full max-w-3xl max-h-[92vh] flex flex-col p-0 border-0 m-0" [attr.aria-label]="'Preview: ' + doc.documentName">
         <!-- Lightbox header -->
         <div class="flex items-center justify-between px-5 py-3 border-b border-line shrink-0 gap-3">
           <div class="flex items-center gap-2.5 min-w-0">
@@ -240,7 +240,7 @@
             </div>
           }
         </div>
-      </div>
+      </dialog>
     </div>
   }
 
@@ -266,26 +266,26 @@
               }
             </div>
             <div class="mb-5">
-              <label class="block text-[13px] font-medium text-ink mb-1.5">Notes (optional)</label>
-              <textarea [(ngModel)]="modalNotes" placeholder="Approval notes..." class="w-full h-20 px-3 py-2.5 border border-line rounded-lg text-[13px] text-body resize-y outline-none leading-relaxed"></textarea>
+              <label for="claim-approve-notes" class="block text-[13px] font-medium text-ink mb-1.5">Notes (optional)</label>
+              <textarea id="claim-approve-notes" [(ngModel)]="modalNotes" placeholder="Approval notes..." class="w-full h-20 px-3 py-2.5 border border-line rounded-lg text-[13px] text-body resize-y outline-none leading-relaxed"></textarea>
             </div>
           }
           @case ('reject') {
             <div class="mb-5">
-              <label class="block text-[13px] font-medium text-ink mb-1.5">Rejection reason <span class="text-danger">*</span></label>
-              <textarea [(ngModel)]="modalReason" placeholder="Provide a clear reason for rejection..." class="w-full h-24 px-3 py-2.5 border border-line rounded-lg text-[13px] text-body resize-y outline-none leading-relaxed"></textarea>
+              <label for="claim-reject-reason" class="block text-[13px] font-medium text-ink mb-1.5">Rejection reason <span class="text-danger">*</span></label>
+              <textarea id="claim-reject-reason" [(ngModel)]="modalReason" placeholder="Provide a clear reason for rejection..." class="w-full h-24 px-3 py-2.5 border border-line rounded-lg text-[13px] text-body resize-y outline-none leading-relaxed"></textarea>
             </div>
           }
           @case ('settle') {
             <div class="mb-5">
-              <label class="block text-[13px] font-medium text-ink mb-1.5">Settlement confirmation</label>
+              <div class="block text-[13px] font-medium text-ink mb-1.5">Settlement confirmation</div>
               <p class="text-[13px] text-body">This will mark the claim as financially settled. The approved amount of <strong class="sc-numeric">{{ claim()?.claimAmountApproved | money }}</strong> will be recorded.</p>
             </div>
           }
           @case ('assignSurveyor') {
             <div class="mb-4">
-              <label class="block text-[13px] font-medium text-ink mb-1.5">Surveyor</label>
-              <select [(ngModel)]="modalSurveyorId" class="w-full h-11 px-3 border border-line rounded-lg text-[13px] text-body outline-none">
+              <label for="claim-assign-surveyor" class="block text-[13px] font-medium text-ink mb-1.5">Surveyor</label>
+              <select id="claim-assign-surveyor" [(ngModel)]="modalSurveyorId" class="w-full h-11 px-3 border border-line rounded-lg text-[13px] text-body outline-none">
                 <option value="">Select a surveyor</option>
                 @for (surveyor of surveyors(); track surveyor.id) {
                   <option [value]="surveyor.id">{{ surveyor.fullName }}</option>
@@ -293,8 +293,8 @@
               </select>
             </div>
             <div class="mb-5">
-              <label class="block text-[13px] font-medium text-ink mb-1.5">Instructions (optional)</label>
-              <input [(ngModel)]="modalNotes" placeholder="Any instructions for the surveyor..." class="w-full h-11 px-3 border border-line rounded-lg text-[13px] text-ink outline-none" />
+              <label for="claim-surveyor-instructions" class="block text-[13px] font-medium text-ink mb-1.5">Instructions (optional)</label>
+              <input id="claim-surveyor-instructions" [(ngModel)]="modalNotes" placeholder="Any instructions for the surveyor..." class="w-full h-11 px-3 border border-line rounded-lg text-[13px] text-ink outline-none" />
             </div>
           }
           @case ('requestDocs') {

@@ -19,11 +19,13 @@
     <div class="px-5 py-3.5 border-b border-line flex items-center gap-3 flex-wrap">
       <div class="relative">
         <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-muted" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event); currentPage.set(1)" placeholder="Search users…"
+        <input id="admin-users-search" type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event); currentPage.set(1)" placeholder="Search users…"
+          aria-label="Search users"
           class="w-52 h-8 pl-8 pr-3 border-[1.5px] border-line rounded-[7px] text-[12.5px] text-ink bg-[#F7F9FA] outline-none" />
       </div>
 
-      <select [ngModel]="roleFilter()" (ngModelChange)="roleFilter.set($event); currentPage.set(1)"
+      <select id="admin-users-role-filter" [ngModel]="roleFilter()" (ngModelChange)="roleFilter.set($event); currentPage.set(1)"
+        aria-label="Filter by role"
         class="h-8 px-2.5 border-[1.5px] border-line rounded-[7px] text-[12.5px] text-body bg-[#F7F9FA] outline-none cursor-pointer">
         <option value="">All roles</option>
         <option value="Admin">Admin</option>
@@ -35,7 +37,8 @@
         <option value="Customer">Customer</option>
       </select>
 
-      <select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event); currentPage.set(1)"
+      <select id="admin-users-status-filter" [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event); currentPage.set(1)"
+        aria-label="Filter by status"
         class="h-8 px-2.5 border-[1.5px] border-line rounded-[7px] text-[12.5px] text-body bg-[#F7F9FA] outline-none cursor-pointer">
         <option value="">All statuses</option>
         <option value="Active">Active</option>
@@ -397,18 +400,18 @@
 
           <div class="space-y-4 mb-6">
             <div>
-              <label class="block text-[12px] font-semibold text-body mb-1.5">Full name</label>
-              <input type="text" [(ngModel)]="inviteForm.name" placeholder="e.g. Priya Nair"
+              <label for="invite-user-name" class="block text-[12px] font-semibold text-body mb-1.5">Full name</label>
+              <input id="invite-user-name" type="text" [(ngModel)]="inviteForm.name" placeholder="e.g. Priya Nair"
                 class="w-full h-9 px-3 border-[1.5px] border-line rounded-lg text-[13px] text-ink bg-[#F7F9FA] outline-none" />
             </div>
             <div>
-              <label class="block text-[12px] font-semibold text-body mb-1.5">Email</label>
-              <input type="email" [(ngModel)]="inviteForm.email" placeholder="e.g. priya&#64;speedclaim.in"
+              <label for="invite-user-email" class="block text-[12px] font-semibold text-body mb-1.5">Email</label>
+              <input id="invite-user-email" type="email" [(ngModel)]="inviteForm.email" placeholder="e.g. priya&#64;speedclaim.in"
                 class="w-full h-9 px-3 border-[1.5px] border-line rounded-lg text-[13px] text-ink bg-[#F7F9FA] outline-none" />
             </div>
             <div>
-              <label class="block text-[12px] font-semibold text-body mb-1.5">Role</label>
-              <select [(ngModel)]="inviteForm.role"
+              <label for="invite-user-role" class="block text-[12px] font-semibold text-body mb-1.5">Role</label>
+              <select id="invite-user-role" [(ngModel)]="inviteForm.role"
                 class="w-full h-9 px-3 border-[1.5px] border-line rounded-lg text-[13px] text-body bg-[#F7F9FA] outline-none cursor-pointer">
                 <option value="Admin">Admin</option>
                 <option value="ClaimsOfficer">Claims Officer</option>

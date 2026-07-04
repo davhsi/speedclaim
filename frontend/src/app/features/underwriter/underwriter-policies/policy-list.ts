@@ -16,9 +16,9 @@ import { ProductService } from '../../portal/products/services/product.service';
   templateUrl: './policy-list.html',
 })
 export class PolicyListComponent implements OnInit {
-  private uwService = inject(UnderwriterService);
-  private productService = inject(ProductService);
-  private router = inject(Router);
+  private readonly uwService = inject(UnderwriterService);
+  private readonly productService = inject(ProductService);
+  private readonly router = inject(Router);
 
   allPolicies = signal<PolicyDto[]>([]);
   products = signal<ProductDto[]>([]);

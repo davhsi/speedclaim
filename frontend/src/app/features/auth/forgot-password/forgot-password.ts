@@ -10,9 +10,9 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './forgot-password.html',
 })
 export class ForgotPasswordComponent {
-  private fb = inject(FormBuilder);
-  private authService = inject(AuthService);
-  private router = inject(Router);
+  private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   loading = signal(false);
   errorMessage = signal('');

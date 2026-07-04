@@ -12,43 +12,49 @@ PGARGS="-h localhost -U postgres -d speedclaimTest"
 DOCS="/Users/davishe/Documents/dummy-docs"
 ENV_FILE="postman/SpeedClaim.postman_environment.json"
 PRODUCT_ID="70000000-0000-0000-0000-000000000001"
+CONTENT_TYPE_JSON="Content-Type: application/json"
+SEED_PASSWORD="Password@123"
+EMAIL_UNDERWRITER="underwriter@speedclaim.com"
+EMAIL_FINANCE_OFFICER="financeofficer@speedclaim.com"
 
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; NC='\033[0m'
-log()  { echo -e "${GREEN}[+]${NC} $1"; }
-info() { echo -e "${YELLOW}[~]${NC} $1"; }
-die()  { echo -e "${RED}[!] ERROR:${NC} $1" >&2; exit 1; }
+log()  { local msg="$1"; echo -e "${GREEN}[+]${NC} $msg"; }
+info() { local msg="$1"; echo -e "${YELLOW}[~]${NC} $msg"; }
+die()  { local msg="$1"; echo -e "${RED}[!] ERROR:${NC} $msg" >&2; exit 1; }
 
 # ─── helpers ────────────────────────────────────────────────
-J()  { jq -r "$1" <<< "$2"; }
+json_get()  { local filter="$1" json="$2"; jq -r "$filter" <<< "$json"; }
 
 # Pass SQL via stdin so special chars ($, quotes) are not re-evaluated by shell
-db() { echo "$1" | psql $PGARGS -t -A; }
+db() { local sql="$1"; echo "$sql" | psql $PGARGS -t -A; }
 
 login() {
   local email="$1" pass="$2"
   curl -sf -X POST "$BASE/auth/login" \
-    -H "Content-Type: application/json" \
+    -H "$CONTENT_TYPE_JSON" \
     -d "{\"email\":\"$email\",\"password\":\"$pass\"}"
 }
 
-token_of() { J '.accessToken' "$1"; }
-uid_of()   { J '.user.id'     "$1"; }
+token_of() { local resp="$1"; json_get '.accessToken' "$resp"; }
+uid_of()   { local resp="$1"; json_get '.user.id'     "$resp"; }
 
 set_verified() {
-  db "UPDATE users SET is_email_verified = true WHERE email = '$1';"
+  local email="$1"
+  db "UPDATE users SET is_email_verified = true WHERE email = '$email';"
 }
 
 get_uid() {
+  local email="$1"
   local id
-  id=$(db "SELECT id FROM users WHERE email = '$1'")
-  [[ -z "$id" ]] && die "User '$1' not found in DB — registration may have failed before committing"
+  id=$(db "SELECT id FROM users WHERE email = '$email'")
+  [[ -z "$id" ]] && die "User '$email' not found in DB — registration may have failed before committing"
   echo "$id"
 }
 
 change_role() {
   local uid="$1" tok="$2" role="$3"
   curl -sf -X PUT "$BASE/users/$uid/role" \
-    -H "Content-Type: application/json" \
+    -H "$CONTENT_TYPE_JSON" \
     -H "Authorization: Bearer $tok" \
     -d "\"$role\"" > /dev/null
 }
@@ -58,7 +64,7 @@ register_staff() {
   local fn="$1" email="$2" phone="$3" dob="$4" gender="$5" sal="$6"
   local http_code
   http_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/auth/register" \
-    -H "Content-Type: application/json" \
+    -H "$CONTENT_TYPE_JSON" \
     -d "{
       \"email\": \"$email\",
       \"password\": \"Password@123\",
@@ -199,7 +205,7 @@ sleep 62
 # 1. Admin login
 # ============================================================
 log "Logging in as admin..."
-ADMIN_RESP=$(login "davish2204@gmail.com" "Password@123")
+ADMIN_RESP=$(login "davish2204@gmail.com" "$SEED_PASSWORD")
 ADMIN_TOKEN=$(token_of "$ADMIN_RESP")
 ADMIN_USER_ID=$(uid_of "$ADMIN_RESP")
 [[ -z "$ADMIN_TOKEN" ]] && die "Admin login failed — check credentials or DB seed"
@@ -209,11 +215,11 @@ log "Admin ID: $ADMIN_USER_ID"
 # 2. Staff users — register → verify → role
 # ============================================================
 info "Creating Underwriter (Anand)..."
-register_staff "Anand"  "underwriter@speedclaim.com"    "9100000001" "1985-03-15" "Male"   "Mr"
-set_verified "underwriter@speedclaim.com"
-UW_USER_ID=$(get_uid "underwriter@speedclaim.com")
+register_staff "Anand"  "$EMAIL_UNDERWRITER"    "9100000001" "1985-03-15" "Male"   "Mr"
+set_verified "$EMAIL_UNDERWRITER"
+UW_USER_ID=$(get_uid "$EMAIL_UNDERWRITER")
 change_role "$UW_USER_ID" "$ADMIN_TOKEN" "Underwriter"
-UW_RESP=$(login "underwriter@speedclaim.com" "Password@123")
+UW_RESP=$(login "$EMAIL_UNDERWRITER" "$SEED_PASSWORD")
 UW_TOKEN=$(token_of "$UW_RESP")
 log "Underwriter ID: $UW_USER_ID"
 
@@ -225,11 +231,11 @@ change_role "$CO_USER_ID" "$ADMIN_TOKEN" "ClaimsOfficer"
 log "Claims Officer ID: $CO_USER_ID"
 
 info "Creating FinanceOfficer (Suresh)..."
-register_staff "Suresh" "financeofficer@speedclaim.com" "9100000003" "1980-11-10" "Male"   "Mr"
-set_verified "financeofficer@speedclaim.com"
-FO_USER_ID=$(get_uid "financeofficer@speedclaim.com")
+register_staff "Suresh" "$EMAIL_FINANCE_OFFICER" "9100000003" "1980-11-10" "Male"   "Mr"
+set_verified "$EMAIL_FINANCE_OFFICER"
+FO_USER_ID=$(get_uid "$EMAIL_FINANCE_OFFICER")
 change_role "$FO_USER_ID" "$ADMIN_TOKEN" "FinanceOfficer"
-FO_RESP=$(login "financeofficer@speedclaim.com" "Password@123")
+FO_RESP=$(login "$EMAIL_FINANCE_OFFICER" "$SEED_PASSWORD")
 FO_TOKEN=$(token_of "$FO_RESP")
 log "Finance Officer ID: $FO_USER_ID"
 
@@ -245,7 +251,7 @@ log "Surveyor user ID: $SV_USER_ID"
 # ============================================================
 info "Creating Agent (Rajesh)..."
 curl -sf -X POST "$BASE/auth/admin/register-agent" \
-  -H "Content-Type: application/json" \
+  -H "$CONTENT_TYPE_JSON" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -d '{
     "email": "davishthedelicious@gmail.com",
@@ -280,7 +286,7 @@ log "Agent user ID: $AG_USER_ID | record ID: $AG_RECORD_ID"
 # ============================================================
 info "Creating branch..."
 BRANCH_RESP=$(curl -sf -X POST "$BASE/agents/branches" \
-  -H "Content-Type: application/json" \
+  -H "$CONTENT_TYPE_JSON" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -d '{
     "name":    "Mumbai Central Branch",
@@ -290,7 +296,7 @@ BRANCH_RESP=$(curl -sf -X POST "$BASE/agents/branches" \
     "phone":   "2261234567",
     "email":   "mumbai@speedclaim.in"
   }')
-BRANCH_ID=$(J '.id' "$BRANCH_RESP")
+BRANCH_ID=$(json_get '.id' "$BRANCH_RESP")
 [[ -z "$BRANCH_ID" ]] && die "Branch creation failed"
 log "Branch ID: $BRANCH_ID"
 
@@ -314,7 +320,7 @@ log "Surveyor record ID: $SV_RECORD_ID"
 # ============================================================
 info "Registering Customer 1 (Rahul / davish.cs22)..."
 C1_HTTP=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/auth/register" \
-  -H "Content-Type: application/json" \
+  -H "$CONTENT_TYPE_JSON" \
   -d '{
     "email": "davish.cs22@bitsathy.ac.in",
     "password": "Password@123",
@@ -340,7 +346,7 @@ C1_HTTP=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/auth/register" \
   }')
 [[ "$C1_HTTP" = "200" ]] || [[ "$C1_HTTP" = "500" ]] || die "Customer 1 registration returned HTTP $C1_HTTP (expected 200 or 500 for SMTP-only failure)"
 set_verified "davish.cs22@bitsathy.ac.in"
-C1_RESP=$(login "davish.cs22@bitsathy.ac.in" "Password@123")
+C1_RESP=$(login "davish.cs22@bitsathy.ac.in" "$SEED_PASSWORD")
 C1_TOKEN=$(token_of "$C1_RESP")
 C1_USER_ID=$(uid_of "$C1_RESP")
 C1_RECORD_ID=$(db "SELECT id FROM customers WHERE user_id = '$C1_USER_ID'")
@@ -354,7 +360,7 @@ sleep 62
 
 info "Registering Customer 2 (Priya Patel)..."
 C2_HTTP=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/auth/register" \
-  -H "Content-Type: application/json" \
+  -H "$CONTENT_TYPE_JSON" \
   -d '{
     "email": "priya.patel@example.com",
     "password": "Password@123",
@@ -380,7 +386,7 @@ C2_HTTP=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/auth/register" \
   }')
 [[ "$C2_HTTP" = "200" ]] || [[ "$C2_HTTP" = "500" ]] || die "Customer 2 registration returned HTTP $C2_HTTP (expected 200 or 500 for SMTP-only failure)"
 set_verified "priya.patel@example.com"
-C2_RESP=$(login "priya.patel@example.com" "Password@123")
+C2_RESP=$(login "priya.patel@example.com" "$SEED_PASSWORD")
 C2_TOKEN=$(token_of "$C2_RESP")
 C2_USER_ID=$(uid_of "$C2_RESP")
 C2_RECORD_ID=$(db "SELECT id FROM customers WHERE user_id = '$C2_USER_ID'")
@@ -435,7 +441,7 @@ log "KYC approved for both customers"
 # ============================================================
 info "Submitting Proposal 1 (Customer 1)..."
 PROP1_RESP=$(curl -sf -X POST "$BASE/proposals" \
-  -H "Content-Type: application/json" \
+  -H "$CONTENT_TYPE_JSON" \
   -H "Authorization: Bearer $C1_TOKEN" \
   -H "Idempotency-Key: $(uuidgen)" \
   -d "{
@@ -465,13 +471,13 @@ PROP1_RESP=$(curl -sf -X POST "$BASE/proposals" \
       \"appointeeName\":    null
     }]
   }")
-PROPOSAL_ID=$(J '.id' "$PROP1_RESP")
+PROPOSAL_ID=$(json_get '.id' "$PROP1_RESP")
 [[ -z "$PROPOSAL_ID" ]] && die "Proposal 1 submission failed: $PROP1_RESP"
 log "Proposal 1 ID: $PROPOSAL_ID"
 
 info "Submitting Proposal 2 (Customer 2 — stays under review)..."
 PROP2_RESP=$(curl -sf -X POST "$BASE/proposals" \
-  -H "Content-Type: application/json" \
+  -H "$CONTENT_TYPE_JSON" \
   -H "Authorization: Bearer $C2_TOKEN" \
   -H "Idempotency-Key: $(uuidgen)" \
   -d "{
@@ -501,7 +507,7 @@ PROP2_RESP=$(curl -sf -X POST "$BASE/proposals" \
       \"appointeeName\":    null
     }]
   }")
-PROPOSAL_ID_UNDER_REVIEW=$(J '.id' "$PROP2_RESP")
+PROPOSAL_ID_UNDER_REVIEW=$(json_get '.id' "$PROP2_RESP")
 [[ -z "$PROPOSAL_ID_UNDER_REVIEW" ]] && die "Proposal 2 submission failed: $PROP2_RESP"
 log "Proposal 2 ID (under review): $PROPOSAL_ID_UNDER_REVIEW"
 
@@ -510,7 +516,7 @@ log "Proposal 2 ID (under review): $PROPOSAL_ID_UNDER_REVIEW"
 # ============================================================
 info "Approving Proposal 1..."
 curl -sf -X POST "$BASE/proposals/$PROPOSAL_ID/review" \
-  -H "Content-Type: application/json" \
+  -H "$CONTENT_TYPE_JSON" \
   -H "Authorization: Bearer $UW_TOKEN" \
   -d '{"isApproved": true, "notes": "All documents verified. Risk profile acceptable. Policy approved for issuance."}' > /dev/null
 log "Proposal 1 approved — policy created in Pending status"
@@ -521,14 +527,14 @@ log "Proposal 1 approved — policy created in Pending status"
 info "Fetching policies for Customer 1..."
 POLICIES_RESP=$(curl -sf -X GET "$BASE/policies/my" \
   -H "Authorization: Bearer $C1_TOKEN")
-POLICY_ID=$(J '.[0].id' "$POLICIES_RESP")
+POLICY_ID=$(json_get '.[0].id' "$POLICIES_RESP")
 [[ -z "$POLICY_ID" ]] && die "Policy not found for Customer 1 after proposal approval"
 log "Policy ID: $POLICY_ID"
 
 info "Fetching premium schedule..."
 SCHEDULE_RESP=$(curl -sf -X GET "$BASE/payments/schedule/$POLICY_ID" \
   -H "Authorization: Bearer $C1_TOKEN")
-SCHEDULE_ID=$(J '.[0].id' "$SCHEDULE_RESP")
+SCHEDULE_ID=$(json_get '.[0].id' "$SCHEDULE_RESP")
 [[ -z "$SCHEDULE_ID" ]] && die "Premium schedule not found for policy $POLICY_ID"
 log "Schedule ID: $SCHEDULE_ID"
 
@@ -567,7 +573,7 @@ log "Policy activated"
 # ============================================================
 info "Submitting Proposal 3 (cancellable policy for Postman demo)..."
 PROP3_RESP=$(curl -sf -X POST "$BASE/proposals" \
-  -H "Content-Type: application/json" \
+  -H "$CONTENT_TYPE_JSON" \
   -H "Authorization: Bearer $C1_TOKEN" \
   -H "Idempotency-Key: $(uuidgen)" \
   -d "{
@@ -597,13 +603,13 @@ PROP3_RESP=$(curl -sf -X POST "$BASE/proposals" \
       \"appointeeName\":    null
     }]
   }")
-PROP3_ID=$(J '.id' "$PROP3_RESP")
+PROP3_ID=$(json_get '.id' "$PROP3_RESP")
 [[ -z "$PROP3_ID" ]] && die "Proposal 3 submission failed: $PROP3_RESP"
 log "Proposal 3 ID: $PROP3_ID"
 
 info "Approving Proposal 3 (creates Pending policy for cancel demo)..."
 curl -sf -X POST "$BASE/proposals/$PROP3_ID/review" \
-  -H "Content-Type: application/json" \
+  -H "$CONTENT_TYPE_JSON" \
   -H "Authorization: Bearer $UW_TOKEN" \
   -d '{"isApproved": true, "notes": "Approved for cancellation demo."}' > /dev/null
 
@@ -622,7 +628,7 @@ INCIDENT_DATE=$(date -u -v-10d +%Y-%m-%dT%H:%M:%SZ 2>/dev/null \
   || date -u --date='10 days ago' +%Y-%m-%dT%H:%M:%SZ)
 
 CLAIM_RESP=$(curl -sf -X POST "$BASE/claims/intimate" \
-  -H "Content-Type: application/json" \
+  -H "$CONTENT_TYPE_JSON" \
   -H "Authorization: Bearer $C1_TOKEN" \
   -H "Idempotency-Key: $(uuidgen)" \
   -d "{
@@ -634,7 +640,7 @@ CLAIM_RESP=$(curl -sf -X POST "$BASE/claims/intimate" \
     \"incidentDate\":           \"$INCIDENT_DATE\",
     \"incidentDescription\":    \"Emergency hospitalisation for appendicitis. Requesting reimbursement for surgery and post-op care.\"
   }")
-CLAIM_ID=$(J '.id' "$CLAIM_RESP")
+CLAIM_ID=$(json_get '.id' "$CLAIM_RESP")
 [[ -z "$CLAIM_ID" ]] && die "Claim intimation failed: $CLAIM_RESP"
 log "Claim ID: $CLAIM_ID"
 
@@ -643,7 +649,7 @@ log "Claim ID: $CLAIM_ID"
 # ============================================================
 info "Intimating Accident claim for Customer 1 (surveyor demo)..."
 MOTOR_CLAIM_RESP=$(curl -sf -X POST "$BASE/claims/intimate" \
-  -H "Content-Type: application/json" \
+  -H "$CONTENT_TYPE_JSON" \
   -H "Authorization: Bearer $C1_TOKEN" \
   -H "Idempotency-Key: $(uuidgen)" \
   -d "{
@@ -655,7 +661,7 @@ MOTOR_CLAIM_RESP=$(curl -sf -X POST "$BASE/claims/intimate" \
     \"incidentDate\":         \"$INCIDENT_DATE\",
     \"incidentDescription\":  \"Vehicle rear-ended by truck on highway. Bumper and boot panel damaged. Requesting repair reimbursement.\"
   }")
-MOTOR_CLAIM_ID=$(J '.id' "$MOTOR_CLAIM_RESP")
+MOTOR_CLAIM_ID=$(json_get '.id' "$MOTOR_CLAIM_RESP")
 [[ -z "$MOTOR_CLAIM_ID" ]] && die "Accident claim intimation failed: $MOTOR_CLAIM_RESP"
 log "Motor/Accident Claim ID: $MOTOR_CLAIM_ID"
 
@@ -664,7 +670,7 @@ log "Motor/Accident Claim ID: $MOTOR_CLAIM_ID"
 # ============================================================
 info "Raising grievance for Customer 1..."
 GRIEVANCE_RESP=$(curl -sf -X POST "$BASE/grievances" \
-  -H "Content-Type: application/json" \
+  -H "$CONTENT_TYPE_JSON" \
   -H "Authorization: Bearer $C1_TOKEN" \
   -H "Idempotency-Key: $(uuidgen)" \
   -d "{
@@ -673,7 +679,7 @@ GRIEVANCE_RESP=$(curl -sf -X POST "$BASE/grievances" \
     \"category\":    \"ClaimDelay\",
     \"description\": \"Claim submitted over a week ago with no status update. Requesting expedited review of my hospitalisation claim.\"
   }")
-GRIEVANCE_ID=$(J '.id' "$GRIEVANCE_RESP")
+GRIEVANCE_ID=$(json_get '.id' "$GRIEVANCE_RESP")
 [[ -z "$GRIEVANCE_ID" ]] && die "Grievance creation failed: $GRIEVANCE_RESP"
 log "Grievance ID: $GRIEVANCE_ID"
 

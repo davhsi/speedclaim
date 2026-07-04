@@ -57,7 +57,7 @@
         <h2 class="text-[15px] font-semibold text-ink">Collection summary</h2>
         <p class="text-[13px] text-muted mt-0.5">Aggregated inflow and outflow for the selected period</p>
       </div>
-      <select [(ngModel)]="summaryPeriod" (ngModelChange)="loadSummary()" class="h-9 px-2.5 border border-line rounded-lg text-[13px] font-medium bg-white text-ink cursor-pointer">
+      <select id="fo-reports-summary-period" aria-label="Collection summary period" [(ngModel)]="summaryPeriod" (ngModelChange)="loadSummary()" class="h-9 px-2.5 border border-line rounded-lg text-[13px] font-medium bg-white text-ink cursor-pointer">
         @for (p of periods; track p) {
           <option [value]="p">{{ p }}</option>
         }
@@ -95,12 +95,12 @@
     </div>
     <div class="p-5 flex items-end gap-4 flex-wrap">
       <div>
-        <div class="text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">From date</div>
-        <input type="date" [(ngModel)]="exportFrom" class="h-[38px] px-3 border border-line rounded-lg text-sm text-ink bg-white cursor-pointer" />
+        <label for="fo-reports-export-from" class="text-xs font-semibold text-muted uppercase tracking-wide mb-1.5 block">From date</label>
+        <input id="fo-reports-export-from" type="date" [(ngModel)]="exportFrom" class="h-[38px] px-3 border border-line rounded-lg text-sm text-ink bg-white cursor-pointer" />
       </div>
       <div>
-        <div class="text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">To date</div>
-        <input type="date" [(ngModel)]="exportTo" class="h-[38px] px-3 border border-line rounded-lg text-sm text-ink bg-white cursor-pointer" />
+        <label for="fo-reports-export-to" class="text-xs font-semibold text-muted uppercase tracking-wide mb-1.5 block">To date</label>
+        <input id="fo-reports-export-to" type="date" [(ngModel)]="exportTo" class="h-[38px] px-3 border border-line rounded-lg text-sm text-ink bg-white cursor-pointer" />
       </div>
       <button (click)="onExport()" [disabled]="exporting()" class="h-[38px] px-5 border-none rounded-lg text-sm font-semibold text-white cursor-pointer flex items-center gap-2 transition-colors disabled:cursor-wait" [class]="exporting() ? 'bg-muted' : 'bg-success hover:bg-success/90'">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>

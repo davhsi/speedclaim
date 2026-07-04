@@ -15,9 +15,9 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
   templateUrl: './underwriter-layout.html',
 })
 export class UnderwriterLayoutComponent implements OnInit {
-  private platformId = inject(PLATFORM_ID);
-  private authService = inject(AuthService);
-  private router = inject(Router);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
   notifService = inject(NotificationService);
 
   sidebarCollapsed = signal(true);
@@ -25,7 +25,7 @@ export class UnderwriterLayoutComponent implements OnInit {
   notifPanelOpen = signal(false);
   profileMenuOpen = signal(false);
 
-  private pageTitles: [string, string][] = [
+  private readonly pageTitles: [string, string][] = [
     ['/underwriter/proposals/', 'Proposal review'],
     ['/underwriter/kyc/', 'KYC review'],
     ['/underwriter/policies/', 'Policy details'],

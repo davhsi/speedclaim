@@ -12,7 +12,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
   templateUrl: './notification-list.html',
 })
 export class NotificationListComponent implements OnInit {
-  private notifService = inject(NotificationService);
+  private readonly notifService = inject(NotificationService);
   notifications = this.notifService.notifications;
   loading = signal(true);
   currentPage = signal(1);

@@ -13,7 +13,7 @@ import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loa
   host: { class: 'flex-1 min-h-0 flex flex-col' },
 })
 export class SurveyorHistoryComponent implements OnInit {
-  private surveyorService = inject(SurveyorService);
+  private readonly surveyorService = inject(SurveyorService);
 
   claims = signal<ClaimDto[]>([]);
   loading = signal(true);
@@ -49,7 +49,21 @@ export class SurveyorHistoryComponent implements OnInit {
     const [integer, decimal] = Math.abs(value).toFixed(2).split('.');
     const lastThree = integer.slice(-3);
     const rest = integer.slice(0, -3);
-    const formatted = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',');
+    const formatted = this.groupByTwos(rest);
     return '₹' + (formatted ? formatted + ',' : '') + lastThree + '.' + decimal;
+  }
+
+  // Groups digits in pairs from the right (Indian lakh/crore style), e.g. "12345" -> "1,23,45".
+  // Implemented without a lookahead-quantifier regex to avoid superlinear backtracking.
+  private groupByTwos(digits: string): string {
+    if (!digits) return '';
+    const parts: string[] = [];
+    let i = digits.length;
+    while (i > 2) {
+      parts.unshift(digits.slice(i - 2, i));
+      i -= 2;
+    }
+    parts.unshift(digits.slice(0, i));
+    return parts.join(',');
   }
 }

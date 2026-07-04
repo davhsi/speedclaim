@@ -5,7 +5,7 @@ import { ProposalDto, SubmitProposalRequest, GenerateQuoteRequest, GenerateQuote
 
 @Injectable({ providedIn: 'root' })
 export class ProposalService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
   private readonly api = '/api/v1/proposals';
 
   getMyProposals(): Observable<ProposalDto[]> {

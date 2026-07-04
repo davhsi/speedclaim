@@ -13,7 +13,7 @@
     <div class="px-5 py-4 border-b border-line flex items-center gap-3 flex-wrap">
       <div class="relative flex-1 min-w-[180px] max-w-[260px]">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" [ngModel]="searchQuery()" (ngModelChange)="onSearch($event)" placeholder="Search products…" class="w-full h-8 pl-8 pr-3 border border-line rounded-lg text-[12.5px] text-ink bg-surface outline-none focus:border-primary transition-colors" />
+        <input type="text" id="admin-products-search-input" aria-label="Search products" [ngModel]="searchQuery()" (ngModelChange)="onSearch($event)" placeholder="Search products…" class="w-full h-8 pl-8 pr-3 border border-line rounded-lg text-[12.5px] text-ink bg-surface outline-none focus:border-primary transition-colors" />
       </div>
       <div class="flex-1"></div>
       <button (click)="openCreateModal()" class="h-8 px-4 bg-primary text-white text-[12.5px] font-semibold rounded-lg border-none cursor-pointer hover:opacity-90 transition-opacity flex items-center gap-1.5">
@@ -85,8 +85,8 @@
         </div>
         <div class="px-6 py-5 space-y-4">
           <div>
-            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Product Name</label>
-            <input type="text" [(ngModel)]="createForm.productName" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+            <label for="create-product-name" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Product Name</label>
+            <input type="text" id="create-product-name" [(ngModel)]="createForm.productName" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
           </div>
           <div>
             <label for="create-product-domain" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Domain</label>
@@ -98,43 +98,43 @@
             <p class="mt-1 text-[11px] text-muted">The UIN is generated automatically from the domain.</p>
           </div>
           <div>
-            <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Description</label>
-            <textarea [(ngModel)]="createForm.description" rows="2" class="w-full px-3 py-2 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary resize-none"></textarea>
+            <label for="create-product-description" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Description</label>
+            <textarea id="create-product-description" [(ngModel)]="createForm.description" rows="2" class="w-full px-3 py-2 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary resize-none"></textarea>
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Min Age</label>
-              <input type="number" [(ngModel)]="createForm.minAge" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+              <label for="create-product-min-age" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Min Age</label>
+              <input type="number" id="create-product-min-age" [(ngModel)]="createForm.minAge" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
             </div>
             <div>
-              <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Max Age</label>
-              <input type="number" [(ngModel)]="createForm.maxAge" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
-            </div>
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Min Sum Assured</label>
-              <input type="number" [(ngModel)]="createForm.minSumAssured" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
-            </div>
-            <div>
-              <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Max Sum Assured</label>
-              <input type="number" [(ngModel)]="createForm.maxSumAssured" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+              <label for="create-product-max-age" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Max Age</label>
+              <input type="number" id="create-product-max-age" [(ngModel)]="createForm.maxAge" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
             </div>
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Min Tenure (years)</label>
-              <input type="number" [(ngModel)]="createForm.minTenureYears" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+              <label for="create-product-min-sum-assured" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Min Sum Assured</label>
+              <input type="number" id="create-product-min-sum-assured" [(ngModel)]="createForm.minSumAssured" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
             </div>
             <div>
-              <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Max Tenure (years)</label>
-              <input type="number" [(ngModel)]="createForm.maxTenureYears" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+              <label for="create-product-max-sum-assured" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Max Sum Assured</label>
+              <input type="number" id="create-product-max-sum-assured" [(ngModel)]="createForm.maxSumAssured" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
             </div>
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Waiting Period (days)</label>
-              <input type="number" [(ngModel)]="createForm.waitingPeriodDays" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+              <label for="create-product-min-tenure" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Min Tenure (years)</label>
+              <input type="number" id="create-product-min-tenure" [(ngModel)]="createForm.minTenureYears" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+            </div>
+            <div>
+              <label for="create-product-max-tenure" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Max Tenure (years)</label>
+              <input type="number" id="create-product-max-tenure" [(ngModel)]="createForm.maxTenureYears" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label for="create-product-waiting-period" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Waiting Period (days)</label>
+              <input type="number" id="create-product-waiting-period" [(ngModel)]="createForm.waitingPeriodDays" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
             </div>
             @if (createForm.domain === 'Health') {
               <div class="flex items-end pb-1.5 gap-2">
@@ -147,8 +147,8 @@
           </div>
           @if (createForm.allowsFamilyFloater) {
             <div>
-              <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Max Family Members</label>
-              <input type="number" [(ngModel)]="createForm.maxFamilyMembers" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+              <label for="create-product-max-family-members" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Max Family Members</label>
+              <input type="number" id="create-product-max-family-members" [(ngModel)]="createForm.maxFamilyMembers" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
             </div>
           }
         </div>
@@ -190,11 +190,11 @@
                 } @else {
                 @for (band of rateBands(); track $index; let i = $index) {
                   <tr class="border-b border-line">
-                    <td class="px-3 py-2"><input type="number" [value]="band.ageMin" (input)="updateRateBand(i, 'ageMin', $event)" class="w-16 h-7 px-2 border border-line rounded text-xs text-ink outline-none focus:border-primary" /></td>
-                    <td class="px-3 py-2"><input type="number" [value]="band.ageMax" (input)="updateRateBand(i, 'ageMax', $event)" class="w-16 h-7 px-2 border border-line rounded text-xs text-ink outline-none focus:border-primary" /></td>
-                    <td class="px-3 py-2"><input type="number" [value]="band.sumAssuredMin" (input)="updateRateBand(i, 'sumAssuredMin', $event)" class="w-24 h-7 px-2 border border-line rounded text-xs text-ink outline-none focus:border-primary" /></td>
-                    <td class="px-3 py-2"><input type="number" [value]="band.sumAssuredMax" (input)="updateRateBand(i, 'sumAssuredMax', $event)" class="w-24 h-7 px-2 border border-line rounded text-xs text-ink outline-none focus:border-primary" /></td>
-                    <td class="px-3 py-2"><input type="number" [value]="band.annualPremium" (input)="updateRateBand(i, 'annualPremium', $event)" class="w-24 h-7 px-2 border border-line rounded text-xs text-ink outline-none focus:border-primary" /></td>
+                    <td class="px-3 py-2"><input type="number" aria-label="Age minimum" [value]="band.ageMin" (input)="updateRateBand(i, 'ageMin', $event)" class="w-16 h-7 px-2 border border-line rounded text-xs text-ink outline-none focus:border-primary" /></td>
+                    <td class="px-3 py-2"><input type="number" aria-label="Age maximum" [value]="band.ageMax" (input)="updateRateBand(i, 'ageMax', $event)" class="w-16 h-7 px-2 border border-line rounded text-xs text-ink outline-none focus:border-primary" /></td>
+                    <td class="px-3 py-2"><input type="number" aria-label="Sum assured minimum" [value]="band.sumAssuredMin" (input)="updateRateBand(i, 'sumAssuredMin', $event)" class="w-24 h-7 px-2 border border-line rounded text-xs text-ink outline-none focus:border-primary" /></td>
+                    <td class="px-3 py-2"><input type="number" aria-label="Sum assured maximum" [value]="band.sumAssuredMax" (input)="updateRateBand(i, 'sumAssuredMax', $event)" class="w-24 h-7 px-2 border border-line rounded text-xs text-ink outline-none focus:border-primary" /></td>
+                    <td class="px-3 py-2"><input type="number" aria-label="Annual premium" [value]="band.annualPremium" (input)="updateRateBand(i, 'annualPremium', $event)" class="w-24 h-7 px-2 border border-line rounded text-xs text-ink outline-none focus:border-primary" /></td>
                     <td class="px-3 py-2"><button (click)="removeRateBand(i)" class="text-danger text-xs bg-transparent border-none cursor-pointer font-medium">Remove</button></td>
                   </tr>
                 } @empty {

@@ -13,7 +13,7 @@ import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
   templateUrl: './customer-list.html',
 })
 export class AgentCustomerListComponent implements OnInit {
-  private agentService = inject(AgentService);
+  private readonly agentService = inject(AgentService);
 
   loading = signal(true);
   customers = signal<AgentCustomerDto[]>([]);
@@ -64,7 +64,7 @@ export class AgentCustomerListComponent implements OnInit {
 
   avatarColor(id: string): string {
     const colors = ['#0F6E8C', '#F2784B', '#1F9D6B', '#D9920A', '#2D7FF9', '#7C3AED'];
-    const hash = Array.from(id).reduce((sum, char) => sum + char.charCodeAt(0), 0);
+    const hash = Array.from(id).reduce((sum, char) => sum + (char.codePointAt(0) ?? 0), 0);
     return colors[hash % colors.length];
   }
 

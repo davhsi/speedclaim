@@ -30,13 +30,11 @@
           <div class="animate-pulse"><div class="h-10 bg-surface-alt rounded"></div></div>
         } @else {
           @for (p of activePolicies(); track p.id) {
-            <div
-              class="flex items-center gap-[13px] border-[1.5px] rounded-[10px] p-3.5 mb-3 cursor-pointer transition-all"
+            <button
+              type="button"
+              class="flex items-center gap-[13px] border-[1.5px] rounded-[10px] p-3.5 mb-3 cursor-pointer transition-all w-full text-left bg-transparent"
               [class]="policyControl.value === p.id.toString() ? 'border-primary bg-primary-light' : 'border-line bg-white hover:border-primary-muted'"
-              tabindex="0"
-              role="button"
               (click)="selectPolicy(p)"
-              (keydown.enter)="selectPolicy(p)"
             >
               <div class="w-10 h-10 rounded-[10px] bg-surface-alt flex items-center justify-center shrink-0">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="text-muted"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -45,7 +43,7 @@
                 <div class="text-sm font-semibold text-ink">{{ p.productName }}</div>
                 <div class="text-xs text-muted sc-numeric">{{ p.policyNumber }} · {{ p.coverageAmount | money }} cover</div>
               </div>
-            </div>
+            </button>
           }
           @if (activePolicies().length === 0) {
             <p class="text-sm text-muted py-4">No active policies available for claims.</p>
@@ -59,8 +57,8 @@
         <div class="text-[15px] font-semibold text-ink mb-4">Claim details</div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5" [formGroup]="claimForm">
           <div>
-            <label class="block text-[13px] font-medium mb-1.5">Claim type</label>
-            <select formControlName="claimType" class="h-[42px]">
+            <label for="claim-type-select" class="block text-[13px] font-medium mb-1.5">Claim type</label>
+            <select id="claim-type-select" formControlName="claimType" class="h-[42px]">
               <option value="Health">Health</option>
               <option value="Accident">Accident</option>
               <option value="Death">Death</option>
@@ -100,8 +98,8 @@
             <label for="cashless" class="text-[13px] font-medium text-ink cursor-pointer">Cashless claim</label>
           </div>
           <div class="sm:col-span-2">
-            <label class="block text-[13px] font-medium mb-1.5">Incident description</label>
-            <textarea formControlName="incidentDescription" rows="4" placeholder="Describe what happened..."></textarea>
+            <label for="claim-incident-description" class="block text-[13px] font-medium mb-1.5">Incident description</label>
+            <textarea id="claim-incident-description" formControlName="incidentDescription" rows="4" placeholder="Describe what happened..."></textarea>
             @if ((claimForm.controls.incidentDescription.touched || claimForm.controls.incidentDescription.dirty) && claimForm.controls.incidentDescription.errors) {
               <p class="text-xs text-danger mt-1">Description must be at least 10 characters.</p>
             }

@@ -34,7 +34,7 @@ export interface ApproveRejectEndorsementRequest {
 
 @Injectable({ providedIn: 'root' })
 export class UnderwriterService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
   // ── Proposals ──
   getAllProposals(): Observable<ProposalDto[]> {

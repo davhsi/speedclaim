@@ -14,8 +14,8 @@ import { ProductService } from '../../products/services/product.service';
   templateUrl: './policy-list.html',
 })
 export class PolicyListComponent implements OnInit {
-  private policyService = inject(PolicyService);
-  private productService = inject(ProductService);
+  private readonly policyService = inject(PolicyService);
+  private readonly productService = inject(ProductService);
   router = inject(Router);
 
   policies = signal<PolicyDto[]>([]);

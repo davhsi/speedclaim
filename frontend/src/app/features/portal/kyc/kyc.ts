@@ -16,8 +16,8 @@ const PAN_PATTERN = /^[A-Z]{5}\d{4}[A-Z]$/;
   templateUrl: './kyc.html',
 })
 export class KycComponent implements OnInit {
-  private profileService = inject(ProfileService);
-  private toast = inject(ToastService);
+  private readonly profileService = inject(ProfileService);
+  private readonly toast = inject(ToastService);
 
   kyc = signal<KycRecordDto | null>(null);
   loading = signal(true);

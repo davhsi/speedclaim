@@ -18,8 +18,8 @@ import { NotificationService } from '../../../core/services/notification.service
   `,
 })
 export class SurveyorLayoutComponent implements OnInit {
-  private router = inject(Router);
-  private authService = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
   notifService = inject(NotificationService);
 
   activeTab = signal<'claims' | 'history' | 'profile'>('claims');

@@ -16,9 +16,9 @@ import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loa
   templateUrl: './proposal-list.html',
 })
 export class ProposalListComponent implements OnInit {
-  private uwService = inject(UnderwriterService);
-  private productService = inject(ProductService);
-  private router = inject(Router);
+  private readonly uwService = inject(UnderwriterService);
+  private readonly productService = inject(ProductService);
+  private readonly router = inject(Router);
 
   proposals = signal<ProposalDto[]>([]);
   products = signal<ProductDto[]>([]);

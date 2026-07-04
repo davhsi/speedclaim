@@ -14,10 +14,10 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './kyc-detail.html',
 })
 export class KycDetailComponent implements OnInit {
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private uwService = inject(UnderwriterService);
-  private toast = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly uwService = inject(UnderwriterService);
+  private readonly toast = inject(ToastService);
 
   kyc = signal<UnderwriterKycDto | null>(null);
   loading = signal(true);

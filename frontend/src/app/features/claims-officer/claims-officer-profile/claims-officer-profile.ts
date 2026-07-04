@@ -8,8 +8,8 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
   templateUrl: './claims-officer-profile.html',
 })
 export class ClaimsOfficerProfileComponent {
-  private authService = inject(AuthService);
-  private toast = inject(ToastService);
+  private readonly authService = inject(AuthService);
+  private readonly toast = inject(ToastService);
   resettingPassword = signal(false);
 
   userInitials(): string {

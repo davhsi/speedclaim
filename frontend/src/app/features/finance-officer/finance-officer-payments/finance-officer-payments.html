@@ -5,7 +5,7 @@
       <p class="text-sm text-muted mt-1">{{ filteredRecords().length }} records — reconcile failed payments or process refunds.</p>
     </div>
     <div class="flex gap-2 flex-wrap">
-      <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()" class="h-[38px] px-2.5 border border-line rounded-lg text-[13px] bg-white text-body cursor-pointer">
+      <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()" aria-label="Filter by status" class="h-[38px] px-2.5 border border-line rounded-lg text-[13px] bg-white text-body cursor-pointer">
         <option value="All">All statuses</option>
         <option value="Paid">Paid</option>
         <option value="Pending">Pending</option>
@@ -14,7 +14,7 @@
       </select>
       <div class="relative">
         <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input [(ngModel)]="searchQuery" (ngModelChange)="onFilterChange()" placeholder="Search ID, reference, customer…" class="h-[38px] pl-8 pr-3 border border-line rounded-lg text-[13px] bg-white min-w-[240px]" />
+        <input [(ngModel)]="searchQuery" (ngModelChange)="onFilterChange()" placeholder="Search ID, reference, customer…" aria-label="Search payments by ID, reference, or customer" class="h-[38px] pl-8 pr-3 border border-line rounded-lg text-[13px] bg-white min-w-[240px]" />
       </div>
     </div>
   </div>

@@ -16,10 +16,10 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
   templateUrl: './finance-officer-layout.html',
 })
 export class FinanceOfficerLayoutComponent implements OnInit {
-  private platformId = inject(PLATFORM_ID);
-  private authService = inject(AuthService);
-  private financeService = inject(FinanceOfficerService);
-  private router = inject(Router);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly authService = inject(AuthService);
+  private readonly financeService = inject(FinanceOfficerService);
+  private readonly router = inject(Router);
   notifService = inject(NotificationService);
 
   sidebarCollapsed = signal(true);
@@ -29,7 +29,7 @@ export class FinanceOfficerLayoutComponent implements OnInit {
   payoutBadge = signal(0);
   commissionBadge = signal(0);
 
-  private pageTitles: [string, string][] = [
+  private readonly pageTitles: [string, string][] = [
     ['/finance-officer/dashboard', 'Dashboard'],
     ['/finance-officer/payments', 'Payment records'],
     ['/finance-officer/payouts', 'Claim payouts'],

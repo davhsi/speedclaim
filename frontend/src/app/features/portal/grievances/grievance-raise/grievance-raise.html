@@ -6,8 +6,8 @@
 
   <div class="bg-white border border-line rounded-card shadow-sm p-6" [formGroup]="form">
     <div class="mb-4">
-      <label class="block text-[13px] font-medium mb-1.5">Category</label>
-      <select formControlName="category" class="h-[42px]">
+      <label for="grievance-category" class="block text-[13px] font-medium mb-1.5">Category</label>
+      <select id="grievance-category" formControlName="category" class="h-[42px]">
         <option value="ClaimDelay">Claim Delay</option>
         <option value="PolicyServicing">Policy Servicing</option>
         <option value="PremiumIssue">Premium Issue</option>
@@ -40,8 +40,8 @@
     </div>
 
     <div class="mb-4">
-      <label class="block text-[13px] font-medium mb-1.5">Description</label>
-      <textarea formControlName="description" rows="5" placeholder="Describe your concern in detail (10-2000 characters)..."></textarea>
+      <label for="grievance-description" class="block text-[13px] font-medium mb-1.5">Description</label>
+      <textarea id="grievance-description" formControlName="description" rows="5" placeholder="Describe your concern in detail (10-2000 characters)..."></textarea>
       @if (form.controls.description.touched && form.controls.description.errors) {
         <p class="text-xs text-danger mt-1">
           @if (form.controls.description.errors['minlength']) { Minimum 10 characters required. }

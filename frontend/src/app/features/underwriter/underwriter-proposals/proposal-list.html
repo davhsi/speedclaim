@@ -25,7 +25,14 @@
             }
           }
           @for (p of pagedProposals(); track p.id) {
-            <tr (click)="openProposal(p.id)" class="border-b border-line cursor-pointer hover:bg-surface transition-colors">
+            <tr
+              (click)="openProposal(p.id)"
+              tabindex="0"
+              role="button"
+              (keydown.enter)="openProposal(p.id)"
+              (keydown.space)="openProposal(p.id); $event.preventDefault()"
+              class="border-b border-line cursor-pointer hover:bg-surface transition-colors"
+            >
               <td class="px-4 py-[13px] text-xs font-semibold text-primary sc-numeric whitespace-nowrap">{{ p.proposalNumber }}</td>
               <td class="px-4 py-[13px] text-body">{{ productName(p) }}</td>
               <td class="px-4 py-[13px] font-semibold text-ink sc-numeric">{{ p.sumAssured | money }}</td>

@@ -8,6 +8,8 @@
     <div class="flex gap-2">
       <input
         type="text"
+        id="customer-list-search-input"
+        aria-label="Search by name or email"
         placeholder="Search by name or email..."
         [value]="searchQuery()"
         (input)="onSearch($any($event.target).value)"

@@ -15,8 +15,8 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './admin-users.html',
 })
 export class AdminUsersComponent implements OnInit {
-  private adminService = inject(AdminService);
-  private toastService = inject(ToastService);
+  private readonly adminService = inject(AdminService);
+  private readonly toastService = inject(ToastService);
   private readonly authService = inject(AuthService);
 
   allUsers = signal<UserDto[]>([]);
@@ -106,12 +106,12 @@ export class AdminUsersComponent implements OnInit {
 
   avatarBg(name: string): string {
     const p = ['#E6F4F8', '#E8F7F1', '#FEF0EA', '#EEF4FF', '#FEF6E6', '#F3E8FF'];
-    return p[(name.charCodeAt(0) + (name.charCodeAt(1) || 0)) % p.length];
+    return p[(name.codePointAt(0)! + (name.codePointAt(1) || 0)) % p.length];
   }
 
   avatarFg(name: string): string {
     const p = ['#0F6E8C', '#1F9D6B', '#D45E2F', '#2D7FF9', '#D9920A', '#7C3AED'];
-    return p[(name.charCodeAt(0) + (name.charCodeAt(1) || 0)) % p.length];
+    return p[(name.codePointAt(0)! + (name.codePointAt(1) || 0)) % p.length];
   }
 
   roleBadge(role: string): { bg: string; fg: string; bdr: string; dot: string } {

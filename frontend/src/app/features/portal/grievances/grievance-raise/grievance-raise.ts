@@ -15,11 +15,11 @@ import { FileUploadComponent } from '../../../../shared/components/file-upload/f
   templateUrl: './grievance-raise.html',
 })
 export class GrievanceRaiseComponent implements OnInit {
-  private fb = inject(FormBuilder);
-  private grievanceService = inject(GrievanceService);
+  private readonly fb = inject(FormBuilder);
+  private readonly grievanceService = inject(GrievanceService);
   private readonly policyService = inject(PolicyService);
   private readonly claimService = inject(ClaimService);
-  private toast = inject(ToastService);
+  private readonly toast = inject(ToastService);
   router = inject(Router);
 
   submitting = signal(false);

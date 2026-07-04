@@ -15,7 +15,7 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './claim-list.html',
 })
 export class ClaimListComponent implements OnInit {
-  private claimService = inject(ClaimService);
+  private readonly claimService = inject(ClaimService);
   router = inject(Router);
   claims = signal<ClaimDto[]>([]);
   loading = signal(true);

@@ -10,8 +10,8 @@
         <!-- Product Selection -->
         @if (!preselectedProduct()) {
           <div class="mb-5">
-            <div class="text-[13px] font-semibold text-ink mb-2.5">Choose a product</div>
-            <select formControlName="productId" class="h-[42px] text-sm" (change)="onProductChange()">
+            <label for="quote-product-select" class="text-[13px] font-semibold text-ink mb-2.5 block">Choose a product</label>
+            <select id="quote-product-select" formControlName="productId" class="h-[42px] text-sm" (change)="onProductChange()">
               <option value="">Select product...</option>
               @for (p of products(); track p.id) {
                 <option [value]="p.id">{{ p.productName }} ({{ p.domain }})</option>
@@ -33,18 +33,18 @@
         @if (selectedProduct(); as sp) {
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-5">
             <div>
-              <label class="block text-[13px] font-medium mb-1.5">Sum assured (₹)</label>
-              <input type="number" formControlName="sumAssured" [min]="sp.minSumAssured" [max]="sp.maxSumAssured" placeholder="e.g., 500000" class="h-[42px]">
+              <label for="quote-sum-assured" class="block text-[13px] font-medium mb-1.5">Sum assured (₹)</label>
+              <input id="quote-sum-assured" type="number" formControlName="sumAssured" [min]="sp.minSumAssured" [max]="sp.maxSumAssured" placeholder="e.g., 500000" class="h-[42px]">
               <p class="text-xs text-muted mt-1">Range: {{ sp.minSumAssured | money }} - {{ sp.maxSumAssured | money }}</p>
             </div>
             <div>
-              <label class="block text-[13px] font-medium mb-1.5">Tenure (years)</label>
-              <input type="number" formControlName="tenureYears" [min]="sp.minTenureYears" [max]="sp.maxTenureYears" placeholder="e.g., 5" class="h-[42px]">
+              <label for="quote-tenure-years" class="block text-[13px] font-medium mb-1.5">Tenure (years)</label>
+              <input id="quote-tenure-years" type="number" formControlName="tenureYears" [min]="sp.minTenureYears" [max]="sp.maxTenureYears" placeholder="e.g., 5" class="h-[42px]">
               <p class="text-xs text-muted mt-1">Range: {{ sp.minTenureYears }} - {{ sp.maxTenureYears }} years</p>
             </div>
             <div>
-              <label class="block text-[13px] font-medium mb-1.5">Payment frequency</label>
-              <select formControlName="paymentFrequency" class="h-[42px]">
+              <label for="quote-payment-frequency" class="block text-[13px] font-medium mb-1.5">Payment frequency</label>
+              <select id="quote-payment-frequency" formControlName="paymentFrequency" class="h-[42px]">
                 <option value="Monthly">Monthly</option>
                 <option value="Quarterly">Quarterly</option>
                 <option value="HalfYearly">Half Yearly</option>
@@ -52,12 +52,12 @@
               </select>
             </div>
             <div>
-              <label class="block text-[13px] font-medium mb-1.5">Date of birth</label>
-              <input type="date" formControlName="dateOfBirth" class="h-[42px]">
+              <label for="quote-date-of-birth" class="block text-[13px] font-medium mb-1.5">Date of birth</label>
+              <input id="quote-date-of-birth" type="date" formControlName="dateOfBirth" class="h-[42px]">
             </div>
             <div>
-              <label class="block text-[13px] font-medium mb-1.5">Gender</label>
-              <select formControlName="gender" class="h-[42px]">
+              <label for="quote-gender" class="block text-[13px] font-medium mb-1.5">Gender</label>
+              <select id="quote-gender" formControlName="gender" class="h-[42px]">
                 <option value="">Select...</option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
@@ -72,20 +72,20 @@
               <div class="text-[13px] font-semibold text-ink mb-3">Vehicle details</div>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label class="block text-[13px] font-medium mb-1.5">Vehicle make</label>
-                  <input type="text" formControlName="vehicleMake" placeholder="e.g., Maruti Suzuki" class="h-[42px]">
+                  <label for="quote-vehicle-make" class="block text-[13px] font-medium mb-1.5">Vehicle make</label>
+                  <input id="quote-vehicle-make" type="text" formControlName="vehicleMake" placeholder="e.g., Maruti Suzuki" class="h-[42px]">
                 </div>
                 <div>
-                  <label class="block text-[13px] font-medium mb-1.5">Vehicle model</label>
-                  <input type="text" formControlName="vehicleModel" placeholder="e.g., Swift" class="h-[42px]">
+                  <label for="quote-vehicle-model" class="block text-[13px] font-medium mb-1.5">Vehicle model</label>
+                  <input id="quote-vehicle-model" type="text" formControlName="vehicleModel" placeholder="e.g., Swift" class="h-[42px]">
                 </div>
                 <div>
-                  <label class="block text-[13px] font-medium mb-1.5">Manufacture year</label>
-                  <input type="number" formControlName="manufactureYear" placeholder="e.g., 2023" class="h-[42px] sc-numeric">
+                  <label for="quote-manufacture-year" class="block text-[13px] font-medium mb-1.5">Manufacture year</label>
+                  <input id="quote-manufacture-year" type="number" formControlName="manufactureYear" placeholder="e.g., 2023" class="h-[42px] sc-numeric">
                 </div>
                 <div>
-                  <label class="block text-[13px] font-medium mb-1.5">IDV (₹)</label>
-                  <input type="number" formControlName="insuredDeclaredValue" placeholder="e.g., 600000" class="h-[42px] sc-numeric">
+                  <label for="quote-idv" class="block text-[13px] font-medium mb-1.5">IDV (₹)</label>
+                  <input id="quote-idv" type="number" formControlName="insuredDeclaredValue" placeholder="e.g., 600000" class="h-[42px] sc-numeric">
                 </div>
               </div>
             </div>
@@ -94,8 +94,8 @@
           <!-- Health fields -->
           @if (sp.domain.toUpperCase() === 'HEALTH') {
             <div class="border-t border-line pt-5 mb-5">
-              <label class="block text-[13px] font-medium mb-1.5">Pre-existing conditions</label>
-              <textarea formControlName="preExistingConditions" rows="3" placeholder="List any pre-existing medical conditions..."></textarea>
+              <label for="quote-pre-existing-conditions" class="block text-[13px] font-medium mb-1.5">Pre-existing conditions</label>
+              <textarea id="quote-pre-existing-conditions" formControlName="preExistingConditions" rows="3" placeholder="List any pre-existing medical conditions..."></textarea>
             </div>
           }
 

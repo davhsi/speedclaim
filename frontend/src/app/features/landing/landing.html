@@ -150,7 +150,7 @@
                     <div style="font-size: 11.5px; font-weight: 700; color: #1A2230; line-height: 1.3;">Claim Approved</div>
                     <div style="font-size: 9.5px; color: #6B7685; margin-top: 1px;">CLM-2025-0891 · Health</div>
                   </div>
-                  <span style="font-size: 9.5px; font-weight: 700; color: #1F9D6B; background: white; padding: 2px 7px; border-radius: 999px; flex-shrink: 0;">Settled</span>
+                  <span style="font-size: 9.5px; font-weight: 700; color: #167A52; background: white; padding: 2px 7px; border-radius: 999px; flex-shrink: 0;">Settled</span>
                 </div>
 
                 <!-- Amount -->
@@ -284,11 +284,8 @@
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         @for (cov of coverageTypes; track cov.title; let i = $index) {
-          <div class="sc-reveal bg-white rounded-2xl p-7 flex flex-col transition-all duration-200 hover:-translate-y-0.5 cursor-default"
-               [class]="i === 1 ? 'sc-reveal-d1' : i === 2 ? 'sc-reveal-d2' : ''"
-               style="box-shadow: 0 1px 4px rgba(26,34,48,0.06);"
-               onmouseenter="this.style.boxShadow='0 8px 28px rgba(15,110,140,0.10), 0 2px 6px rgba(0,0,0,0.04)'"
-               onmouseleave="this.style.boxShadow='0 1px 4px rgba(26,34,48,0.06)'">
+          <div class="sc-reveal bg-white rounded-2xl p-7 flex flex-col transition-all duration-200 hover:-translate-y-0.5 cursor-default shadow-[0_1px_4px_rgba(26,34,48,0.06)] hover:shadow-[0_8px_28px_rgba(15,110,140,0.10),0_2px_6px_rgba(0,0,0,0.04)]"
+               [class]="i === 1 ? 'sc-reveal-d1' : i === 2 ? 'sc-reveal-d2' : ''">
 
             <!-- Scene illustration -->
             <div class="mb-5" [innerHTML]="cov.icon | safeHtml"></div>

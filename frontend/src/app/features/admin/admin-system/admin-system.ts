@@ -61,8 +61,8 @@ const TEMPLATE_DUMMIES: Record<string, Record<string, string>> = {
   templateUrl: './admin-system.html',
 })
 export class AdminSystemComponent implements OnInit {
-  private adminService = inject(AdminService);
-  private toastService = inject(ToastService);
+  private readonly adminService = inject(AdminService);
+  private readonly toastService = inject(ToastService);
   private readonly sanitizer = inject(DomSanitizer);
 
   activeTab = signal<'configs' | 'audit' | 'notifications' | 'templates'>('configs');

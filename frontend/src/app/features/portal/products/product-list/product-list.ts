@@ -15,8 +15,8 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
   templateUrl: './product-list.html',
 })
 export class ProductListComponent implements OnInit {
-  private productService = inject(ProductService);
-  private sanitizer = inject(DomSanitizer);
+  private readonly productService = inject(ProductService);
+  private readonly sanitizer = inject(DomSanitizer);
 
   loading = signal(true);
   products = signal<ProductDto[]>([]);

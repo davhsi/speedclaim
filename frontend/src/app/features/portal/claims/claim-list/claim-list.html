@@ -53,7 +53,7 @@
   } @else {
     <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
       @for (c of pagedClaims(); track c.id) {
-        <div class="flex items-center gap-3.5 px-[18px] py-4 border-b border-line cursor-pointer hover:bg-surface transition-colors"
+        <button type="button" class="w-full text-left bg-transparent border-0 flex items-center gap-3.5 px-[18px] py-4 border-b border-line cursor-pointer hover:bg-surface transition-colors"
              (click)="router.navigate(['/claims', c.id])">
           <div class="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0"
                [class]="domainBgClass(c.claimType)">
@@ -64,7 +64,7 @@
             <div class="text-xs text-muted sc-numeric">{{ c.claimNumber }} · {{ c.claimAmountRequested | money }} · {{ c.intimationDate | dateFormat }}</div>
           </div>
           <app-status-badge [status]="c.status" />
-        </div>
+        </button>
       }
     </div>
     @if (totalPages() > 1) {

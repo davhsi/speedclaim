@@ -6,38 +6,38 @@
 
   <!-- Stats -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
-    <div (click)="navigateTo('/underwriter/proposals')" class="cursor-pointer">
+    <button type="button" (click)="navigateTo('/underwriter/proposals')" class="cursor-pointer w-full text-left bg-transparent border-0 p-0">
       <app-stat-card
         title="Proposals to review"
         [value]="pendingProposals().toString()"
         iconBgClass="bg-warning-bg text-warning"
         [icon]="iconProposal"
       />
-    </div>
-    <div (click)="navigateTo('/underwriter/kyc')" class="cursor-pointer">
+    </button>
+    <button type="button" (click)="navigateTo('/underwriter/kyc')" class="cursor-pointer w-full text-left bg-transparent border-0 p-0">
       <app-stat-card
         title="KYC reviews pending"
         [value]="pendingKyc().toString()"
         iconBgClass="bg-warning-bg text-warning"
         [icon]="iconKyc"
       />
-    </div>
-    <div (click)="navigateTo('/underwriter/endorsements')" class="cursor-pointer">
+    </button>
+    <button type="button" (click)="navigateTo('/underwriter/endorsements')" class="cursor-pointer w-full text-left bg-transparent border-0 p-0">
       <app-stat-card
         title="Endorsements pending"
         [value]="pendingEndorsements().toString()"
         iconBgClass="bg-info-bg text-info"
         [icon]="iconEndorsement"
       />
-    </div>
-    <div (click)="navigateTo('/underwriter/policies')" class="cursor-pointer">
+    </button>
+    <button type="button" (click)="navigateTo('/underwriter/policies')" class="cursor-pointer w-full text-left bg-transparent border-0 p-0">
       <app-stat-card
         title="Total active policies"
         [value]="activePolicies().toString()"
         iconBgClass="bg-success-bg text-success"
         [icon]="iconPolicy"
       />
-    </div>
+    </button>
   </div>
 
   <!-- Recent activity -->

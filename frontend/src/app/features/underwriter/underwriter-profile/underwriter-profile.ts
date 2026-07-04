@@ -11,9 +11,9 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
   templateUrl: './underwriter-profile.html',
 })
 export class UnderwriterProfileComponent implements OnInit {
-  private authService = inject(AuthService);
-  private uwService = inject(UnderwriterService);
-  private toast = inject(ToastService);
+  private readonly authService = inject(AuthService);
+  private readonly uwService = inject(UnderwriterService);
+  private readonly toast = inject(ToastService);
 
   name = '';
   email = '';

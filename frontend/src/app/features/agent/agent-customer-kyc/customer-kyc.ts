@@ -17,10 +17,10 @@ const PAN_PATTERN = /^[A-Z]{5}\d{4}[A-Z]$/;
   templateUrl: './customer-kyc.html',
 })
 export class AgentCustomerKycComponent implements OnInit {
-  private agentService = inject(AgentService);
-  private http = inject(HttpClient);
-  private toast = inject(ToastService);
-  private router = inject(Router);
+  private readonly agentService = inject(AgentService);
+  private readonly http = inject(HttpClient);
+  private readonly toast = inject(ToastService);
+  private readonly router = inject(Router);
 
   customers = signal<AgentCustomerDto[]>([]);
   selectedCustomerId = signal<string | null>(null);

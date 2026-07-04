@@ -23,7 +23,7 @@
   } @else {
     <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
       @for (p of proposals(); track p.id) {
-        <div class="flex items-center gap-3.5 px-[18px] py-4 border-b border-line cursor-pointer hover:bg-surface transition-colors"
+        <button type="button" class="w-full text-left bg-transparent border-0 flex items-center gap-3.5 px-[18px] py-4 border-b border-line cursor-pointer hover:bg-surface transition-colors"
              (click)="router.navigate(['/proposals', p.id])">
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 mb-0.5">
@@ -35,7 +35,7 @@
             <app-status-badge [status]="p.status" />
             <span class="text-[13px] font-semibold text-ink sc-numeric">{{ p.premiumAmount | money }}/yr</span>
           </div>
-        </div>
+        </button>
       }
     </div>
   }

@@ -8,7 +8,7 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class PaymentService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
   private readonly api = '/api/v1/payments';
 
   getSchedule(policyId: string): Observable<PremiumScheduleDto[]> {

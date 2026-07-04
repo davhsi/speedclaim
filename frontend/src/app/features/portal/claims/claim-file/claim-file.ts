@@ -15,11 +15,11 @@ import { ToastService } from '../../../../shared/components/toast/toast.service'
   templateUrl: './claim-file.html',
 })
 export class ClaimFileComponent implements OnInit {
-  private fb = inject(FormBuilder);
-  private claimService = inject(ClaimService);
-  private policyService = inject(PolicyService);
-  private router = inject(Router);
-  private toast = inject(ToastService);
+  private readonly fb = inject(FormBuilder);
+  private readonly claimService = inject(ClaimService);
+  private readonly policyService = inject(PolicyService);
+  private readonly router = inject(Router);
+  private readonly toast = inject(ToastService);
 
   step = signal(0);
   activePolicies = signal<PolicyDto[]>([]);
@@ -132,7 +132,7 @@ export class ClaimFileComponent implements OnInit {
 
   private documentKeyFor(file: File): string {
     const baseName = file.name.replace(/\.[^/.]+$/, '');
-    const key = baseName.replace(/[^a-zA-Z0-9_-]+/g, '_').replace(/^_+/, '').replace(/_+$/, '');
+    const key = baseName.replace(/[^a-zA-Z0-9_-]+/g, '_').replace(/^_+|_+$/g, '');
     return (key || 'SUPPORTING_DOCUMENT').slice(0, 100).toUpperCase();
   }
 }

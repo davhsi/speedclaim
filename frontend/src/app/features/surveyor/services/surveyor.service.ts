@@ -26,7 +26,7 @@ export interface SubmitSurveyReportForm {
 
 @Injectable({ providedIn: 'root' })
 export class SurveyorService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
   getAssignedClaims(): Observable<ClaimDto[]> {
     return this.http.get<ClaimDto[]>('/api/v1/claims/surveyor/assigned');

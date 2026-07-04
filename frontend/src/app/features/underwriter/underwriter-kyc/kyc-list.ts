@@ -12,15 +12,15 @@ import { UnderwriterService, UnderwriterKycDto } from '../services/underwriter.s
   templateUrl: './kyc-list.html',
 })
 export class KycListComponent implements OnInit {
-  private uwService = inject(UnderwriterService);
-  private router = inject(Router);
+  private readonly uwService = inject(UnderwriterService);
+  private readonly router = inject(Router);
 
   kycRecords = signal<UnderwriterKycDto[]>([]);
   loading = signal(true);
   currentPage = signal(1);
   totalPages = signal(1);
   totalRecords = signal(0);
-  private pageSize = 10;
+  private readonly pageSize = 10;
 
   ngOnInit(): void {
     this.loadPage(1);

@@ -13,8 +13,8 @@ import { GrievanceDto } from '../../../core/models/api.models';
   templateUrl: './grievance-list.html',
 })
 export class GrievanceListComponent implements OnInit {
-  private claimsService = inject(ClaimsOfficerService);
-  private router = inject(Router);
+  private readonly claimsService = inject(ClaimsOfficerService);
+  private readonly router = inject(Router);
 
   grievances = signal<GrievanceDto[]>([]);
   loading = signal(true);

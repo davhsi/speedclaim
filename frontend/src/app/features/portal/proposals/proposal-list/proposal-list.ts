@@ -14,7 +14,7 @@ import { DateFormatPipe } from '../../../../shared/pipes/date-format.pipe';
   templateUrl: './proposal-list.html',
 })
 export class ProposalListComponent implements OnInit {
-  private proposalService = inject(ProposalService);
+  private readonly proposalService = inject(ProposalService);
   router = inject(Router);
 
   proposals = signal<ProposalDto[]>([]);

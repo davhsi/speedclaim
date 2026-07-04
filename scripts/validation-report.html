@@ -214,8 +214,8 @@
   .gradient-text { background: linear-gradient(90deg, #58a6ff, #d2a8ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
   .table-row { transition: all 0.2s ease; border-bottom: 1px solid #21262d; }
   .table-row:hover { background-color: #161b22; transform: translateX(4px); }
-  .badge-pass { background: rgba(63, 185, 80, 0.15); color: #3fb950; border: 1px solid rgba(63,185,80,0.3); }
-  .badge-fail { background: rgba(248, 81, 73, 0.15); color: #f85149; border: 1px solid rgba(248,81,73,0.3); }
+  .badge-pass { background: #0f2a1a; color: #4ade80; border: 1px solid rgba(63,185,80,0.3); }
+  .badge-fail { background: #2a1310; color: #f87171; border: 1px solid rgba(248,81,73,0.3); }
   .method-GET { color: #3fb950; font-weight: 600; }
   .method-POST { color: #58a6ff; font-weight: 600; }
   .method-PUT { color: #d29922; font-weight: 600; }
@@ -301,15 +301,15 @@
     <div class="flex flex-wrap gap-4 items-center flex-1 w-full">
       <div class="relative w-full max-w-md">
         <svg class="w-5 h-5 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-        <input type="text" id="search" placeholder="Search scenarios, categories, status..." class="w-full bg-gray-900 border border-gray-600 text-gray-300 pl-10 pr-4 py-2 rounded-lg text-sm focus:outline-none focus:border-brand-blue focus:ring-1 transition-colors">
+        <input type="text" id="search" aria-label="Search scenarios, categories, status" placeholder="Search scenarios, categories, status..." class="w-full bg-gray-900 border border-gray-600 text-gray-300 pl-10 pr-4 py-2 rounded-lg text-sm focus:outline-none focus:border-brand-blue focus:ring-1 transition-colors">
       </div>
-      <select id="categoryFilter" class="bg-gray-900 border border-gray-600 text-gray-300 px-3 py-2 rounded-lg text-sm focus:outline-none focus:border-brand-blue"></select>
-      <select id="statusFilter" class="bg-gray-900 border border-gray-600 text-gray-300 px-3 py-2 rounded-lg text-sm focus:outline-none focus:border-brand-blue">
+      <select id="categoryFilter" aria-label="Filter by domain category" class="bg-gray-900 border border-gray-600 text-gray-300 px-3 py-2 rounded-lg text-sm focus:outline-none focus:border-brand-blue"></select>
+      <select id="statusFilter" aria-label="Filter by status" class="bg-gray-900 border border-gray-600 text-gray-300 px-3 py-2 rounded-lg text-sm focus:outline-none focus:border-brand-blue">
         <option value="">All Statuses</option>
         <option value="pass">Passed</option>
         <option value="fail">Failed</option>
       </select>
-      <select id="httpFilter" class="bg-gray-900 border border-gray-600 text-gray-300 px-3 py-2 rounded-lg text-sm focus:outline-none focus:border-brand-blue">
+      <select id="httpFilter" aria-label="Filter by HTTP status code" class="bg-gray-900 border border-gray-600 text-gray-300 px-3 py-2 rounded-lg text-sm focus:outline-none focus:border-brand-blue">
         <option value="">All HTTP Codes</option>
         <option value="400">400 Bad Request</option>
         <option value="401">401 Unauthorized</option>
@@ -351,7 +351,7 @@
       <div class="px-6 py-4 border-b border-gray-800 flex justify-between items-center bg-gray-800/50 rounded-t-2xl">
         <div class="flex items-center gap-3">
             <span id="modalMethod" class="text-xs px-2.5 py-1 rounded bg-gray-800 border font-bold uppercase tracking-wider"></span>
-            <h3 class="text-lg font-bold text-gray-200" id="modalScenario"></h3>
+            <h3 class="text-lg font-bold text-gray-200" id="modalScenario">Scenario detail</h3>
         </div>
         <button onclick="closeModal()" class="text-gray-400 hover:text-white transition-colors focus:outline-none">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -387,7 +387,7 @@
   </div>
 </div>
 
-<script>
+<script type="module">
 let data = null;
 
 async function loadData() {
@@ -412,12 +412,7 @@ let sortKey = 'id';
 let sortAsc = true;
 let myChart = null;
 
-async function init() {
-  await loadData();
-  renderSummary();
-  populateCategoryFilter();
-  render();
-
+function wireUpControls() {
   document.getElementById('search').addEventListener('input', render);
   document.getElementById('categoryFilter').addEventListener('change', render);
   document.getElementById('statusFilter').addEventListener('change', render);
@@ -435,7 +430,7 @@ async function init() {
 
 function renderSummary() {
   const s = data.summary;
-  const perc = parseFloat(s.passRate);
+  const perc = Number.parseFloat(s.passRate);
   const isPerfect = perc === 100;
 
   document.getElementById('summary').innerHTML = `
@@ -548,6 +543,23 @@ function getFiltered() {
   });
 }
 
+function sortArrowFor(column) {
+  if (column !== sortKey) return '';
+  return sortAsc ? '▲' : '▼';
+}
+
+function statusClassFor(status) {
+  if (status < 300) return 'status-2xx';
+  if (status < 500) return 'status-4xx';
+  return 'status-5xx';
+}
+
+function modalStatusClassFor(status) {
+  if (status < 300) return 'text-brand-green border-brand-green/30 bg-brand-green/10';
+  if (status < 500) return 'text-brand-yellow border-brand-yellow/30 bg-brand-yellow/10';
+  return 'text-brand-red border-brand-red/30 bg-brand-red/10';
+}
+
 function render() {
   let rows = getFiltered();
   rows.sort((a, b) => {
@@ -564,7 +576,7 @@ function render() {
 
   document.querySelectorAll('thead th[data-sort]').forEach(th => {
     const arrow = th.querySelector('.arrow');
-    arrow.textContent = th.dataset.sort === sortKey ? (sortAsc ? '▲' : '▼') : '';
+    arrow.textContent = sortArrowFor(th.dataset.sort);
   });
 
   const tbody = document.getElementById('tbody');
@@ -574,7 +586,7 @@ function render() {
   }
 
   tbody.innerHTML = rows.map(s => {
-    const statusClass = s.actualStatus < 300 ? 'status-2xx' : s.actualStatus < 500 ? 'status-4xx' : 'status-5xx';
+    const statusClass = statusClassFor(s.actualStatus);
     return `<tr class="table-row">
       <td class="px-6 py-4 font-mono text-gray-500">${s.id}</td>
       <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-full text-xs font-bold ${s.passed ? 'badge-pass' : 'badge-fail'}">${s.passed ? 'PASS' : 'FAIL'}</span></td>
@@ -606,9 +618,7 @@ function openModal(id) {
   document.getElementById('modalScenario').textContent = s.scenario;
 
   const sLabel = document.getElementById('modalStatus');
-  const sClass = s.actualStatus < 300 ? 'text-brand-green border-brand-green/30 bg-brand-green/10' :
-                 s.actualStatus < 500 ? 'text-brand-yellow border-brand-yellow/30 bg-brand-yellow/10' :
-                 'text-brand-red border-brand-red/30 bg-brand-red/10';
+  const sClass = modalStatusClassFor(s.actualStatus);
   sLabel.textContent = `STATUS: ${s.actualStatus}`;
   sLabel.className = `px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${sClass}`;
 
@@ -619,7 +629,7 @@ function openModal(id) {
   const content = document.getElementById('modalContent');
   modal.classList.remove('hidden');
   modal.classList.add('flex');
-  void modal.offsetWidth;
+  modal.offsetWidth;
   modal.classList.remove('opacity-0');
   content.classList.remove('scale-95');
 }
@@ -649,7 +659,20 @@ function esc(s) {
   return d.innerHTML;
 }
 
-init();
+// Inline onclick="" handlers in the generated markup need these on the global object,
+// since module scripts do not leak top-level declarations onto window.
+window.closeModal = closeModal;
+window.openModal = openModal;
+
+try {
+  await loadData();
+  renderSummary();
+  populateCategoryFilter();
+  render();
+  wireUpControls();
+} catch {
+  // loadData() already renders an error state into #summary; nothing further to do.
+}
 </script>
 </body>
 </html>

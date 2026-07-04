@@ -14,8 +14,8 @@ import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-
   templateUrl: './product-detail.html',
 })
 export class ProductDetailComponent implements OnInit {
-  private route = inject(ActivatedRoute);
-  private productService = inject(ProductService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly productService = inject(ProductService);
 
   loading = signal(true);
   product = signal<ProductDto | null>(null);

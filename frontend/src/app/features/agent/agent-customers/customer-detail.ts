@@ -14,8 +14,8 @@ import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loa
   templateUrl: './customer-detail.html',
 })
 export class AgentCustomerDetailComponent implements OnInit {
-  private route = inject(ActivatedRoute);
-  private agentService = inject(AgentService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly agentService = inject(AgentService);
 
   loading = signal(true);
   customer = signal<AgentCustomerDto | null>(null);

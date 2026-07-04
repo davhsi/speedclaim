@@ -5,7 +5,7 @@ import { GenerateQuoteRequest, GenerateQuoteResponse } from '../../../../core/mo
 
 @Injectable({ providedIn: 'root' })
 export class QuoteService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
   generateQuote(req: GenerateQuoteRequest): Observable<GenerateQuoteResponse> {
     return this.http.post<GenerateQuoteResponse>('/api/v1/proposals/quote', req);

@@ -42,7 +42,7 @@ export interface SurveyorDto {
 
 @Injectable({ providedIn: 'root' })
 export class ClaimsOfficerService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
   getAllClaims(page = 1, pageSize = 20, status?: ClaimStatus, type?: ClaimType): Observable<PagedResponse<ClaimDto>> {
     let params = new HttpParams()

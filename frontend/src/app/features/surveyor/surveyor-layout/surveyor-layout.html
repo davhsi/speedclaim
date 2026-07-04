@@ -57,9 +57,9 @@
 
   <!-- Notifications Panel -->
   @if (showNotifs()) {
-    <div class="fixed inset-0 bg-black/45 z-[200] flex items-end" (click)="showNotifs.set(false)">
-      <div class="bg-white rounded-t-[22px] w-full flex flex-col max-h-[72%] animate-slide-up"
-           (click)="$event.stopPropagation()">
+    <button type="button" class="fixed inset-0 bg-black/45 z-[200] border-none cursor-default p-0" (click)="showNotifs.set(false)" aria-label="Close notifications"></button>
+    <div class="fixed inset-0 z-[200] flex items-end pointer-events-none">
+      <div class="bg-white rounded-t-[22px] w-full flex flex-col max-h-[72%] animate-slide-up pointer-events-auto">
         <div class="flex justify-center pt-2.5 pb-1">
           <div class="w-9 h-1 rounded-full bg-line"></div>
         </div>

@@ -20,8 +20,8 @@ type Tab = 'all' | 'pending' | 'overdue' | 'submitted';
 export class SurveyorClaimsComponent implements OnInit {
   layout = inject(SurveyorLayoutComponent);
   router = inject(Router);
-  private authService = inject(AuthService);
-  private surveyorService = inject(SurveyorService);
+  private readonly authService = inject(AuthService);
+  private readonly surveyorService = inject(SurveyorService);
 
   claims = signal<ClaimDto[]>([]);
   loading = signal(true);
@@ -113,7 +113,7 @@ export class SurveyorClaimsComponent implements OnInit {
     const [integer, decimal] = Math.abs(value).toFixed(2).split('.');
     const lastThree = integer.slice(-3);
     const rest = integer.slice(0, -3);
-    const formatted = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',');
+    const formatted = rest.replace(/\d(?=(\d{2})+(?!\d))/g, '$&,');
     return '₹' + (formatted ? formatted + ',' : '') + lastThree + '.' + decimal;
   }
 }

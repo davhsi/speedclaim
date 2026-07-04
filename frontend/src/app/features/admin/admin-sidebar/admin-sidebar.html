@@ -1,5 +1,5 @@
 @if (!collapsed()) {
-  <div class="fixed inset-0 bg-black/40 z-40 lg:hidden" (click)="toggle.emit()"></div>
+  <button type="button" aria-label="Close menu" class="fixed inset-0 w-full h-full bg-black/40 z-40 lg:hidden border-0 p-0 cursor-default" (click)="sidebarToggle.emit()"></button>
 }
 <aside
   class="fixed top-0 left-0 h-full z-50 flex flex-col w-[244px] transition-transform duration-200 ease-out"
@@ -13,7 +13,7 @@
       <div class="text-[13px] font-bold text-white leading-tight" style="letter-spacing:-.01em;">SpeedClaim</div>
       <div class="text-[9px] mt-px" style="color: rgba(255,255,255,.32); letter-spacing: .1em; text-transform: uppercase;">Admin Portal</div>
     </div>
-    <button class="ml-auto lg:hidden text-white/60 hover:text-white bg-transparent border-none cursor-pointer" (click)="toggle.emit()">
+    <button class="ml-auto lg:hidden text-white/60 hover:text-white bg-transparent border-none cursor-pointer" (click)="sidebarToggle.emit()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
     </button>
   </div>
@@ -33,7 +33,7 @@
         <span class="w-[15px] h-[15px] shrink-0 flex items-center justify-center" [innerHTML]="item.icon | safeHtml"></span>
         <span class="flex-1">{{ item.label }}</span>
         @if (item.badgeCount && item.badgeCount > 0) {
-          <span class="text-[10px] px-1.5 py-px rounded-full font-medium sc-numeric" style="background:rgba(255,255,255,.09); color:rgba(255,255,255,.45); font-feature-settings:'tnum';">{{ item.badgeCount }}</span>
+          <span class="text-[10px] px-1.5 py-px rounded-full font-medium sc-numeric" style="background:rgba(255,255,255,.09); color:rgba(255,255,255,.6); font-feature-settings:'tnum';">{{ item.badgeCount }}</span>
         }
       </a>
     }

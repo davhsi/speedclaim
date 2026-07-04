@@ -15,9 +15,9 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
   templateUrl: './finance-officer-commissions.html',
 })
 export class FinanceOfficerCommissionsComponent implements OnInit {
-  private financeService = inject(FinanceOfficerService);
-  private toast = inject(ToastService);
-  private moneyPipe = new MoneyPipe();
+  private readonly financeService = inject(FinanceOfficerService);
+  private readonly toast = inject(ToastService);
+  private readonly moneyPipe = new MoneyPipe();
 
   allCommissions = signal<AgentCommissionDto[]>([]);
   loading = signal(true);

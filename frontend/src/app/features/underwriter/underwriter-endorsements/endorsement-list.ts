@@ -14,8 +14,8 @@ import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loa
   templateUrl: './endorsement-list.html',
 })
 export class EndorsementListComponent implements OnInit {
-  private uwService = inject(UnderwriterService);
-  private toast = inject(ToastService);
+  private readonly uwService = inject(UnderwriterService);
+  private readonly toast = inject(ToastService);
 
   endorsements = signal<EndorsementDto[]>([]);
   pendingCount = signal(0);

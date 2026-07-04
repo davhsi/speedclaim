@@ -1,10 +1,11 @@
 <div class="space-y-2">
   @if (label()) {
-    <label class="block text-sm font-medium text-ink">{{ label() }}</label>
+    <div class="block text-sm font-medium text-ink">{{ label() }}</div>
   }
   @if (!selectedFile()) {
-    <div
-      class="border-2 border-dashed border-line rounded-card p-8 text-center cursor-pointer hover:border-primary hover:bg-primary-light/30 transition-colors"
+    <button
+      type="button"
+      class="w-full block border-2 border-dashed border-line rounded-card p-8 text-center cursor-pointer hover:border-primary hover:bg-primary-light/30 transition-colors"
       (click)="fileInput.click()"
       (dragover)="onDragOver($event)"
       (drop)="onDrop($event)"
@@ -18,7 +19,7 @@
           <p class="text-xs mt-1">{{ hint() }}</p>
         }
       </div>
-    </div>
+    </button>
   } @else {
     <div class="flex items-center gap-3 p-3 bg-surface-alt rounded-control border border-line">
       <svg class="w-5 h-5 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -43,6 +44,7 @@
     type="file"
     class="hidden"
     [accept]="accept()"
+    [attr.aria-label]="label() || 'Upload file'"
     (change)="onFileSelected($event)"
   />
 </div>

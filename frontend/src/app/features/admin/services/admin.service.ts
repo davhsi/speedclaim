@@ -12,7 +12,7 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
   // ── Users ──
 

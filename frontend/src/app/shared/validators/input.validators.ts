@@ -12,7 +12,7 @@ export function panValidator(): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
     const value = control.value;
     if (!value) return null;
-    return /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(value.toUpperCase()) ? null : { pan: true };
+    return /^[A-Z]{5}\d{4}[A-Z]$/.test(value.toUpperCase()) ? null : { pan: true };
   };
 }
 

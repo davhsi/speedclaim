@@ -9,7 +9,7 @@ import { ClaimStatus } from '../../../core/models/enums';
 
 @Injectable({ providedIn: 'root' })
 export class FinanceOfficerService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
   private idempotencyOptions() {
     return { headers: { 'Idempotency-Key': crypto.randomUUID() } };

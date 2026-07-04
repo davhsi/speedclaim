@@ -17,8 +17,8 @@ import { ClaimStatus, ClaimType } from '../../../core/models/enums';
   templateUrl: './claim-list.html',
 })
 export class ClaimListComponent implements OnInit {
-  private claimsService = inject(ClaimsOfficerService);
-  private router = inject(Router);
+  private readonly claimsService = inject(ClaimsOfficerService);
+  private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
   claims = signal<ClaimDto[]>([]);

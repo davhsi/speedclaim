@@ -16,10 +16,10 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
   templateUrl: './admin-layout.html',
 })
 export class AdminLayoutComponent implements OnInit {
-  private platformId = inject(PLATFORM_ID);
-  private authService = inject(AuthService);
-  private adminService = inject(AdminService);
-  private router = inject(Router);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly authService = inject(AuthService);
+  private readonly adminService = inject(AdminService);
+  private readonly router = inject(Router);
   notifService = inject(NotificationService);
 
   sidebarCollapsed = signal(true);
@@ -30,7 +30,7 @@ export class AdminLayoutComponent implements OnInit {
   agentCount = signal(0);
   productCount = signal(0);
 
-  private pageTitles: [string, string][] = [
+  private readonly pageTitles: [string, string][] = [
     ['/admin/users', 'User management'],
     ['/admin/agents', 'Agent management'],
     ['/admin/products', 'Product catalog'],

@@ -7,6 +7,8 @@
     <div class="relative">
       <svg class="absolute left-[10px] top-1/2 -translate-y-1/2 pointer-events-none" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input
+        id="uw-policy-search"
+        aria-label="Search policies by ID, customer or product"
         [(ngModel)]="searchTerm"
         placeholder="Search ID, customer or product..."
         class="h-10 pl-9 pr-3.5 border border-line rounded-lg text-[13px] bg-white outline-none min-w-[280px] focus:border-primary transition-colors"
@@ -38,7 +40,7 @@
             }
           }
           @for (pol of filteredPolicies(); track pol.id) {
-            <tr (click)="openPolicy(pol.id)" class="border-b border-line cursor-pointer hover:bg-surface transition-colors">
+            <tr (click)="openPolicy(pol.id)" tabindex="0" role="button" (keydown.enter)="openPolicy(pol.id)" (keydown.space)="openPolicy(pol.id); $event.preventDefault()" class="border-b border-line cursor-pointer hover:bg-surface transition-colors">
               <td class="px-4 py-[13px] text-xs font-semibold text-primary sc-numeric whitespace-nowrap">{{ pol.policyNumber }}</td>
               <td class="px-4 py-[13px] text-body">{{ productName(pol) }}</td>
               <td class="px-4 py-[13px] font-semibold text-ink sc-numeric">{{ pol.coverageAmount | money }}</td>

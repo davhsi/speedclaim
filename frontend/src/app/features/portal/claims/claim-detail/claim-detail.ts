@@ -18,9 +18,9 @@ import { ToastService } from '../../../../shared/components/toast/toast.service'
   templateUrl: './claim-detail.html',
 })
 export class ClaimDetailComponent implements OnInit {
-  private route = inject(ActivatedRoute);
-  private claimService = inject(ClaimService);
-  private toast = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly claimService = inject(ClaimService);
+  private readonly toast = inject(ToastService);
   router = inject(Router);
 
   claim = signal<ClaimDto | null>(null);
@@ -98,7 +98,7 @@ export class ClaimDetailComponent implements OnInit {
 
   private documentKeyFor(file: File): string {
     const baseName = file.name.replace(/\.[^/.]+$/, '');
-    const key = baseName.replace(/[^a-zA-Z0-9_-]+/g, '_').replace(/^_+/, '').replace(/_+$/, '');
+    const key = baseName.replace(/[^a-zA-Z0-9_-]+/g, '_').replace(/^_+|_+$/g, '');
     return (key || 'SUPPORTING_DOCUMENT').slice(0, 100).toUpperCase();
   }
 }

@@ -11,8 +11,14 @@ export class MoneyPipe implements PipeTransform {
   private indianFormat(num: number): string {
     const [integer, decimal] = num.toFixed(2).split('.');
     const lastThree = integer.slice(-3);
-    const rest = integer.slice(0, -3);
-    const formatted = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',');
+    let rest = integer.slice(0, -3);
+    const groups: string[] = [];
+    while (rest.length > 2) {
+      groups.unshift(rest.slice(-2));
+      rest = rest.slice(0, -2);
+    }
+    if (rest) groups.unshift(rest);
+    const formatted = groups.join(',');
     return (formatted ? formatted + ',' : '') + lastThree + '.' + decimal;
   }
 }

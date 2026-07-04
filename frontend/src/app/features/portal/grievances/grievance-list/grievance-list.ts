@@ -13,7 +13,7 @@ import { DateFormatPipe } from '../../../../shared/pipes/date-format.pipe';
   templateUrl: './grievance-list.html',
 })
 export class GrievanceListComponent implements OnInit {
-  private grievanceService = inject(GrievanceService);
+  private readonly grievanceService = inject(GrievanceService);
   router = inject(Router);
   grievances = signal<GrievanceDto[]>([]);
   loading = signal(true);

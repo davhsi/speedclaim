@@ -31,8 +31,8 @@ export class AdminSidebarComponent {
   userCount = input<number>(0);
   agentCount = input<number>(0);
   productCount = input<number>(0);
-  toggle = output<void>();
-  private authService = inject(AuthService);
+  sidebarToggle = output<void>();
+  private readonly authService = inject(AuthService);
 
   get navItems(): NavItem[] {
     return [
@@ -63,8 +63,8 @@ export class AdminSidebarComponent {
   }
 
   onNavClick(): void {
-    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-      this.toggle.emit();
+    if (typeof globalThis.window !== 'undefined' && globalThis.window.innerWidth < 1024) {
+      this.sidebarToggle.emit();
     }
   }
 }

@@ -13,7 +13,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
   templateUrl: './renewal-list.html',
 })
 export class AgentRenewalListComponent implements OnInit {
-  private agentService = inject(AgentService);
+  private readonly agentService = inject(AgentService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
 

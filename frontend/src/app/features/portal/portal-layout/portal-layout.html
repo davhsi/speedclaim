@@ -1,6 +1,6 @@
 <a href="#main-content" class="skip-link">Skip to main content</a>
 <div class="min-h-screen flex bg-surface">
-  <app-sidebar [collapsed]="sidebarCollapsed()" (toggle)="toggleSidebar()" />
+  <app-sidebar [collapsed]="sidebarCollapsed()" (sidebarToggle)="toggleSidebar()" />
   <div class="flex-1 flex flex-col min-h-screen transition-[margin] duration-200 lg:ml-60">
     <app-topbar (menuToggle)="toggleSidebar()" />
     <main id="main-content" class="flex-1 p-4 md:p-6 pb-20 lg:pb-6">

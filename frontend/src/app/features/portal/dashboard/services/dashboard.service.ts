@@ -5,7 +5,7 @@ import { PolicyDto, ClaimDto, PremiumScheduleDto } from '../../../../core/models
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
   getPolicies(): Observable<PolicyDto[]> {
     return this.http.get<PolicyDto[]>('/api/v1/policies/my');

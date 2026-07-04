@@ -32,9 +32,9 @@ interface NavItem {
 })
 export class SidebarComponent {
   collapsed = input<boolean>(true);
-  toggle = output<void>();
+  sidebarToggle = output<void>();
   notifService = inject(NotificationService);
-  private authService = inject(AuthService);
+  private readonly authService = inject(AuthService);
 
   navGroups: NavGroup[] = [
     {
@@ -86,7 +86,7 @@ export class SidebarComponent {
 
   onNavClick(): void {
     if (window.innerWidth < 1024) {
-      this.toggle.emit();
+      this.sidebarToggle.emit();
     }
   }
 }

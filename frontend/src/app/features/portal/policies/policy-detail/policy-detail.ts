@@ -2,7 +2,7 @@ import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PolicyService } from '../services/policy.service';
-import { PolicyDto, PolicyStatusHistoryDto, EndorsementDto, PolicyNomineeDto, ProductDto, PremiumScheduleDto } from '../../../../core/models/api.models';
+import { PolicyDto, EndorsementDto, PolicyNomineeDto, ProductDto, PremiumScheduleDto } from '../../../../core/models/api.models';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge';
 import { TimelineComponent, TimelineItem } from '../../../../shared/components/timeline/timeline';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog';
@@ -19,11 +19,11 @@ import { ProductService } from '../../products/services/product.service';
   templateUrl: './policy-detail.html',
 })
 export class PolicyDetailComponent implements OnInit {
-  private route = inject(ActivatedRoute);
-  private policyService = inject(PolicyService);
-  private productService = inject(ProductService);
-  private fb = inject(FormBuilder);
-  private toast = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly policyService = inject(PolicyService);
+  private readonly productService = inject(ProductService);
+  private readonly fb = inject(FormBuilder);
+  private readonly toast = inject(ToastService);
   router = inject(Router);
 
   policy = signal<PolicyDto | null>(null);

@@ -13,10 +13,10 @@ import { phoneValidator } from '../../../shared/validators/input.validators';
   templateUrl: './agent-profile.html',
 })
 export class AgentProfileComponent implements OnInit {
-  private fb = inject(FormBuilder);
-  private agentService = inject(AgentService);
-  private authService = inject(AuthService);
-  private toast = inject(ToastService);
+  private readonly fb = inject(FormBuilder);
+  private readonly agentService = inject(AgentService);
+  private readonly authService = inject(AuthService);
+  private readonly toast = inject(ToastService);
 
   profile = signal<AgentProfileDto | null>(null);
   saving = signal(false);

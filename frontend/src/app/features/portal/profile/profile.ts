@@ -21,10 +21,10 @@ const PAN_PATTERN = /^[A-Z]{5}\d{4}[A-Z]$/;
   templateUrl: './profile.html',
 })
 export class ProfileComponent implements OnInit {
-  private fb = inject(FormBuilder);
-  private profileService = inject(ProfileService);
-  private authService = inject(AuthService);
-  private toast = inject(ToastService);
+  private readonly fb = inject(FormBuilder);
+  private readonly profileService = inject(ProfileService);
+  private readonly authService = inject(AuthService);
+  private readonly toast = inject(ToastService);
 
   profile = signal<UserDto | null>(null);
   familyMembers = signal<FamilyMemberDto[]>([]);

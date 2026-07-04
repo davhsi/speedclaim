@@ -15,9 +15,9 @@ import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loa
   templateUrl: './finance-officer-payouts.html',
 })
 export class FinanceOfficerPayoutsComponent implements OnInit {
-  private financeService = inject(FinanceOfficerService);
-  private toast = inject(ToastService);
-  private moneyPipe = new MoneyPipe();
+  private readonly financeService = inject(FinanceOfficerService);
+  private readonly toast = inject(ToastService);
+  private readonly moneyPipe = new MoneyPipe();
 
   allClaims = signal<ClaimDto[]>([]);
   loading = signal(true);

@@ -15,8 +15,8 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 export class TopbarComponent implements OnInit {
   menuToggle = output<void>();
 
-  private authService = inject(AuthService);
-  private router = inject(Router);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
   notifService = inject(NotificationService);
   profileMenuOpen = signal(false);
   notifOpen = signal(false);
@@ -36,7 +36,7 @@ export class TopbarComponent implements OnInit {
     this.router.navigate(['/notifications']);
   }
 
-  private routeTitleMap: Record<string, string> = {
+  private readonly routeTitleMap: Record<string, string> = {
     '/dashboard': 'Dashboard',
     '/products': 'Browse Products',
     '/quote': 'Get a Quote',
@@ -85,18 +85,18 @@ export class TopbarComponent implements OnInit {
     const isId = (s: string) =>
       /^\d+$/.test(s) ||
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
-    if (segments.length >= 2 && isId(segments[segments.length - 1])) {
-      const base = segments[segments.length - 2];
+    if (segments.length >= 2 && isId(segments.at(-1)!)) {
+      const base = segments.at(-2)!;
       const singularMap: Record<string, string> = {
         products: 'Product', policies: 'Policy', claims: 'Claim',
         proposals: 'Proposal', grievances: 'Grievance',
       };
-      const label = singularMap[base] ?? (base.charAt(0).toUpperCase() + base.slice(1).replace(/-/g, ' '));
+      const label = singularMap[base] ?? (base.charAt(0).toUpperCase() + base.slice(1).replaceAll('-', ' '));
       return label + ' Details';
     }
     if (segments.length >= 1) {
-      const base = segments[segments.length - 1];
-      return base.charAt(0).toUpperCase() + base.slice(1).replace(/-/g, ' ');
+      const base = segments.at(-1)!;
+      return base.charAt(0).toUpperCase() + base.slice(1).replaceAll('-', ' ');
     }
     return 'Dashboard';
   }

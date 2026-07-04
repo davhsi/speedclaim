@@ -12,8 +12,8 @@
   <div class="bg-white border border-line rounded-card shadow-sm p-6 space-y-5">
     <!-- Customer selector -->
     <div>
-      <label class="block text-xs font-medium text-body mb-1.5">Select customer</label>
-      <select class="h-[42px]" (change)="onCustomerChange($event)">
+      <label for="kyc-customer-select" class="block text-xs font-medium text-body mb-1.5">Select customer</label>
+      <select id="kyc-customer-select" class="h-[42px]" (change)="onCustomerChange($event)">
         <option value="">Choose a customer...</option>
         @for (c of customers(); track c.id) {
           <option [value]="c.id">{{ c.fullName }} ({{ c.email }})</option>
@@ -34,7 +34,7 @@
 
     <!-- ID type selector -->
     <div>
-      <label class="block text-xs font-medium text-body mb-2">Document type</label>
+      <div class="block text-xs font-medium text-body mb-2">Document type</div>
       <div class="flex gap-3">
         <button
           class="flex-1 h-[42px] rounded-[10px] border text-[13px] font-semibold transition-colors flex items-center justify-center gap-2"
@@ -77,13 +77,13 @@
 
     <!-- File uploads -->
     <div>
-      <label class="block text-xs font-medium text-body mb-1.5">{{ idType() === 'aadhaar' ? 'Aadhaar front' : 'PAN front' }}</label>
+      <div class="block text-xs font-medium text-body mb-1.5">{{ idType() === 'aadhaar' ? 'Aadhaar front' : 'PAN front' }}</div>
       <app-file-upload label="Upload front page" hint="PDF, JPG, PNG up to 5MB" (fileSelected)="frontFile = $event" />
     </div>
 
     @if (idType() === 'aadhaar') {
       <div>
-        <label class="block text-xs font-medium text-body mb-1.5">Aadhaar back (optional)</label>
+        <div class="block text-xs font-medium text-body mb-1.5">Aadhaar back (optional)</div>
         <app-file-upload label="Upload back page" hint="PDF, JPG, PNG up to 5MB" (fileSelected)="backFile = $event" />
       </div>
     }

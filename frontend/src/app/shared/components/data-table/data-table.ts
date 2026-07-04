@@ -25,7 +25,7 @@ export class DataTableComponent {
   sortKey = signal('');
   sortDir = signal<'asc' | 'desc'>('asc');
 
-  skeletonRows = Array(5);
+  skeletonRows = new Array(5);
 
   toggleSort(key: string): void {
     if (this.sortKey() === key) {
@@ -44,7 +44,13 @@ export class DataTableComponent {
       const va = a[key], vb = b[key];
       if (va == null) return 1;
       if (vb == null) return -1;
-      return va > vb ? dir : va < vb ? -dir : 0;
+      return this.compareValues(va, vb, dir);
     });
+  }
+
+  private compareValues(va: any, vb: any, dir: number): number {
+    if (va > vb) return dir;
+    if (va < vb) return -dir;
+    return 0;
   }
 }

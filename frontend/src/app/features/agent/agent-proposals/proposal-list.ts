@@ -15,7 +15,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
   templateUrl: './proposal-list.html',
 })
 export class AgentProposalListComponent implements OnInit {
-  private agentService = inject(AgentService);
+  private readonly agentService = inject(AgentService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 

@@ -19,20 +19,20 @@
     <!-- Form -->
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-5">
       <div>
-        <label class="block text-[13px] font-medium text-body mb-1.5">Full name</label>
-        <input [(ngModel)]="name" class="w-full h-[42px] px-3 border border-line rounded-lg text-sm outline-none focus:border-primary transition-colors" />
+        <label for="underwriter-profile-name" class="block text-[13px] font-medium text-body mb-1.5">Full name</label>
+        <input id="underwriter-profile-name" [(ngModel)]="name" class="w-full h-[42px] px-3 border border-line rounded-lg text-sm outline-none focus:border-primary transition-colors" />
       </div>
       <div>
-        <label class="block text-[13px] font-medium text-body mb-1.5">Email</label>
-        <input [(ngModel)]="email" class="w-full h-[42px] px-3 border border-line rounded-lg text-sm outline-none focus:border-primary transition-colors" />
+        <label for="underwriter-profile-email" class="block text-[13px] font-medium text-body mb-1.5">Email</label>
+        <input id="underwriter-profile-email" [(ngModel)]="email" class="w-full h-[42px] px-3 border border-line rounded-lg text-sm outline-none focus:border-primary transition-colors" />
       </div>
       <div>
-        <label class="block text-[13px] font-medium text-body mb-1.5">Phone</label>
-        <input [(ngModel)]="phone" class="w-full h-[42px] px-3 border border-line rounded-lg text-sm outline-none focus:border-primary transition-colors" />
+        <label for="underwriter-profile-phone" class="block text-[13px] font-medium text-body mb-1.5">Phone</label>
+        <input id="underwriter-profile-phone" [(ngModel)]="phone" class="w-full h-[42px] px-3 border border-line rounded-lg text-sm outline-none focus:border-primary transition-colors" />
       </div>
       <div>
-        <label class="block text-[13px] font-medium text-body mb-1.5">Department</label>
-        <input value="Underwriting — Risk Assessment" readonly class="w-full h-[42px] px-3 border border-line rounded-lg text-sm text-muted bg-surface outline-none" />
+        <label for="underwriter-profile-department" class="block text-[13px] font-medium text-body mb-1.5">Department</label>
+        <input id="underwriter-profile-department" value="Underwriting — Risk Assessment" readonly class="w-full h-[42px] px-3 border border-line rounded-lg text-sm text-muted bg-surface outline-none" />
       </div>
     </div>
 

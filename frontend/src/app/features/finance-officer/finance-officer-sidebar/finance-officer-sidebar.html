@@ -1,5 +1,5 @@
 @if (!collapsed()) {
-  <div class="fixed inset-0 bg-black/40 z-40 lg:hidden" (click)="toggle.emit()"></div>
+  <button type="button" class="fixed inset-0 bg-black/40 z-40 lg:hidden border-0 p-0" aria-label="Close navigation menu" (click)="sidebarToggle.emit()"></button>
 }
 <aside
   class="fixed top-0 left-0 h-full z-50 flex flex-col w-[244px] transition-transform duration-200 ease-out"
@@ -13,7 +13,7 @@
       <div class="text-sm font-bold text-white leading-tight">SpeedClaim</div>
       <div class="text-[10px] font-semibold mt-px" style="color: rgba(255,255,255,.45); letter-spacing: .06em;">FINANCE OFFICER</div>
     </div>
-    <button class="ml-auto lg:hidden text-white/60 hover:text-white bg-transparent border-none cursor-pointer" (click)="toggle.emit()">
+    <button class="ml-auto lg:hidden text-white/60 hover:text-white bg-transparent border-none cursor-pointer" (click)="sidebarToggle.emit()" aria-label="Close navigation menu">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
     </button>
   </div>

@@ -18,10 +18,10 @@ import { ToastService } from '../../../../shared/components/toast/toast.service'
   templateUrl: './proposal-detail.html',
 })
 export class ProposalDetailComponent implements OnInit {
-  private route = inject(ActivatedRoute);
-  private proposalService = inject(ProposalService);
-  private productService = inject(ProductService);
-  private toast = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly proposalService = inject(ProposalService);
+  private readonly productService = inject(ProductService);
+  private readonly toast = inject(ToastService);
   router = inject(Router);
 
   proposal = signal<ProposalDto | null>(null);

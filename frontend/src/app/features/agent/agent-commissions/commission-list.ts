@@ -13,7 +13,7 @@ import { forkJoin } from 'rxjs';
   templateUrl: './commission-list.html',
 })
 export class AgentCommissionListComponent implements OnInit {
-  private agentService = inject(AgentService);
+  private readonly agentService = inject(AgentService);
 
   loading = signal(true);
   commissions = signal<AgentCommissionDto[]>([]);

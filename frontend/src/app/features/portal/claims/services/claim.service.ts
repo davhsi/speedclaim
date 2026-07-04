@@ -5,7 +5,7 @@ import { ClaimDto, ClaimStatusHistoryDto, IntimateClaimRequest, ApiMessage } fro
 
 @Injectable({ providedIn: 'root' })
 export class ClaimService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
   private readonly api = '/api/v1/claims';
 
   getMyClaims(status?: string, type?: string): Observable<ClaimDto[]> {

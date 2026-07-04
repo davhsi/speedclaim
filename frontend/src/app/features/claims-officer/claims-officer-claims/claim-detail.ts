@@ -21,11 +21,11 @@ type ToastType = 'success' | 'error' | 'warning' | 'info';
   templateUrl: './claim-detail.html',
 })
 export class ClaimDetailComponent implements OnInit {
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private claimsService = inject(ClaimsOfficerService);
-  private authService = inject(AuthService);
-  private toast = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly claimsService = inject(ClaimsOfficerService);
+  private readonly authService = inject(AuthService);
+  private readonly toast = inject(ToastService);
   private readonly sanitizer = inject(DomSanitizer);
 
   claim = signal<ClaimDto | null>(null);

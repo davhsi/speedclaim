@@ -12,8 +12,8 @@ import { DateFormatPipe } from '../../../../shared/pipes/date-format.pipe';
   templateUrl: './grievance-detail.html',
 })
 export class GrievanceDetailComponent implements OnInit {
-  private route = inject(ActivatedRoute);
-  private grievanceService = inject(GrievanceService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly grievanceService = inject(GrievanceService);
   router = inject(Router);
 
   grievance = signal<GrievanceDto | null>(null);

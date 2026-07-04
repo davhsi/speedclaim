@@ -20,7 +20,7 @@
     <div class="step-animate space-y-3">
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label class="block text-[13px] font-medium text-body mb-1.5">Salutation</label>
+          <div class="block text-[13px] font-medium text-body mb-1.5">Salutation</div>
           <app-select formControlName="salutationTitle"
                       [options]="salutations"
                       placeholder="Select">
@@ -30,7 +30,7 @@
           }
         </div>
         <div>
-          <label class="block text-[13px] font-medium text-body mb-1.5">Gender</label>
+          <div class="block text-[13px] font-medium text-body mb-1.5">Gender</div>
           <app-select formControlName="gender"
                       [options]="genders"
                       placeholder="Select">
@@ -42,8 +42,8 @@
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label class="block text-[13px] font-medium text-body mb-1.5">First name</label>
-          <input type="text" formControlName="firstName" placeholder="First name">
+          <label for="register-first-name" class="block text-[13px] font-medium text-body mb-1.5">First name</label>
+          <input id="register-first-name" type="text" formControlName="firstName" placeholder="First name">
           @if (form.controls.firstName.touched && form.controls.firstName.errors?.['required']) {
             <p class="text-xs text-danger mt-0.5">First name is required.</p>
           } @else if (form.controls.firstName.touched && form.controls.firstName.errors?.['minlength']) {
@@ -51,16 +51,16 @@
           }
         </div>
         <div>
-          <label class="block text-[13px] font-medium text-body mb-1.5">Last name</label>
-          <input type="text" formControlName="lastName" placeholder="Last name">
+          <label for="register-last-name" class="block text-[13px] font-medium text-body mb-1.5">Last name</label>
+          <input id="register-last-name" type="text" formControlName="lastName" placeholder="Last name">
           @if (form.controls.lastName.touched && form.controls.lastName.errors?.['required']) {
             <p class="text-xs text-danger mt-0.5">Last name is required.</p>
           }
         </div>
       </div>
       <div>
-        <label class="block text-[13px] font-medium text-body mb-1.5">Email</label>
-        <input type="email" formControlName="email" placeholder="you@example.com" autocomplete="email">
+        <label for="register-email" class="block text-[13px] font-medium text-body mb-1.5">Email</label>
+        <input id="register-email" type="email" formControlName="email" placeholder="you@example.com" autocomplete="email">
         @if (form.controls.email.touched && form.controls.email.errors?.['required']) {
           <p class="text-xs text-danger mt-0.5">Email is required.</p>
         } @else if (form.controls.email.touched && form.controls.email.errors?.['email']) {
@@ -69,8 +69,8 @@
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label class="block text-[13px] font-medium text-body mb-1.5">Phone</label>
-          <input type="tel" formControlName="phone" placeholder="10-digit number">
+          <label for="register-phone" class="block text-[13px] font-medium text-body mb-1.5">Phone</label>
+          <input id="register-phone" type="tel" formControlName="phone" placeholder="10-digit number">
           @if (form.controls.phone.touched && form.controls.phone.errors?.['required']) {
             <p class="text-xs text-danger mt-0.5">Phone number is required.</p>
           } @else if (form.controls.phone.touched && form.controls.phone.errors?.['phone']) {
@@ -78,8 +78,8 @@
           }
         </div>
         <div>
-          <label class="block text-[13px] font-medium text-body mb-1.5">Date of birth</label>
-          <input type="date" formControlName="dateOfBirth">
+          <label for="register-dob" class="block text-[13px] font-medium text-body mb-1.5">Date of birth</label>
+          <input id="register-dob" type="date" formControlName="dateOfBirth">
           @if (form.controls.dateOfBirth.touched && form.controls.dateOfBirth.errors?.['required']) {
             <p class="text-xs text-danger mt-0.5">Date of birth is required.</p>
           } @else if (form.controls.dateOfBirth.touched && form.controls.dateOfBirth.errors?.['minAge']) {
@@ -88,7 +88,7 @@
         </div>
       </div>
       <div>
-        <label class="block text-[13px] font-medium text-body mb-1.5">Marital status</label>
+        <div class="block text-[13px] font-medium text-body mb-1.5">Marital status</div>
           <app-select formControlName="maritalStatus"
                       [options]="maritalStatuses"
                       placeholder="Select">
@@ -105,9 +105,9 @@
     <div class="step-animate space-y-3">
       <p class="text-xs font-semibold text-muted uppercase tracking-wide">Password</p>
       <div>
-        <label class="block text-[13px] font-medium text-body mb-1.5">Password</label>
+        <label for="register-password" class="block text-[13px] font-medium text-body mb-1.5">Password</label>
         <div class="relative">
-          <input [type]="showPassword() ? 'text' : 'password'" formControlName="password" placeholder="Min 8 characters" autocomplete="new-password" class="pr-10">
+          <input id="register-password" [type]="showPassword() ? 'text' : 'password'" formControlName="password" placeholder="Min 8 characters" autocomplete="new-password" class="pr-10">
           <button type="button" (click)="showPassword.set(!showPassword())" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-body">
             @if (showPassword()) {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
@@ -129,9 +129,9 @@
         }
       </div>
       <div>
-        <label class="block text-[13px] font-medium text-body mb-1.5">Confirm password</label>
+        <label for="register-confirm-password" class="block text-[13px] font-medium text-body mb-1.5">Confirm password</label>
         <div class="relative">
-          <input [type]="showConfirmPassword() ? 'text' : 'password'" formControlName="confirmPassword" placeholder="Repeat password" autocomplete="new-password" class="pr-10">
+          <input id="register-confirm-password" [type]="showConfirmPassword() ? 'text' : 'password'" formControlName="confirmPassword" placeholder="Repeat password" autocomplete="new-password" class="pr-10">
           <button type="button" (click)="showConfirmPassword.set(!showConfirmPassword())" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-body">
             @if (showConfirmPassword()) {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
@@ -152,8 +152,8 @@
       <p class="text-xs font-semibold text-muted uppercase tracking-wide">KYC Verification</p>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label class="block text-[13px] font-medium text-body mb-1.5">Aadhaar number</label>
-          <input type="text" formControlName="aadhaarNumber" placeholder="12-digit number" maxlength="12">
+          <label for="register-aadhaar" class="block text-[13px] font-medium text-body mb-1.5">Aadhaar number</label>
+          <input id="register-aadhaar" type="text" formControlName="aadhaarNumber" placeholder="12-digit number" maxlength="12">
           @if (form.controls.aadhaarNumber.touched && form.controls.aadhaarNumber.errors?.['required']) {
             <p class="text-xs text-danger mt-0.5">Aadhaar number is required.</p>
           } @else if (form.controls.aadhaarNumber.touched && form.controls.aadhaarNumber.errors?.['aadhaar']) {
@@ -161,8 +161,8 @@
           }
         </div>
         <div>
-          <label class="block text-[13px] font-medium text-body mb-1.5">PAN number</label>
-          <input type="text" formControlName="panNumber" placeholder="ABCDE1234F" maxlength="10" class="uppercase">
+          <label for="register-pan" class="block text-[13px] font-medium text-body mb-1.5">PAN number</label>
+          <input id="register-pan" type="text" formControlName="panNumber" placeholder="ABCDE1234F" maxlength="10" class="uppercase">
           @if (form.controls.panNumber.touched && form.controls.panNumber.errors?.['required']) {
             <p class="text-xs text-danger mt-0.5">PAN number is required.</p>
           } @else if (form.controls.panNumber.touched && form.controls.panNumber.errors?.['pan']) {
@@ -179,26 +179,26 @@
       <p class="text-xs font-semibold text-muted uppercase tracking-wide">Permanent Address</p>
       <div class="space-y-3" formGroupName="permanentAddress">
         <div>
-          <label class="block text-[13px] font-medium text-body mb-1.5">Address line 1</label>
-          <input type="text" formControlName="line1" placeholder="Street, building, flat number">
+          <label for="register-permanent-line1" class="block text-[13px] font-medium text-body mb-1.5">Address line 1</label>
+          <input id="register-permanent-line1" type="text" formControlName="line1" placeholder="Street, building, flat number">
           @if (form.controls.permanentAddress.controls.line1.touched && form.controls.permanentAddress.controls.line1.errors?.['required']) {
             <p class="text-xs text-danger mt-0.5">Address line 1 is required.</p>
           }
         </div>
         <div>
-          <label class="block text-[13px] font-medium text-body mb-1.5">Address line 2 (optional)</label>
-          <input type="text" formControlName="line2" placeholder="Landmark, area">
+          <label for="register-permanent-line2" class="block text-[13px] font-medium text-body mb-1.5">Address line 2 (optional)</label>
+          <input id="register-permanent-line2" type="text" formControlName="line2" placeholder="Landmark, area">
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-[13px] font-medium text-body mb-1.5">City</label>
-            <input type="text" formControlName="city" placeholder="City">
+            <label for="register-permanent-city" class="block text-[13px] font-medium text-body mb-1.5">City</label>
+            <input id="register-permanent-city" type="text" formControlName="city" placeholder="City">
             @if (form.controls.permanentAddress.controls.city.touched && form.controls.permanentAddress.controls.city.errors?.['required']) {
               <p class="text-xs text-danger mt-0.5">City is required.</p>
             }
           </div>
           <div>
-            <label class="block text-[13px] font-medium text-body mb-1.5">State</label>
+            <div class="block text-[13px] font-medium text-body mb-1.5">State</div>
             <app-select formControlName="state"
                         [options]="states"
                         placeholder="Select state"
@@ -211,8 +211,8 @@
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-[13px] font-medium text-body mb-1.5">Postal code</label>
-            <input type="text" formControlName="postalCode" placeholder="6-digit PIN" maxlength="6">
+            <label for="register-permanent-postal-code" class="block text-[13px] font-medium text-body mb-1.5">Postal code</label>
+            <input id="register-permanent-postal-code" type="text" formControlName="postalCode" placeholder="6-digit PIN" maxlength="6">
             @if (form.controls.permanentAddress.controls.postalCode.touched && form.controls.permanentAddress.controls.postalCode.errors?.['required']) {
               <p class="text-xs text-danger mt-0.5">Postal code is required.</p>
             } @else if (form.controls.permanentAddress.controls.postalCode.touched && form.controls.permanentAddress.controls.postalCode.errors?.['postalCode']) {
@@ -220,8 +220,8 @@
             }
           </div>
           <div>
-            <label class="block text-[13px] font-medium text-body mb-1.5">Country</label>
-            <input type="text" formControlName="country" readonly>
+            <label for="register-permanent-country" class="block text-[13px] font-medium text-body mb-1.5">Country</label>
+            <input id="register-permanent-country" type="text" formControlName="country" readonly>
           </div>
         </div>
       </div>
@@ -237,26 +237,26 @@
         <p class="text-xs font-semibold text-muted uppercase tracking-wide mt-3">Current Address</p>
         <div class="space-y-3" formGroupName="currentAddress">
           <div>
-            <label class="block text-[13px] font-medium text-body mb-1.5">Address line 1</label>
-            <input type="text" formControlName="line1" placeholder="Street, building, flat number">
+            <label for="register-current-line1" class="block text-[13px] font-medium text-body mb-1.5">Address line 1</label>
+            <input id="register-current-line1" type="text" formControlName="line1" placeholder="Street, building, flat number">
             @if (form.controls.currentAddress.controls.line1.touched && form.controls.currentAddress.controls.line1.errors?.['required']) {
               <p class="text-xs text-danger mt-0.5">Address line 1 is required.</p>
             }
           </div>
           <div>
-            <label class="block text-[13px] font-medium text-body mb-1.5">Address line 2 (optional)</label>
-            <input type="text" formControlName="line2" placeholder="Landmark, area">
+            <label for="register-current-line2" class="block text-[13px] font-medium text-body mb-1.5">Address line 2 (optional)</label>
+            <input id="register-current-line2" type="text" formControlName="line2" placeholder="Landmark, area">
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="block text-[13px] font-medium text-body mb-1.5">City</label>
-              <input type="text" formControlName="city" placeholder="City">
+              <label for="register-current-city" class="block text-[13px] font-medium text-body mb-1.5">City</label>
+              <input id="register-current-city" type="text" formControlName="city" placeholder="City">
               @if (form.controls.currentAddress.controls.city.touched && form.controls.currentAddress.controls.city.errors?.['required']) {
                 <p class="text-xs text-danger mt-0.5">City is required.</p>
               }
             </div>
             <div>
-              <label class="block text-[13px] font-medium text-body mb-1.5">State</label>
+              <div class="block text-[13px] font-medium text-body mb-1.5">State</div>
               <app-select formControlName="state"
                           [options]="states"
                           placeholder="Select state"
@@ -269,8 +269,8 @@
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="block text-[13px] font-medium text-body mb-1.5">Postal code</label>
-              <input type="text" formControlName="postalCode" placeholder="6-digit PIN" maxlength="6">
+              <label for="register-current-postal-code" class="block text-[13px] font-medium text-body mb-1.5">Postal code</label>
+              <input id="register-current-postal-code" type="text" formControlName="postalCode" placeholder="6-digit PIN" maxlength="6">
               @if (form.controls.currentAddress.controls.postalCode.touched && form.controls.currentAddress.controls.postalCode.errors?.['required']) {
                 <p class="text-xs text-danger mt-0.5">Postal code is required.</p>
               } @else if (form.controls.currentAddress.controls.postalCode.touched && form.controls.currentAddress.controls.postalCode.errors?.['postalCode']) {
@@ -278,8 +278,8 @@
               }
             </div>
             <div>
-              <label class="block text-[13px] font-medium text-body mb-1.5">Country</label>
-              <input type="text" formControlName="country" readonly>
+              <label for="register-current-country" class="block text-[13px] font-medium text-body mb-1.5">Country</label>
+              <input id="register-current-country" type="text" formControlName="country" readonly>
             </div>
           </div>
         </div>

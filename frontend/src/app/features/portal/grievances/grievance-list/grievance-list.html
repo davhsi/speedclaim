@@ -24,7 +24,10 @@
     <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
       @for (g of grievances(); track g.id) {
         <div class="flex items-center gap-3.5 px-[18px] py-4 border-b border-line cursor-pointer hover:bg-surface transition-colors"
-             (click)="router.navigate(['/grievances', g.id])">
+             (click)="router.navigate(['/grievances', g.id])"
+             tabindex="0" role="button"
+             (keydown.enter)="router.navigate(['/grievances', g.id])"
+             (keydown.space)="router.navigate(['/grievances', g.id]); $event.preventDefault()">
           <div class="flex-1 min-w-0">
             <div class="text-sm font-semibold text-ink truncate">{{ g.description }}</div>
             <div class="text-xs text-muted sc-numeric">{{ g.grievanceNumber }} · {{ g.category }} · {{ g.createdAt | dateFormat }}</div>

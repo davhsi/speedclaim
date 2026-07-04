@@ -15,12 +15,12 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
   templateUrl: './quote.html',
 })
 export class QuoteComponent implements OnInit {
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private fb = inject(FormBuilder);
-  private quoteService = inject(QuoteService);
-  private productService = inject(ProductService);
-  private toast = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly fb = inject(FormBuilder);
+  private readonly quoteService = inject(QuoteService);
+  private readonly productService = inject(ProductService);
+  private readonly toast = inject(ToastService);
 
   products = signal<ProductDto[]>([]);
   preselectedProduct = signal<ProductDto | null>(null);

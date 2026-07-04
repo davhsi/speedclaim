@@ -5,7 +5,7 @@ import { ProductDto, DocumentRequirementDto } from '../../../../core/models/api.
 
 @Injectable({ providedIn: 'root' })
 export class ProductService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
   private readonly apiUrl = '/api/v1/products';
 
   getAll(): Observable<ProductDto[]> {

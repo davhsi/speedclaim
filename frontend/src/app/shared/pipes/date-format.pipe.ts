@@ -7,7 +7,7 @@ export class DateFormatPipe implements PipeTransform {
   transform(value: string | null | undefined, format: 'short' | 'long' = 'short'): string {
     if (!value) return '';
     const d = new Date(value);
-    if (isNaN(d.getTime())) return value;
+    if (Number.isNaN(d.getTime())) return value;
     const day = d.getDate().toString().padStart(2, '0');
     const month = MONTHS[d.getMonth()];
     const year = d.getFullYear();

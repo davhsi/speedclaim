@@ -12,11 +12,11 @@ import { passwordStrengthValidator, matchPasswordValidator } from '../../../shar
   templateUrl: './reset-password.html',
 })
 export class ResetPasswordComponent implements OnInit {
-  private fb = inject(FormBuilder);
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private authService = inject(AuthService);
-  private toast = inject(ToastService);
+  private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
+  private readonly toast = inject(ToastService);
 
   loading = signal(false);
   success = signal(false);

@@ -14,7 +14,7 @@ import { DateFormatPipe } from '../../../../shared/pipes/date-format.pipe';
   templateUrl: './payment-history.html',
 })
 export class PaymentHistoryComponent implements OnInit {
-  private paymentService = inject(PaymentService);
+  private readonly paymentService = inject(PaymentService);
   payments = signal<PaymentRecordDto[]>([]);
   loading = signal(true);
   receipt = signal<PaymentRecordDto | null>(null);

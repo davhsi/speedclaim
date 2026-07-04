@@ -20,7 +20,7 @@
   } @else {
     <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
       @for (n of pagedNotifications(); track n.id) {
-        <div class="flex gap-[13px] px-[18px] py-4 border-b border-line cursor-pointer hover:bg-surface transition-colors"
+        <button type="button" class="w-full text-left bg-transparent border-0 flex gap-[13px] px-[18px] py-4 border-b border-line cursor-pointer hover:bg-surface transition-colors"
              [class.bg-primary-light/20]="!n.isRead"
              (click)="markRead(n)">
           <div class="w-9 h-9 rounded-full bg-primary-light flex items-center justify-center shrink-0">
@@ -34,7 +34,7 @@
           @if (!n.isRead) {
             <span class="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5"></span>
           }
-        </div>
+        </button>
       }
     </div>
     <div class="px-4 border-t border-line">
