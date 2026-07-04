@@ -13,7 +13,7 @@ Persistent context for AI sessions. Read this before touching any code.
 - **Payments**: Stripe (backend PaymentIntents + frontend Stripe Elements checkout)
 - **Email**: MailKit over SMTP (Gmail App Password); templates stored in DB (see §12)
 - **Auth**: JWT Bearer tokens, validated per-request against session + user state (see §13)
-- **Tests**: backend NUnit 4 + Moq (NOT xUnit — attributes are `[TestFixture]`/`[Test]`, asserts are `Assert.That`), 453 tests, all passing; frontend Vitest via `ng test`
+- **Tests**: backend NUnit 4 + Moq (NOT xUnit — attributes are `[TestFixture]`/`[Test]`, asserts are `Assert.That`), 473 tests, all passing; frontend Vitest via `ng test`
 
 ---
 
@@ -36,7 +36,7 @@ InsuranceApp/
 │   │   ├── Swagger/             # AuthorizeOperationFilter
 │   │   ├── appsettings.json     # Non-secret defaults (committed)
 │   │   └── appsettings.Development.json  # ALL secrets (git-ignored)
-│   └── SpeedClaim.Tests/        # xUnit test project
+│   └── SpeedClaim.Tests/        # NUnit test project (see Tests line above — NOT xUnit)
 ├── frontend/                    # Angular 21 app
 │   ├── src/app/
 │   │   ├── core/                # Guards, interceptors, services, models
@@ -116,7 +116,7 @@ EF Core is configured with `UseSnakeCaseNamingConvention()`. All DB columns are 
 Policy start/end dates, DOB, and similar fields use `DateOnly` (not `DateTime`). Npgsql maps these to `date` columns in Postgres. DTOs and tests must use `DateOnly`, not `DateTime` or `string`.
 
 ### 3. AES-256-CBC encryption for KYC
-`KycRecord.IdNumber` stores Aadhaar/PAN encrypted with AES-256-CBC:
+`KycRecord.AadhaarNumber` and `KycRecord.PanNumber` (separate fields since the `RefactorKycToDualDocument` migration — not a single `IdNumber` field) store Aadhaar/PAN encrypted with AES-256-CBC:
 - Random 16-byte IV generated per call → prepended to ciphertext → single Base64 blob stored in DB
 - Same plaintext encrypts to different ciphertext every time (prevents frequency analysis)
 - Key: 32-byte value in `appsettings.Development.json` under `SecuritySettings:EncryptionKey`
@@ -184,9 +184,13 @@ All DB access goes through `IUnitOfWork` → `IRepository<T>`. Direct `DbContext
 - Swagger auto-documents the header via `IdempotencyOperationFilter`
 
 **Layer 2 — Stripe idempotency keys** (`FinanceService`):
-- `PayPremiumAsync` → `RequestOptions { IdempotencyKey = "pay-premium-{scheduleId}" }`
-- `ProcessClaimPayoutAsync` → `RequestOptions { IdempotencyKey = "claim-payout-{claimId}" }`
+- `PayPremiumAsync` → `RequestOptions { IdempotencyKey = "pay-premium-{scheduleId}-inr" }`
+- `ProcessClaimPayoutAsync` → `RequestOptions { IdempotencyKey = "claim-payout-{claimId}-inr" }`
+- `ProcessRefundAsync` → `RequestOptions { IdempotencyKey = "refund-{payment.Id}" }`
 - Deterministic keys prevent duplicate Stripe charges even without the header middleware
+- The `-inr` suffix exists because Stripe idempotency keys are tied to their exact request
+  params for 24h — reusing a key after the currency/params changed throws `idempotency_error`.
+  If request params change again in the future, version the suffix again rather than reusing.
 
 **Layer 3 — Webhook event deduplication** (`PaymentsController.StripeWebhook`):
 - `ProcessedWebhookEvent` table tracks Stripe event IDs (`stripe_event_id`, unique indexed)
@@ -260,6 +264,30 @@ returns 405.
 a mismatched property name binds as null/default *silently* (this broke the family
 members feature once: frontend sent `salutationTitle`/`name`, backend wanted
 `salutation`/`firstName`/`lastName`).
+
+### 19. Payments run in INR on a US-domiciled Stripe test account
+
+Indian Stripe onboarding is halted for this account, so it's a **US test account** paying
+in **INR** — Stripe accounts can charge in a currency other than their home country's, so
+this works fine for card payments. Practical consequences:
+- All `PaymentIntent`/amount math is in paise (`Math.Round(amount * 100)`), `Currency = "inr"`.
+- **UPI is not available and cannot be added** — it's a Stripe platform restriction limited
+  to India-domiciled accounts, not a code gap. Don't spend time trying to enable it via
+  `AutomaticPaymentMethods` or similar; it was verified directly against the Stripe API.
+  Card (and Stripe Link) are the only payment methods this account can offer.
+- Webhook (`PaymentsController.StripeWebhook`) handles both `payment_intent.succeeded`
+  (→ `ReconcilePaymentAsync`) and `payment_intent.payment_failed`
+  (→ `MarkPaymentFailedByStripeIntentAsync`, only downgrades a still-`Pending` payment —
+  never overwrites an already-`Paid` one).
+- `ProcessRefundAsync` creates a **real** Stripe refund (not a local-only status flip):
+  requires the payment to be `Paid` (else `UnprocessableException`), rejects an
+  already-`Refunded` payment (`ConflictException`), tolerates Stripe's
+  `charge_already_refunded` error code as a no-op success, and skips the Stripe call
+  entirely if the payment has no `StripePaymentIntentId` (pre-Stripe-integration legacy rows).
+- Reconciliation email/notification sends are **post-commit best-effort**
+  (`FinanceService.SendEmailBestEffortAsync`): the DB write via `CompleteAsync()` happens
+  first and is what the customer's payment status depends on; a failed email is logged and
+  swallowed, never rolls back or blocks the financial state change.
 
 ---
 
@@ -390,7 +418,7 @@ These appear during `dotnet ef database update` and at runtime. They are real ar
 - **Tailwind CSS 4** via `@tailwindcss/postcss`
 - **RxJS 7.8** for reactive state
 - **Vitest** for unit testing (not Karma/Jasmine)
-- Dev proxy in `proxy.conf.js` forwards `/api/*` → `http://localhost:5062`
+- Dev proxy in `proxy.conf.js` forwards `/api` and `/uploads` → `http://localhost:5062` (see §15 — never add other bare paths)
 
 ### Feature Modules (role-based routing)
 
@@ -426,8 +454,20 @@ Custom pipes: `date-format`, `money`, `time-ago`.
 - Backend `POST /api/v1/payments/pay/{scheduleId}` returns `clientSecret` +
   `publishableKey` (from `Stripe:PublishableKey` in appsettings — must be set in
   `appsettings.Development.json` or the UI shows "Payment configuration error")
-- Flow: create intent → mount Payment Element → `confirmPayment(redirect: 'if_required')`
-  → refresh schedule; webhook + reconcile handle the backend side
+- The Payment Element mounts into its own dedicated, always-present div
+  (`#stripe-payment-element-mount`) — **never** clear that div's `innerHTML` manually;
+  doing so previously wiped Angular's own loading skeleton out from under itself and left
+  a blank modal for several seconds (a real regression, now fixed).
+- The checkout modal stays open through the entire post-charge sequence instead of closing
+  the instant Stripe confirms — it shows a 2-phase result: success checkmark + amount, then
+  "Confirming with SpeedClaim…" while `waitForReconciliation()` polls the schedule (webhook
+  lag between Stripe's success and the DB flipping to `Paid` can take several seconds in
+  production), then a final "Confirmed — installment marked as Paid" state. Closing is
+  disabled once the charge has succeeded but reconciliation hasn't landed yet, so a customer
+  can't accidentally lose track of a charged-but-unconfirmed payment.
+- Declined cards show Stripe's inline error plus "You haven't been charged" reassurance,
+  and the customer can retry in the same modal without losing their place.
+- See §19 for the INR/US-account/UPI details and the webhook/refund backend behavior.
 
 ### Profile rules (backend-enforced, frontend-mirrored)
 Once KYC is **Approved**, `firstName`, `lastName`, and `dateOfBirth` are locked:
@@ -458,9 +498,9 @@ Aadhaar and PAN uploads now enforce uniqueness across users:
 - **P2-B scheduled email reminders** (`PremiumDueReminder`, `PolicyExpiryReminder`):
   need a `BackgroundService` + `PeriodicTimer`; deliberately deferred. All other
   notifications are event-driven and implemented.
-- `updateFamilyMember` exists in `profile.service.ts` + backend PATCH endpoint, but no
-  UI calls it yet (add-only flow in the UI).
 - In-memory `IDistributedCache` for idempotency — swap for Redis only if productionizing.
+- 3D Secure / RBI e-mandate authentication flow for real Indian cards — not yet tested against
+  this Stripe integration (deferred by explicit choice: card + webhook UX was prioritized first).
 
 ---
 
@@ -468,7 +508,7 @@ Aadhaar and PAN uploads now enforce uniqueness across users:
 
 - [ ] Postman workspace with all endpoints preloaded + auth pre-request script
 - [ ] DB seeded with realistic data covering all scenarios
-- [ ] 100% service layer test coverage (currently 453 tests, all passing)
+- [ ] 100% service layer test coverage (currently 473 tests, all passing)
 - [ ] No unhandled exceptions (GlobalExceptionMiddleware covers all routes)
 - [ ] Clean git commits with descriptive messages (see Commit Message Rules — no AI attribution)
 - [ ] All EF migrations applied (`dotnet ef database update`) — DB-seeded email templates are load-bearing
