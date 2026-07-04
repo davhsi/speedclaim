@@ -75,8 +75,8 @@
 
         <!-- Damage description -->
         <div class="mb-3.5">
-          <div class="text-[13px] font-semibold text-ink mb-[7px]">Damage description <span class="text-danger">*</span></div>
-          <textarea [(ngModel)]="desc" (ngModelChange)="saveDraft()" placeholder="Describe visible damage — panels, components, frame, fluids…"
+          <label for="survey-damage-description" class="text-[13px] font-semibold text-ink mb-[7px] block">Damage description <span class="text-danger">*</span></label>
+          <textarea id="survey-damage-description" [(ngModel)]="desc" (ngModelChange)="saveDraft()" placeholder="Describe visible damage — panels, components, frame, fluids…"
                     rows="4"
                     class="w-full px-3 py-[11px] rounded-[10px] text-sm text-ink bg-white resize-none outline-none leading-relaxed transition-colors"
                     [class]="descErr() ? 'border-[1.5px] border-danger' : 'border-[1.5px] border-line focus:border-primary'"></textarea>
@@ -87,10 +87,10 @@
 
         <!-- Estimated repair cost -->
         <div class="mb-3.5">
-          <div class="text-[13px] font-semibold text-ink mb-[7px]">Estimated repair cost <span class="text-danger">*</span></div>
+          <label for="survey-repair-cost" class="text-[13px] font-semibold text-ink mb-[7px] block">Estimated repair cost <span class="text-danger">*</span></label>
           <div class="relative">
             <span class="absolute left-[13px] top-1/2 -translate-y-1/2 text-[15px] font-semibold text-muted pointer-events-none">₹</span>
-            <input type="number" [(ngModel)]="cost" (ngModelChange)="saveDraft()" placeholder="0.00"
+            <input id="survey-repair-cost" type="number" [(ngModel)]="cost" (ngModelChange)="saveDraft()" placeholder="0.00"
                    class="w-full h-12 pl-[30px] pr-3 rounded-[10px] text-[15px] font-semibold text-ink bg-white outline-none sc-numeric transition-colors"
                    [class]="costErr() ? 'border-[1.5px] border-danger' : 'border-[1.5px] border-line focus:border-primary'" />
           </div>
@@ -101,10 +101,10 @@
 
         <!-- Pre-accident value -->
         <div class="mb-3.5">
-          <div class="text-[13px] font-semibold text-ink mb-[7px]">Pre-accident market value <span class="text-[11px] font-normal text-muted">(IDV)</span></div>
+          <label for="survey-pre-accident-value" class="text-[13px] font-semibold text-ink mb-[7px] block">Pre-accident market value <span class="text-[11px] font-normal text-muted">(IDV)</span></label>
           <div class="relative">
             <span class="absolute left-[13px] top-1/2 -translate-y-1/2 text-[15px] font-semibold text-muted pointer-events-none">₹</span>
-            <input type="number" [(ngModel)]="pav" (ngModelChange)="saveDraft()" placeholder="0.00"
+            <input id="survey-pre-accident-value" type="number" [(ngModel)]="pav" (ngModelChange)="saveDraft()" placeholder="0.00"
                    class="w-full h-12 pl-[30px] pr-3 border-[1.5px] border-line rounded-[10px] text-[15px] font-semibold text-ink bg-white outline-none sc-numeric" />
           </div>
         </div>
@@ -141,15 +141,15 @@
 
         <!-- Recommended workshop -->
         <div class="mb-3.5">
-          <div class="text-[13px] font-semibold text-ink mb-[7px]">Recommended workshop</div>
-          <input type="text" [(ngModel)]="workshop" (ngModelChange)="saveDraft()" placeholder="e.g. Mahindra First Choice, Koramangala"
+          <label for="survey-workshop" class="text-[13px] font-semibold text-ink mb-[7px] block">Recommended workshop</label>
+          <input id="survey-workshop" type="text" [(ngModel)]="workshop" (ngModelChange)="saveDraft()" placeholder="e.g. Mahindra First Choice, Koramangala"
                  class="w-full h-[46px] px-[13px] border-[1.5px] border-line rounded-[10px] text-sm text-ink bg-white outline-none" />
         </div>
 
         <!-- Surveyor notes -->
         <div class="mb-1.5">
-          <div class="text-[13px] font-semibold text-ink mb-[7px]">Surveyor observations</div>
-          <textarea [(ngModel)]="notes" (ngModelChange)="saveDraft()" placeholder="Additional notes, discrepancies, or context for the claims officer…"
+          <label for="survey-notes" class="text-[13px] font-semibold text-ink mb-[7px] block">Surveyor observations</label>
+          <textarea id="survey-notes" [(ngModel)]="notes" (ngModelChange)="saveDraft()" placeholder="Additional notes, discrepancies, or context for the claims officer…"
                     rows="3"
                     class="w-full px-3 py-[11px] border-[1.5px] border-line rounded-[10px] text-sm text-ink bg-white resize-none outline-none leading-relaxed"></textarea>
         </div>
@@ -172,7 +172,10 @@
                [class]="photos().length
                  ? 'border-success bg-success-bg'
                  : photoErr() ? 'border-danger bg-danger-bg' : 'border-[#C5CBD3] bg-[#FAFBFC]'"
-               (click)="photoInput.click()">
+               tabindex="0"
+               role="button"
+               (click)="photoInput.click()"
+               (keydown.enter)="photoInput.click()">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
                  [attr.stroke]="photos().length ? '#1F9D6B' : '#6B7685'"
                  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-1.5">
@@ -183,7 +186,7 @@
             </div>
             <div class="text-[11px] text-muted mt-[3px]">Tap to take photo or choose from gallery</div>
           </div>
-          <input #photoInput type="file" accept="image/*" multiple class="hidden" (change)="onPhotoChange($event)" />
+          <input #photoInput type="file" accept="image/*" multiple class="hidden" aria-label="Add damage photos" (change)="onPhotoChange($event)" />
           @if (photos().length) {
             <div class="flex gap-2 flex-wrap mt-[9px]">
               @for (p of photos(); track p.name; let i = $index) {
@@ -218,7 +221,10 @@
           </div>
           <div class="border-[1.5px] border-dashed border-[#C5CBD3] rounded-[12px] py-[13px] px-3.5 flex items-center gap-3 cursor-pointer bg-[#FAFBFC] hover:bg-surface-alt transition-colors"
                [class]="reportDocumentErr() ? 'border-danger bg-danger-bg' : ''"
-               (click)="docInput.click()">
+               tabindex="0"
+               role="button"
+               (click)="docInput.click()"
+               (keydown.enter)="docInput.click()">
             <div class="w-[38px] h-[38px] rounded-[10px] bg-primary-light flex items-center justify-center shrink-0">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F6E8C" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
@@ -232,7 +238,7 @@
               <div class="text-[11px] text-muted mt-0.5">This file is stored as the official survey report</div>
             </div>
           </div>
-          <input #docInput type="file" accept=".pdf,.jpg,.jpeg,.png" class="hidden" (change)="onDocChange($event)" />
+          <input #docInput type="file" accept=".pdf,.jpg,.jpeg,.png" class="hidden" aria-label="Add survey report document" (change)="onDocChange($event)" />
           @if (reportDocument(); as d) {
             <div class="mt-2 flex flex-col gap-[5px]">
               <div class="flex items-center gap-[9px] bg-surface border border-line rounded-lg px-[11px] py-2">

@@ -281,6 +281,8 @@ export class ClaimDetailComponent implements OnInit {
   }
 
   safePreviewUrl(doc: SubmittedDocumentDto): SafeResourceUrl {
+    // filePath is server-generated (LocalStorageService writes uploads/<folder>/<guid>.<ext>
+    // with an allowlisted extension) — never a raw user-supplied path or URL.
     return this.sanitizer.bypassSecurityTrustResourceUrl('/' + doc.filePath);
   }
 

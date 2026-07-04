@@ -41,7 +41,7 @@ set_verified() {
 get_uid() {
   local id
   id=$(db "SELECT id FROM users WHERE email = '$1'")
-  [ -z "$id" ] && die "User '$1' not found in DB — registration may have failed before committing"
+  [[ -z "$id" ]] && die "User '$1' not found in DB — registration may have failed before committing"
   echo "$id"
 }
 
@@ -82,7 +82,7 @@ register_staff() {
       \"gender\": \"$gender\",
       \"maritalStatus\": \"Married\"
     }")
-  [ "$http_code" = "200" ] || [ "$http_code" = "500" ] \
+  [[ "$http_code" = "200" ]] || [[ "$http_code" = "500" ]] \
     || die "Staff registration for $email returned HTTP $http_code (expected 200 or 500 for SMTP-only failure)"
 }
 
@@ -171,7 +171,10 @@ DELETE FROM branches;
 DELETE FROM processed_webhook_events;
 CLEANSQL
 
-# Ensure admin password is Password@123 (hash may differ on fresh migrations)
+# Ensure admin password is Password@123 (hash may differ on fresh migrations).
+# This is a fixed local dev/demo credential for the seeded test admin account only
+# (already declared in plaintext a few lines down for the login call) — not a
+# production secret, so the bcrypt hash below is intentionally checked in.
 psql $PGARGS > /dev/null << 'ADMINSQL'
 UPDATE users
   SET email                  = 'davish2204@gmail.com',
@@ -180,10 +183,10 @@ UPDATE users
       locked_until           = NULL
 WHERE id = '11111111-1111-1111-1111-111111111111';
 ADMINSQL
-[ -f "$DOCS/aadhar-dummy.pdf" ]   || die "Missing: $DOCS/aadhar-dummy.pdf"
-[ -f "$DOCS/pan-dummy.pdf" ]      || die "Missing: $DOCS/pan-dummy.pdf"
-[ -f "$DOCS/dummy-document.pdf" ] || die "Missing: $DOCS/dummy-document.pdf"
-[ -f "$ENV_FILE" ]                || die "Missing Postman env file: $ENV_FILE"
+[[ -f "$DOCS/aadhar-dummy.pdf" ]]   || die "Missing: $DOCS/aadhar-dummy.pdf"
+[[ -f "$DOCS/pan-dummy.pdf" ]]      || die "Missing: $DOCS/pan-dummy.pdf"
+[[ -f "$DOCS/dummy-document.pdf" ]] || die "Missing: $DOCS/dummy-document.pdf"
+[[ -f "$ENV_FILE" ]]                || die "Missing Postman env file: $ENV_FILE"
 log "Preflight OK"
 
 # Auth rate limiter: 10 req/60 s (fixed server-aligned window).
@@ -199,7 +202,7 @@ log "Logging in as admin..."
 ADMIN_RESP=$(login "davish2204@gmail.com" "Password@123")
 ADMIN_TOKEN=$(token_of "$ADMIN_RESP")
 ADMIN_USER_ID=$(uid_of "$ADMIN_RESP")
-[ -z "$ADMIN_TOKEN" ] && die "Admin login failed — check credentials or DB seed"
+[[ -z "$ADMIN_TOKEN" ]] && die "Admin login failed — check credentials or DB seed"
 log "Admin ID: $ADMIN_USER_ID"
 
 # ============================================================
@@ -269,7 +272,7 @@ curl -sf -X POST "$BASE/auth/admin/register-agent" \
   }' > /dev/null
 AG_USER_ID=$(get_uid "davishthedelicious@gmail.com")
 AG_RECORD_ID=$(db "SELECT id FROM agents WHERE user_id = '$AG_USER_ID'")
-[ -z "$AG_RECORD_ID" ] && die "Agent record not found — registration likely failed"
+[[ -z "$AG_RECORD_ID" ]] && die "Agent record not found — registration likely failed"
 log "Agent user ID: $AG_USER_ID | record ID: $AG_RECORD_ID"
 
 # ============================================================
@@ -288,7 +291,7 @@ BRANCH_RESP=$(curl -sf -X POST "$BASE/agents/branches" \
     "email":   "mumbai@speedclaim.in"
   }')
 BRANCH_ID=$(J '.id' "$BRANCH_RESP")
-[ -z "$BRANCH_ID" ] && die "Branch creation failed"
+[[ -z "$BRANCH_ID" ]] && die "Branch creation failed"
 log "Branch ID: $BRANCH_ID"
 
 info "Assigning agent to branch..."
@@ -335,13 +338,13 @@ C1_HTTP=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/auth/register" \
     "gender": "Male",
     "maritalStatus": "Single"
   }')
-[ "$C1_HTTP" = "200" ] || [ "$C1_HTTP" = "500" ] || die "Customer 1 registration returned HTTP $C1_HTTP (expected 200 or 500 for SMTP-only failure)"
+[[ "$C1_HTTP" = "200" ]] || [[ "$C1_HTTP" = "500" ]] || die "Customer 1 registration returned HTTP $C1_HTTP (expected 200 or 500 for SMTP-only failure)"
 set_verified "davish.cs22@bitsathy.ac.in"
 C1_RESP=$(login "davish.cs22@bitsathy.ac.in" "Password@123")
 C1_TOKEN=$(token_of "$C1_RESP")
 C1_USER_ID=$(uid_of "$C1_RESP")
 C1_RECORD_ID=$(db "SELECT id FROM customers WHERE user_id = '$C1_USER_ID'")
-[ -z "$C1_RECORD_ID" ] && die "Customer 1 record not found"
+[[ -z "$C1_RECORD_ID" ]] && die "Customer 1 record not found"
 log "Customer 1 user ID: $C1_USER_ID | record ID: $C1_RECORD_ID"
 
 # Auth rate limiter: 10 req/60 s. Wait for the fixed window to reset before
@@ -375,13 +378,13 @@ C2_HTTP=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/auth/register" \
     "gender": "Female",
     "maritalStatus": "Single"
   }')
-[ "$C2_HTTP" = "200" ] || [ "$C2_HTTP" = "500" ] || die "Customer 2 registration returned HTTP $C2_HTTP (expected 200 or 500 for SMTP-only failure)"
+[[ "$C2_HTTP" = "200" ]] || [[ "$C2_HTTP" = "500" ]] || die "Customer 2 registration returned HTTP $C2_HTTP (expected 200 or 500 for SMTP-only failure)"
 set_verified "priya.patel@example.com"
 C2_RESP=$(login "priya.patel@example.com" "Password@123")
 C2_TOKEN=$(token_of "$C2_RESP")
 C2_USER_ID=$(uid_of "$C2_RESP")
 C2_RECORD_ID=$(db "SELECT id FROM customers WHERE user_id = '$C2_USER_ID'")
-[ -z "$C2_RECORD_ID" ] && die "Customer 2 record not found"
+[[ -z "$C2_RECORD_ID" ]] && die "Customer 2 record not found"
 log "Customer 2 user ID: $C2_USER_ID | record ID: $C2_RECORD_ID"
 
 # ============================================================
@@ -463,7 +466,7 @@ PROP1_RESP=$(curl -sf -X POST "$BASE/proposals" \
     }]
   }")
 PROPOSAL_ID=$(J '.id' "$PROP1_RESP")
-[ -z "$PROPOSAL_ID" ] && die "Proposal 1 submission failed: $PROP1_RESP"
+[[ -z "$PROPOSAL_ID" ]] && die "Proposal 1 submission failed: $PROP1_RESP"
 log "Proposal 1 ID: $PROPOSAL_ID"
 
 info "Submitting Proposal 2 (Customer 2 — stays under review)..."
@@ -499,7 +502,7 @@ PROP2_RESP=$(curl -sf -X POST "$BASE/proposals" \
     }]
   }")
 PROPOSAL_ID_UNDER_REVIEW=$(J '.id' "$PROP2_RESP")
-[ -z "$PROPOSAL_ID_UNDER_REVIEW" ] && die "Proposal 2 submission failed: $PROP2_RESP"
+[[ -z "$PROPOSAL_ID_UNDER_REVIEW" ]] && die "Proposal 2 submission failed: $PROP2_RESP"
 log "Proposal 2 ID (under review): $PROPOSAL_ID_UNDER_REVIEW"
 
 # ============================================================
@@ -519,14 +522,14 @@ info "Fetching policies for Customer 1..."
 POLICIES_RESP=$(curl -sf -X GET "$BASE/policies/my" \
   -H "Authorization: Bearer $C1_TOKEN")
 POLICY_ID=$(J '.[0].id' "$POLICIES_RESP")
-[ -z "$POLICY_ID" ] && die "Policy not found for Customer 1 after proposal approval"
+[[ -z "$POLICY_ID" ]] && die "Policy not found for Customer 1 after proposal approval"
 log "Policy ID: $POLICY_ID"
 
 info "Fetching premium schedule..."
 SCHEDULE_RESP=$(curl -sf -X GET "$BASE/payments/schedule/$POLICY_ID" \
   -H "Authorization: Bearer $C1_TOKEN")
 SCHEDULE_ID=$(J '.[0].id' "$SCHEDULE_RESP")
-[ -z "$SCHEDULE_ID" ] && die "Premium schedule not found for policy $POLICY_ID"
+[[ -z "$SCHEDULE_ID" ]] && die "Premium schedule not found for policy $POLICY_ID"
 log "Schedule ID: $SCHEDULE_ID"
 
 # ============================================================
@@ -595,7 +598,7 @@ PROP3_RESP=$(curl -sf -X POST "$BASE/proposals" \
     }]
   }")
 PROP3_ID=$(J '.id' "$PROP3_RESP")
-[ -z "$PROP3_ID" ] && die "Proposal 3 submission failed: $PROP3_RESP"
+[[ -z "$PROP3_ID" ]] && die "Proposal 3 submission failed: $PROP3_RESP"
 log "Proposal 3 ID: $PROP3_ID"
 
 info "Approving Proposal 3 (creates Pending policy for cancel demo)..."
@@ -608,7 +611,7 @@ curl -sf -X POST "$BASE/proposals/$PROP3_ID/review" \
 CANCEL_POLICY_ID=$(curl -sf -X GET "$BASE/policies/my" \
   -H "Authorization: Bearer $C1_TOKEN" | \
   jq -r "[.[] | select(.id != \"$POLICY_ID\")] | .[0].id // empty")
-[ -z "$CANCEL_POLICY_ID" ] && die "Cancellable policy not found after Proposal 3 approval"
+[[ -z "$CANCEL_POLICY_ID" ]] && die "Cancellable policy not found after Proposal 3 approval"
 log "Cancellable Policy ID: $CANCEL_POLICY_ID"
 
 # ============================================================
@@ -632,7 +635,7 @@ CLAIM_RESP=$(curl -sf -X POST "$BASE/claims/intimate" \
     \"incidentDescription\":    \"Emergency hospitalisation for appendicitis. Requesting reimbursement for surgery and post-op care.\"
   }")
 CLAIM_ID=$(J '.id' "$CLAIM_RESP")
-[ -z "$CLAIM_ID" ] && die "Claim intimation failed: $CLAIM_RESP"
+[[ -z "$CLAIM_ID" ]] && die "Claim intimation failed: $CLAIM_RESP"
 log "Claim ID: $CLAIM_ID"
 
 # ============================================================
@@ -653,7 +656,7 @@ MOTOR_CLAIM_RESP=$(curl -sf -X POST "$BASE/claims/intimate" \
     \"incidentDescription\":  \"Vehicle rear-ended by truck on highway. Bumper and boot panel damaged. Requesting repair reimbursement.\"
   }")
 MOTOR_CLAIM_ID=$(J '.id' "$MOTOR_CLAIM_RESP")
-[ -z "$MOTOR_CLAIM_ID" ] && die "Accident claim intimation failed: $MOTOR_CLAIM_RESP"
+[[ -z "$MOTOR_CLAIM_ID" ]] && die "Accident claim intimation failed: $MOTOR_CLAIM_RESP"
 log "Motor/Accident Claim ID: $MOTOR_CLAIM_ID"
 
 # ============================================================
@@ -671,7 +674,7 @@ GRIEVANCE_RESP=$(curl -sf -X POST "$BASE/grievances" \
     \"description\": \"Claim submitted over a week ago with no status update. Requesting expedited review of my hospitalisation claim.\"
   }")
 GRIEVANCE_ID=$(J '.id' "$GRIEVANCE_RESP")
-[ -z "$GRIEVANCE_ID" ] && die "Grievance creation failed: $GRIEVANCE_RESP"
+[[ -z "$GRIEVANCE_ID" ]] && die "Grievance creation failed: $GRIEVANCE_RESP"
 log "Grievance ID: $GRIEVANCE_ID"
 
 # ============================================================

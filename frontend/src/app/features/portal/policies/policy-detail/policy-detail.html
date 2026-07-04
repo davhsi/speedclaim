@@ -138,8 +138,8 @@
               <div class="p-5 bg-surface rounded-card border border-line mb-4 space-y-3" [formGroup]="endorsementForm">
                 <div class="text-[13px] font-semibold text-ink mb-2">Request an endorsement</div>
                 <div>
-                  <label class="block text-xs text-muted mb-1.5">Type</label>
-                  <select formControlName="endorsementType" class="text-sm h-[42px]">
+                  <label for="endorsement-type" class="block text-xs text-muted mb-1.5">Type</label>
+                  <select id="endorsement-type" formControlName="endorsementType" class="text-sm h-[42px]">
                     <option value="NomineeChange">Nominee Change</option>
                     <option value="AddressChange">Address Change</option>
                     <option value="ContactUpdate">Contact Update</option>
@@ -148,8 +148,8 @@
                   </select>
                 </div>
                 <div>
-                  <label class="block text-xs text-muted mb-1.5">Description</label>
-                  <textarea formControlName="description" rows="3" placeholder="Describe the change..." class="text-sm"
+                  <label for="endorsement-description" class="block text-xs text-muted mb-1.5">Description</label>
+                  <textarea id="endorsement-description" formControlName="description" rows="3" placeholder="Describe the change..." class="text-sm"
                             [class.border-danger]="endorsementForm.controls.description.invalid && endorsementForm.controls.description.touched"></textarea>
                   @if (endorsementForm.controls.description.touched && endorsementForm.controls.description.errors) {
                     <div class="text-[11px] text-danger mt-1">

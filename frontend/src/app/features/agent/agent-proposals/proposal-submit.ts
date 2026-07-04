@@ -151,11 +151,11 @@ export class AgentProposalSubmitComponent implements OnInit {
   }
 
   private parseMoney(val: string): number {
-    return parseInt(val.replace(/[₹,\s]/g, ''), 10) || 0;
+    return Number.parseInt(val.replace(/[₹,\s]/g, ''), 10) || 0;
   }
 
   private parseTerm(val: string): number {
-    return parseInt(val, 10) || 0;
+    return Number.parseInt(val, 10) || 0;
   }
 
   private submitProposal(): void {

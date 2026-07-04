@@ -19,8 +19,8 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
       <div>
-        <label class="block text-[13px] font-medium mb-1.5">Related policy</label>
-        <select formControlName="policyId" class="h-[42px]">
+        <label for="grievance-policy" class="block text-[13px] font-medium mb-1.5">Related policy</label>
+        <select id="grievance-policy" formControlName="policyId" class="h-[42px]">
           <option value="">No policy selected</option>
           @for (policy of policies(); track policy.id) {
             <option [value]="policy.id">{{ policy.policyNumber }} · {{ policy.productName }}</option>
@@ -29,8 +29,8 @@
       </div>
 
       <div>
-        <label class="block text-[13px] font-medium mb-1.5">Related claim</label>
-        <select formControlName="claimId" class="h-[42px]">
+        <label for="grievance-claim" class="block text-[13px] font-medium mb-1.5">Related claim</label>
+        <select id="grievance-claim" formControlName="claimId" class="h-[42px]">
           <option value="">No claim selected</option>
           @for (claim of claims(); track claim.id) {
             <option [value]="claim.id">{{ claim.claimNumber }} · {{ claim.status }}</option>
@@ -51,7 +51,7 @@
     </div>
 
     <div class="mb-5">
-      <label class="block text-[13px] font-medium mb-1.5">Supporting document <span class="text-muted font-normal">(optional)</span></label>
+      <span class="block text-[13px] font-medium mb-1.5">Supporting document <span class="text-muted font-normal">(optional)</span></span>
       <app-file-upload label="Attach a file" hint="PDF, JPG, PNG up to 10MB" (fileSelected)="onFileSelected($event)" />
       @if (attachedFile()) {
         <p class="text-xs text-success mt-1.5">{{ attachedFile()!.name }} selected</p>

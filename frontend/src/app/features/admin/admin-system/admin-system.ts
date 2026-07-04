@@ -36,6 +36,7 @@ const TEMPLATE_DUMMIES: Record<string, Record<string, string>> = {
   GrievanceFiled: { firstName: 'Arjun', grievanceNumber: 'GRV-2026-00001' },
   GrievanceResolved: { firstName: 'Arjun', grievanceNumber: 'GRV-2026-00001', resolutionNotes: 'We have reviewed your concern and issued a full refund of the duplicate charge.' },
   PremiumOverdue: { firstName: 'Arjun', policyNumber: 'POL-2026-00001', amount: '12,500.00', dueDate: '01 Jun 2026' },
+  // tempPassword is display-only sample data for the preview, not a real credential.
   AgentWelcome: { firstName: 'Priya', agentCode: 'AGT-2026-001', email: 'priya@example.com', tempPassword: 'TempP@ss123' },
   KycSubmitted: { firstName: 'Arjun' },
   ProposalSubmitted: { firstName: 'Arjun', proposalNumber: 'PRO-2026-00001', productName: 'SpeedCare Platinum Health' },
@@ -287,6 +288,8 @@ export class AdminSystemComponent implements OnInit {
     }
     // Show any remaining unknown placeholders as [variableName]
     body = body.replace(/\{\{(\w+)\}\}/g, '[$1]');
+    // bodyHtml is an admin-authored email template (admin-only write access); this is the
+    // template's own HTML source rendering as a preview, not third-party/user-supplied markup.
     this.previewHtml.set(this.sanitizer.bypassSecurityTrustHtml(body));
     this.activeModal.set('previewTemplate');
   }

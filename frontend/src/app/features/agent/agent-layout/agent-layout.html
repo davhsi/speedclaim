@@ -29,7 +29,7 @@
             </div>
             <div class="max-h-[360px] overflow-y-auto">
               @for (n of notifService.notifications(); track n.id) {
-                <div (click)="onReadNotification(n)" class="flex items-start gap-3 px-4 py-3.5 border-b border-line cursor-pointer hover:bg-surface transition-colors" [class.bg-primary-light/30]="!n.isRead">
+                <div (click)="onReadNotification(n)" tabindex="0" role="button" (keydown.enter)="onReadNotification(n)" class="flex items-start gap-3 px-4 py-3.5 border-b border-line cursor-pointer hover:bg-surface transition-colors" [class.bg-primary-light/30]="!n.isRead">
                   <div class="w-[7px] h-[7px] rounded-full shrink-0 mt-1.5" [class]="n.isRead ? 'bg-transparent' : 'bg-primary'"></div>
                   <div class="flex-1 min-w-0">
                     <div class="text-[13px] text-ink mb-0.5" [class.font-semibold]="!n.isRead">{{ n.title }}</div>
@@ -54,7 +54,7 @@
           {{ userInitials() }}
         </button>
         @if (profileMenuOpen()) {
-          <div class="fixed inset-0 z-40" (click)="profileMenuOpen.set(false)"></div>
+          <div class="fixed inset-0 z-40" tabindex="0" role="button" (click)="profileMenuOpen.set(false)" (keydown.enter)="profileMenuOpen.set(false)"></div>
           <div class="absolute top-[calc(100%+8px)] right-0 w-[200px] bg-white border border-line rounded-card shadow-dropdown z-50 overflow-hidden animate-sc-fade-fast">
             <div class="px-4 py-3 border-b border-line">
               <div class="text-[13px] font-semibold text-ink truncate">{{ userName() }}</div>

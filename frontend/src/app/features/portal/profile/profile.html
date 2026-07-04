@@ -61,19 +61,19 @@
           <div class="text-[13px] font-semibold text-ink mb-4">Personal details</div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5" [formGroup]="profileForm">
             <div>
-              <label class="block text-xs text-muted mb-1.5">Salutation</label>
+              <span class="block text-xs text-muted mb-1.5">Salutation</span>
               <app-select formControlName="salutation" [options]="salutations" />
             </div>
             <div class="hidden sm:block"></div>
             <div>
-              <label class="block text-xs text-muted mb-1.5">
+              <label for="profile-first-name" class="block text-xs text-muted mb-1.5">
                 First name
                 @if (kycApproved()) { <span class="ml-1 text-[10px] text-muted font-normal">(locked after KYC)</span> }
               </label>
               @if (kycApproved()) {
                 <div class="text-[15px] text-ink py-2">{{ profile()!.firstName }}</div>
               } @else {
-                <input formControlName="firstName" class="h-[42px]"
+                <input id="profile-first-name" formControlName="firstName" class="h-[42px]"
                        [class.border-danger]="profileForm.get('firstName')?.invalid && profileForm.get('firstName')?.touched" />
                 @if (profileForm.get('firstName')?.invalid && profileForm.get('firstName')?.touched) {
                   <div class="text-[11px] text-danger mt-1">First name is required.</div>
@@ -81,14 +81,14 @@
               }
             </div>
             <div>
-              <label class="block text-xs text-muted mb-1.5">
+              <label for="profile-last-name" class="block text-xs text-muted mb-1.5">
                 Last name
                 @if (kycApproved()) { <span class="ml-1 text-[10px] text-muted font-normal">(locked after KYC)</span> }
               </label>
               @if (kycApproved()) {
                 <div class="text-[15px] text-ink py-2">{{ profile()!.lastName }}</div>
               } @else {
-                <input formControlName="lastName" class="h-[42px]"
+                <input id="profile-last-name" formControlName="lastName" class="h-[42px]"
                        [class.border-danger]="profileForm.get('lastName')?.invalid && profileForm.get('lastName')?.touched" />
                 @if (profileForm.get('lastName')?.invalid && profileForm.get('lastName')?.touched) {
                   <div class="text-[11px] text-danger mt-1">Last name is required.</div>
@@ -100,26 +100,26 @@
               <div class="text-[15px] text-ink py-2">{{ profile()!.email }}</div>
             </div>
             <div>
-              <label class="block text-xs text-muted mb-1.5">Phone</label>
-              <input formControlName="phone" class="h-[42px] sc-numeric"
+              <label for="profile-phone" class="block text-xs text-muted mb-1.5">Phone</label>
+              <input id="profile-phone" formControlName="phone" class="h-[42px] sc-numeric"
                      [class.border-danger]="profileForm.get('phone')?.invalid && profileForm.get('phone')?.touched" />
               @if (profileForm.get('phone')?.invalid && profileForm.get('phone')?.touched) {
                 <div class="text-[11px] text-danger mt-1">Enter a valid 10-digit phone number.</div>
               }
             </div>
             <div>
-              <label class="block text-xs text-muted mb-1.5">Marital status</label>
+              <span class="block text-xs text-muted mb-1.5">Marital status</span>
               <app-select formControlName="maritalStatus" [options]="maritalStatuses" />
             </div>
             <div>
-              <label class="block text-xs text-muted mb-1.5">
+              <label for="profile-dob" class="block text-xs text-muted mb-1.5">
                 Date of birth
                 @if (kycApproved()) { <span class="ml-1 text-[10px] text-muted font-normal">(locked after KYC)</span> }
               </label>
               @if (kycApproved()) {
                 <div class="text-[15px] text-ink py-2">{{ profile()!.dateOfBirth | dateFormat }}</div>
               } @else {
-                <input type="date" formControlName="dateOfBirth" class="h-[42px]" />
+                <input id="profile-dob" type="date" formControlName="dateOfBirth" class="h-[42px]" />
               }
             </div>
           </div>
@@ -137,16 +137,16 @@
           @if (showAddressForm()) {
             <div class="p-4 bg-surface rounded-[10px] mb-4 space-y-3" [formGroup]="addressForm">
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div><label class="block text-xs text-muted mb-1.5">Line 1</label><input formControlName="line1" class="h-[42px]" /></div>
-                <div><label class="block text-xs text-muted mb-1.5">Line 2</label><input formControlName="line2" class="h-[42px]" /></div>
-                <div><label class="block text-xs text-muted mb-1.5">City</label><input formControlName="city" class="h-[42px]" /></div>
-                <div><label class="block text-xs text-muted mb-1.5">State</label><input formControlName="state" class="h-[42px]" /></div>
-                <div><label class="block text-xs text-muted mb-1.5">Postal code</label><input formControlName="postalCode" class="h-[42px] sc-numeric" [class.border-danger]="addressForm.get('postalCode')?.invalid && addressForm.get('postalCode')?.touched" />
+                <div><label for="address-line1" class="block text-xs text-muted mb-1.5">Line 1</label><input id="address-line1" formControlName="line1" class="h-[42px]" /></div>
+                <div><label for="address-line2" class="block text-xs text-muted mb-1.5">Line 2</label><input id="address-line2" formControlName="line2" class="h-[42px]" /></div>
+                <div><label for="address-city" class="block text-xs text-muted mb-1.5">City</label><input id="address-city" formControlName="city" class="h-[42px]" /></div>
+                <div><label for="address-state" class="block text-xs text-muted mb-1.5">State</label><input id="address-state" formControlName="state" class="h-[42px]" /></div>
+                <div><label for="address-postal-code" class="block text-xs text-muted mb-1.5">Postal code</label><input id="address-postal-code" formControlName="postalCode" class="h-[42px] sc-numeric" [class.border-danger]="addressForm.get('postalCode')?.invalid && addressForm.get('postalCode')?.touched" />
                   @if (addressForm.get('postalCode')?.invalid && addressForm.get('postalCode')?.touched) {
                     <div class="text-[11px] text-danger mt-1">Enter a valid 6-digit postal code.</div>
                   }
                 </div>
-                <div><label class="block text-xs text-muted mb-1.5">Type</label><select formControlName="type" class="h-[42px]"><option value="Permanent">Permanent</option><option value="Current">Current</option></select></div>
+                <div><label for="address-type" class="block text-xs text-muted mb-1.5">Type</label><select id="address-type" formControlName="type" class="h-[42px]"><option value="Permanent">Permanent</option><option value="Current">Current</option></select></div>
               </div>
               <button class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover" (click)="saveAddress()">Save address</button>
             </div>
@@ -187,17 +187,17 @@
       @if (showMemberForm()) {
         <div class="bg-white border border-line rounded-card shadow-sm p-6 mb-5 space-y-3.5" [formGroup]="memberForm">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <div><label class="block text-xs text-muted mb-1.5">First name</label><input formControlName="firstName" class="h-[42px]" /></div>
-            <div><label class="block text-xs text-muted mb-1.5">Last name</label><input formControlName="lastName" class="h-[42px]" /></div>
-            <div><label class="block text-xs text-muted mb-1.5">Date of birth</label><input type="date" formControlName="dateOfBirth" class="h-[42px]" /></div>
-            <div><label class="block text-xs text-muted mb-1.5">Relationship</label>
-              <select formControlName="relationship" class="h-[42px]">
+            <div><label for="profile-member-first-name" class="block text-xs text-muted mb-1.5">First name</label><input id="profile-member-first-name" formControlName="firstName" class="h-[42px]" /></div>
+            <div><label for="profile-member-last-name" class="block text-xs text-muted mb-1.5">Last name</label><input id="profile-member-last-name" formControlName="lastName" class="h-[42px]" /></div>
+            <div><label for="profile-member-dob" class="block text-xs text-muted mb-1.5">Date of birth</label><input id="profile-member-dob" type="date" formControlName="dateOfBirth" class="h-[42px]" /></div>
+            <div><label for="profile-member-relationship" class="block text-xs text-muted mb-1.5">Relationship</label>
+              <select id="profile-member-relationship" formControlName="relationship" class="h-[42px]">
                 <option value="Spouse">Spouse</option><option value="Son">Son</option><option value="Daughter">Daughter</option>
                 <option value="Father">Father</option><option value="Mother">Mother</option><option value="Other">Other</option>
               </select>
             </div>
-            <div><label class="block text-xs text-muted mb-1.5">Gender</label>
-              <select formControlName="gender" class="h-[42px]">
+            <div><label for="profile-member-gender" class="block text-xs text-muted mb-1.5">Gender</label>
+              <select id="profile-member-gender" formControlName="gender" class="h-[42px]">
                 <option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option>
               </select>
             </div>

@@ -132,7 +132,7 @@ export class ClaimFileComponent implements OnInit {
 
   private documentKeyFor(file: File): string {
     const baseName = file.name.replace(/\.[^/.]+$/, '');
-    const key = baseName.replace(/[^a-zA-Z0-9_-]+/g, '_').replace(/^_+|_+$/g, '');
+    const key = baseName.replace(/[^a-zA-Z0-9_-]+/g, '_').replace(/^_+/, '').replace(/_+$/, '');
     return (key || 'SUPPORTING_DOCUMENT').slice(0, 100).toUpperCase();
   }
 }

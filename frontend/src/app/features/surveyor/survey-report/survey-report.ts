@@ -154,7 +154,7 @@ export class SurveyReportComponent implements OnInit {
     else this.dmgTypeErr.set('');
     if (!this.desc.trim()) { this.descErr.set('Please describe the damage observed.'); ok = false; }
     else this.descErr.set('');
-    if (!this.cost || parseFloat(this.cost) <= 0) { this.costErr.set('Please enter a valid estimated repair cost.'); ok = false; }
+    if (!this.cost || Number.parseFloat(this.cost) <= 0) { this.costErr.set('Please enter a valid estimated repair cost.'); ok = false; }
     else this.costErr.set('');
     if (this.driveable() === null) { this.driveableErr.set('Please indicate whether the vehicle is driveable.'); ok = false; }
     else this.driveableErr.set('');
@@ -185,7 +185,7 @@ export class SurveyReportComponent implements OnInit {
       `Damage type: ${this.dmgType()}`,
       `Description: ${this.desc}`,
       `Driveable: ${this.driveable() === true ? 'Yes' : this.driveable() === false ? 'No' : 'N/A'}`,
-      this.pav ? `Pre-accident market value: ₹${parseFloat(this.pav).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '',
+      this.pav ? `Pre-accident market value: ₹${Number.parseFloat(this.pav).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '',
       this.workshop ? `Workshop: ${this.workshop}` : '',
       this.notes ? `Notes: ${this.notes}` : '',
     ].filter(Boolean).join('\n');
@@ -194,7 +194,7 @@ export class SurveyReportComponent implements OnInit {
     if (!reportDocument) return;
 
     this.surveyorService.submitSurveyReport(c.id.toString(), {
-      estimatedRepairCost: parseFloat(this.cost),
+      estimatedRepairCost: Number.parseFloat(this.cost),
       surveyDate: new Date().toISOString(),
       remarks,
       reportDocument,

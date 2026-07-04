@@ -273,7 +273,7 @@ export class AdminUsersComponent implements OnInit {
       this.toastService.warning('Please enter a name and email.');
       return;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!/^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{1,24}$/.test(email)) {
       this.toastService.warning('Please enter a valid email address.');
       return;
     }

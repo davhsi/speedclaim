@@ -329,8 +329,8 @@
           <h3 class="text-[15px] font-bold text-ink mb-1">Reset password</h3>
           <p class="text-[12.5px] text-body mb-4">Set a new temporary password for <span class="font-semibold text-ink">{{ selectedUser()?.email }}</span>. Share it securely with the user.</p>
           <div class="mb-5">
-            <label class="block text-[12px] font-semibold text-body mb-1.5">New password</label>
-            <input type="text" [(ngModel)]="resetPwForm.newPassword" placeholder="Min. 8 characters"
+            <label for="reset-pw-new-password" class="block text-[12px] font-semibold text-body mb-1.5">New password</label>
+            <input id="reset-pw-new-password" type="text" [(ngModel)]="resetPwForm.newPassword" placeholder="Min. 8 characters"
               class="w-full h-9 px-3 border-[1.5px] border-line rounded-lg text-[13px] text-ink bg-[#F7F9FA] outline-none font-mono" />
           </div>
           <div class="flex justify-end gap-2">
@@ -359,9 +359,9 @@
 
   <!-- Activate / Deactivate confirmation -->
   @if (activeModal() === 'toggleStatus') {
-    <div class="fixed inset-0 z-[200] flex items-center justify-center p-4" (click)="closeModal()">
+    <div class="fixed inset-0 z-[200] flex items-center justify-center p-4" tabindex="0" role="button" (click)="closeModal()" (keydown.enter)="closeModal()">
       <div class="absolute inset-0 bg-black/40"></div>
-      <div class="relative bg-white rounded-card shadow-lg max-w-sm w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
+      <div class="relative bg-white rounded-card shadow-lg max-w-sm w-full p-6 animate-[sc-modal_.2s_ease-out]" tabindex="0" role="button" (click)="$event.stopPropagation()" (keydown.enter)="$event.stopPropagation()">
         @if (selectedUser()?.isActive) {
           <div class="flex items-center justify-center w-10 h-10 rounded-full bg-danger-bg mb-4">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D14343" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 11-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
@@ -448,9 +448,9 @@
 
   <!-- Bulk deactivate confirm -->
   @if (showBulkConfirm()) {
-    <div class="fixed inset-0 z-[200] flex items-center justify-center p-4" (click)="showBulkConfirm.set(false)">
+    <div class="fixed inset-0 z-[200] flex items-center justify-center p-4" tabindex="0" role="button" (click)="showBulkConfirm.set(false)" (keydown.enter)="showBulkConfirm.set(false)">
       <div class="absolute inset-0 bg-black/40"></div>
-      <div class="relative bg-white rounded-card shadow-lg max-w-sm w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
+      <div class="relative bg-white rounded-card shadow-lg max-w-sm w-full p-6 animate-[sc-modal_.2s_ease-out]" tabindex="0" role="button" (click)="$event.stopPropagation()" (keydown.enter)="$event.stopPropagation()">
         <div class="flex items-center justify-center w-10 h-10 rounded-full bg-danger-bg mb-4">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D14343" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 11-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
         </div>

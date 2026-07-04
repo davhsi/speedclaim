@@ -57,8 +57,9 @@
 
     <!-- ID number -->
     <div>
-      <label class="block text-xs font-medium text-body mb-1.5">{{ idType() === 'aadhaar' ? 'Aadhaar number' : 'PAN number' }}</label>
+      <label for="kyc-id-number" class="block text-xs font-medium text-body mb-1.5">{{ idType() === 'aadhaar' ? 'Aadhaar number' : 'PAN number' }}</label>
       <input
+        id="kyc-id-number"
         type="text"
         [ngModel]="idNumber()"
         (ngModelChange)="idNumber.set(idType() === 'pan' ? $event.toUpperCase() : $event)"

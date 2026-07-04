@@ -14,20 +14,20 @@
     <div class="bg-white border border-line rounded-card shadow-sm p-6 mb-5 space-y-3.5" [formGroup]="memberForm">
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         <div>
-          <label class="block text-xs text-muted mb-1.5">First name</label>
-          <input formControlName="firstName" class="h-[42px]" placeholder="e.g., Priya" />
+          <label for="add-member-first-name" class="block text-xs text-muted mb-1.5">First name</label>
+          <input id="add-member-first-name" formControlName="firstName" class="h-[42px]" placeholder="e.g., Priya" />
         </div>
         <div>
-          <label class="block text-xs text-muted mb-1.5">Last name</label>
-          <input formControlName="lastName" class="h-[42px]" placeholder="e.g., Sharma" />
+          <label for="add-member-last-name" class="block text-xs text-muted mb-1.5">Last name</label>
+          <input id="add-member-last-name" formControlName="lastName" class="h-[42px]" placeholder="e.g., Sharma" />
         </div>
         <div>
-          <label class="block text-xs text-muted mb-1.5">Date of birth</label>
-          <input type="date" formControlName="dateOfBirth" class="h-[42px]" />
+          <label for="add-member-dob" class="block text-xs text-muted mb-1.5">Date of birth</label>
+          <input id="add-member-dob" type="date" formControlName="dateOfBirth" class="h-[42px]" />
         </div>
         <div>
-          <label class="block text-xs text-muted mb-1.5">Relationship</label>
-          <select formControlName="relationship" class="h-[42px]">
+          <label for="add-member-relationship" class="block text-xs text-muted mb-1.5">Relationship</label>
+          <select id="add-member-relationship" formControlName="relationship" class="h-[42px]">
             <option value="Spouse">Spouse</option>
             <option value="Son">Son</option>
             <option value="Daughter">Daughter</option>
@@ -37,8 +37,8 @@
           </select>
         </div>
         <div>
-          <label class="block text-xs text-muted mb-1.5">Gender</label>
-          <select formControlName="gender" class="h-[42px]">
+          <label for="add-member-gender" class="block text-xs text-muted mb-1.5">Gender</label>
+          <select id="add-member-gender" formControlName="gender" class="h-[42px]">
             <option value="Male">Male</option>
             <option value="Female">Female</option>
             <option value="Other">Other</option>
@@ -59,20 +59,20 @@
         <div class="px-[18px] py-4 border-b border-line last:border-0 space-y-3" [formGroup]="editForm">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs text-muted mb-1">First name</label>
-              <input formControlName="firstName" class="h-[38px]" />
+              <label [for]="'edit-member-first-name-' + m.id" class="block text-xs text-muted mb-1">First name</label>
+              <input [id]="'edit-member-first-name-' + m.id" formControlName="firstName" class="h-[38px]" />
             </div>
             <div>
-              <label class="block text-xs text-muted mb-1">Last name</label>
-              <input formControlName="lastName" class="h-[38px]" />
+              <label [for]="'edit-member-last-name-' + m.id" class="block text-xs text-muted mb-1">Last name</label>
+              <input [id]="'edit-member-last-name-' + m.id" formControlName="lastName" class="h-[38px]" />
             </div>
             <div>
-              <label class="block text-xs text-muted mb-1">Date of birth</label>
-              <input type="date" formControlName="dateOfBirth" class="h-[38px]" />
+              <label [for]="'edit-member-dob-' + m.id" class="block text-xs text-muted mb-1">Date of birth</label>
+              <input [id]="'edit-member-dob-' + m.id" type="date" formControlName="dateOfBirth" class="h-[38px]" />
             </div>
             <div>
-              <label class="block text-xs text-muted mb-1">Relationship</label>
-              <select formControlName="relationship" class="h-[38px]">
+              <label [for]="'edit-member-relationship-' + m.id" class="block text-xs text-muted mb-1">Relationship</label>
+              <select [id]="'edit-member-relationship-' + m.id" formControlName="relationship" class="h-[38px]">
                 <option value="Spouse">Spouse</option>
                 <option value="Son">Son</option>
                 <option value="Daughter">Daughter</option>
@@ -82,8 +82,8 @@
               </select>
             </div>
             <div>
-              <label class="block text-xs text-muted mb-1">Gender</label>
-              <select formControlName="gender" class="h-[38px]">
+              <label [for]="'edit-member-gender-' + m.id" class="block text-xs text-muted mb-1">Gender</label>
+              <select [id]="'edit-member-gender-' + m.id" formControlName="gender" class="h-[38px]">
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
                 <option value="Other">Other</option>

@@ -32,7 +32,7 @@ PASSWORD="Password@123"
 
 # Read IDs from Postman environment (written by seed.sh)
 ENV_FILE="postman/SpeedClaim.postman_environment.json"
-[ -f "$ENV_FILE" ] || { echo "ERROR: $ENV_FILE not found. Run seed.sh first." >&2; exit 1; }
+[[ -f "$ENV_FILE" ]] || { echo "ERROR: $ENV_FILE not found. Run seed.sh first." >&2; exit 1; }
 penv() { python3 -c "import json,sys; env=json.load(open('$ENV_FILE')); print(next((v['value'] for v in env['values'] if v['key']=='$1'),''))"; }
 
 CUSTOMER_USER_ID="$(penv customerUserId)"
@@ -88,7 +88,7 @@ record() {
 
   TOTAL=$((TOTAL + 1))
   local passed="true"
-  if [ "$actual_status" != "$expected_status" ]; then
+  if [[ "$actual_status" != "$expected_status" ]]; then
     passed="false"
     FAIL=$((FAIL + 1))
   else
@@ -151,9 +151,9 @@ fire() {
   local body="${7:-}"
 
   local curl_args=(-s -w "\n%{http_code}" -X "$method" "$url")
-  [ -n "$token" ] && curl_args+=(-H "Authorization: Bearer $token")
+  [[ -n "$token" ]] && curl_args+=(-H "Authorization: Bearer $token")
 
-  if [ -n "$body" ]; then
+  if [[ -n "$body" ]]; then
     curl_args+=(-H "Content-Type: application/json" -d "$body")
   fi
 
@@ -164,7 +164,7 @@ fire() {
 
   record "$scenario" "$category" "$expected_status" "$status_code" "$response_body" "$method" "$url"
   printf "  [%s] #%-3d %-4s %-60s expected=%s got=%s\n" \
-    "$([ "$status_code" = "$expected_status" ] && echo "PASS" || echo "FAIL")" \
+    "$([[ "$status_code" = "$expected_status" ]] && echo "PASS" || echo "FAIL")" \
     "$TOTAL" "$method" "$scenario" "$expected_status" "$status_code"
 }
 
@@ -179,10 +179,10 @@ fire_with_header() {
   local body="${8:-}"
 
   local curl_args=(-s -w "\n%{http_code}" -X "$method" "$url")
-  [ -n "$token" ] && curl_args+=(-H "Authorization: Bearer $token")
-  [ -n "$extra_header" ] && curl_args+=(-H "$extra_header")
+  [[ -n "$token" ]] && curl_args+=(-H "Authorization: Bearer $token")
+  [[ -n "$extra_header" ]] && curl_args+=(-H "$extra_header")
 
-  if [ -n "$body" ]; then
+  if [[ -n "$body" ]]; then
     curl_args+=(-H "Content-Type: application/json" -d "$body")
   fi
 
@@ -193,7 +193,7 @@ fire_with_header() {
 
   record "$scenario" "$category" "$expected_status" "$status_code" "$response_body" "$method" "$url"
   printf "  [%s] #%-3d %-4s %-60s expected=%s got=%s\n" \
-    "$([ "$status_code" = "$expected_status" ] && echo "PASS" || echo "FAIL")" \
+    "$([[ "$status_code" = "$expected_status" ]] && echo "PASS" || echo "FAIL")" \
     "$TOTAL" "$method" "$scenario" "$expected_status" "$status_code"
 }
 
@@ -208,7 +208,7 @@ fire_form() {
   local form_args=("$@")
 
   local curl_args=(-s -w "\n%{http_code}" -X "$method" "$url")
-  [ -n "$token" ] && curl_args+=(-H "Authorization: Bearer $token")
+  [[ -n "$token" ]] && curl_args+=(-H "Authorization: Bearer $token")
   curl_args+=("${form_args[@]}")
 
   local raw
@@ -218,7 +218,7 @@ fire_form() {
 
   record "$scenario" "$category" "$expected_status" "$status_code" "$response_body" "$method" "$url"
   printf "  [%s] #%-3d %-4s %-60s expected=%s got=%s\n" \
-    "$([ "$status_code" = "$expected_status" ] && echo "PASS" || echo "FAIL")" \
+    "$([[ "$status_code" = "$expected_status" ]] && echo "PASS" || echo "FAIL")" \
     "$TOTAL" "$method" "$scenario" "$expected_status" "$status_code"
 }
 
@@ -238,7 +238,7 @@ SURVEYOR_TOKEN=$(login "$SURVEYOR_EMAIL")
 CUSTOMER2_EMAIL="priya.patel@example.com"
 CUSTOMER2_TOKEN=$(login "$CUSTOMER2_EMAIL")
 
-if [ -z "$ADMIN_TOKEN" ]; then
+if [[ -z "$ADMIN_TOKEN" ]]; then
   echo "❌ Failed to get admin token. Is the API running at $BASE_URL?"
   exit 1
 fi
