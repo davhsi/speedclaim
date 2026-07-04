@@ -17,8 +17,8 @@ import { FileUploadComponent } from '../../../../shared/components/file-upload/f
 export class GrievanceRaiseComponent implements OnInit {
   private fb = inject(FormBuilder);
   private grievanceService = inject(GrievanceService);
-  private policyService = inject(PolicyService);
-  private claimService = inject(ClaimService);
+  private readonly policyService = inject(PolicyService);
+  private readonly claimService = inject(ClaimService);
   private toast = inject(ToastService);
   router = inject(Router);
 

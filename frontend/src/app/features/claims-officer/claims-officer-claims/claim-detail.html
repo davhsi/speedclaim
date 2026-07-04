@@ -195,8 +195,9 @@
 
   <!-- Document Preview Lightbox -->
   @if (previewDoc(); as doc) {
-    <div class="fixed inset-0 z-[500] bg-black/75 flex items-center justify-center p-4" tabindex="0" (click)="closePreview()" (keydown.enter)="closePreview()" role="dialog" [attr.aria-label]="'Preview: ' + doc.documentName">
-      <div class="relative bg-white rounded-card shadow-modal w-full max-w-3xl max-h-[92vh] flex flex-col" tabindex="0" role="button" (click)="$event.stopPropagation()" (keydown.enter)="$event.stopPropagation()">
+    <div class="fixed inset-0 z-[500] flex items-center justify-center p-4">
+      <button type="button" [attr.aria-label]="'Close preview: ' + doc.documentName" (click)="closePreview()" class="absolute inset-0 bg-black/75 border-none cursor-default"></button>
+      <div class="relative bg-white rounded-card shadow-modal w-full max-w-3xl max-h-[92vh] flex flex-col" role="dialog" aria-modal="true" [attr.aria-label]="'Preview: ' + doc.documentName">
         <!-- Lightbox header -->
         <div class="flex items-center justify-between px-5 py-3 border-b border-line shrink-0 gap-3">
           <div class="flex items-center gap-2.5 min-w-0">
@@ -245,8 +246,9 @@
 
   <!-- Modal -->
   @if (modalType()) {
-    <div (click)="closeModal()" tabindex="0" role="button" (keydown.enter)="closeModal()" class="fixed inset-0 bg-black/45 z-[400] flex items-center justify-center p-4">
-      <div (click)="$event.stopPropagation()" tabindex="0" role="button" (keydown.enter)="$event.stopPropagation()" class="bg-white rounded-modal shadow-modal w-[480px] max-w-[92vw] p-7 animate-sc-fade">
+    <div class="fixed inset-0 z-[400] flex items-center justify-center p-4">
+      <button type="button" aria-label="Close dialog" (click)="closeModal()" class="absolute inset-0 bg-black/45 border-none cursor-default"></button>
+      <div class="relative bg-white rounded-modal shadow-modal w-[480px] max-w-[92vw] p-7 animate-sc-fade">
         <div class="flex items-start justify-between mb-5">
           <h3 class="text-[17px] font-semibold text-ink">{{ modalTitle() }}</h3>
           <button (click)="closeModal()" class="bg-transparent border-none cursor-pointer text-muted p-0.5 flex shrink-0 ml-3">
@@ -297,8 +299,8 @@
           }
           @case ('requestDocs') {
             <div class="mb-5">
-              <label class="block text-[13px] font-medium text-ink mb-1.5">Documents required <span class="text-danger">*</span></label>
-              <textarea [(ngModel)]="modalDocs" placeholder="List the documents required..." class="w-full h-24 px-3 py-2.5 border border-line rounded-lg text-[13px] text-body resize-y outline-none leading-relaxed"></textarea>
+              <label for="claim-docs-required" class="block text-[13px] font-medium text-ink mb-1.5">Documents required <span class="text-danger">*</span></label>
+              <textarea id="claim-docs-required" [(ngModel)]="modalDocs" placeholder="List the documents required..." class="w-full h-24 px-3 py-2.5 border border-line rounded-lg text-[13px] text-body resize-y outline-none leading-relaxed"></textarea>
             </div>
           }
           @case ('preAuth') {

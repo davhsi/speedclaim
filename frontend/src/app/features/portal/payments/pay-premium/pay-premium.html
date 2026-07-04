@@ -62,7 +62,7 @@
 <!-- Stripe Checkout Modal -->
 @if (clientSecret()) {
   <div class="fixed inset-0 z-[200] flex items-center justify-center p-4 overflow-y-auto">
-    <div class="absolute inset-0 bg-black/50" tabindex="0" role="button" (click)="paymentSuccess() ? null : cancelPayment()" (keydown.enter)="paymentSuccess() ? null : cancelPayment()"></div>
+    <button type="button" aria-label="Close dialog" (click)="paymentSuccess() ? null : cancelPayment()" class="absolute inset-0 bg-black/50 border-none cursor-default"></button>
     <div class="relative bg-white rounded-card shadow-xl max-w-md w-full p-6 my-8 max-h-[90vh] overflow-y-auto animate-[sc-modal_.2s_ease-out]">
 
       @if (!paymentSuccess()) {

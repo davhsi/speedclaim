@@ -36,7 +36,7 @@ export class ClaimFileComponent implements OnInit {
     return policyEndDate && policyEndDate < this.today ? policyEndDate : this.today;
   });
 
-  private withinPolicyCoverage = (control: AbstractControl): { aboveCoverage: true } | null => {
+  private readonly withinPolicyCoverage = (control: AbstractControl): { aboveCoverage: true } | null => {
     const policy = this.selectedPolicy();
     const amount = Number(control.value);
     if (!policy || !amount) return null;
@@ -44,7 +44,7 @@ export class ClaimFileComponent implements OnInit {
     return amount > policy.coverageAmount ? { aboveCoverage: true } : null;
   };
 
-  private withinPolicyPeriod = (control: AbstractControl): { outsidePolicyPeriod: true } | null => {
+  private readonly withinPolicyPeriod = (control: AbstractControl): { outsidePolicyPeriod: true } | null => {
     const policy = this.selectedPolicy();
     const value = control.value;
     if (!policy || !value) return null;

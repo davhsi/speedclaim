@@ -7,7 +7,7 @@ import { TimelineComponent, TimelineItem } from '../../../shared/components/time
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 import { ClaimsOfficerService, SurveyorDto } from '../services/claims-officer.service';
-import { ClaimDto, ClaimStatusHistoryDto, SubmittedDocumentDto } from '../../../core/models/api.models';
+import { ClaimDto, SubmittedDocumentDto } from '../../../core/models/api.models';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 
@@ -26,7 +26,7 @@ export class ClaimDetailComponent implements OnInit {
   private claimsService = inject(ClaimsOfficerService);
   private authService = inject(AuthService);
   private toast = inject(ToastService);
-  private sanitizer = inject(DomSanitizer);
+  private readonly sanitizer = inject(DomSanitizer);
 
   claim = signal<ClaimDto | null>(null);
   timelineItems = signal<TimelineItem[]>([]);

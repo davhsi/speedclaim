@@ -6,7 +6,7 @@
 
   <!-- Stats -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
-    <div (click)="navigateTo('/claims-officer/claims', {status: 'Intimated'})" class="cursor-pointer">
+    <button type="button" (click)="navigateTo('/claims-officer/claims', {status: 'Intimated'})" class="cursor-pointer w-full text-left block border-none bg-transparent p-0">
       <app-stat-card
         title="New claims to action"
         [value]="newClaimsCount().toString()"
@@ -14,8 +14,8 @@
         [icon]="iconClaims"
         subtitle="Tap to review →"
       />
-    </div>
-    <div (click)="navigateTo('/claims-officer/claims', {status: 'UnderReview'})" class="cursor-pointer">
+    </button>
+    <button type="button" (click)="navigateTo('/claims-officer/claims', {status: 'UnderReview'})" class="cursor-pointer w-full text-left block border-none bg-transparent p-0">
       <app-stat-card
         title="Claims under review"
         [value]="activeClaimsCount().toString()"
@@ -23,8 +23,8 @@
         [icon]="iconClock"
         subtitle="Tap to review →"
       />
-    </div>
-    <div (click)="navigateTo('/claims-officer/claims', {status: 'PreAuthRequested'})" class="cursor-pointer">
+    </button>
+    <button type="button" (click)="navigateTo('/claims-officer/claims', {status: 'PreAuthRequested'})" class="cursor-pointer w-full text-left block border-none bg-transparent p-0">
       <app-stat-card
         title="Awaiting surveyor report"
         [value]="surveyorPendingCount().toString()"
@@ -32,15 +32,15 @@
         [icon]="iconSurveyor"
         subtitle="Tap to review →"
       />
-    </div>
-    <div (click)="navigateTo('/claims-officer/grievances')" class="cursor-pointer">
+    </button>
+    <button type="button" (click)="navigateTo('/claims-officer/grievances')" class="cursor-pointer w-full text-left block border-none bg-transparent p-0">
       <app-stat-card
         title="Open grievances"
         [value]="openGrievancesCount().toString()"
         iconBgClass="bg-danger-bg text-danger"
         [icon]="iconGrievance"
       />
-    </div>
+    </button>
   </div>
 
   <!-- Recent claims -->
@@ -50,7 +50,7 @@
       <button (click)="navigateTo('/claims-officer/claims')" class="text-[13px] font-medium text-primary bg-transparent border-none cursor-pointer">View all →</button>
     </div>
     @for (claim of recentClaims(); track claim.id) {
-      <div (click)="openClaim(claim.id)" class="flex items-center gap-3.5 px-5 py-3.5 border-b border-line cursor-pointer hover:bg-surface transition-colors">
+      <button type="button" (click)="openClaim(claim.id)" class="w-full flex items-center gap-3.5 px-5 py-3.5 border-b border-line cursor-pointer hover:bg-surface transition-colors text-left border-x-0 border-t-0 bg-transparent">
         <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" [class]="getTypeBgClass(claim.claimType)">
           <span class="text-[10px] font-bold" [class]="getTypeFgClass(claim.claimType)">{{ getTypeAbbr(claim.claimType) }}</span>
         </div>
@@ -68,7 +68,7 @@
           <app-status-badge [status]="claim.status" />
           <span class="text-xs text-muted whitespace-nowrap">{{ claim.intimationDate | dateFormat }}</span>
         </div>
-      </div>
+      </button>
     } @empty {
       <div class="px-5 py-10 text-center">
         <div class="w-11 h-11 rounded-[11px] bg-surface flex items-center justify-center mx-auto mb-3">

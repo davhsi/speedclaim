@@ -17,11 +17,11 @@ import { ProductService } from '../../portal/products/services/product.service';
   templateUrl: './proposal-detail.html',
 })
 export class AgentProposalDetailComponent implements OnInit {
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private agentService = inject(AgentService);
-  private productService = inject(ProductService);
-  private toast = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly agentService = inject(AgentService);
+  private readonly productService = inject(ProductService);
+  private readonly toast = inject(ToastService);
 
   proposal = signal<ProposalDto | null>(null);
   product = signal<ProductDto | null>(null);

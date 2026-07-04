@@ -129,9 +129,9 @@
 
   <!-- ══════ Register Agent Modal ══════ -->
   @if (activeModal() === 'register') {
-    <div class="fixed inset-0 z-[400] flex items-center justify-center p-4" (click)="closeModal()">
-      <div class="absolute inset-0 bg-black/40"></div>
-      <div class="relative bg-white rounded-card shadow-lg max-w-lg w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
+    <div class="fixed inset-0 z-[400] flex items-center justify-center p-4">
+      <button type="button" aria-label="Close dialog" (click)="closeModal()" class="absolute inset-0 bg-black/40 border-none cursor-default"></button>
+      <div class="relative bg-white rounded-card shadow-lg max-w-lg w-full p-6 animate-[sc-modal_.2s_ease-out]">
         <div class="flex items-center justify-between mb-5">
           <h3 class="text-[15px] font-bold text-ink">Register new agent</h3>
           <button (click)="closeModal()" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface">
@@ -201,9 +201,9 @@
 
   <!-- ══════ Assign Branch Modal ══════ -->
   @if (activeModal() === 'assignBranch') {
-    <div class="fixed inset-0 z-[400] flex items-center justify-center p-4" (click)="closeModal()">
-      <div class="absolute inset-0 bg-black/40"></div>
-      <div class="relative bg-white rounded-card shadow-lg max-w-md w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
+    <div class="fixed inset-0 z-[400] flex items-center justify-center p-4">
+      <button type="button" aria-label="Close dialog" (click)="closeModal()" class="absolute inset-0 bg-black/40 border-none cursor-default"></button>
+      <div class="relative bg-white rounded-card shadow-lg max-w-md w-full p-6 animate-[sc-modal_.2s_ease-out]">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-[15px] font-bold text-ink">Assign branch for {{ selectedAgent()?.fullName }}</h3>
           <button (click)="closeModal()" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface">
@@ -233,9 +233,9 @@
 
   <!-- ══════ Update License Modal ══════ -->
   @if (activeModal() === 'updateLicense') {
-    <div class="fixed inset-0 z-[400] flex items-center justify-center p-4" (click)="closeModal()">
-      <div class="absolute inset-0 bg-black/40"></div>
-      <div class="relative bg-white rounded-card shadow-lg max-w-md w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
+    <div class="fixed inset-0 z-[400] flex items-center justify-center p-4">
+      <button type="button" aria-label="Close dialog" (click)="closeModal()" class="absolute inset-0 bg-black/40 border-none cursor-default"></button>
+      <div class="relative bg-white rounded-card shadow-lg max-w-md w-full p-6 animate-[sc-modal_.2s_ease-out]">
         <div class="flex items-center justify-between mb-5">
           <h3 class="text-[15px] font-bold text-ink">Update license for {{ selectedAgent()?.fullName }}</h3>
           <button (click)="closeModal()" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface">
@@ -260,9 +260,9 @@
 
   <!-- ══════ Edit Branch Modal ══════ -->
   @if (activeModal() === 'editBranch') {
-    <div class="fixed inset-0 z-[400] flex items-center justify-center p-4" (click)="closeModal()">
-      <div class="absolute inset-0 bg-black/40"></div>
-      <div class="relative bg-white rounded-card shadow-lg max-w-md w-full p-6 animate-[sc-modal_.2s_ease-out]" (click)="$event.stopPropagation()">
+    <div class="fixed inset-0 z-[400] flex items-center justify-center p-4">
+      <button type="button" aria-label="Close dialog" (click)="closeModal()" class="absolute inset-0 bg-black/40 border-none cursor-default"></button>
+      <div class="relative bg-white rounded-card shadow-lg max-w-md w-full p-6 animate-[sc-modal_.2s_ease-out]">
         <div class="flex items-center justify-between mb-5">
           <h3 class="text-[15px] font-bold text-ink">Edit branch: {{ selectedBranch()?.name }}</h3>
           <button (click)="closeModal()" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface">

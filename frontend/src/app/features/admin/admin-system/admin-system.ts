@@ -63,7 +63,7 @@ const TEMPLATE_DUMMIES: Record<string, Record<string, string>> = {
 export class AdminSystemComponent implements OnInit {
   private adminService = inject(AdminService);
   private toastService = inject(ToastService);
-  private sanitizer = inject(DomSanitizer);
+  private readonly sanitizer = inject(DomSanitizer);
 
   activeTab = signal<'configs' | 'audit' | 'notifications' | 'templates'>('configs');
 
@@ -279,7 +279,7 @@ export class AdminSystemComponent implements OnInit {
 
   openPreviewModal(tpl: EmailTemplateDto): void {
     this.selectedTemplate.set(tpl);
-    const dummies = { year: new Date().getFullYear().toString(), ...(TEMPLATE_DUMMIES[tpl.templateKey] ?? {}) };
+    const dummies = { year: new Date().getFullYear().toString(), ...TEMPLATE_DUMMIES[tpl.templateKey] };
     let subject = tpl.subject;
     let body = tpl.bodyHtml;
     for (const [key, value] of Object.entries(dummies)) {

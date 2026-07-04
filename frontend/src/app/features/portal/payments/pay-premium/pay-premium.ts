@@ -17,10 +17,10 @@ declare const Stripe: any;
   templateUrl: './pay-premium.html',
 })
 export class PayPremiumComponent implements OnInit {
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private paymentService = inject(PaymentService);
-  private toast = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly paymentService = inject(PaymentService);
+  private readonly toast = inject(ToastService);
 
   schedule = signal<PremiumScheduleDto[]>([]);
   loading = signal(true);
@@ -126,7 +126,7 @@ export class PayPremiumComponent implements OnInit {
     this.checkoutError.set(null);
     const { error } = await this.stripeInstance.confirmPayment({
       elements: this.stripeElements,
-      confirmParams: { return_url: window.location.origin + '/payments' },
+      confirmParams: { return_url: globalThis.location.origin + '/payments' },
       redirect: 'if_required',
     });
     if (error) {

@@ -168,14 +168,11 @@
             Damage photos <span class="text-danger">*</span>
             <span class="text-[11px] font-normal text-muted ml-1">JPG / PNG · max 5 MB</span>
           </div>
-          <div class="border-2 border-dashed rounded-[12px] py-[18px] px-3.5 text-center cursor-pointer transition-all"
+          <button type="button" class="w-full block border-2 border-dashed rounded-[12px] py-[18px] px-3.5 text-center cursor-pointer transition-all"
                [class]="photos().length
                  ? 'border-success bg-success-bg'
                  : photoErr() ? 'border-danger bg-danger-bg' : 'border-[#C5CBD3] bg-[#FAFBFC]'"
-               tabindex="0"
-               role="button"
-               (click)="photoInput.click()"
-               (keydown.enter)="photoInput.click()">
+               (click)="photoInput.click()">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
                  [attr.stroke]="photos().length ? '#1F9D6B' : '#6B7685'"
                  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-1.5">
@@ -185,7 +182,7 @@
               {{ photos().length ? photos().length + ' photo' + (photos().length > 1 ? 's' : '') + ' added' : 'Add damage photos' }}
             </div>
             <div class="text-[11px] text-muted mt-[3px]">Tap to take photo or choose from gallery</div>
-          </div>
+          </button>
           <input #photoInput type="file" accept="image/*" multiple class="hidden" aria-label="Add damage photos" (change)="onPhotoChange($event)" />
           @if (photos().length) {
             <div class="flex gap-2 flex-wrap mt-[9px]">
@@ -219,12 +216,9 @@
             Survey report document <span class="text-danger">*</span>
             <span class="text-[11px] font-normal text-muted ml-1">PDF / JPG / PNG · max 5 MB</span>
           </div>
-          <div class="border-[1.5px] border-dashed border-[#C5CBD3] rounded-[12px] py-[13px] px-3.5 flex items-center gap-3 cursor-pointer bg-[#FAFBFC] hover:bg-surface-alt transition-colors"
+          <button type="button" class="w-full border-[1.5px] border-dashed border-[#C5CBD3] rounded-[12px] py-[13px] px-3.5 flex items-center gap-3 cursor-pointer bg-[#FAFBFC] hover:bg-surface-alt transition-colors text-left"
                [class]="reportDocumentErr() ? 'border-danger bg-danger-bg' : ''"
-               tabindex="0"
-               role="button"
-               (click)="docInput.click()"
-               (keydown.enter)="docInput.click()">
+               (click)="docInput.click()">
             <div class="w-[38px] h-[38px] rounded-[10px] bg-primary-light flex items-center justify-center shrink-0">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F6E8C" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
@@ -237,7 +231,7 @@
               </div>
               <div class="text-[11px] text-muted mt-0.5">This file is stored as the official survey report</div>
             </div>
-          </div>
+          </button>
           <input #docInput type="file" accept=".pdf,.jpg,.jpeg,.png" class="hidden" aria-label="Add survey report document" (change)="onDocChange($event)" />
           @if (reportDocument(); as d) {
             <div class="mt-2 flex flex-col gap-[5px]">

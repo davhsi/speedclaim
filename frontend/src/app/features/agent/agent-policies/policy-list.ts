@@ -14,8 +14,8 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
   templateUrl: './policy-list.html',
 })
 export class AgentPolicyListComponent implements OnInit {
-  private agentService = inject(AgentService);
-  private route = inject(ActivatedRoute);
+  private readonly agentService = inject(AgentService);
+  private readonly route = inject(ActivatedRoute);
 
   loading = signal(true);
   policies = signal<PolicyDto[]>([]);

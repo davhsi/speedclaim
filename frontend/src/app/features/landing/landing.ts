@@ -10,8 +10,8 @@ import { SafeHtmlPipe } from '../../shared/pipes/safe-html.pipe';
   templateUrl: './landing.html',
 })
 export class LandingComponent implements AfterViewInit {
-  private platformId = inject(PLATFORM_ID);
-  private router = inject(Router);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly router = inject(Router);
 
   readonly year = new Date().getFullYear();
   quoteType = signal<'Health' | 'Motor' | 'Life'>('Health');

@@ -17,7 +17,7 @@ import { AuthService } from '../../../core/services/auth.service';
 export class AdminUsersComponent implements OnInit {
   private adminService = inject(AdminService);
   private toastService = inject(ToastService);
-  private authService = inject(AuthService);
+  private readonly authService = inject(AuthService);
 
   allUsers = signal<UserDto[]>([]);
   sessions = signal<SessionDto[]>([]);
@@ -330,8 +330,8 @@ export class AdminUsersComponent implements OnInit {
 
   bulkDeactivate(): void {
     if (this.bulkDeactivating()) return;
-    const ids = Array.from(this.selectedIds());
-    const users = this.allUsers().filter(u => ids.includes(u.id) && u.isActive && this.canToggleStatus(u));
+    const ids = this.selectedIds();
+    const users = this.allUsers().filter(u => ids.has(u.id) && u.isActive && this.canToggleStatus(u));
     if (!users.length) { this.clearSelection(); this.showBulkConfirm.set(false); return; }
     this.bulkDeactivating.set(true);
     let done = 0, failed = 0;

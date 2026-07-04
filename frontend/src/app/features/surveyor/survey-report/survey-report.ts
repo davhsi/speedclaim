@@ -74,7 +74,7 @@ export class SurveyReportComponent implements OnInit {
       if (d.driveable !== null && d.driveable !== undefined) this.driveable.set(d.driveable);
       this.workshop = d.workshop ?? '';
       this.notes = d.notes ?? '';
-      if (Object.values(d).some(v => v)) this.toastService.success('Draft restored — pick up where you left off.');
+      if (Object.values(d).some(Boolean)) this.toastService.success('Draft restored — pick up where you left off.');
     } catch { /* corrupted draft */ }
   }
 
@@ -150,8 +150,8 @@ export class SurveyReportComponent implements OnInit {
 
   validate(): boolean {
     let ok = true;
-    if (!this.dmgType()) { this.dmgTypeErr.set('Please choose a damage type.'); ok = false; }
-    else this.dmgTypeErr.set('');
+    if (this.dmgType()) this.dmgTypeErr.set('');
+    else { this.dmgTypeErr.set('Please choose a damage type.'); ok = false; }
     if (!this.desc.trim()) { this.descErr.set('Please describe the damage observed.'); ok = false; }
     else this.descErr.set('');
     if (!this.cost || Number.parseFloat(this.cost) <= 0) { this.costErr.set('Please enter a valid estimated repair cost.'); ok = false; }
@@ -160,8 +160,8 @@ export class SurveyReportComponent implements OnInit {
     else this.driveableErr.set('');
     if (this.photos().length === 0) { this.photoErr.set('Please upload at least one damage photo.'); ok = false; }
     else this.photoErr.set('');
-    if (!this.reportDocument()) { this.reportDocumentErr.set('Please upload the survey report document.'); ok = false; }
-    else this.reportDocumentErr.set('');
+    if (this.reportDocument()) this.reportDocumentErr.set('');
+    else { this.reportDocumentErr.set('Please upload the survey report document.'); ok = false; }
     return ok;
   }
 

@@ -14,8 +14,8 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
 })
 export class AgentRenewalListComponent implements OnInit {
   private agentService = inject(AgentService);
-  private router = inject(Router);
-  private toast = inject(ToastService);
+  private readonly router = inject(Router);
+  private readonly toast = inject(ToastService);
 
   loading = signal(true);
   renewals = signal<RenewalReminderDto[]>([]);
@@ -61,7 +61,7 @@ export class AgentRenewalListComponent implements OnInit {
     const body = encodeURIComponent(
       `Dear ${renewal.customerName},\n\nYour SpeedClaim policy ${renewal.policyNumber} is due for renewal on ${this.formatDate(renewal.dueDate)}. The premium due is INR ${renewal.amountDue}.\n\nPlease log in to SpeedClaim to complete the renewal.\n\nRegards,\nSpeedClaim`
     );
-    window.location.href = `mailto:${renewal.customerEmail}?subject=${subject}&body=${body}`;
+    globalThis.location.href = `mailto:${renewal.customerEmail}?subject=${subject}&body=${body}`;
   }
 
   viewDetails(renewal: RenewalReminderDto): void {

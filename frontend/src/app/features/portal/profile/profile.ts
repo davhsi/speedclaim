@@ -12,7 +12,7 @@ import { postalCodeValidator, phoneValidator } from '../../../shared/validators/
 import { AppSelectComponent } from '../../../shared/components/app-select/app-select';
 
 const AADHAAR_PATTERN = /^\d{12}$/;
-const PAN_PATTERN = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
+const PAN_PATTERN = /^[A-Z]{5}\d{4}[A-Z]$/;
 
 @Component({
   selector: 'app-profile',

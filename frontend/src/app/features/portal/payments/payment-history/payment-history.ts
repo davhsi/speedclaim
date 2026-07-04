@@ -29,7 +29,7 @@ export class PaymentHistoryComponent implements OnInit {
   openReceipt(p: PaymentRecordDto): void { this.receipt.set(p); }
   closeReceipt(): void { this.receipt.set(null); }
 
-  printReceipt(): void { window.print(); }
+  printReceipt(): void { globalThis.print(); }
 
   receiptRef(p: PaymentRecordDto): string {
     const id = p.stripePaymentIntentId ?? p.id;

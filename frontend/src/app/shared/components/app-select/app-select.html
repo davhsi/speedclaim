@@ -20,6 +20,9 @@
 </button>
 
 @if (isOpen()) {
+  <!-- Deliberately a custom ARIA listbox, not a native <select>/<option>: this component's
+       search-to-filter box and custom styling (checkmarks, Tailwind theming) have no native
+       equivalent. Escape-to-close and click-outside-to-close are implemented in the .ts. -->
   <div class="sc-panel" role="listbox" [attr.aria-label]="placeholder">
 
     @if (searchable) {

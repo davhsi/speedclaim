@@ -26,7 +26,7 @@
       }
     </button>
     @if (notifOpen()) {
-      <div class="fixed inset-0 z-40" tabindex="0" role="button" (click)="closeNotif()" (keydown.enter)="closeNotif()"></div>
+      <button type="button" class="fixed inset-0 z-40" (click)="closeNotif()" aria-label="Close menu"></button>
       <div class="absolute top-[calc(100%+6px)] right-0 w-[320px] bg-white border border-line rounded-card shadow-dropdown z-50 overflow-hidden animate-sc-fade-fast">
         <div class="flex items-center justify-between px-4 py-3 border-b border-line">
           <span class="text-[13px] font-semibold text-ink">Notifications</span>
@@ -72,7 +72,7 @@
       }
     </button>
     @if (profileMenuOpen()) {
-      <div class="fixed inset-0 z-40" tabindex="0" role="button" (click)="profileMenuOpen.set(false)" (keydown.enter)="profileMenuOpen.set(false)"></div>
+      <button type="button" class="fixed inset-0 z-40" (click)="profileMenuOpen.set(false)" aria-label="Close menu"></button>
       <div class="absolute top-[calc(100%+8px)] right-0 w-[200px] bg-white border border-line rounded-card shadow-dropdown z-50 overflow-hidden animate-sc-fade-fast">
         <div class="px-4 py-3 border-b border-line">
           <div class="text-[13px] font-semibold text-ink truncate">{{ userName() }}</div>

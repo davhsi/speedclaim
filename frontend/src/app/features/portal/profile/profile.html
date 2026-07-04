@@ -280,8 +280,8 @@
         <div class="bg-white border border-line rounded-card shadow-sm p-6 space-y-5">
           <div class="text-[13px] font-semibold text-ink">Upload KYC documents</div>
           <div>
-            <label class="block text-xs text-muted mb-1.5">Aadhaar number</label>
-            <input type="text" [ngModel]="aadhaarNum()" (ngModelChange)="aadhaarNum.set($event)" inputmode="numeric" maxlength="12"
+            <label for="kyc-aadhaar-number" class="block text-xs text-muted mb-1.5">Aadhaar number</label>
+            <input id="kyc-aadhaar-number" type="text" [ngModel]="aadhaarNum()" (ngModelChange)="aadhaarNum.set($event)" inputmode="numeric" maxlength="12"
                    placeholder="12 digit Aadhaar number" class="h-[42px] sc-numeric mb-1"
                    [class]="aadhaarError() ? 'border-[1.5px] border-danger' : ''" />
             @if (aadhaarError()) {
@@ -291,8 +291,8 @@
             <button class="mt-2 h-9 px-4 bg-primary text-white text-xs font-semibold rounded-control hover:bg-primary-hover disabled:opacity-40" [disabled]="!aadhaarFile || !aadhaarValid()" (click)="uploadAadhaar()">Upload Aadhaar</button>
           </div>
           <div>
-            <label class="block text-xs text-muted mb-1.5">PAN number</label>
-            <input type="text" [ngModel]="panNum()" (ngModelChange)="panNum.set($event.toUpperCase())" maxlength="10"
+            <label for="kyc-pan-number" class="block text-xs text-muted mb-1.5">PAN number</label>
+            <input id="kyc-pan-number" type="text" [ngModel]="panNum()" (ngModelChange)="panNum.set($event.toUpperCase())" maxlength="10"
                    placeholder="e.g., ABCDE1234F" class="h-[42px] mb-1"
                    [class]="panError() ? 'border-[1.5px] border-danger' : ''" />
             @if (panError()) {

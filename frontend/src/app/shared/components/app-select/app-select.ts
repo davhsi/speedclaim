@@ -1,6 +1,6 @@
 import {
   Component, Input, signal, computed, HostListener,
-  ElementRef, inject, ViewChild, ElementRef as ElRef, AfterViewInit
+  ElementRef, inject, ViewChild, ElementRef as ElRef
 } from '@angular/core';
 import { ControlValueAccessor, NgControl, FormsModule } from '@angular/forms';
 
@@ -111,11 +111,11 @@ export class AppSelectComponent implements ControlValueAccessor {
 
   @ViewChild('searchInput') searchInput?: ElRef<HTMLInputElement>;
 
-  private el = inject(ElementRef);
-  private ngControl = inject(NgControl, { optional: true, self: true });
+  private readonly el = inject(ElementRef);
+  private readonly ngControl = inject(NgControl, { optional: true, self: true });
 
   isOpen = signal(false);
-  private _value = signal('');
+  private readonly _value = signal('');
   query = signal('');
   isDisabled = false;
 

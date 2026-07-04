@@ -19,7 +19,7 @@ import { ClaimStatus, ClaimType } from '../../../core/models/enums';
 export class ClaimListComponent implements OnInit {
   private claimsService = inject(ClaimsOfficerService);
   private router = inject(Router);
-  private route = inject(ActivatedRoute);
+  private readonly route = inject(ActivatedRoute);
 
   claims = signal<ClaimDto[]>([]);
   currentPage = signal(1);

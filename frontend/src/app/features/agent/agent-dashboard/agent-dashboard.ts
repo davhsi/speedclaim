@@ -26,7 +26,7 @@ const RENEWAL_ICON = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none
 })
 export class AgentDashboardComponent implements OnInit {
   private agentService = inject(AgentService);
-  private router = inject(Router);
+  private readonly router = inject(Router);
 
   loading = signal(true);
   dashboard = signal<AgentDashboardDto | null>(null);

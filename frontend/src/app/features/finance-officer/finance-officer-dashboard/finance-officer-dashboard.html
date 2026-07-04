@@ -7,7 +7,7 @@
   <!-- Stat cards -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
     <!-- Total payments collected -->
-    <div (click)="navigateTo('/finance-officer/payments')" class="bg-white border border-line rounded-card shadow-sm p-5 cursor-pointer transition-shadow hover:shadow-md">
+    <button type="button" (click)="navigateTo('/finance-officer/payments')" class="bg-white border border-line rounded-card shadow-sm p-5 cursor-pointer transition-shadow hover:shadow-md w-full text-left block">
       <div class="flex justify-between items-start mb-3.5">
         <div class="w-10 h-10 rounded-[10px] bg-success-bg flex items-center justify-center">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1F9D6B" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
@@ -16,10 +16,10 @@
       </div>
       <div class="text-[22px] font-bold text-ink sc-numeric leading-tight mb-[5px]">{{ totalPaid() }}</div>
       <div class="text-[13px] text-muted">Total payments collected</div>
-    </div>
+    </button>
 
     <!-- Commissions to approve -->
-    <div (click)="navigateTo('/finance-officer/commissions')" class="bg-white border border-line rounded-card shadow-sm p-5 cursor-pointer transition-shadow hover:shadow-md">
+    <button type="button" (click)="navigateTo('/finance-officer/commissions')" class="bg-white border border-line rounded-card shadow-sm p-5 cursor-pointer transition-shadow hover:shadow-md w-full text-left block">
       <div class="flex justify-between items-start mb-3.5">
         <div class="w-10 h-10 rounded-[10px] bg-warning-bg flex items-center justify-center">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D9920A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
@@ -28,10 +28,10 @@
       </div>
       <div class="text-[22px] font-bold text-ink sc-numeric leading-tight mb-[5px]">{{ pendingCommTotal() }}</div>
       <div class="text-[13px] text-muted">Commissions to approve</div>
-    </div>
+    </button>
 
     <!-- Overdue policies -->
-    <div (click)="navigateTo('/finance-officer/reports')" class="bg-white border border-line rounded-card shadow-sm p-5 cursor-pointer transition-shadow hover:shadow-md">
+    <button type="button" (click)="navigateTo('/finance-officer/reports')" class="bg-white border border-line rounded-card shadow-sm p-5 cursor-pointer transition-shadow hover:shadow-md w-full text-left block">
       <div class="flex justify-between items-start mb-3.5">
         <div class="w-10 h-10 rounded-[10px] bg-danger-bg flex items-center justify-center">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D14343" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -40,10 +40,10 @@
       </div>
       <div class="text-[32px] font-bold text-ink sc-numeric leading-none mb-[5px]">{{ overdueCount() }}</div>
       <div class="text-[13px] text-muted">Overdue policies</div>
-    </div>
+    </button>
 
     <!-- Claims awaiting payout -->
-    <div (click)="navigateTo('/finance-officer/payouts')" class="bg-white border border-line rounded-card shadow-sm p-5 cursor-pointer transition-shadow hover:shadow-md">
+    <button type="button" (click)="navigateTo('/finance-officer/payouts')" class="bg-white border border-line rounded-card shadow-sm p-5 cursor-pointer transition-shadow hover:shadow-md w-full text-left block">
       <div class="flex justify-between items-start mb-3.5">
         <div class="w-10 h-10 rounded-[10px] bg-info-bg flex items-center justify-center">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2D7FF9" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a1 1 0 11-2 0 1 1 0 012 0z"/></svg>
@@ -52,7 +52,7 @@
       </div>
       <div class="text-[32px] font-bold text-ink sc-numeric leading-none mb-[5px]">{{ payoutCount() }}</div>
       <div class="text-[13px] text-muted">Claims awaiting payout</div>
-    </div>
+    </button>
   </div>
 
   <!-- Recent payments -->
