@@ -154,6 +154,10 @@ export class AdminAgentsComponent implements OnInit {
     this.activeModal.set(null);
   }
 
+  private isPasswordStrong(pw: string): boolean {
+    return pw.length >= 8 && /[A-Z]/.test(pw) && /[a-z]/.test(pw) && /\d/.test(pw) && /[^a-zA-Z0-9]/.test(pw);
+  }
+
   toggleAgentStatus(agent: UserDto): void {
     const next = !agent.isActive;
     const profile = this.getAgentProfile(agent.id);
@@ -169,9 +173,13 @@ export class AdminAgentsComponent implements OnInit {
 
   registerAgent(): void {
     const f = this.regForm;
+    if (!this.isPasswordStrong(f.password)) {
+      this.toastService.warning('Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a digit, and a special character.');
+      return;
+    }
     this.adminService.registerAgent({
       email: f.email,
-      password: f.password || 'TempPass@123',
+      password: f.password,
       salutation: 'Mr',
       firstName: f.firstName,
       lastName: f.lastName,

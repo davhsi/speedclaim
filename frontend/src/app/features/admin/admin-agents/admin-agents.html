@@ -160,6 +160,13 @@
         </div>
         <div class="grid grid-cols-2 gap-3 mb-4">
           <div>
+            <label for="agent-reg-password" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Temporary password</label>
+            <input id="agent-reg-password" type="password" [(ngModel)]="regForm.password" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            <p class="mt-1 text-[11px] text-muted">8+ chars, with uppercase, lowercase, digit &amp; special character. Share it with the agent yourself.</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div>
             <label class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">License number</label>
             <input type="text" [(ngModel)]="regForm.licenseNumber" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
