@@ -29,12 +29,14 @@ describe('authGuard', () => {
   let initialized: ReturnType<typeof signal<boolean>>;
   let initFromStorage: ReturnType<typeof vi.fn>;
   let createUrlTree: ReturnType<typeof vi.fn>;
+  let getCurrentNavigation: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     currentUser = signal<AuthUserDto | null>(null);
     initialized = signal(false);
     initFromStorage = vi.fn(() => of(null));
     createUrlTree = vi.fn((commands: string[]) => ({ __urlTree: true, commands }) as unknown as UrlTree);
+    getCurrentNavigation = vi.fn(() => ({ trigger: 'imperative' }));
 
     TestBed.configureTestingModule({
       providers: [
@@ -47,7 +49,7 @@ describe('authGuard', () => {
             isAuthenticated: () => !!currentUser(),
           },
         },
-        { provide: Router, useValue: { createUrlTree } },
+        { provide: Router, useValue: { createUrlTree, getCurrentNavigation } },
       ],
     });
   });
@@ -60,6 +62,17 @@ describe('authGuard', () => {
 
     expect(createUrlTree).toHaveBeenCalledWith(['/auth/login']);
     expect(result).toEqual({ __urlTree: true, commands: ['/auth/login'] });
+  });
+
+  it('redirects browser-back navigation from a protected route to landing when unauthenticated', async () => {
+    initialized.set(true);
+    currentUser.set(null);
+    getCurrentNavigation.mockReturnValue({ trigger: 'popstate' });
+
+    const result = await runGuard(routeWithPath('admin'));
+
+    expect(createUrlTree).toHaveBeenCalledWith(['/']);
+    expect(result).toEqual({ __urlTree: true, commands: ['/'] });
   });
 
   it('allows a role-matching route (e.g. Admin hitting /admin)', async () => {

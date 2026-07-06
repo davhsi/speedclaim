@@ -7,9 +7,14 @@ export const authGuard: CanActivateFn = (route) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
+  const unauthenticatedRedirect = (): UrlTree => {
+    const navigation = router.getCurrentNavigation();
+    return router.createUrlTree([navigation?.trigger === 'popstate' ? '/' : '/auth/login']);
+  };
+
   const checkAndRedirect = (): boolean | UrlTree => {
     if (!authService.isAuthenticated()) {
-      return router.createUrlTree(['/auth/login']);
+      return unauthenticatedRedirect();
     }
 
     const user = authService.currentUser();
@@ -40,5 +45,5 @@ export const authGuard: CanActivateFn = (route) => {
     );
   }
 
-  return router.createUrlTree(['/auth/login']);
+  return unauthenticatedRedirect();
 };
