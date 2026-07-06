@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR;
 using Moq;
 using NUnit.Framework;
+using SpeedClaim.Api.Hubs;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Models;
 using SpeedClaim.Api.Services;
@@ -16,6 +18,8 @@ public class NotificationServiceTests
 {
     private Mock<IUnitOfWork> _mockUnitOfWork = null!;
     private Mock<IRepository<Notification>> _mockNotificationRepo = null!;
+    private Mock<IHubContext<NotificationHub, INotificationClient>> _mockHubContext = null!;
+    private Mock<INotificationClient> _mockNotificationClient = null!;
     private NotificationService _notificationService = null!;
 
     [SetUp]
@@ -25,7 +29,14 @@ public class NotificationServiceTests
         _mockNotificationRepo = new Mock<IRepository<Notification>>();
         _mockUnitOfWork.Setup(u => u.Notifications).Returns(_mockNotificationRepo.Object);
         _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
-        _notificationService = new NotificationService(_mockUnitOfWork.Object);
+
+        _mockNotificationClient = new Mock<INotificationClient>();
+        var mockClients = new Mock<IHubClients<INotificationClient>>();
+        mockClients.Setup(c => c.Group(It.IsAny<string>())).Returns(_mockNotificationClient.Object);
+        _mockHubContext = new Mock<IHubContext<NotificationHub, INotificationClient>>();
+        _mockHubContext.Setup(h => h.Clients).Returns(mockClients.Object);
+
+        _notificationService = new NotificationService(_mockUnitOfWork.Object, _mockHubContext.Object);
     }
 
     [Test]
@@ -42,6 +53,8 @@ public class NotificationServiceTests
             n.Type == "policy" &&
             !n.IsRead)), Times.Once);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+        _mockNotificationClient.Verify(c => c.ReceiveNotification(It.Is<Api.Dtos.SystemManagement.NotificationDto>(d =>
+            d.UserId == userId && d.Title == "Policy Activated")), Times.Once);
     }
 
     [Test]

@@ -1,12 +1,19 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
+import * as signalR from '@microsoft/signalr';
 import { NotificationDto, ApiMessage } from '../models/api.models';
+import { TokenService } from './token.service';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
   private readonly http = inject(HttpClient);
+  private readonly tokenService = inject(TokenService);
+  private readonly platformId = inject(PLATFORM_ID);
   private readonly apiUrl = '/api/v1/users/notifications';
+
+  private hubConnection: signalR.HubConnection | null = null;
 
   notifications = signal<NotificationDto[]>([]);
   unreadCount = signal<number>(0);
@@ -38,5 +45,28 @@ export class NotificationService {
         this.unreadCount.set(0);
       }),
     );
+  }
+
+  startRealtime(): void {
+    if (!isPlatformBrowser(this.platformId) || this.hubConnection) return;
+
+    this.hubConnection = new signalR.HubConnectionBuilder()
+      .withUrl('/hubs/notifications', {
+        accessTokenFactory: () => this.tokenService.getAccessToken() ?? '',
+      })
+      .withAutomaticReconnect()
+      .build();
+
+    this.hubConnection.on('ReceiveNotification', (notification: NotificationDto) => {
+      this.notifications.update(list => [notification, ...list]);
+      this.unreadCount.update(c => c + 1);
+    });
+
+    this.hubConnection.start().catch(err => console.error('SignalR connection failed:', err));
+  }
+
+  stopRealtime(): void {
+    this.hubConnection?.stop();
+    this.hubConnection = null;
   }
 }

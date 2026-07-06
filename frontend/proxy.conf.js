@@ -17,4 +17,12 @@ module.exports = [
     secure: false,
     changeOrigin: true,
   },
+  {
+    // SignalR hub for real-time notifications (WebSocket upgrade).
+    context: ['/hubs'],
+    target,
+    secure: false,
+    changeOrigin: true,
+    ws: true,
+  },
 ];

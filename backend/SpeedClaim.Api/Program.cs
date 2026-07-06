@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using SpeedClaim.Api.Context;
+using SpeedClaim.Api.Hubs;
 using SpeedClaim.Api.Swagger;
 using SpeedClaim.Api.Exceptions;
 using SpeedClaim.Api.Interfaces;
@@ -90,6 +91,17 @@ builder.Services.AddAuthentication(options =>
                 context.Fail("Invalid user");
             }
         },
+        OnMessageReceived = context =>
+        {
+            // SignalR's browser client can't attach an Authorization header to the
+            // WebSocket/SSE handshake, so it sends the token as a query param instead.
+            var accessToken = context.Request.Query["access_token"];
+            if (!string.IsNullOrEmpty(accessToken) && context.HttpContext.Request.Path.StartsWithSegments("/hubs"))
+            {
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        },
         OnChallenge = async context =>
         {
             context.HandleResponse();
@@ -117,6 +129,8 @@ builder.Services.AddControllers()
     {
         options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
     });
+
+builder.Services.AddSignalR();
 
 // Add FluentValidation
 builder.Services.AddFluentValidationAutoValidation();
@@ -315,5 +329,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.Run();

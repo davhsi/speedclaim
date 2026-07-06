@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR;
 using SpeedClaim.Api.Dtos.SystemManagement;
 using SpeedClaim.Api.Exceptions;
+using SpeedClaim.Api.Hubs;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Models;
 
@@ -12,10 +14,12 @@ namespace SpeedClaim.Api.Services;
 public class NotificationService : INotificationService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IHubContext<NotificationHub, INotificationClient> _hubContext;
 
-    public NotificationService(IUnitOfWork unitOfWork)
+    public NotificationService(IUnitOfWork unitOfWork, IHubContext<NotificationHub, INotificationClient> hubContext)
     {
         _unitOfWork = unitOfWork;
+        _hubContext = hubContext;
     }
 
     public async Task CreateAsync(Guid userId, string title, string message, string type, string? redirectUrl = null)
@@ -33,6 +37,10 @@ public class NotificationService : INotificationService
         };
         await _unitOfWork.Notifications.AddAsync(notification);
         await _unitOfWork.CompleteAsync();
+
+        var dto = new NotificationDto(notification.Id, notification.UserId, notification.Title,
+            notification.Message, notification.Type, notification.IsRead, notification.CreatedAt);
+        await _hubContext.Clients.Group(NotificationHub.GroupForUser(userId)).ReceiveNotification(dto);
     }
 
     public async Task<IEnumerable<NotificationDto>> GetForUserAsync(Guid userId)

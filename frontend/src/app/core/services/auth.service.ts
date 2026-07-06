@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap, catchError, of } from 'rxjs';
 import { TokenService } from './token.service';
+import { NotificationService } from './notification.service';
 import {
   AuthResponse, AuthUserDto, LoginRequest, RegisterUserRequest,
   RegistrationResponse, ForgotPasswordRequest, ResetPasswordRequest,
@@ -14,6 +15,7 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly tokenService = inject(TokenService);
+  private readonly notificationService = inject(NotificationService);
 
   private readonly apiUrl = '/api/v1/auth';
 
@@ -27,6 +29,7 @@ export class AuthService {
       tap(res => {
         this.tokenService.setTokens(res.accessToken, res.refreshToken, rememberMe);
         this.currentUser.set(res.user);
+        this.notificationService.startRealtime();
       }),
     );
   }
@@ -39,6 +42,7 @@ export class AuthService {
     this.http.post(`${this.apiUrl}/logout`, {}).subscribe({ error: () => {} });
     this.tokenService.clearTokens();
     this.currentUser.set(null);
+    this.notificationService.stopRealtime();
     this.router.navigate(['/auth/login']);
   }
 
@@ -50,10 +54,12 @@ export class AuthService {
       tap(res => {
         this.tokenService.setTokens(res.accessToken, res.refreshToken);
         this.currentUser.set(res.user);
+        this.notificationService.startRealtime();
       }),
       catchError(() => {
         this.tokenService.clearTokens();
         this.currentUser.set(null);
+        this.notificationService.stopRealtime();
         return of(null);
       }),
     );
