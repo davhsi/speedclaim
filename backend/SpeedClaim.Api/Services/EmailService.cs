@@ -136,7 +136,7 @@ public class EmailService : IEmailService
     }
 
     // Loads a template from the DB by key, substitutes {{variable}} placeholders, and returns
-    // the rendered (subject, body) pair. Always injects {{year}} automatically.
+    // the rendered (subject, body) pair. Always injects {{year}} and {{logoUrl}} automatically.
     // Throws InvalidOperationException if the template key is missing or inactive — this is
     // intentional: a missing template means missing seed data, not a runtime user error.
     private async Task<(string subject, string body)> LoadAndRenderAsync(
@@ -150,6 +150,10 @@ public class EmailService : IEmailService
                 $"Email template '{templateKey}' is missing or inactive. Run database migrations to seed default templates.");
 
         variables["year"] = DateTime.UtcNow.Year.ToString();
+        // Single hosted logo asset (backend/SpeedClaim.Api/wwwroot/assets/logo.png, served via
+        // UseStaticFiles — the same file PolicyDocumentGenerator embeds into certificates) —
+        // every template references this one URL instead of embedding its own copy of the logo.
+        variables["logoUrl"] = $"{_configuration["ApiBaseUrl"] ?? "http://localhost:5062"}/assets/logo.png";
 
         var subject = template.Subject;
         var body = template.BodyHtml;

@@ -9,6 +9,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Rasterized copy of wwwroot/assets/logo.svg, embedded so PolicyDocumentGenerator can draw
+         the brand mark as a real image without a filesystem lookup or an image-processing package. -->
+    <EmbeddedResource Include="wwwroot\assets\logo.png" LogicalName="SpeedClaim.Api.Assets.logo.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Asp.Versioning.Mvc" Version="10.0.0" />
     <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="10.0.0" />
     <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />

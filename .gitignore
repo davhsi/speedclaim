@@ -62,6 +62,10 @@ graphify-out/
 .agents/.cache/
 
 wwwroot
+!backend/SpeedClaim.Api/wwwroot/
+!backend/SpeedClaim.Api/wwwroot/assets/
+!backend/SpeedClaim.Api/wwwroot/assets/**
+backend/SpeedClaim.Api/wwwroot/uploads/
 coverage-report/
 **/logs/*.log
 

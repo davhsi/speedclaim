@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.IO.Compression;
+using System.Reflection;
 using System.Text;
 using SpeedClaim.Api.Models;
 
@@ -7,6 +9,10 @@ namespace SpeedClaim.Api.Services;
 public static class PolicyDocumentGenerator
 {
     public const string ContentType = "application/pdf";
+
+    // wwwroot/assets/logo.png (a rasterized copy of frontend/public/favicon.svg) embedded as a
+    // manifest resource — decoded and re-Flate-compressed once, then reused for every certificate.
+    private static readonly Lazy<LogoImage> _logo = new(LoadLogo);
 
     public static byte[] GenerateCertificatePdf(Policy policy, string customerName, string productName)
     {
@@ -31,14 +37,31 @@ public static class PolicyDocumentGenerator
         DrawContactPanel(content);
         DrawFooter(content);
 
-        return BuildPdf(content.ToString());
+        return BuildPdf(content.ToString(), _logo.Value);
+    }
+
+    private static LogoImage LoadLogo()
+    {
+        using var stream = typeof(PolicyDocumentGenerator).Assembly
+            .GetManifestResourceStream("SpeedClaim.Api.Assets.logo.png")
+            ?? throw new InvalidOperationException("Embedded resource SpeedClaim.Api.Assets.logo.png not found.");
+        using var buffer = new MemoryStream();
+        stream.CopyTo(buffer);
+
+        var (rgb, width, height) = PngDecoder.DecodeRgb24(buffer.ToArray());
+
+        using var flate = new MemoryStream();
+        using (var deflate = new ZLibStream(flate, CompressionLevel.Optimal, leaveOpen: true))
+            deflate.Write(rgb);
+
+        return new LogoImage(flate.ToArray(), width, height);
     }
 
     private static void DrawHeader(PdfCanvas c)
     {
         c.FillRect(0, 706, 612, 86, 0.06, 0.43, 0.55);
         c.FillRect(0, 706, 612, 10, 0.12, 0.62, 0.42);
-        c.DrawSpeedClaimLogo(56, 742, 36);
+        c.DrawImage("Im1", 56, 742, 36, 36);
         c.Text("SpeedClaim", 94, 755, 22, "F2", 1, 1, 1);
         c.Text("Insurance policy services", 96, 736, 10, "F1", 0.82, 0.94, 0.97);
         c.Text("Policy Certificate", 410, 754, 18, "F2", 1, 1, 1);
@@ -104,48 +127,166 @@ public static class PolicyDocumentGenerator
     private static string FormatMoney(decimal value) =>
         string.Create(CultureInfo.InvariantCulture, $"{value:0.00} INR");
 
-    private static byte[] BuildPdf(string stream)
+    // Objects are raw bytes (not strings) so the image XObject's Flate-compressed binary stream
+    // survives unmangled — an ASCII StreamWriter would corrupt any byte outside the 7-bit range.
+    private static byte[] BuildPdf(string contentStream, LogoImage logo)
     {
-        var objects = new[]
+        var objects = new List<byte[]>
         {
-            "<< /Type /Catalog /Pages 2 0 R >>",
-            "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>",
-            "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-            "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
-            $"<< /Length {Encoding.ASCII.GetByteCount(stream)} >>\nstream\n{stream}endstream"
+            Ascii("<< /Type /Catalog /Pages 2 0 R >>"),
+            Ascii("<< /Type /Pages /Kids [3 0 R] /Count 1 >>"),
+            Ascii("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] " +
+                  "/Resources << /Font << /F1 4 0 R /F2 5 0 R >> /XObject << /Im1 6 0 R >> >> " +
+                  "/Contents 7 0 R >>"),
+            Ascii("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"),
+            Ascii("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>"),
+            Concat(
+                Ascii($"<< /Type /XObject /Subtype /Image /Width {logo.Width} /Height {logo.Height} " +
+                      $"/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode /Length {logo.FlateData.Length} >>\nstream\n"),
+                logo.FlateData,
+                Ascii("\nendstream")),
+            Concat(Ascii($"<< /Length {Encoding.ASCII.GetByteCount(contentStream)} >>\nstream\n"), Ascii(contentStream), Ascii("endstream"))
         };
 
         using var output = new MemoryStream();
-        using var writer = new StreamWriter(output, Encoding.ASCII, leaveOpen: true);
-        writer.WriteLine("%PDF-1.4");
+        void WriteAscii(string s) => output.Write(Ascii(s));
+
+        WriteAscii("%PDF-1.4\n");
 
         var offsets = new List<long> { 0 };
-        for (var i = 0; i < objects.Length; i++)
+        for (var i = 0; i < objects.Count; i++)
         {
-            writer.Flush();
             offsets.Add(output.Position);
-            writer.WriteLine($"{i + 1} 0 obj");
-            writer.WriteLine(objects[i]);
-            writer.WriteLine("endobj");
+            WriteAscii($"{i + 1} 0 obj\n");
+            output.Write(objects[i]);
+            WriteAscii("\nendobj\n");
         }
 
-        writer.Flush();
         var xrefOffset = output.Position;
-        writer.WriteLine("xref");
-        writer.WriteLine($"0 {objects.Length + 1}");
-        writer.WriteLine("0000000000 65535 f ");
+        WriteAscii("xref\n");
+        WriteAscii($"0 {objects.Count + 1}\n");
+        WriteAscii("0000000000 65535 f \n");
         foreach (var offset in offsets.Skip(1))
-            writer.WriteLine($"{offset:0000000000} 00000 n ");
+            WriteAscii($"{offset:0000000000} 00000 n \n");
 
-        writer.WriteLine("trailer");
-        writer.WriteLine($"<< /Size {objects.Length + 1} /Root 1 0 R >>");
-        writer.WriteLine("startxref");
-        writer.WriteLine(xrefOffset);
-        writer.WriteLine("%%EOF");
-        writer.Flush();
+        WriteAscii("trailer\n");
+        WriteAscii($"<< /Size {objects.Count + 1} /Root 1 0 R >>\n");
+        WriteAscii("startxref\n");
+        WriteAscii($"{xrefOffset}\n");
+        WriteAscii("%%EOF");
 
         return output.ToArray();
+    }
+
+    private static byte[] Ascii(string value) => Encoding.ASCII.GetBytes(value);
+
+    private static byte[] Concat(params byte[][] parts)
+    {
+        var result = new byte[parts.Sum(p => p.Length)];
+        var offset = 0;
+        foreach (var part in parts)
+        {
+            Buffer.BlockCopy(part, 0, result, offset, part.Length);
+            offset += part.Length;
+        }
+        return result;
+    }
+
+    private sealed record LogoImage(byte[] FlateData, int Width, int Height);
+
+    // Minimal decoder for the one PNG shape we ourselves produce (8-bit, non-interlaced,
+    // truecolor-without-alpha) — not a general-purpose PNG reader.
+    private static class PngDecoder
+    {
+        public static (byte[] Rgb, int Width, int Height) DecodeRgb24(byte[] png)
+        {
+            var pos = 8; // skip the 8-byte PNG signature
+            int width = 0, height = 0;
+            using var idat = new MemoryStream();
+
+            while (pos < png.Length)
+            {
+                var length = ReadUInt32BigEndian(png, pos);
+                var type = Encoding.ASCII.GetString(png, pos + 4, 4);
+                var dataStart = pos + 8;
+
+                if (type == "IHDR")
+                {
+                    width = (int)ReadUInt32BigEndian(png, dataStart);
+                    height = (int)ReadUInt32BigEndian(png, dataStart + 4);
+                    var bitDepth = png[dataStart + 8];
+                    var colorType = png[dataStart + 9];
+                    var interlace = png[dataStart + 12];
+                    if (bitDepth != 8 || colorType != 2 || interlace != 0)
+                        throw new NotSupportedException(
+                            $"logo.png must be 8-bit non-interlaced RGB (got bitDepth={bitDepth}, colorType={colorType}, interlace={interlace}).");
+                }
+                else if (type == "IDAT")
+                {
+                    idat.Write(png, dataStart, (int)length);
+                }
+                else if (type == "IEND")
+                {
+                    break;
+                }
+
+                pos = dataStart + (int)length + 4; // + 4 for the trailing CRC
+            }
+
+            using var inflated = new MemoryStream();
+            using (var zlib = new ZLibStream(new MemoryStream(idat.ToArray()), CompressionMode.Decompress))
+                zlib.CopyTo(inflated);
+
+            return (Unfilter(inflated.ToArray(), width, height), width, height);
+        }
+
+        private static byte[] Unfilter(byte[] filtered, int width, int height)
+        {
+            const int bpp = 3; // RGB, 8 bits per channel
+            var stride = width * bpp;
+            var raw = new byte[height * stride];
+            var srcPos = 0;
+
+            for (var row = 0; row < height; row++)
+            {
+                var filterType = filtered[srcPos++];
+                var rowStart = row * stride;
+                var prevRowStart = rowStart - stride;
+
+                for (var i = 0; i < stride; i++)
+                {
+                    var x = filtered[srcPos++];
+                    var a = i >= bpp ? raw[rowStart + i - bpp] : 0;
+                    var b = row > 0 ? raw[prevRowStart + i] : 0;
+                    var cc = row > 0 && i >= bpp ? raw[prevRowStart + i - bpp] : 0;
+
+                    raw[rowStart + i] = filterType switch
+                    {
+                        0 => x,
+                        1 => (byte)(x + a),
+                        2 => (byte)(x + b),
+                        3 => (byte)(x + (a + b) / 2),
+                        4 => (byte)(x + PaethPredictor(a, b, cc)),
+                        _ => throw new NotSupportedException($"Unsupported PNG filter type {filterType}.")
+                    };
+                }
+            }
+
+            return raw;
+        }
+
+        private static int PaethPredictor(int a, int b, int c)
+        {
+            var p = a + b - c;
+            var pa = Math.Abs(p - a);
+            var pb = Math.Abs(p - b);
+            var pc = Math.Abs(p - c);
+            if (pa <= pb && pa <= pc) return a;
+            return pb <= pc ? b : c;
+        }
+
+        private static uint ReadUInt32BigEndian(byte[] data, int offset) =>
+            (uint)((data[offset] << 24) | (data[offset + 1] << 16) | (data[offset + 2] << 8) | data[offset + 3]);
     }
 
     private sealed class PdfCanvas
@@ -182,22 +323,9 @@ public static class PolicyDocumentGenerator
             _content.AppendLine($"q {F(r)} {F(g)} {F(b)} RG 1 w {F(x1)} {F(y1)} m {F(x2)} {F(y2)} l S Q");
         }
 
-        public void DrawSpeedClaimLogo(double x, double y, double size)
+        public void DrawImage(string xObjectName, double x, double y, double width, double height)
         {
-            FillRect(x, y, size, size, 0.04, 0.19, 0.25);
-            _content.AppendLine(
-                $"q 1 1 1 RG {F(size * .11)} w 1 J " +
-                $"{F(x + size * .24)} {F(y + size * .36)} m " +
-                $"{F(x + size * .32)} {F(y + size * .12)} {F(x + size * .80)} {F(y + size * .13)} {F(x + size * .73)} {F(y + size * .45)} c " +
-                $"{F(x + size * .67)} {F(y + size * .69)} {F(x + size * .27)} {F(y + size * .53)} {F(x + size * .37)} {F(y + size * .78)} c " +
-                $"{F(x + size * .44)} {F(y + size * .92)} {F(x + size * .64)} {F(y + size * .87)} {F(x + size * .73)} {F(y + size * .77)} c S Q");
-            _content.AppendLine(
-                $"q 0.13 0.78 0.53 RG {F(size * .09)} w 1 J 1 j " +
-                $"{F(x + size * .23)} {F(y + size * .35)} m " +
-                $"{F(x + size * .36)} {F(y + size * .20)} l " +
-                $"{F(x + size * .73)} {F(y + size * .58)} l S Q");
-            _content.AppendLine($"q 0.47 0.87 0.95 RG {F(size * .06)} w 1 J {F(x + size * .76)} {F(y + size * .83)} m {F(x + size * .92)} {F(y + size * .83)} l S Q");
-            _content.AppendLine($"q 0.47 0.87 0.95 RG {F(size * .06)} w 1 J {F(x + size * .82)} {F(y + size * .70)} m {F(x + size * .94)} {F(y + size * .70)} l S Q");
+            _content.AppendLine($"q {F(width)} 0 0 {F(height)} {F(x)} {F(y)} cm /{xObjectName} Do Q");
         }
 
         public override string ToString() => _content.ToString();
