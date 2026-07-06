@@ -61,7 +61,10 @@ export class FinanceOfficerPaymentsComponent implements OnInit {
     });
   }
 
-  onFilterChange(): void { this.currentPage.set(1); }
+  onFilterChange(): void {
+    this.currentPage.set(1);
+    this.allRecords.update(records => [...records]);
+  }
   onPageChange(page: number): void { this.currentPage.set(page); }
 
   openReconcile(p: FinancePaymentRecordDto): void {
