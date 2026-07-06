@@ -34,13 +34,23 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-5">
             <div>
               <label for="quote-sum-assured" class="block text-[13px] font-medium mb-1.5">Sum assured (₹)</label>
-              <input id="quote-sum-assured" type="number" formControlName="sumAssured" [min]="sp.minSumAssured" [max]="sp.maxSumAssured" placeholder="e.g., 500000" class="h-[42px]">
-              <p class="text-xs text-muted mt-1">Range: {{ sp.minSumAssured | money }} - {{ sp.maxSumAssured | money }}</p>
+              <input id="quote-sum-assured" type="number" formControlName="sumAssured" [min]="sp.minSumAssured" [max]="sp.maxSumAssured" placeholder="e.g., 500000" class="h-[42px]"
+                     [class.border-danger]="form.get('sumAssured')?.invalid && form.get('sumAssured')?.touched">
+              @if (form.get('sumAssured')?.invalid && form.get('sumAssured')?.touched) {
+                <p class="text-xs text-danger mt-1">Enter an amount between {{ sp.minSumAssured | money }} and {{ sp.maxSumAssured | money }}.</p>
+              } @else {
+                <p class="text-xs text-muted mt-1">Range: {{ sp.minSumAssured | money }} - {{ sp.maxSumAssured | money }}</p>
+              }
             </div>
             <div>
               <label for="quote-tenure-years" class="block text-[13px] font-medium mb-1.5">Tenure (years)</label>
-              <input id="quote-tenure-years" type="number" formControlName="tenureYears" [min]="sp.minTenureYears" [max]="sp.maxTenureYears" placeholder="e.g., 5" class="h-[42px]">
-              <p class="text-xs text-muted mt-1">Range: {{ sp.minTenureYears }} - {{ sp.maxTenureYears }} years</p>
+              <input id="quote-tenure-years" type="number" formControlName="tenureYears" [min]="sp.minTenureYears" [max]="sp.maxTenureYears" placeholder="e.g., 5" class="h-[42px]"
+                     [class.border-danger]="form.get('tenureYears')?.invalid && form.get('tenureYears')?.touched">
+              @if (form.get('tenureYears')?.invalid && form.get('tenureYears')?.touched) {
+                <p class="text-xs text-danger mt-1">Enter a tenure between {{ sp.minTenureYears }} and {{ sp.maxTenureYears }} years.</p>
+              } @else {
+                <p class="text-xs text-muted mt-1">Range: {{ sp.minTenureYears }} - {{ sp.maxTenureYears }} years</p>
+              }
             </div>
             <div>
               <label for="quote-payment-frequency" class="block text-[13px] font-medium mb-1.5">Payment frequency</label>

@@ -333,7 +333,7 @@
           <p class="text-[12.5px] text-body mb-4">Set a new temporary password for <span class="font-semibold text-ink">{{ selectedUser()?.email }}</span>. Share it securely with the user.</p>
           <div class="mb-5">
             <label for="reset-pw-new-password" class="block text-[12px] font-semibold text-body mb-1.5">New password</label>
-            <input id="reset-pw-new-password" type="text" [(ngModel)]="resetPwForm.newPassword" placeholder="Min. 8 characters"
+            <input id="reset-pw-new-password" type="password" [(ngModel)]="resetPwForm.newPassword" placeholder="Min. 8 characters"
               class="w-full h-9 px-3 border-[1.5px] border-line rounded-lg text-[13px] text-ink bg-[#F7F9FA] outline-none font-mono" />
           </div>
           <div class="flex justify-end gap-2">

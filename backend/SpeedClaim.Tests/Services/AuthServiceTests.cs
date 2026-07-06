@@ -95,8 +95,8 @@ public class AuthServiceTests
         _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
             .ReturnsAsync((User?)null);
 
-        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _authService.LoginAsync(request));
-        Assert.That(ex.Message, Is.EqualTo("No account found with this email address."));
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() => _authService.LoginAsync(request));
+        Assert.That(ex.Message, Is.EqualTo("Invalid email or password."));
     }
 
     [Test]
@@ -109,7 +109,7 @@ public class AuthServiceTests
             .ReturnsAsync(user);
 
         var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() => _authService.LoginAsync(request));
-        Assert.That(ex.Message, Is.EqualTo("Incorrect password."));
+        Assert.That(ex.Message, Is.EqualTo("Invalid email or password."));
     }
 
     [Test]

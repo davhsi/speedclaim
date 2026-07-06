@@ -21,6 +21,7 @@ public class AuthController : BaseApiController
 
     /// <summary>Register a new customer account</summary>
     /// <remarks>Sends a verification email after successful registration. Account is inactive until email is verified.</remarks>
+    [AllowAnonymous]
     [HttpPost("register")]
     [EnableRateLimiting("auth")]
     [ProducesResponseType(typeof(RegistrationResponse), 200)]
@@ -32,6 +33,7 @@ public class AuthController : BaseApiController
     }
 
     /// <summary>Authenticate a user and obtain JWT access and refresh tokens</summary>
+    [AllowAnonymous]
     [HttpPost("login")]
     [EnableRateLimiting("auth")]
     [ProducesResponseType(typeof(AuthResponse), 200)]
@@ -44,6 +46,7 @@ public class AuthController : BaseApiController
     }
 
     /// <summary>Verify a customer's email address using the token sent during registration</summary>
+    [AllowAnonymous]
     [HttpPost("verify-email")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
@@ -55,6 +58,7 @@ public class AuthController : BaseApiController
 
     /// <summary>Resend the email verification link</summary>
     /// <remarks>Always returns 200 regardless of whether the email exists or is already verified, to prevent email enumeration.</remarks>
+    [AllowAnonymous]
     [HttpPost("resend-verification")]
     [EnableRateLimiting("auth")]
     [ProducesResponseType(200)]
@@ -66,6 +70,7 @@ public class AuthController : BaseApiController
 
     /// <summary>Exchange a valid refresh token for a new access token and refresh token pair</summary>
     /// <remarks>The old refresh token is revoked and replaced. Tokens use the format `sessionId:rawToken`.</remarks>
+    [AllowAnonymous]
     [HttpPost("refresh")]
     [ProducesResponseType(typeof(AuthResponse), 200)]
     [ProducesResponseType(400)]
@@ -91,6 +96,7 @@ public class AuthController : BaseApiController
 
     /// <summary>Request a password reset email</summary>
     /// <remarks>Always returns 200 regardless of whether the email exists, to prevent email enumeration.</remarks>
+    [AllowAnonymous]
     [HttpPost("forgot-password")]
     [EnableRateLimiting("auth")]
     [ProducesResponseType(200)]
@@ -101,6 +107,7 @@ public class AuthController : BaseApiController
     }
 
     /// <summary>Reset a customer's password using the token from the reset email</summary>
+    [AllowAnonymous]
     [HttpPost("reset-password")]
     [EnableRateLimiting("auth")]
     [ProducesResponseType(200)]

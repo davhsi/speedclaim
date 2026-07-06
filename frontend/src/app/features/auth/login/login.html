@@ -4,11 +4,6 @@
 @if (errorMessage()) {
   <div class="mb-4 p-3 rounded-control bg-danger-bg border border-danger-border text-sm text-danger">
     {{ errorMessage() }}
-    @if (showRegisterLink()) {
-      <a routerLink="/auth/register" class="block mt-2 text-primary font-semibold hover:text-primary-dark text-sm underline">
-        Create an account
-      </a>
-    }
     @if (showResendVerification() && !resendSuccess()) {
       <button
         type="button"

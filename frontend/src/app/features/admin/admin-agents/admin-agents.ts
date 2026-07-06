@@ -158,6 +158,44 @@ export class AdminAgentsComponent implements OnInit {
     return pw.length >= 8 && /[A-Z]/.test(pw) && /[a-z]/.test(pw) && /\d/.test(pw) && /[^a-zA-Z0-9]/.test(pw);
   }
 
+  private isValidEmail(v: string): boolean {
+    return /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{1,24}$/.test(v.trim());
+  }
+
+  private isValidPhone(v: string): boolean {
+    return /^\d{10}$/.test(v.trim());
+  }
+
+  private isValidAadhaar(v: string): boolean {
+    return /^\d{12}$/.test(v.trim());
+  }
+
+  private isValidPan(v: string): boolean {
+    return /^[A-Z]{5}\d{4}[A-Z]$/.test(v.trim().toUpperCase());
+  }
+
+  private isValidDate(v: string): boolean {
+    return !!v && !isNaN(new Date(v).getTime());
+  }
+
+  registerFormInvalid(): boolean {
+    const f = this.regForm;
+    return !f.firstName.trim() || !f.lastName.trim() || !this.isValidEmail(f.email)
+      || !this.isValidPhone(f.phone) || !this.isPasswordStrong(f.password)
+      || !f.licenseNumber.trim() || !this.isValidDate(f.licenseExpiry)
+      || !f.agencyName.trim() || !this.isValidAadhaar(f.aadhaarNumber) || !this.isValidPan(f.panNumber);
+  }
+
+  licenseFormInvalid(): boolean {
+    return !this.licForm.licenseNumber.trim() || !this.isValidDate(this.licForm.licenseExpiry);
+  }
+
+  branchFormInvalid(): boolean {
+    const f = this.branchForm;
+    return !f.name.trim() || !f.city.trim() || !f.state.trim() || !f.address.trim()
+      || !this.isValidPhone(f.phone) || !this.isValidEmail(f.email);
+  }
+
   toggleAgentStatus(agent: UserDto): void {
     const next = !agent.isActive;
     const profile = this.getAgentProfile(agent.id);
@@ -175,6 +213,10 @@ export class AdminAgentsComponent implements OnInit {
     const f = this.regForm;
     if (!this.isPasswordStrong(f.password)) {
       this.toastService.warning('Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a digit, and a special character.');
+      return;
+    }
+    if (this.registerFormInvalid()) {
+      this.toastService.warning('Please fill in all fields with valid values (email, phone, Aadhaar, PAN, and license expiry) before registering the agent.');
       return;
     }
     this.adminService.registerAgent({
@@ -206,7 +248,11 @@ export class AdminAgentsComponent implements OnInit {
   assignBranch(): void {
     const agent = this.selectedAgent();
     const branchId = this.selectedBranchId();
-    if (!agent || !branchId) return;
+    if (!agent) return;
+    if (!branchId) {
+      this.toastService.warning('Please select a branch to assign.');
+      return;
+    }
     const profile = this.getAgentProfile(agent.id);
     const agentId = profile?.agentId ?? agent.id;
     this.adminService.assignAgentToBranch(agentId, branchId).subscribe({
@@ -222,6 +268,10 @@ export class AdminAgentsComponent implements OnInit {
   updateLicense(): void {
     const agent = this.selectedAgent();
     if (!agent) return;
+    if (this.licenseFormInvalid()) {
+      this.toastService.warning('Please enter a license number and a valid expiry date.');
+      return;
+    }
     const profile = this.getAgentProfile(agent.id);
     const agentId = profile?.agentId ?? agent.id;
     this.adminService.updateAgentLicense(agentId, {
@@ -240,6 +290,10 @@ export class AdminAgentsComponent implements OnInit {
   saveBranch(): void {
     const br = this.selectedBranch();
     if (!br) return;
+    if (this.branchFormInvalid()) {
+      this.toastService.warning('Please fill in all branch fields with valid values (name, city, state, address, phone, and email).');
+      return;
+    }
     this.adminService.updateBranch(br.id.toString(), {
       name: this.branchForm.name,
       city: this.branchForm.city,

@@ -35,7 +35,7 @@
             <div class="bg-surface rounded-lg px-3.5 py-3 mb-3 text-[13px] text-body leading-relaxed whitespace-pre-wrap">{{ g.resolutionNotes }}</div>
           }
           <textarea id="grievance-notes" aria-label="Resolution notes" [(ngModel)]="notes" placeholder="Add investigation notes or internal comments..." class="w-full h-24 px-3 py-2.5 border border-line rounded-lg text-[13px] text-body resize-y outline-none leading-relaxed"></textarea>
-          <button (click)="onSaveNotes()" [disabled]="isTerminal(g) || actionInFlight()" class="mt-2 w-full h-[38px] border-none bg-primary rounded-lg text-[13px] font-semibold text-white cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed">Save notes</button>
+          <button (click)="onSaveNotes()" [disabled]="isTerminal(g) || actionInFlight() || !notes.trim()" class="mt-2 w-full h-[38px] border-none bg-primary rounded-lg text-[13px] font-semibold text-white cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed">Save notes</button>
         </div>
       </div>
 

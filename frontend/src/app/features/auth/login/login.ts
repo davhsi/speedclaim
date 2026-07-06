@@ -23,7 +23,6 @@ export class LoginComponent implements OnInit {
   loading = signal(false);
   errorMessage = signal('');
   showResendVerification = signal(false);
-  showRegisterLink = signal(false);
   showPassword = signal(false);
   resendLoading = signal(false);
   resendSuccess = signal(false);
@@ -54,7 +53,6 @@ export class LoginComponent implements OnInit {
     this.loading.set(true);
     this.errorMessage.set('');
     this.showResendVerification.set(false);
-    this.showRegisterLink.set(false);
     this.resendSuccess.set(false);
 
     const { email, password, rememberMe } = this.form.getRawValue();
@@ -83,10 +81,7 @@ export class LoginComponent implements OnInit {
       },
       error: (err) => {
         this.loading.set(false);
-        if (err.status === 404) {
-          this.errorMessage.set(err.error?.detail || 'No account found with this email address.');
-          this.showRegisterLink.set(true);
-        } else if (err.status === 422) {
+        if (err.status === 422) {
           this.errorMessage.set(err.error?.detail || 'Please verify your email address before signing in.');
           this.showResendVerification.set(true);
           this.lastEmail = email;

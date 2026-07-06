@@ -15,15 +15,27 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         <div>
           <label for="add-member-first-name" class="block text-xs text-muted mb-1.5">First name</label>
-          <input id="add-member-first-name" formControlName="firstName" class="h-[42px]" placeholder="e.g., Priya" />
+          <input id="add-member-first-name" formControlName="firstName" class="h-[42px]" placeholder="e.g., Priya"
+                 [class.border-danger]="memberForm.get('firstName')?.invalid && memberForm.get('firstName')?.touched" />
+          @if (memberForm.get('firstName')?.invalid && memberForm.get('firstName')?.touched) {
+            <div class="text-[11px] text-danger mt-1">First name is required.</div>
+          }
         </div>
         <div>
           <label for="add-member-last-name" class="block text-xs text-muted mb-1.5">Last name</label>
-          <input id="add-member-last-name" formControlName="lastName" class="h-[42px]" placeholder="e.g., Sharma" />
+          <input id="add-member-last-name" formControlName="lastName" class="h-[42px]" placeholder="e.g., Sharma"
+                 [class.border-danger]="memberForm.get('lastName')?.invalid && memberForm.get('lastName')?.touched" />
+          @if (memberForm.get('lastName')?.invalid && memberForm.get('lastName')?.touched) {
+            <div class="text-[11px] text-danger mt-1">Last name is required.</div>
+          }
         </div>
         <div>
           <label for="add-member-dob" class="block text-xs text-muted mb-1.5">Date of birth</label>
-          <input id="add-member-dob" type="date" formControlName="dateOfBirth" class="h-[42px]" />
+          <input id="add-member-dob" type="date" formControlName="dateOfBirth" class="h-[42px]"
+                 [class.border-danger]="memberForm.get('dateOfBirth')?.invalid && memberForm.get('dateOfBirth')?.touched" />
+          @if (memberForm.get('dateOfBirth')?.invalid && memberForm.get('dateOfBirth')?.touched) {
+            <div class="text-[11px] text-danger mt-1">Date of birth is required.</div>
+          }
         </div>
         <div>
           <label for="add-member-relationship" class="block text-xs text-muted mb-1.5">Relationship</label>
@@ -60,15 +72,27 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label [for]="'edit-member-first-name-' + m.id" class="block text-xs text-muted mb-1">First name</label>
-              <input [id]="'edit-member-first-name-' + m.id" formControlName="firstName" class="h-[38px]" />
+              <input [id]="'edit-member-first-name-' + m.id" formControlName="firstName" class="h-[38px]"
+                     [class.border-danger]="editForm.get('firstName')?.invalid && editForm.get('firstName')?.touched" />
+              @if (editForm.get('firstName')?.invalid && editForm.get('firstName')?.touched) {
+                <div class="text-[11px] text-danger mt-1">First name is required.</div>
+              }
             </div>
             <div>
               <label [for]="'edit-member-last-name-' + m.id" class="block text-xs text-muted mb-1">Last name</label>
-              <input [id]="'edit-member-last-name-' + m.id" formControlName="lastName" class="h-[38px]" />
+              <input [id]="'edit-member-last-name-' + m.id" formControlName="lastName" class="h-[38px]"
+                     [class.border-danger]="editForm.get('lastName')?.invalid && editForm.get('lastName')?.touched" />
+              @if (editForm.get('lastName')?.invalid && editForm.get('lastName')?.touched) {
+                <div class="text-[11px] text-danger mt-1">Last name is required.</div>
+              }
             </div>
             <div>
               <label [for]="'edit-member-dob-' + m.id" class="block text-xs text-muted mb-1">Date of birth</label>
-              <input [id]="'edit-member-dob-' + m.id" type="date" formControlName="dateOfBirth" class="h-[38px]" />
+              <input [id]="'edit-member-dob-' + m.id" type="date" formControlName="dateOfBirth" class="h-[38px]"
+                     [class.border-danger]="editForm.get('dateOfBirth')?.invalid && editForm.get('dateOfBirth')?.touched" />
+              @if (editForm.get('dateOfBirth')?.invalid && editForm.get('dateOfBirth')?.touched) {
+                <div class="text-[11px] text-danger mt-1">Date of birth is required.</div>
+              }
             </div>
             <div>
               <label [for]="'edit-member-relationship-' + m.id" class="block text-xs text-muted mb-1">Relationship</label>

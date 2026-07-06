@@ -175,7 +175,7 @@ public class AuthService : IAuthService
         if (user == null)
         {
             _logger.LogWarning("Login attempt for non-existent email: {Email}", request.Email);
-            throw new NotFoundException("No account found with this email address.");
+            throw new ValidationException("Invalid email or password.");
         }
 
         if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
@@ -188,7 +188,7 @@ public class AuthService : IAuthService
             }
             await _unitOfWork.CompleteAsync();
             _logger.LogWarning("Failed login attempt for email: {Email}", request.Email);
-            throw new ValidationException("Incorrect password.");
+            throw new ValidationException("Invalid email or password.");
         }
 
         if (!user.IsActive)

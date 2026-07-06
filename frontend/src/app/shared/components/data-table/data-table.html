@@ -1,5 +1,6 @@
 @if (loading()) {
   <div class="bg-white rounded-card border border-line overflow-hidden">
+    <div class="overflow-x-auto">
     <table class="w-full">
       <thead>
         <tr class="border-b border-line bg-surface">
@@ -20,11 +21,13 @@
         }
       </tbody>
     </table>
+    </div>
   </div>
 } @else if (data().length === 0) {
   <app-empty-state [title]="emptyTitle()" [message]="emptyMessage()" />
 } @else {
   <div class="bg-white rounded-card border border-line overflow-hidden">
+    <div class="overflow-x-auto">
     <table class="w-full">
       <thead>
         <tr class="border-b border-line bg-surface">
@@ -67,5 +70,6 @@
         }
       </tbody>
     </table>
+    </div>
   </div>
 }

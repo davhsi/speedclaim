@@ -8,6 +8,10 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
 
 type DamageType = '' | 'Partial loss' | 'Total loss' | 'Third party' | 'Theft';
 
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+const PHOTO_MIME_TYPES = ['image/jpeg', 'image/png'];
+const DOC_MIME_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
+
 @Component({
   selector: 'app-survey-report',
   standalone: true,
@@ -113,8 +117,13 @@ export class SurveyReportComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     if (input.files?.length) {
       const files = Array.from(input.files);
-      this.photos.update(prev => [...prev, ...files].slice(0, 10));
-      this.photoErr.set('');
+      const invalid = files.some(f => !PHOTO_MIME_TYPES.includes(f.type) || f.size > MAX_FILE_SIZE_BYTES);
+      if (invalid) {
+        this.photoErr.set('Only JPG or PNG photos up to 5 MB are allowed.');
+      } else {
+        this.photos.update(prev => [...prev, ...files].slice(0, 10));
+        this.photoErr.set('');
+      }
     }
     input.value = '';
   }
@@ -122,8 +131,13 @@ export class SurveyReportComponent implements OnInit {
   onDocChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files?.length) {
-      this.reportDocument.set(input.files[0]);
-      this.reportDocumentErr.set('');
+      const file = input.files[0];
+      if (!DOC_MIME_TYPES.includes(file.type) || file.size > MAX_FILE_SIZE_BYTES) {
+        this.reportDocumentErr.set('Only PDF, JPG, or PNG files up to 5 MB are allowed.');
+      } else {
+        this.reportDocument.set(file);
+        this.reportDocumentErr.set('');
+      }
     }
     input.value = '';
   }
