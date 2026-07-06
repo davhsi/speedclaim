@@ -101,6 +101,11 @@ public class UnitOfWork : IUnitOfWork
         ProcessedWebhookEvents = new Repository<ProcessedWebhookEvent>(_context);
     }
 
+    public void SetCurrentActor(Guid? userId)
+    {
+        _context.CurrentActorOverride = userId;
+    }
+
     public async Task<int> CompleteAsync()
     {
         return await _context.SaveChangesAsync();

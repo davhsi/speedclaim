@@ -49,5 +49,13 @@ public interface IUnitOfWork : IDisposable
     IRepository<UserConsent> UserConsents { get; }
     IRepository<ProcessedWebhookEvent> ProcessedWebhookEvents { get; }
 
+    /// <summary>
+    /// Attributes the next SaveChanges call's generic change-tracker audit entries (§6B) to
+    /// the given user, bypassing the usual JWT-claims lookup. Needed for actions that mutate
+    /// a User row on an unauthenticated request — e.g. login itself — where there is no bearer
+    /// token yet for the audit code to read an actor from.
+    /// </summary>
+    void SetCurrentActor(Guid? userId);
+
     Task<int> CompleteAsync();
 }

@@ -148,6 +148,7 @@ public class AuthService : IAuthService
             ExpiresAt = DateTime.UtcNow.AddHours(24)
         };
         await _unitOfWork.UserTokens.AddAsync(userToken);
+        _unitOfWork.SetCurrentActor(user.Id);
         await _unitOfWork.CompleteAsync();
 
         // Send "{tokenId}:{rawToken}" — lets VerifyEmailAsync skip the full-table scan
@@ -186,6 +187,7 @@ public class AuthService : IAuthService
                 user.LockedUntil = DateTime.UtcNow.AddMinutes(lockoutMinutes);
                 _logger.LogWarning("Account locked after {Max} failed attempts: {Email}", maxAttempts, request.Email);
             }
+            _unitOfWork.SetCurrentActor(user.Id);
             await _unitOfWork.CompleteAsync();
             _logger.LogWarning("Failed login attempt for email: {Email}", request.Email);
             throw new ValidationException("Invalid email or password.");
@@ -228,6 +230,7 @@ public class AuthService : IAuthService
             Id = Guid.NewGuid(), UserId = user.Id, EntityType = "Session", EntityId = session.Id,
             Action = "UserLoggedIn", NewValue = JsonSerializer.Serialize(user.Role.ToString()), CreatedAt = DateTime.UtcNow
         });
+        _unitOfWork.SetCurrentActor(user.Id);
         await _unitOfWork.CompleteAsync();
 
         // Return "{sessionId}:{rawToken}" so refresh can target the specific session directly
@@ -308,6 +311,7 @@ public class AuthService : IAuthService
                 Id = Guid.NewGuid(), UserId = user.Id, EntityType = "User", EntityId = user.Id,
                 Action = "EmailVerified", CreatedAt = DateTime.UtcNow
             });
+            _unitOfWork.SetCurrentActor(user.Id);
         }
 
         await _unitOfWork.CompleteAsync();
@@ -411,6 +415,7 @@ public class AuthService : IAuthService
                 Id = Guid.NewGuid(), UserId = user.Id, EntityType = "User", EntityId = user.Id,
                 Action = "PasswordReset", CreatedAt = DateTime.UtcNow
             });
+            _unitOfWork.SetCurrentActor(user.Id);
         }
 
         await _unitOfWork.CompleteAsync();

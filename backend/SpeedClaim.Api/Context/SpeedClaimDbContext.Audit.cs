@@ -7,6 +7,14 @@ namespace SpeedClaim.Api.Context;
 
 public partial class SpeedClaimDbContext
 {
+    /// <summary>
+    /// Explicit actor override for the generic change-tracker audit (see OnBeforeSaveChanges).
+    /// Set via IUnitOfWork.SetCurrentActor when a request mutates a User row before that user
+    /// has a JWT on the current HttpContext (e.g. during login), so the audit entry isn't left
+    /// with a blank actor. Takes priority over the HttpContext claims lookup when set.
+    /// </summary>
+    public Guid? CurrentActorOverride { get; set; }
+
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         OnBeforeSaveChanges();
@@ -43,8 +51,8 @@ public partial class SpeedClaimDbContext
         var auditEntries = new List<AuditEntry>();
         var httpContext = _httpContextAccessor?.HttpContext;
         var userIdString = httpContext?.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        Guid? userId = null;
-        if (Guid.TryParse(userIdString, out var parsedUserId))
+        Guid? userId = CurrentActorOverride;
+        if (userId == null && Guid.TryParse(userIdString, out var parsedUserId))
         {
             userId = parsedUserId;
         }
