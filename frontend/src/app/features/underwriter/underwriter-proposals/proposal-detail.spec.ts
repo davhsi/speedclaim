@@ -100,11 +100,12 @@ describe('ProposalDetailComponent', () => {
     });
   });
 
-  describe('isPending / canRequestDocuments', () => {
-    it('is pending for Submitted or UnderReview', () => {
-      expect(create(proposal({ status: 'Submitted' })).componentInstance.isPending()).toBe(true);
-      expect(create(proposal({ status: 'UnderReview' })).componentInstance.isPending()).toBe(true);
-      expect(create(proposal({ status: 'Approved' })).componentInstance.isPending()).toBe(false);
+  describe('canDecide / canRequestDocuments', () => {
+    it('can decide Submitted, UnderReview, or DocumentsPending proposals', () => {
+      expect(create(proposal({ status: 'Submitted' })).componentInstance.canDecide()).toBe(true);
+      expect(create(proposal({ status: 'UnderReview' })).componentInstance.canDecide()).toBe(true);
+      expect(create(proposal({ status: 'DocumentsPending' })).componentInstance.canDecide()).toBe(true);
+      expect(create(proposal({ status: 'Approved' })).componentInstance.canDecide()).toBe(false);
     });
 
     it('allows document requests for DocumentsPending too', () => {
@@ -230,6 +231,12 @@ describe('ProposalDetailComponent', () => {
       expect(fixture.componentInstance.productName()).toBe('Fallback');
       expect(fixture.componentInstance.displayDomain()).toBe('Life');
     });
+
+    it('builds static-file links for uploaded documents', () => {
+      const fixture = create();
+      expect(fixture.componentInstance.documentHref('uploads/proposals/doc.pdf')).toBe('/uploads/proposals/doc.pdf');
+      expect(fixture.componentInstance.documentHref('/uploads/proposals/doc.pdf')).toBe('/uploads/proposals/doc.pdf');
+    });
   });
 
   describe('closeDialog / goBack', () => {
@@ -244,6 +251,16 @@ describe('ProposalDetailComponent', () => {
       const fixture = create();
       fixture.componentInstance.goBack();
       expect(router.navigate).toHaveBeenCalledWith(['/underwriter/proposals']);
+    });
+  });
+
+  describe('document preview', () => {
+    it('openPreview/closePreview toggle the previewed document', () => {
+      const fixture = create();
+      fixture.componentInstance.openPreview({ documentName: 'x.pdf', filePath: 'uploads/proposals/x.pdf' } as any);
+      expect(fixture.componentInstance.previewDoc()).toEqual({ url: '/uploads/proposals/x.pdf', label: 'x.pdf' });
+      fixture.componentInstance.closePreview();
+      expect(fixture.componentInstance.previewDoc()).toBeNull();
     });
   });
 });

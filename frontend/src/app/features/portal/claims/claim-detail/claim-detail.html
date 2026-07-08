@@ -100,11 +100,11 @@
             </div>
             <div class="flex items-center gap-3 shrink-0">
               <span class="text-xs text-muted">{{ doc.uploadedAt | dateFormat }}</span>
-              <a [href]="'/' + doc.filePath" target="_blank" rel="noopener"
-                 class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+              <button type="button" (click)="openPreview(doc)"
+                 class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline bg-transparent border-0 cursor-pointer p-0">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 View
-              </a>
+              </button>
             </div>
           </div>
         }
@@ -120,7 +120,7 @@
             Uploading document...
           </div>
         } @else {
-          <app-file-upload label="Select document" hint="PDF, JPG, PNG up to 5MB" (fileSelected)="uploadDoc($event)" />
+          <app-file-upload label="Select document" hint="PDF, JPG, PNG up to 5MB" [maxSizeMb]="5" (fileSelected)="uploadDoc($event)" />
         }
       </div>
     }
@@ -146,3 +146,5 @@
     (cancelled)="showWithdrawDialog.set(false)"
   />
 }
+
+<app-document-preview [doc]="previewDoc()" (closed)="closePreview()" />

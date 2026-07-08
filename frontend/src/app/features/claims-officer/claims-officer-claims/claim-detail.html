@@ -140,11 +140,11 @@
                 Reject claim
               </button>
             }
-            @if (canSettle()) {
-              <button (click)="openModal('settle')" class="flex items-center justify-center gap-2 w-full h-11 border-none bg-primary rounded-lg text-sm font-semibold text-white cursor-pointer hover:opacity-90 transition-opacity">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                Mark settled
-              </button>
+            @if (c.status === 'Approved') {
+              <div class="bg-surface rounded-lg p-3.5 text-center">
+                <div class="text-[13px] font-semibold text-muted">Awaiting financial settlement</div>
+                <div class="text-xs text-muted mt-1">The Finance team processes payout and marks this claim settled.</div>
+              </div>
             }
             @if (isTerminal()) {
               <div class="bg-surface rounded-lg p-3.5 text-center">
@@ -194,55 +194,7 @@
   }
 
   <!-- Document Preview Lightbox -->
-  @if (previewDoc(); as doc) {
-    <div class="fixed inset-0 z-[500] flex items-center justify-center p-4">
-      <button type="button" [attr.aria-label]="'Close preview: ' + doc.documentName" (click)="closePreview()" class="absolute inset-0 bg-black/75 border-none cursor-default"></button>
-      <dialog open class="relative bg-white rounded-card shadow-modal w-full max-w-3xl max-h-[92vh] flex flex-col p-0 border-0 m-0" [attr.aria-label]="'Preview: ' + doc.documentName">
-        <!-- Lightbox header -->
-        <div class="flex items-center justify-between px-5 py-3 border-b border-line shrink-0 gap-3">
-          <div class="flex items-center gap-2.5 min-w-0">
-            <div class="w-7 h-7 rounded-lg bg-info-bg flex items-center justify-center shrink-0">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2D7FF9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            </div>
-            <span class="text-[13px] font-semibold text-ink truncate">{{ doc.documentName }}</span>
-          </div>
-          <div class="flex items-center gap-2 shrink-0">
-            <a [href]="docRawUrl(doc)" target="_blank" download
-              class="h-8 px-3 text-[12px] font-semibold text-body border border-line bg-white rounded-lg flex items-center gap-1.5 cursor-pointer hover:bg-surface transition-colors no-underline">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Download
-            </a>
-            <button (click)="closePreview()" aria-label="Close preview" class="w-8 h-8 rounded-lg border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface transition-colors">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- Lightbox content -->
-        <div class="flex-1 min-h-0 overflow-hidden bg-[#1A1A1A] rounded-b-card flex items-center justify-center">
-          @if (isImage(doc)) {
-            <div class="overflow-auto w-full h-full flex items-center justify-center p-4" style="max-height: calc(92vh - 57px);">
-              <img [src]="docRawUrl(doc)" [alt]="doc.documentName" class="max-w-full max-h-full object-contain rounded-lg shadow-lg" />
-            </div>
-          } @else if (isPdf(doc)) {
-            <iframe [src]="safePreviewUrl(doc)" class="w-full border-0 rounded-b-card" style="height: calc(92vh - 57px);" [title]="doc.documentName"></iframe>
-          } @else {
-            <div class="text-center py-16 px-8">
-              <div class="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center mx-auto mb-4">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-              </div>
-              <p class="text-white/70 text-sm mb-4">This file type cannot be previewed in the browser.</p>
-              <a [href]="docRawUrl(doc)" target="_blank" download
-                class="inline-flex items-center gap-2 h-10 px-5 bg-white text-ink text-[13px] font-semibold rounded-lg no-underline hover:bg-white/90 transition-opacity">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Download file
-              </a>
-            </div>
-          }
-        </div>
-      </dialog>
-    </div>
-  }
+  <app-document-preview [doc]="previewDoc()" (closed)="closePreview()" />
 
   <!-- Modal -->
   @if (modalType()) {
@@ -274,12 +226,6 @@
             <div class="mb-5">
               <label for="claim-reject-reason" class="block text-[13px] font-medium text-ink mb-1.5">Rejection reason <span class="text-danger">*</span></label>
               <textarea id="claim-reject-reason" [(ngModel)]="modalReason" placeholder="Provide a clear reason for rejection..." class="w-full h-24 px-3 py-2.5 border border-line rounded-lg text-[13px] text-body resize-y outline-none leading-relaxed"></textarea>
-            </div>
-          }
-          @case ('settle') {
-            <div class="mb-5">
-              <div class="block text-[13px] font-medium text-ink mb-1.5">Settlement confirmation</div>
-              <p class="text-[13px] text-body">This will mark the claim as financially settled. The approved amount of <strong class="sc-numeric">{{ claim()?.claimAmountApproved | money }}</strong> will be recorded.</p>
             </div>
           }
           @case ('assignSurveyor') {

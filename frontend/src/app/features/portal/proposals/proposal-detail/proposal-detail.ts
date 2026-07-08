@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProposalService } from '../services/proposal.service';
-import { ProductDto, ProposalDto } from '../../../../core/models/api.models';
+import { ProductDto, ProposalDto, SubmittedDocumentDto } from '../../../../core/models/api.models';
 import { ProductService } from '../../products/services/product.service';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
@@ -9,12 +9,13 @@ import { DateFormatPipe } from '../../../../shared/pipes/date-format.pipe';
 import { SafeHtmlPipe } from '../../../../shared/pipes/safe-html.pipe';
 import { FileUploadComponent } from '../../../../shared/components/file-upload/file-upload';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog';
+import { DocumentPreviewComponent, PreviewDoc } from '../../../../shared/components/document-preview/document-preview';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
 
 @Component({
   selector: 'app-proposal-detail',
   standalone: true,
-  imports: [StatusBadgeComponent, MoneyPipe, DateFormatPipe, SafeHtmlPipe, FileUploadComponent, ConfirmDialogComponent],
+  imports: [StatusBadgeComponent, MoneyPipe, DateFormatPipe, SafeHtmlPipe, FileUploadComponent, ConfirmDialogComponent, DocumentPreviewComponent],
   templateUrl: './proposal-detail.html',
 })
 export class ProposalDetailComponent implements OnInit {
@@ -28,6 +29,7 @@ export class ProposalDetailComponent implements OnInit {
   product = signal<ProductDto | null>(null);
   loading = signal(true);
   showWithdrawDialog = signal(false);
+  previewDoc = signal<PreviewDoc | null>(null);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id') ?? '';
@@ -92,6 +94,11 @@ export class ProposalDetailComponent implements OnInit {
       },
     });
   }
+
+  openPreview(doc: SubmittedDocumentDto): void {
+    this.previewDoc.set({ url: '/' + doc.filePath, label: doc.documentName });
+  }
+  closePreview(): void { this.previewDoc.set(null); }
 
   onDocUpload(file: File): void {
     const p = this.proposal();

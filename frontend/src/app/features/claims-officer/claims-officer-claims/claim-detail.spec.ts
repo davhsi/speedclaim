@@ -11,7 +11,7 @@ import { AuthUserDto, ClaimDto, ClaimStatusHistoryDto, SubmittedDocumentDto } fr
 describe('ClaimDetailComponent', () => {
   let claimsService: {
     getClaimById: ReturnType<typeof vi.fn>; getClaimHistory: ReturnType<typeof vi.fn>; getSurveyors: ReturnType<typeof vi.fn>;
-    assignToSelf: ReturnType<typeof vi.fn>; approveReject: ReturnType<typeof vi.fn>; settleClaim: ReturnType<typeof vi.fn>;
+    assignToSelf: ReturnType<typeof vi.fn>; approveReject: ReturnType<typeof vi.fn>;
     assignSurveyor: ReturnType<typeof vi.fn>; requestDocs: ReturnType<typeof vi.fn>; approvePreAuth: ReturnType<typeof vi.fn>;
   };
   let authService: { currentUser: ReturnType<typeof vi.fn> };
@@ -35,7 +35,6 @@ describe('ClaimDetailComponent', () => {
       getSurveyors: vi.fn(() => of([])),
       assignToSelf: vi.fn(),
       approveReject: vi.fn(),
-      settleClaim: vi.fn(),
       assignSurveyor: vi.fn(),
       requestDocs: vi.fn(),
       approvePreAuth: vi.fn(),
@@ -66,7 +65,7 @@ describe('ClaimDetailComponent', () => {
         getClaimById: vi.fn(() => of(baseClaim)),
         getClaimHistory: vi.fn(() => of(history)),
         getSurveyors: vi.fn(() => of([{ id: 's1' }])),
-        assignToSelf: vi.fn(), approveReject: vi.fn(), settleClaim: vi.fn(), assignSurveyor: vi.fn(), requestDocs: vi.fn(), approvePreAuth: vi.fn(),
+        assignToSelf: vi.fn(), approveReject: vi.fn(), assignSurveyor: vi.fn(), requestDocs: vi.fn(), approvePreAuth: vi.fn(),
       };
       authService = { currentUser: vi.fn(() => officer) };
       TestBed.configureTestingModule({
@@ -110,9 +109,8 @@ describe('ClaimDetailComponent', () => {
       expect(create({ ...baseClaim, status: 'Settled' }).componentInstance.canReject()).toBe(false);
     });
 
-    it('canSettle is true only for Approved status while assigned', () => {
-      expect(create({ ...baseClaim, status: 'Approved' }).componentInstance.canSettle()).toBe(true);
-      expect(create({ ...baseClaim, status: 'UnderReview' }).componentInstance.canSettle()).toBe(false);
+    it('showDecisionCard shows the awaiting-settlement info once approved (settlement is Finance-only)', () => {
+      expect(create({ ...baseClaim, status: 'Approved' }).componentInstance.showDecisionCard()).toBe(true);
     });
 
     it('isTerminal covers Settled/Rejected/Withdrawn', () => {
@@ -248,17 +246,6 @@ describe('ClaimDetailComponent', () => {
       expect(toast.success).toHaveBeenCalledWith('Claim rejected');
     });
 
-    it('settles the claim', () => {
-      const fixture = create({ ...baseClaim, status: 'Approved' });
-      claimsService.settleClaim.mockReturnValue(of({ message: 'ok' }));
-      fixture.componentInstance.openModal('settle');
-
-      fixture.componentInstance.onModalConfirm();
-
-      expect(claimsService.settleClaim).toHaveBeenCalledWith('claim1');
-      expect(toast.success).toHaveBeenCalledWith('Claim marked as settled');
-    });
-
     it('assigns a surveyor with notes', () => {
       const fixture = create();
       claimsService.assignSurveyor.mockReturnValue(of({ message: 'ok' }));
@@ -306,18 +293,11 @@ describe('ClaimDetailComponent', () => {
   describe('document preview helpers', () => {
     it('openPreview/closePreview toggle the previewed document', () => {
       const fixture = create();
-      const doc = { documentName: 'x.pdf' } as SubmittedDocumentDto;
+      const doc = { documentName: 'x.pdf', filePath: 'uploads/claims/x.pdf' } as SubmittedDocumentDto;
       fixture.componentInstance.openPreview(doc);
-      expect(fixture.componentInstance.previewDoc()).toEqual(doc);
+      expect(fixture.componentInstance.previewDoc()).toEqual({ url: '/uploads/claims/x.pdf', label: 'x.pdf' });
       fixture.componentInstance.closePreview();
       expect(fixture.componentInstance.previewDoc()).toBeNull();
-    });
-
-    it('isImage/isPdf detect file type by extension', () => {
-      const fixture = create();
-      expect(fixture.componentInstance.isImage({ documentName: 'photo.JPG' } as SubmittedDocumentDto)).toBe(true);
-      expect(fixture.componentInstance.isImage({ documentName: 'doc.pdf' } as SubmittedDocumentDto)).toBe(false);
-      expect(fixture.componentInstance.isPdf({ documentName: 'doc.PDF' } as SubmittedDocumentDto)).toBe(true);
     });
 
     it('docRawUrl prefixes the file path with a slash', () => {

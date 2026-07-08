@@ -152,4 +152,14 @@ describe('ProposalDetailComponent', () => {
       expect(proposalService.uploadDocument).not.toHaveBeenCalled();
     });
   });
+
+  describe('document preview', () => {
+    it('openPreview/closePreview toggle the previewed document', () => {
+      const fixture = create();
+      fixture.componentInstance.openPreview({ documentName: 'x.pdf', filePath: 'uploads/proposals/x.pdf' } as any);
+      expect(fixture.componentInstance.previewDoc()).toEqual({ url: '/uploads/proposals/x.pdf', label: 'x.pdf' });
+      fixture.componentInstance.closePreview();
+      expect(fixture.componentInstance.previewDoc()).toBeNull();
+    });
+  });
 });

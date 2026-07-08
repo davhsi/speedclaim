@@ -65,7 +65,9 @@
             @for (doc of p.documents; track doc.id) {
               <div class="flex items-center gap-3 py-2.5 border-b border-line last:border-b-0">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                <span class="flex-1 text-[13px] text-body">{{ doc.documentName }}</span>
+                <button type="button" (click)="openPreview(doc)" class="flex-1 text-left text-[13px] text-primary font-medium hover:underline bg-transparent border-0 cursor-pointer p-0">
+                  {{ doc.documentName }}
+                </button>
                 <span class="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-success-bg text-success border border-success-border">Uploaded</span>
               </div>
             }
@@ -101,7 +103,7 @@
         <!-- Review decision -->
         <div class="bg-white border border-line rounded-card shadow-sm p-5 mb-4">
           <div class="text-sm font-semibold text-ink mb-3.5">Review decision</div>
-          @if (isPending()) {
+          @if (canDecide()) {
             <div class="flex flex-col gap-2.5">
               <button (click)="showDialog.set('approve')" [disabled]="actionInFlight()" class="w-full h-[42px] rounded-lg border-none text-sm font-semibold text-white cursor-pointer bg-success hover:bg-success-dark transition-colors disabled:opacity-50 disabled:cursor-wait">
                 Approve proposal
@@ -185,4 +187,6 @@
       </div>
     </div>
   }
+
+  <app-document-preview [doc]="previewDoc()" (closed)="closePreview()" />
 </div>

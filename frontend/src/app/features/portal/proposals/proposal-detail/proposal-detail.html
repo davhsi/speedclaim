@@ -116,11 +116,11 @@
             </div>
             <div class="flex items-center gap-3 shrink-0">
               <span class="text-xs text-muted">{{ doc.uploadedAt | dateFormat }}</span>
-              <a [href]="'/' + doc.filePath" target="_blank" rel="noopener"
-                 class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline no-underline">
+              <button type="button" (click)="openPreview(doc)"
+                 class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline bg-transparent border-0 cursor-pointer p-0">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 View
-              </a>
+              </button>
             </div>
           </div>
         }
@@ -135,7 +135,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2D7FF9" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
           <div class="text-xs text-body">Additional documents have been requested. Please upload them to proceed.</div>
         </div>
-        <app-file-upload label="Select document" hint="PDF, JPG, PNG up to 5MB" (fileSelected)="onDocUpload($event)" />
+        <app-file-upload label="Select document" hint="PDF, JPG, PNG up to 5MB" [maxSizeMb]="5" (fileSelected)="onDocUpload($event)" />
       </div>
     }
   </div>
@@ -152,3 +152,5 @@
     (cancelled)="showWithdrawDialog.set(false)"
   />
 }
+
+<app-document-preview [doc]="previewDoc()" (closed)="closePreview()" />

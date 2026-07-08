@@ -1,9 +1,9 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge';
 import { TimelineComponent, TimelineItem } from '../../../shared/components/timeline/timeline';
+import { DocumentPreviewComponent, PreviewDoc } from '../../../shared/components/document-preview/document-preview';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 import { ClaimsOfficerService, SurveyorDto } from '../services/claims-officer.service';
@@ -11,13 +11,13 @@ import { ClaimDto, SubmittedDocumentDto } from '../../../core/models/api.models'
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 
-type ModalType = 'approve' | 'reject' | 'settle' | 'assignSurveyor' | 'requestDocs' | 'preAuth' | null;
+type ModalType = 'approve' | 'reject' | 'assignSurveyor' | 'requestDocs' | 'preAuth' | null;
 type ToastType = 'success' | 'error' | 'warning' | 'info';
 
 @Component({
   selector: 'app-claim-detail',
   standalone: true,
-  imports: [FormsModule, StatusBadgeComponent, TimelineComponent, MoneyPipe, DateFormatPipe],
+  imports: [FormsModule, StatusBadgeComponent, TimelineComponent, DocumentPreviewComponent, MoneyPipe, DateFormatPipe],
   templateUrl: './claim-detail.html',
 })
 export class ClaimDetailComponent implements OnInit {
@@ -26,14 +26,13 @@ export class ClaimDetailComponent implements OnInit {
   private readonly claimsService = inject(ClaimsOfficerService);
   private readonly authService = inject(AuthService);
   private readonly toast = inject(ToastService);
-  private readonly sanitizer = inject(DomSanitizer);
 
   claim = signal<ClaimDto | null>(null);
   timelineItems = signal<TimelineItem[]>([]);
   surveyors = signal<SurveyorDto[]>([]);
   modalType = signal<ModalType>(null);
   actionInFlight = signal(false);
-  previewDoc = signal<SubmittedDocumentDto | null>(null);
+  previewDoc = signal<PreviewDoc | null>(null);
 
   modalAmount = '';
   modalNotes = '';
@@ -75,7 +74,7 @@ export class ClaimDetailComponent implements OnInit {
   }
 
   showDecisionCard(): boolean {
-    return this.canApprove() || this.canReject() || this.canSettle() || this.isTerminal();
+    return this.canApprove() || this.canReject() || this.isTerminal() || this.claim()?.status === 'Approved';
   }
 
   canApprove(): boolean {
@@ -86,10 +85,6 @@ export class ClaimDetailComponent implements OnInit {
   canReject(): boolean {
     const s = this.claim()?.status;
     return this.isAssignedToSelf() && (s === 'UnderReview' || s === 'Intimated' || s === 'DocumentsPending' || s === 'PreAuthApproved');
-  }
-
-  canSettle(): boolean {
-    return this.isAssignedToSelf() && this.claim()?.status === 'Approved';
   }
 
   isTerminal(): boolean {
@@ -156,7 +151,7 @@ export class ClaimDetailComponent implements OnInit {
 
   modalTitle(): string {
     const map: Record<string, string> = {
-      approve: 'Approve claim', reject: 'Reject claim', settle: 'Mark as settled',
+      approve: 'Approve claim', reject: 'Reject claim',
       assignSurveyor: 'Assign surveyor', requestDocs: 'Request documents', preAuth: 'Approve pre-authorisation',
     };
     return map[this.modalType() ?? ''] ?? '';
@@ -164,7 +159,7 @@ export class ClaimDetailComponent implements OnInit {
 
   modalConfirmLabel(): string {
     const map: Record<string, string> = {
-      approve: 'Approve', reject: 'Reject', settle: 'Confirm settlement',
+      approve: 'Approve', reject: 'Reject',
       assignSurveyor: 'Assign', requestDocs: 'Send request', preAuth: 'Approve pre-auth',
     };
     return map[this.modalType() ?? ''] ?? 'Confirm';
@@ -173,7 +168,7 @@ export class ClaimDetailComponent implements OnInit {
   modalConfirmBg(): string {
     const type = this.modalType();
     if (type === 'reject') return 'bg-danger';
-    if (type === 'approve' || type === 'settle') return 'bg-success';
+    if (type === 'approve') return 'bg-success';
     return 'bg-primary';
   }
 
@@ -219,12 +214,6 @@ export class ClaimDetailComponent implements OnInit {
           error: () => this.finishAction('Failed to reject claim', 'error'),
         });
         break;
-      case 'settle':
-        this.claimsService.settleClaim(c.id).subscribe({
-          next: () => { this.finishAction('Claim marked as settled', 'success'); this.closeModal(); this.loadClaim(c.id); },
-          error: () => this.finishAction('Failed to settle claim', 'error'),
-        });
-        break;
       case 'assignSurveyor':
         this.claimsService.assignSurveyor(c.id, {
           surveyorId: this.modalSurveyorId,
@@ -264,26 +253,13 @@ export class ClaimDetailComponent implements OnInit {
     this.toast[type](message);
   }
 
-  openPreview(doc: SubmittedDocumentDto): void { this.previewDoc.set(doc); }
+  openPreview(doc: SubmittedDocumentDto): void {
+    this.previewDoc.set({ url: this.docRawUrl(doc), label: doc.documentName });
+  }
   closePreview(): void { this.previewDoc.set(null); }
-
-  isImage(doc: SubmittedDocumentDto): boolean {
-    const ext = doc.documentName?.split('.').pop()?.toLowerCase() ?? '';
-    return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'].includes(ext);
-  }
-
-  isPdf(doc: SubmittedDocumentDto): boolean {
-    return doc.documentName?.toLowerCase().endsWith('.pdf') ?? false;
-  }
 
   docRawUrl(doc: SubmittedDocumentDto): string {
     return '/' + doc.filePath;
-  }
-
-  safePreviewUrl(doc: SubmittedDocumentDto): SafeResourceUrl {
-    // filePath is server-generated (LocalStorageService writes uploads/<folder>/<guid>.<ext>
-    // with an allowlisted extension) — never a raw user-supplied path or URL.
-    return this.sanitizer.bypassSecurityTrustResourceUrl('/' + doc.filePath);
   }
 
   getTypePillClass(type: string): string {

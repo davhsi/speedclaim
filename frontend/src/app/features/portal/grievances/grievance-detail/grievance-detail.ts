@@ -4,11 +4,12 @@ import { GrievanceService } from '../services/grievance.service';
 import { GrievanceDto } from '../../../../core/models/api.models';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge';
 import { DateFormatPipe } from '../../../../shared/pipes/date-format.pipe';
+import { DocumentPreviewComponent, PreviewDoc } from '../../../../shared/components/document-preview/document-preview';
 
 @Component({
   selector: 'app-grievance-detail',
   standalone: true,
-  imports: [RouterLink, StatusBadgeComponent, DateFormatPipe],
+  imports: [RouterLink, StatusBadgeComponent, DateFormatPipe, DocumentPreviewComponent],
   templateUrl: './grievance-detail.html',
 })
 export class GrievanceDetailComponent implements OnInit {
@@ -18,6 +19,7 @@ export class GrievanceDetailComponent implements OnInit {
 
   grievance = signal<GrievanceDto | null>(null);
   loading = signal(true);
+  previewDoc = signal<PreviewDoc | null>(null);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id') ?? '';
@@ -26,4 +28,9 @@ export class GrievanceDetailComponent implements OnInit {
       error: () => this.loading.set(false),
     });
   }
+
+  openPreview(path: string): void {
+    this.previewDoc.set({ url: '/' + path, label: 'Supporting document' });
+  }
+  closePreview(): void { this.previewDoc.set(null); }
 }

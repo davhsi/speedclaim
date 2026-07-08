@@ -130,4 +130,14 @@ describe('ClaimDetailComponent', () => {
       expect(claimService.withdraw).not.toHaveBeenCalled();
     });
   });
+
+  describe('document preview', () => {
+    it('openPreview/closePreview toggle the previewed document', () => {
+      const fixture = create();
+      fixture.componentInstance.openPreview({ documentName: 'x.pdf', filePath: 'uploads/claims/x.pdf' } as any);
+      expect(fixture.componentInstance.previewDoc()).toEqual({ url: '/uploads/claims/x.pdf', label: 'x.pdf' });
+      fixture.componentInstance.closePreview();
+      expect(fixture.componentInstance.previewDoc()).toBeNull();
+    });
+  });
 });

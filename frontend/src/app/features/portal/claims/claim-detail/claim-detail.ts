@@ -1,11 +1,12 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ClaimService } from '../services/claim.service';
-import { ClaimDto } from '../../../../core/models/api.models';
+import { ClaimDto, SubmittedDocumentDto } from '../../../../core/models/api.models';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge';
 import { TimelineComponent, TimelineItem } from '../../../../shared/components/timeline/timeline';
 import { FileUploadComponent } from '../../../../shared/components/file-upload/file-upload';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog';
+import { DocumentPreviewComponent, PreviewDoc } from '../../../../shared/components/document-preview/document-preview';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { DateFormatPipe } from '../../../../shared/pipes/date-format.pipe';
 import { SafeHtmlPipe } from '../../../../shared/pipes/safe-html.pipe';
@@ -14,7 +15,7 @@ import { ToastService } from '../../../../shared/components/toast/toast.service'
 @Component({
   selector: 'app-claim-detail',
   standalone: true,
-  imports: [StatusBadgeComponent, TimelineComponent, FileUploadComponent, ConfirmDialogComponent, MoneyPipe, DateFormatPipe, SafeHtmlPipe],
+  imports: [StatusBadgeComponent, TimelineComponent, FileUploadComponent, ConfirmDialogComponent, DocumentPreviewComponent, MoneyPipe, DateFormatPipe, SafeHtmlPipe],
   templateUrl: './claim-detail.html',
 })
 export class ClaimDetailComponent implements OnInit {
@@ -28,6 +29,7 @@ export class ClaimDetailComponent implements OnInit {
   loading = signal(true);
   uploading = signal(false);
   showWithdrawDialog = signal(false);
+  previewDoc = signal<PreviewDoc | null>(null);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
@@ -95,6 +97,11 @@ export class ClaimDetailComponent implements OnInit {
       },
     });
   }
+
+  openPreview(doc: SubmittedDocumentDto): void {
+    this.previewDoc.set({ url: '/' + doc.filePath, label: doc.documentName });
+  }
+  closePreview(): void { this.previewDoc.set(null); }
 
   private documentKeyFor(file: File): string {
     const baseName = file.name.replace(/\.[^/.]+$/, '');

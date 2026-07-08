@@ -52,4 +52,15 @@ describe('GrievanceDetailComponent', () => {
     create(null);
     expect(grievanceService.getById).toHaveBeenCalledWith('');
   });
+
+  describe('document preview', () => {
+    it('openPreview/closePreview toggle the previewed attachment with a fixed label', () => {
+      grievanceService.getById.mockReturnValue(of({} as GrievanceDto));
+      const fixture = create('g1');
+      fixture.componentInstance.openPreview('uploads/grievances/x.pdf');
+      expect(fixture.componentInstance.previewDoc()).toEqual({ url: '/uploads/grievances/x.pdf', label: 'Supporting document' });
+      fixture.componentInstance.closePreview();
+      expect(fixture.componentInstance.previewDoc()).toBeNull();
+    });
+  });
 });

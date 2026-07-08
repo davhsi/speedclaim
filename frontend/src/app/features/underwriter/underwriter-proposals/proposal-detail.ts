@@ -6,14 +6,15 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 import { UnderwriterService } from '../services/underwriter.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
-import { ProductDto, ProposalDto } from '../../../core/models/api.models';
+import { ProductDto, ProposalDto, SubmittedDocumentDto } from '../../../core/models/api.models';
 import { FormsModule } from '@angular/forms';
 import { ProductService } from '../../portal/products/services/product.service';
+import { DocumentPreviewComponent, PreviewDoc } from '../../../shared/components/document-preview/document-preview';
 
 @Component({
   selector: 'app-uw-proposal-detail',
   standalone: true,
-  imports: [StatusBadgeComponent, ConfirmDialogComponent, MoneyPipe, DateFormatPipe, FormsModule],
+  imports: [StatusBadgeComponent, ConfirmDialogComponent, MoneyPipe, DateFormatPipe, FormsModule, DocumentPreviewComponent],
   templateUrl: './proposal-detail.html',
 })
 export class ProposalDetailComponent implements OnInit {
@@ -46,6 +47,7 @@ export class ProposalDetailComponent implements OnInit {
   private formatCr(amount: number): string { return (amount / 10_000_000).toFixed(1) + 'Cr'; }
   showDialog = signal<'approve' | 'reject' | 'docs' | null>(null);
   actionInFlight = signal(false);
+  previewDoc = signal<PreviewDoc | null>(null);
   notes = '';
   rejectReason = '';
   docsRequest = '';
@@ -64,9 +66,9 @@ export class ProposalDetailComponent implements OnInit {
     });
   }
 
-  isPending(): boolean {
+  canDecide(): boolean {
     const s = this.proposal()?.status;
-    return s === 'Submitted' || s === 'UnderReview';
+    return s === 'Submitted' || s === 'UnderReview' || s === 'DocumentsPending';
   }
 
   canRequestDocuments(): boolean {
@@ -75,7 +77,7 @@ export class ProposalDetailComponent implements OnInit {
   }
 
   onApprove(): void {
-    if (this.actionInFlight() || !this.isPending()) return;
+    if (this.actionInFlight() || !this.canDecide()) return;
     const id = this.proposal()!.id.toString();
     this.actionInFlight.set(true);
     this.uwService.reviewProposal(id, { isApproved: true, notes: this.notes || 'Approved' }).subscribe({
@@ -92,7 +94,7 @@ export class ProposalDetailComponent implements OnInit {
   }
 
   onReject(): void {
-    if (this.actionInFlight() || !this.isPending() || !this.rejectReason.trim()) return;
+    if (this.actionInFlight() || !this.canDecide() || !this.rejectReason.trim()) return;
     const id = this.proposal()!.id.toString();
     this.actionInFlight.set(true);
     this.uwService.reviewProposal(id, { isApproved: false, notes: this.rejectReason.trim() }).subscribe({
@@ -162,4 +164,14 @@ export class ProposalDetailComponent implements OnInit {
   displayDomain(): string {
     return this.product()?.domain ?? this.proposal()?.domain ?? 'Unknown';
   }
+
+  documentHref(filePath: string): string {
+    if (!filePath) return '#';
+    return filePath.startsWith('/') ? filePath : `/${filePath}`;
+  }
+
+  openPreview(doc: SubmittedDocumentDto): void {
+    this.previewDoc.set({ url: this.documentHref(doc.filePath), label: doc.documentName });
+  }
+  closePreview(): void { this.previewDoc.set(null); }
 }
