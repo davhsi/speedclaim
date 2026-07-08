@@ -37,8 +37,6 @@ describe('RegisterComponent', () => {
     fixture.componentInstance.form.patchValue({
       password: 'Secret123!',
       confirmPassword: 'Secret123!',
-      aadhaarNumber: '123456789012',
-      panNumber: 'ABCDE1234F',
     });
   }
 
@@ -160,8 +158,6 @@ describe('RegisterComponent', () => {
         firstName: 'Jane',
         lastName: 'Doe',
         phone: '9876543210',
-        aadhaarNumber: '123456789012',
-        panNumber: 'ABCDE1234F',
         permanentAddress: address,
         currentAddress: otherAddress,
         isSameAsPermanent: false,
@@ -236,6 +232,50 @@ describe('RegisterComponent', () => {
         const fixture = create();
         expect(submitWithError(fixture, { status: 418, error: {} })).toBe('Registration failed. Please try again.');
       });
+    });
+  });
+
+  describe('canDeactivate', () => {
+    it('allows navigation when the form is untouched', () => {
+      const fixture = create();
+      expect(fixture.componentInstance.canDeactivate()).toBe(true);
+    });
+
+    it('allows navigation when registration completed successfully, even if the form is dirty', () => {
+      const fixture = create();
+      fixture.componentInstance.form.markAsDirty();
+      fillAllStepsAndGoToLast(fixture);
+      authService.register.mockReturnValue(of({ message: 'ok' }));
+      fixture.componentInstance.onSubmit();
+
+      expect(fixture.componentInstance.canDeactivate()).toBe(true);
+    });
+
+    it('prompts for confirmation when the form is dirty and unsubmitted, resolving true on confirm', async () => {
+      const fixture = create();
+      fixture.componentInstance.form.markAsDirty();
+
+      const result$ = fixture.componentInstance.canDeactivate();
+      expect(fixture.componentInstance.showLeaveConfirm()).toBe(true);
+      expect(result$).not.toBe(true);
+
+      const resultPromise = new Promise(resolve => (result$ as any).subscribe(resolve));
+      fixture.componentInstance.confirmLeave();
+
+      expect(await resultPromise).toBe(true);
+      expect(fixture.componentInstance.showLeaveConfirm()).toBe(false);
+    });
+
+    it('prompts for confirmation when the form is dirty and unsubmitted, resolving false on cancel', async () => {
+      const fixture = create();
+      fixture.componentInstance.form.markAsDirty();
+
+      const result$ = fixture.componentInstance.canDeactivate();
+      const resultPromise = new Promise(resolve => (result$ as any).subscribe(resolve));
+      fixture.componentInstance.cancelLeave();
+
+      expect(await resultPromise).toBe(false);
+      expect(fixture.componentInstance.showLeaveConfirm()).toBe(false);
     });
   });
 });

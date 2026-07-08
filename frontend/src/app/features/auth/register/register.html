@@ -3,7 +3,7 @@
 
 <!-- Progress bar -->
 <div class="mb-6">
-  <div class="flex gap-1.5 mb-2">
+  <div class="flex gap-1.5 mb-2" role="progressbar" [attr.aria-valuenow]="currentStep()" aria-valuemin="1" [attr.aria-valuemax]="steps.length">
     @for (step of steps; track step.label; let i = $index) {
       <div class="flex-1 h-1 rounded-full transition-colors duration-300"
            [class]="i < currentStep() ? 'bg-primary' : 'bg-line'">
@@ -40,6 +40,7 @@
           }
         </div>
       </div>
+      <p class="text-xs text-muted -mt-1">Enter your name exactly as shown on your Aadhaar/PAN — this helps us verify your KYC documents later.</p>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label for="register-first-name" class="block text-[13px] font-medium text-body mb-1.5">First name</label>
@@ -100,7 +101,7 @@
     </div>
   }
 
-  <!-- Step 2: Security & KYC -->
+  <!-- Step 2: Security -->
   @if (currentStep() === 2) {
     <div class="step-animate space-y-3">
       <p class="text-xs font-semibold text-muted uppercase tracking-wide">Password</p>
@@ -147,28 +148,8 @@
         }
       </div>
 
-      <hr class="border-line !my-4">
-
-      <p class="text-xs font-semibold text-muted uppercase tracking-wide">KYC Verification</p>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label for="register-aadhaar" class="block text-[13px] font-medium text-body mb-1.5">Aadhaar number</label>
-          <input id="register-aadhaar" type="text" formControlName="aadhaarNumber" placeholder="12-digit number" maxlength="12">
-          @if (form.controls.aadhaarNumber.touched && form.controls.aadhaarNumber.errors?.['required']) {
-            <p class="text-xs text-danger mt-0.5">Aadhaar number is required.</p>
-          } @else if (form.controls.aadhaarNumber.touched && form.controls.aadhaarNumber.errors?.['aadhaar']) {
-            <p class="text-xs text-danger mt-0.5">Enter a valid 12-digit Aadhaar number.</p>
-          }
-        </div>
-        <div>
-          <label for="register-pan" class="block text-[13px] font-medium text-body mb-1.5">PAN number</label>
-          <input id="register-pan" type="text" formControlName="panNumber" placeholder="ABCDE1234F" maxlength="10" class="uppercase">
-          @if (form.controls.panNumber.touched && form.controls.panNumber.errors?.['required']) {
-            <p class="text-xs text-danger mt-0.5">PAN number is required.</p>
-          } @else if (form.controls.panNumber.touched && form.controls.panNumber.errors?.['pan']) {
-            <p class="text-xs text-danger mt-0.5">Enter a valid PAN (e.g. ABCDE1234F).</p>
-          }
-        </div>
+      <div class="p-3 bg-warning-bg border border-warning-border rounded-control text-xs text-warning">
+        Aadhaar and PAN verification is completed from the KYC page after you sign in.
       </div>
     </div>
   }
@@ -361,3 +342,15 @@
   Already have an account?
   <a routerLink="/auth/login" class="text-primary font-semibold hover:text-primary-dark">Sign in</a>
 </p>
+
+@if (showLeaveConfirm()) {
+  <app-confirm-dialog
+    title="Leave registration?"
+    message="You have unsaved changes. If you leave now, the details you've entered will be lost."
+    confirmLabel="Leave"
+    cancelLabel="Stay"
+    variant="danger"
+    (confirmed)="confirmLeave()"
+    (cancelled)="cancelLeave()"
+  />
+}

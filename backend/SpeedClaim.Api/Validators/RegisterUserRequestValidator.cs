@@ -41,13 +41,17 @@ public class RegisterUserRequestValidator : AbstractValidator<RegisterUserReques
             .NotEmpty().WithMessage("Date of Birth is required.")
             .Must(BeAtLeast18YearsOld).WithMessage("You must be at least 18 years old to register.");
 
-        RuleFor(x => x.AadhaarNumber)
-            .NotEmpty().WithMessage("Aadhaar Number is required.")
-            .Matches(@"^\d{12}$").WithMessage("Aadhaar Number must be exactly 12 digits.");
+        When(x => !string.IsNullOrWhiteSpace(x.AadhaarNumber), () =>
+        {
+            RuleFor(x => x.AadhaarNumber)
+                .Matches(@"^\d{12}$").WithMessage("Aadhaar Number must be exactly 12 digits.");
+        });
 
-        RuleFor(x => x.PanNumber)
-            .NotEmpty().WithMessage("PAN Number is required.")
-            .Matches(@"^[A-Z]{5}[0-9]{4}[A-Z]{1}$").WithMessage("Invalid PAN Number format.");
+        When(x => !string.IsNullOrWhiteSpace(x.PanNumber), () =>
+        {
+            RuleFor(x => x.PanNumber)
+                .Matches(@"^[A-Z]{5}[0-9]{4}[A-Z]{1}$").WithMessage("Invalid PAN Number format.");
+        });
 
         RuleFor(x => x.Gender)
             .IsInEnum().WithMessage("Invalid Gender selected.");

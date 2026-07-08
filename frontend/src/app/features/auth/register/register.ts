@@ -1,11 +1,14 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { Observable, Subject } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { passwordStrengthValidator, matchPasswordValidator } from '../../../shared/validators/password.validator';
-import { aadhaarValidator, panValidator, postalCodeValidator, phoneValidator, minAgeValidator } from '../../../shared/validators/input.validators';
+import { postalCodeValidator, phoneValidator, minAgeValidator } from '../../../shared/validators/input.validators';
 import { AppSelectComponent } from '../../../shared/components/app-select/app-select';
+import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog';
+import { CanComponentDeactivate } from '../../../core/guards/unsaved-changes.guard';
 
 const INDIAN_STATES = [
   'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat',
@@ -20,7 +23,7 @@ const INDIAN_STATES = [
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, AppSelectComponent],
+  imports: [ReactiveFormsModule, RouterLink, AppSelectComponent, ConfirmDialogComponent],
   templateUrl: './register.html',
   styles: `
     :host { display: block; }
@@ -31,7 +34,7 @@ const INDIAN_STATES = [
     .step-animate { animation: stepFadeIn 0.2s ease-out; }
   `,
 })
-export class RegisterComponent {
+export class RegisterComponent implements CanComponentDeactivate {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
@@ -43,6 +46,9 @@ export class RegisterComponent {
   sameAsPermanent = signal(false);
   showPassword = signal(false);
   showConfirmPassword = signal(false);
+  showLeaveConfirm = signal(false);
+  private registrationComplete = false;
+  private leaveSubject: Subject<boolean> | null = null;
 
   steps = [
     { label: 'Personal' },
@@ -53,14 +59,14 @@ export class RegisterComponent {
 
   stepDescriptions = [
     "Let's start with your personal details.",
-    'Set a password and provide KYC details.',
+    'Set a password for your account.',
     'Where can we reach you?',
     'Almost done — review and agree.',
   ];
 
   private readonly stepControls: string[][] = [
     ['salutationTitle', 'firstName', 'lastName', 'email', 'phone', 'dateOfBirth', 'gender', 'maritalStatus'],
-    ['password', 'confirmPassword', 'aadhaarNumber', 'panNumber'],
+    ['password', 'confirmPassword'],
     ['permanentAddress', 'currentAddress'],
     ['consentDataProcessing', 'consentKycCollection'],
   ];
@@ -81,8 +87,6 @@ export class RegisterComponent {
     maritalStatus: ['', Validators.required],
     password: ['', [Validators.required, passwordStrengthValidator()]],
     confirmPassword: ['', [Validators.required, matchPasswordValidator('password')]],
-    aadhaarNumber: ['', [Validators.required, aadhaarValidator()]],
-    panNumber: ['', [Validators.required, panValidator()]],
     permanentAddress: this.fb.nonNullable.group({
       line1: ['', Validators.required],
       line2: [''],
@@ -182,8 +186,6 @@ export class RegisterComponent {
       dateOfBirth: formData.dateOfBirth,
       gender: formData.gender,
       maritalStatus: formData.maritalStatus,
-      aadhaarNumber: formData.aadhaarNumber,
-      panNumber: formData.panNumber,
       permanentAddress: formData.permanentAddress,
       currentAddress: this.sameAsPermanent() ? formData.permanentAddress : formData.currentAddress,
       isSameAsPermanent: this.sameAsPermanent(),
@@ -192,6 +194,7 @@ export class RegisterComponent {
     this.authService.register(payload as any).subscribe({
       next: () => {
         this.loading.set(false);
+        this.registrationComplete = true;
         this.toast.success('Account created! Please check your email to verify.');
         this.router.navigate(['/auth/login']);
       },
@@ -200,5 +203,27 @@ export class RegisterComponent {
         this.errorMessage.set(this.getErrorMessage(err));
       },
     });
+  }
+
+  canDeactivate(): boolean | Observable<boolean> {
+    if (this.registrationComplete || !this.form.dirty) return true;
+
+    this.showLeaveConfirm.set(true);
+    this.leaveSubject = new Subject<boolean>();
+    return this.leaveSubject.asObservable();
+  }
+
+  confirmLeave(): void {
+    this.showLeaveConfirm.set(false);
+    this.leaveSubject?.next(true);
+    this.leaveSubject?.complete();
+    this.leaveSubject = null;
+  }
+
+  cancelLeave(): void {
+    this.showLeaveConfirm.set(false);
+    this.leaveSubject?.next(false);
+    this.leaveSubject?.complete();
+    this.leaveSubject = null;
   }
 }

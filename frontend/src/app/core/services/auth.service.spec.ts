@@ -99,8 +99,6 @@ describe('AuthService', () => {
         dateOfBirth: '1995-01-01',
         gender: 'Female' as RegisterUserRequest['gender'],
         maritalStatus: 'Single' as RegisterUserRequest['maritalStatus'],
-        aadhaarNumber: '123456789012',
-        panNumber: 'ABCDE1234F',
         permanentAddress: { line1: 'x', city: 'y', state: 'z', postalCode: '000000', country: 'IN' },
         currentAddress: { line1: 'x', city: 'y', state: 'z', postalCode: '000000', country: 'IN' },
         consentDataProcessing: true,

@@ -15,12 +15,12 @@ public record RegisterUserRequest(
     AddressDto? CurrentAddress,
     bool IsSameAsPermanent,
     DateOnly DateOfBirth,
-    string AadhaarNumber,
-    string PanNumber,
+    string? AadhaarNumber,
+    string? PanNumber,
     Gender Gender,
     MaritalStatus MaritalStatus
 )
 {
     public override string ToString() => 
-        $"RegisterUserRequest {{ Email = {Email}, Name = {Salutation} {FirstName} {LastName}, Phone = {Phone}, Aadhaar = {(AadhaarNumber?.Length >= 4 ? new string('X', 8) + AadhaarNumber[^4..] : "MASKED")}, Pan = MASKED, Gender = {Gender}, MaritalStatus = {MaritalStatus} }}";
+        $"RegisterUserRequest {{ Email = {Email}, Name = {Salutation} {FirstName} {LastName}, Phone = {Phone}, Gender = {Gender}, MaritalStatus = {MaritalStatus} }}";
 }
