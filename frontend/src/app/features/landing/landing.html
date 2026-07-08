@@ -11,7 +11,8 @@
       <nav class="hidden md:flex items-center gap-6">
         <a href="#how-it-works" class="text-[13.5px] font-medium text-muted hover:text-ink transition-colors no-underline">How it works</a>
         <a href="#coverage" class="text-[13.5px] font-medium text-muted hover:text-ink transition-colors no-underline">Coverage</a>
-        <a href="#stories" class="text-[13.5px] font-medium text-muted hover:text-ink transition-colors no-underline">Stories</a>
+        <a href="#about" class="text-[13.5px] font-medium text-muted hover:text-ink transition-colors no-underline">About</a>
+        <a href="#contact" class="text-[13.5px] font-medium text-muted hover:text-ink transition-colors no-underline">Contact</a>
       </nav>
 
       <div class="flex items-center gap-2">
@@ -306,7 +307,87 @@
     </div>
   </section>
 
-  <!-- ── Testimonials ── -->
+  <!-- ── About ── -->
+  <section id="about" class="bg-white py-20 lg:py-24">
+    <div class="max-w-6xl mx-auto px-5 lg:px-8">
+      <div class="flex flex-col lg:flex-row gap-12 lg:gap-16 items-center">
+        <div class="flex-1 sc-reveal">
+          <h2 style="font-family: var(--font-display); font-weight: 700;"
+              class="text-3xl lg:text-[2.5rem] text-ink tracking-tight mb-4">
+            Insurance, without the runaround.
+          </h2>
+          <p class="text-body text-[15px] leading-relaxed mb-4">
+            SpeedClaim is a digital-first insurance platform built on one belief: a claim
+            shouldn't take longer to settle than the emergency that caused it. We handle
+            health, motor, and life coverage end-to-end — proposal to payout — without
+            branch visits, paperwork chases, or "we'll get back to you."
+          </p>
+          <p class="text-body text-[15px] leading-relaxed">
+            We're an IRDAI-registered insurer, and every policy, claim, and payment on the
+            platform runs under Indian insurance regulations — including a dedicated
+            grievance redressal process if something ever falls short. See
+            <a href="#contact" class="text-primary font-medium hover:underline no-underline">Contact</a>
+            below.
+          </p>
+        </div>
+        <div class="flex-1 w-full grid grid-cols-2 gap-4 sc-reveal sc-reveal-d1">
+          <div class="rounded-2xl p-6 border border-line" style="background: #FAFBFC;">
+            <div class="text-[11px] font-bold text-muted uppercase tracking-widest mb-1">Founded</div>
+            <div class="text-[15px] font-bold text-ink">2023</div>
+          </div>
+          <div class="rounded-2xl p-6 border border-line" style="background: #FAFBFC;">
+            <div class="text-[11px] font-bold text-muted uppercase tracking-widest mb-1">Headquarters</div>
+            <div class="text-[15px] font-bold text-ink">Bengaluru, India</div>
+          </div>
+          <div class="rounded-2xl p-6 border border-line" style="background: #FAFBFC;">
+            <div class="text-[11px] font-bold text-muted uppercase tracking-widest mb-1">Regulated by</div>
+            <div class="text-[15px] font-bold text-ink">IRDAI</div>
+          </div>
+          <div class="rounded-2xl p-6 border border-line" style="background: #FAFBFC;">
+            <div class="text-[11px] font-bold text-muted uppercase tracking-widest mb-1">Lines covered</div>
+            <div class="text-[15px] font-bold text-ink">Health · Motor · Life</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Contact ── -->
+  <section id="contact" class="py-20 lg:py-24" style="background: #F8FAFB;">
+    <div class="max-w-6xl mx-auto px-5 lg:px-8">
+      <div class="text-center mb-14 sc-reveal">
+        <h2 style="font-family: var(--font-display); font-weight: 700;"
+            class="text-3xl lg:text-[2.5rem] text-ink tracking-tight">
+          Talk to a human, not a hold queue.
+        </h2>
+        <p class="text-muted mt-3 text-[15px] max-w-[420px] mx-auto leading-relaxed">
+          Reach us directly — including our grievance redressal officer, published here per IRDAI guidelines.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        @for (c of contactChannels; track c.title; let i = $index) {
+          <div class="sc-reveal flex gap-4 rounded-2xl p-6 border border-line bg-white"
+               [class]="i % 2 === 1 ? 'sc-reveal-d1' : ''">
+            <div class="w-10 h-10 rounded-full bg-primary-light flex items-center justify-center shrink-0 text-primary"
+                 [innerHTML]="c.icon | safeHtml"></div>
+            <div class="min-w-0">
+              <div class="text-[12.5px] font-bold text-ink">{{ c.title }}</div>
+              @if (c.href) {
+                <a [href]="c.href" class="block text-[14px] font-semibold text-primary mt-1 hover:underline no-underline break-words">{{ c.value }}</a>
+              } @else {
+                <div class="text-[14px] font-semibold text-ink mt-1 break-words">{{ c.value }}</div>
+              }
+              <div class="text-[12px] text-muted mt-1 leading-relaxed">{{ c.hint }}</div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Testimonials (hidden for now) ── -->
+  @if (false) {
   <section id="stories" class="bg-white py-20 lg:py-24">
     <div class="max-w-6xl mx-auto px-5 lg:px-8">
 
@@ -358,6 +439,7 @@
       </div>
     </div>
   </section>
+  }
 
   <!-- ── Peak moment ── -->
   <section class="py-20 lg:py-24 relative overflow-hidden" style="background: linear-gradient(135deg, #EFF9FC 0%, #F0F9FF 100%);">
@@ -526,14 +608,19 @@
             IRDAI Registered Insurance Platform.<br>Claim settlement ratio: 97.3%
           </p>
         </div>
-        <div class="flex items-center gap-6">
+        <div class="flex flex-wrap items-center gap-6">
+          <a href="#about" class="text-[13px] hover:text-white transition-colors no-underline" style="color: #9CA3AF;">About</a>
+          <a href="#contact" class="text-[13px] hover:text-white transition-colors no-underline" style="color: #9CA3AF;">Contact</a>
           <a routerLink="/auth/login" class="text-[13px] hover:text-white transition-colors no-underline" style="color: #9CA3AF;">Sign in</a>
           <a routerLink="/auth/register" class="text-[13px] hover:text-white transition-colors no-underline" style="color: #9CA3AF;">Register</a>
         </div>
       </div>
       <div class="mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2" style="border-top: 1px solid #1F2937;">
         <p class="text-[12px]" style="color: #4B5563;">© {{ year }} SpeedClaim. All rights reserved.</p>
-        <p class="text-[12px]" style="color: #4B5563;">Registered under IRDAI · Subject to terms and conditions</p>
+        <p class="text-[12px]" style="color: #4B5563;">
+          <a href="mailto:support@speedclaim.in" class="hover:text-white transition-colors no-underline" style="color: #4B5563;">support@speedclaim.in</a>
+          · Registered under IRDAI · Subject to terms and conditions
+        </p>
       </div>
     </div>
   </footer>
