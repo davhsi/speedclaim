@@ -5,6 +5,19 @@
   </div>
 
   <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
+    <div class="flex flex-wrap items-center gap-3 p-4 border-b border-line bg-white">
+      <label class="text-[13px] font-medium text-body" for="proposal-status-filter">Status</label>
+      <select id="proposal-status-filter" class="h-9 w-44 text-[13px]" [value]="statusFilter()" (change)="onFilterChange($any($event.target).value)">
+        @for (status of statuses; track status) {
+          <option [value]="status">{{ status }}</option>
+        }
+      </select>
+      <label class="text-[13px] font-medium text-body ml-0 sm:ml-2" for="proposal-sort">Sort</label>
+      <select id="proposal-sort" class="h-9 w-40 text-[13px]" [value]="sortOrder()" (change)="onSortChange($any($event.target).value)">
+        <option value="latest">Latest first</option>
+        <option value="oldest">Oldest first</option>
+      </select>
+    </div>
     <div class="overflow-x-auto">
       <table class="w-full text-sm border-collapse">
         <thead>

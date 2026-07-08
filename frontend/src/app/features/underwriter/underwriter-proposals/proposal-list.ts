@@ -25,15 +25,30 @@ export class ProposalListComponent implements OnInit {
   pendingCount = signal(0);
   loading = signal(true);
   currentPage = signal(1);
+  statusFilter = signal('All');
+  sortOrder = signal<'latest' | 'oldest'>('latest');
   readonly pageSize = 10;
+  readonly statuses = ['All', 'Submitted', 'UnderReview', 'DocumentsPending', 'Approved', 'Rejected', 'Withdrawn'];
 
-  totalPages = computed(() => Math.max(1, Math.ceil(this.proposals().length / this.pageSize)));
+  filteredProposals = computed(() => {
+    const status = this.statusFilter();
+    return [...this.proposals()]
+      .filter(p => status === 'All' || p.status === status)
+      .sort((a, b) => {
+        const diff = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        return this.sortOrder() === 'latest' ? diff : -diff;
+      });
+  });
+
+  totalPages = computed(() => Math.max(1, Math.ceil(this.filteredProposals().length / this.pageSize)));
   pagedProposals = computed(() => {
     const start = (this.currentPage() - 1) * this.pageSize;
-    return this.proposals().slice(start, start + this.pageSize);
+    return this.filteredProposals().slice(start, start + this.pageSize);
   });
 
   onPageChange(page: number): void { this.currentPage.set(page); }
+  onFilterChange(value: string): void { this.statusFilter.set(value); this.currentPage.set(1); }
+  onSortChange(value: string): void { this.sortOrder.set(value === 'oldest' ? 'oldest' : 'latest'); this.currentPage.set(1); }
 
   ngOnInit(): void {
     this.productService.getAll().subscribe(products => this.products.set(products));
