@@ -11,8 +11,14 @@ public class GenerateQuoteRequestValidator : AbstractValidator<GenerateQuoteRequ
         RuleFor(x => x.ProductId)
             .NotEmpty().WithMessage("Product ID is required.");
 
-        RuleFor(x => x.Age)
-            .InclusiveBetween(1, 100).WithMessage("Age must be between 1 and 100.");
+        // Age is only meaningful for age-rated domains (Health/Life) — the Motor quote form
+        // doesn't collect it at all, so it's optional here and validated only when present.
+        When(x => x.Age.HasValue, () =>
+        {
+            RuleFor(x => x.Age)
+                .Must(age => age!.Value is >= 1 and <= 100)
+                .WithMessage("Age must be between 1 and 100.");
+        });
 
         RuleFor(x => x.SumAssured)
             .GreaterThan(0).WithMessage("Sum assured must be greater than zero.");

@@ -42,6 +42,15 @@ public class GenerateQuoteRequestValidatorTests
     }
 
     [Test]
+    public void Null_Age_Passes_ProductLevelEnforcementHandlesRequiredness()
+    {
+        // Motor quotes never send an age — the DTO-level validator allows null; whether an
+        // age is actually required is a product/domain concern enforced in ProposalService.
+        var req = new GenerateQuoteRequest("prod-001", null, null, 500000m, 10);
+        _validator.TestValidate(req).ShouldNotHaveValidationErrorFor(x => x.Age);
+    }
+
+    [Test]
     public void Zero_SumAssured_Fails()
     {
         var req = new GenerateQuoteRequest("prod-001", 35, null, 0m, 10);

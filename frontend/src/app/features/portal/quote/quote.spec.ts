@@ -21,6 +21,13 @@ describe('QuoteComponent', () => {
     allowsFamilyFloater: true, maxFamilyMembers: 5, isActive: true,
   } as ProductDto;
 
+  const motorProduct: ProductDto = {
+    id: 'prod-motor', productName: 'SpeedDrive Motor', uin: 'U2', description: '', domain: 'Motor',
+    minAge: 18, maxAge: 70, minSumAssured: 100000, maxSumAssured: 2000000,
+    minTenureYears: 1, maxTenureYears: 3, waitingPeriodDays: 0,
+    allowsFamilyFloater: false, maxFamilyMembers: 1, isActive: true,
+  } as ProductDto;
+
   function create(productId: string | null = null) {
     TestBed.configureTestingModule({
       imports: [QuoteComponent],
@@ -91,7 +98,7 @@ describe('QuoteComponent', () => {
     function fillValidForm(fixture: ReturnType<typeof create>) {
       fixture.componentInstance.form.setValue({
         productId: 'prod1', sumAssured: 500000, tenureYears: 5, paymentFrequency: 'Monthly',
-        dateOfBirth: '1990-06-15', gender: 'Male', vehicleMake: '', vehicleModel: '',
+        age: 36, gender: 'Male', vehicleMake: '', vehicleModel: '',
         manufactureYear: null, insuredDeclaredValue: null, preExistingConditions: '', isSmoker: false,
       });
     }
@@ -111,10 +118,7 @@ describe('QuoteComponent', () => {
       expect(quoteService.generateQuote).not.toHaveBeenCalled();
     });
 
-    it('computes age from dateOfBirth and submits the quote request', () => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date('2026-07-06T00:00:00'));
-
+    it('submits the quote request with the entered age', () => {
       const fixture = create('prod1'); // preselects product1 via ngOnInit
       fillValidForm(fixture);
       quoteService.generateQuote.mockReturnValue(of({ premiumAmount: 2000 } as GenerateQuoteResponse));
@@ -126,8 +130,6 @@ describe('QuoteComponent', () => {
       });
       expect(fixture.componentInstance.quoteResult()).toEqual({ premiumAmount: 2000 });
       expect(fixture.componentInstance.submitting()).toBe(false);
-
-      vi.useRealTimers();
     });
 
     it('shows a server-provided error title (or a fallback) when quote generation fails', () => {
@@ -149,6 +151,34 @@ describe('QuoteComponent', () => {
       fixture.componentInstance.onSubmit();
 
       expect(toast.error).toHaveBeenCalledWith('Failed to generate quote');
+    });
+  });
+
+  describe('Motor domain (not age-rated)', () => {
+    beforeEach(() => {
+      productService.getAll = vi.fn(() => of([product, motorProduct]));
+    });
+
+    it('clears the age requirement and value when a Motor product is selected', () => {
+      const fixture = create('prod-motor');
+
+      expect(fixture.componentInstance.form.controls.age.value).toBeNull();
+      expect(fixture.componentInstance.form.controls.age.validator).toBeNull();
+    });
+
+    it('submits the quote request without an age for Motor', () => {
+      const fixture = create('prod-motor');
+      fixture.componentInstance.form.patchValue({
+        sumAssured: 900000, tenureYears: 1, vehicleMake: 'Maruti', vehicleModel: 'Swift',
+        manufactureYear: 2022, insuredDeclaredValue: 900000,
+      });
+      quoteService.generateQuote.mockReturnValue(of({ premiumAmount: 18000 } as GenerateQuoteResponse));
+
+      fixture.componentInstance.onSubmit();
+
+      expect(quoteService.generateQuote).toHaveBeenCalledWith(expect.objectContaining({
+        productId: 'prod-motor', age: undefined, sumAssured: 900000, tenureYears: 1,
+      }));
     });
   });
 

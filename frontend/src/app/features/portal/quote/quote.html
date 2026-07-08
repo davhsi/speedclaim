@@ -61,10 +61,16 @@
                 <option value="Annually">Annually</option>
               </select>
             </div>
-            <div>
-              <label for="quote-date-of-birth" class="block text-[13px] font-medium mb-1.5">Date of birth</label>
-              <input id="quote-date-of-birth" type="date" formControlName="dateOfBirth" class="h-[42px]">
-            </div>
+            @if (sp.domain.toUpperCase() !== 'MOTOR') {
+              <div>
+                <label for="quote-age" class="block text-[13px] font-medium mb-1.5">Age</label>
+                <input id="quote-age" type="number" formControlName="age" [min]="sp.minAge" [max]="sp.maxAge" placeholder="e.g., 35" class="h-[42px] sc-numeric"
+                       [class.border-danger]="form.get('age')?.invalid && form.get('age')?.touched">
+                @if (form.get('age')?.invalid && form.get('age')?.touched) {
+                  <p class="text-xs text-danger mt-1">Enter an age between {{ sp.minAge }} and {{ sp.maxAge }}.</p>
+                }
+              </div>
+            }
             <div>
               <label for="quote-gender" class="block text-[13px] font-medium mb-1.5">Gender</label>
               <select id="quote-gender" formControlName="gender" class="h-[42px]">

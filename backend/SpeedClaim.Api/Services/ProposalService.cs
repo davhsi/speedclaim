@@ -39,15 +39,26 @@ public class ProposalService : IProposalService
         if (!product.IsActive) throw new ConflictException("Product is not available for new quotes.");
         ValidateProductEligibility(product, request.Age, request.SumAssured, request.TenureYears);
 
-        var premiumAmount = await CalculatePremiumAsync(productId, request.Age, request.SumAssured);
+        var premiumAmount = await CalculatePremiumAsync(product, request.Age, request.SumAssured);
 
         return new GenerateQuoteResponse(premiumAmount, request.SumAssured, request.TenureYears, "Monthly");
     }
 
-    private static void ValidateProductEligibility(InsuranceProduct product, int age, decimal sumAssured, int tenureYears)
+    // Motor premiums are rated on IDV (sum assured) alone — a policyholder's age isn't an
+    // underwriting factor for vehicle cover in this app, unlike Health/Life. Age is therefore
+    // optional end-to-end for Motor: not collected by the Motor quote form, not required by
+    // this validation, and not part of the rate-table lookup below.
+    private static bool IsAgeRatedDomain(string domain) => !string.Equals(domain, "Motor", StringComparison.OrdinalIgnoreCase);
+
+    private static void ValidateProductEligibility(InsuranceProduct product, int? age, decimal sumAssured, int tenureYears)
     {
-        if (age < product.MinAge || age > product.MaxAge)
-            throw new ValidationException($"Age must be between {product.MinAge} and {product.MaxAge} for this product.");
+        if (IsAgeRatedDomain(product.Domain))
+        {
+            if (!age.HasValue)
+                throw new ValidationException("Age is required for this product.");
+            if (age < product.MinAge || age > product.MaxAge)
+                throw new ValidationException($"Age must be between {product.MinAge} and {product.MaxAge} for this product.");
+        }
 
         if (sumAssured < product.MinSumAssured || sumAssured > product.MaxSumAssured)
             throw new ValidationException($"Sum assured must be between {product.MinSumAssured} and {product.MaxSumAssured}.");
@@ -56,11 +67,12 @@ public class ProposalService : IProposalService
             throw new ValidationException($"Tenure must be between {product.MinTenureYears} and {product.MaxTenureYears} years.");
     }
 
-    private async Task<decimal> CalculatePremiumAsync(Guid productId, int age, decimal sumAssured)
+    private async Task<decimal> CalculatePremiumAsync(InsuranceProduct product, int? age, decimal sumAssured)
     {
-        var rateTables = await _unitOfWork.PremiumRateTables.FindAsync(r => r.ProductId == productId);
+        var rateTables = await _unitOfWork.PremiumRateTables.FindAsync(r => r.ProductId == product.Id);
+        var ageRated = IsAgeRatedDomain(product.Domain);
         var applicableRate = rateTables.FirstOrDefault(r =>
-            r.AgeMin <= age && r.AgeMax >= age &&
+            (!ageRated || (r.AgeMin <= age && r.AgeMax >= age)) &&
             r.SumAssuredMin <= sumAssured && r.SumAssuredMax >= sumAssured);
 
         if (applicableRate == null)
@@ -102,7 +114,7 @@ public class ProposalService : IProposalService
         if (kyc == null || kyc.KycStatus != KycStatus.Approved)
             throw new ForbiddenException("KYC must be approved before submitting a proposal.");
 
-        var premiumAmount = await CalculatePremiumAsync(productId, customerAge, request.SumAssured);
+        var premiumAmount = await CalculatePremiumAsync(product, customerAge, request.SumAssured);
 
         var proposal = new Proposal
         {
@@ -387,6 +399,24 @@ public class ProposalService : IProposalService
             UploadedBy = uId,
             UploadedAt = DateTime.UtcNow
         });
+
+        if (proposal.Status == ProposalStatus.DocumentsPending)
+        {
+            proposal.Status = ProposalStatus.UnderReview;
+            proposal.UpdatedAt = DateTimeOffset.UtcNow;
+            _unitOfWork.Proposals.Update(proposal);
+
+            if (proposal.UnderwriterId.HasValue)
+            {
+                await _notifications.CreateAsync(
+                    proposal.UnderwriterId.Value,
+                    "Additional documents uploaded",
+                    $"Documents were uploaded for proposal {proposal.ProposalNumber}.",
+                    "policy",
+                    $"/underwriter/proposals/{proposal.Id}");
+            }
+        }
+
         await _unitOfWork.CompleteAsync();
         return storedPath;
     }
@@ -400,8 +430,8 @@ public class ProposalService : IProposalService
         if (proposal == null) throw new NotFoundException("Proposal not found");
         if (proposal.Status is ProposalStatus.Approved or ProposalStatus.Rejected or ProposalStatus.Withdrawn)
             throw new ConflictException($"Proposal is already in a terminal status: {proposal.Status}.");
-        if (proposal.Status is not (ProposalStatus.Submitted or ProposalStatus.UnderReview))
-            throw new UnprocessableException("Only submitted or under-review proposals can receive a final decision.");
+        if (proposal.Status is not (ProposalStatus.Submitted or ProposalStatus.UnderReview or ProposalStatus.DocumentsPending))
+            throw new UnprocessableException("Only submitted, under-review, or documents-pending proposals can receive a final decision.");
 
         proposal.Status = isApproved ? ProposalStatus.Approved : ProposalStatus.Rejected;
         proposal.UnderwriterId = uId;
@@ -433,17 +463,8 @@ public class ProposalService : IProposalService
             };
             await _unitOfWork.Policies.AddAsync(issuedPolicy);
 
-            await _unitOfWork.PremiumSchedules.AddAsync(new PremiumSchedule
-            {
-                Id = Guid.NewGuid(),
-                ProposalId = proposal.Id,
-                PolicyId = issuedPolicy.Id,
-                InstallmentNumber = 1,
-                DueDate = activationDate,
-                Amount = proposal.PremiumAmount,
-                Status = PremiumScheduleStatus.Upcoming,
-                CreatedAt = DateTimeOffset.UtcNow
-            });
+            await _unitOfWork.PremiumSchedules.AddRangeAsync(
+                BuildPremiumSchedule(proposal, issuedPolicy.Id, activationDate));
         }
         else
         {
@@ -511,6 +532,37 @@ public class ProposalService : IProposalService
         }
     }
 
+    private static IEnumerable<PremiumSchedule> BuildPremiumSchedule(Proposal proposal, Guid policyId, DateTime firstDueDate)
+    {
+        var intervalMonths = GetPaymentIntervalMonths(proposal.PaymentFrequency);
+        var installmentCount = Math.Max(1, proposal.TenureYears * 12 / intervalMonths);
+        var createdAt = DateTimeOffset.UtcNow;
+
+        return Enumerable.Range(0, installmentCount).Select(index => new PremiumSchedule
+        {
+            Id = Guid.NewGuid(),
+            ProposalId = proposal.Id,
+            PolicyId = policyId,
+            InstallmentNumber = index + 1,
+            DueDate = firstDueDate.AddMonths(index * intervalMonths),
+            Amount = proposal.PremiumAmount,
+            Status = PremiumScheduleStatus.Upcoming,
+            CreatedAt = createdAt
+        }).ToList();
+    }
+
+    private static int GetPaymentIntervalMonths(string paymentFrequency)
+    {
+        return (paymentFrequency ?? string.Empty).Trim().ToLowerInvariant() switch
+        {
+            "monthly" => 1,
+            "quarterly" => 3,
+            "halfyearly" or "half-yearly" or "semiannually" or "semi-annually" => 6,
+            "annually" or "annual" or "yearly" => 12,
+            _ => 12
+        };
+    }
+
     public async Task RequestAdditionalDocumentsAsync(string proposalId, string underwriterId, string details)
     {
         var pId = Guid.Parse(proposalId);
@@ -540,12 +592,21 @@ public class ProposalService : IProposalService
         {
             var docsUser = await _unitOfWork.Users.GetByIdAsync(docsCustomer.UserId);
             if (docsUser != null)
+            {
+                await _notifications.CreateAsync(
+                    docsCustomer.UserId,
+                    "Additional documents required",
+                    $"Additional documents are required for proposal {proposal.ProposalNumber}: {details}",
+                    "policy",
+                    $"/proposals/{proposal.Id}");
+
                 await _emailService.SendTemplatedEmailAsync("ProposalDocumentsPending", new Dictionary<string, string>
                 {
                     ["firstName"]      = WebUtility.HtmlEncode(docsUser.FirstName),
                     ["proposalNumber"] = WebUtility.HtmlEncode(proposal.ProposalNumber),
                     ["details"]        = WebUtility.HtmlEncode(details)
                 }, docsUser.Email);
+            }
         }
     }
 

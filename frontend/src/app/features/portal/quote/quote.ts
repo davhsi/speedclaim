@@ -33,7 +33,7 @@ export class QuoteComponent implements OnInit {
     sumAssured: [null as number | null, Validators.required],
     tenureYears: [null as number | null, Validators.required],
     paymentFrequency: ['Monthly', Validators.required],
-    dateOfBirth: ['', Validators.required],
+    age: [null as number | null, Validators.required],
     gender: [''],
     vehicleMake: [''],
     vehicleModel: [''],
@@ -78,7 +78,7 @@ export class QuoteComponent implements OnInit {
 
     const req: GenerateQuoteRequest = {
       productId: v.productId!,
-      age: this.calculateAge(v.dateOfBirth!),
+      age: v.age ?? undefined,
       sumAssured: v.sumAssured!,
       tenureYears: v.tenureYears!,
       gender: v.gender as any || undefined,
@@ -109,17 +109,6 @@ export class QuoteComponent implements OnInit {
     });
   }
 
-  private calculateAge(dateOfBirth: string): number {
-    const dob = new Date(dateOfBirth);
-    const today = new Date();
-    let age = today.getFullYear() - dob.getFullYear();
-    const monthDelta = today.getMonth() - dob.getMonth();
-    if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < dob.getDate())) {
-      age--;
-    }
-    return age;
-  }
-
   private applyProductValidators(product: ProductDto): void {
     this.form.controls.sumAssured.setValidators([
       Validators.required,
@@ -131,7 +120,20 @@ export class QuoteComponent implements OnInit {
       Validators.min(product.minTenureYears),
       Validators.max(product.maxTenureYears),
     ]);
+    // Motor isn't age-rated — the driver/policyholder's age doesn't affect vehicle premium
+    // here, so the Age field is hidden and not required for Motor products (see quote.html).
+    if (product.domain.toUpperCase() === 'MOTOR') {
+      this.form.controls.age.clearValidators();
+      this.form.controls.age.setValue(null);
+    } else {
+      this.form.controls.age.setValidators([
+        Validators.required,
+        Validators.min(product.minAge),
+        Validators.max(product.maxAge),
+      ]);
+    }
     this.form.controls.sumAssured.updateValueAndValidity();
     this.form.controls.tenureYears.updateValueAndValidity();
+    this.form.controls.age.updateValueAndValidity();
   }
 }

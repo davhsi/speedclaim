@@ -51,7 +51,10 @@ public class ProposalServiceTests
         _mockUnitOfWork.Setup(u => u.Customers).Returns(_mockCustomerRepo.Object);
         _mockUnitOfWork.Setup(u => u.KycRecords).Returns(mockKycRepo.Object);
         _mockUnitOfWork.Setup(u => u.Policies).Returns(new Mock<IPolicyRepository>().Object);
-        _mockUnitOfWork.Setup(u => u.PremiumSchedules).Returns(new Mock<IRepository<PremiumSchedule>>().Object);
+        var mockPremiumScheduleRepo = new Mock<IRepository<PremiumSchedule>>();
+        mockPremiumScheduleRepo.Setup(r => r.AddRangeAsync(It.IsAny<IEnumerable<PremiumSchedule>>()))
+            .Returns(Task.CompletedTask);
+        _mockUnitOfWork.Setup(u => u.PremiumSchedules).Returns(mockPremiumScheduleRepo.Object);
         _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
         _mockUnitOfWork.Setup(u => u.Users).Returns(new Mock<IUserRepository>().Object);
 
@@ -172,6 +175,36 @@ public class ProposalServiceTests
     }
 
     [Test]
+    public async Task GenerateQuoteAsync_MotorWithoutAge_IgnoresAgeBandAndSucceeds()
+    {
+        var productId = Guid.NewGuid();
+        var product = ActiveProduct("Motor");
+        // Age band deliberately doesn't cover any real age — should be ignored for Motor.
+        var rateTable = new PremiumRateTable { AgeMin = 999, AgeMax = 999, SumAssuredMin = 0, SumAssuredMax = 2000000, AnnualPremium = 18000 };
+
+        _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
+        _mockRateRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<PremiumRateTable, bool>>>())).ReturnsAsync(new List<PremiumRateTable> { rateTable });
+
+        var request = new GenerateQuoteRequest(productId.ToString(), null, null, 900000, 1);
+        var result = await _proposalService.GenerateQuoteAsync(request);
+
+        Assert.That(result.PremiumAmount, Is.EqualTo(18000));
+    }
+
+    [Test]
+    public void GenerateQuoteAsync_HealthWithoutAge_ThrowsValidationException()
+    {
+        var productId = Guid.NewGuid();
+        _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(ActiveProduct("Health"));
+
+        var request = new GenerateQuoteRequest(productId.ToString(), null, "Male", 100000, 10);
+
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() =>
+            _proposalService.GenerateQuoteAsync(request));
+        Assert.That(ex.Message, Is.EqualTo("Age is required for this product."));
+    }
+
+    [Test]
     public async Task SubmitProposalAsync_AsCustomer_Success()
     {
         var userId = Guid.NewGuid().ToString();
@@ -195,6 +228,44 @@ public class ProposalServiceTests
 
         Assert.That(result.Status, Is.EqualTo("Submitted"));
         Assert.That(result.PremiumAmount, Is.EqualTo(2500));
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public async Task SubmitProposalAsync_SameCustomerAndProduct_AllowsAnotherProposal()
+    {
+        var userGuid = Guid.NewGuid();
+        var customerGuid = Guid.NewGuid();
+        var productGuid = Guid.NewGuid();
+        Proposal? savedProposal = null;
+
+        _mockProductRepo.Setup(r => r.GetByIdAsync(productGuid)).ReturnsAsync(ActiveProduct("Life"));
+        _mockProposalRepo.Setup(r => r.AddAsync(It.IsAny<Proposal>()))
+            .Callback<Proposal>(p => savedProposal = p)
+            .Returns(Task.CompletedTask);
+        SetupCustomer(customerGuid, userGuid);
+        SetupRate();
+
+        var request = new SubmitProposalRequest(
+            customerGuid.ToString(),
+            productGuid.ToString(),
+            100000,
+            10,
+            2500,
+            "Monthly",
+            null,
+            new LifeDetailDto("Term", 0, 100000, false, false),
+            null,
+            new List<string>(),
+            new List<NomineeDto> { new NomineeDto("Jane Doe", "Spouse", AdultDob, 100, false, null) });
+
+        var result = await _proposalService.SubmitProposalAsync(userGuid.ToString(), request, false);
+
+        Assert.That(result.Status, Is.EqualTo("Submitted"));
+        Assert.That(savedProposal, Is.Not.Null);
+        Assert.That(savedProposal!.CustomerId, Is.EqualTo(customerGuid));
+        Assert.That(savedProposal.ProductId, Is.EqualTo(productGuid));
+        Assert.That(savedProposal.ProposalNumber, Does.StartWith("PRP-"));
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
 
@@ -355,15 +426,23 @@ public class ProposalServiceTests
     }
 
     [Test]
-    public async Task ApproveOrRejectProposalAsync_Approved_CreatesPremiumSchedule()
+    public async Task ApproveOrRejectProposalAsync_Approved_CreatesFullPremiumSchedule()
     {
-        var proposal = new Proposal { Status = ProposalStatus.Submitted, PremiumAmount = 2500, PremiumSchedules = new List<PremiumSchedule>() };
+        var proposal = new Proposal
+        {
+            Id = Guid.NewGuid(),
+            Status = ProposalStatus.Submitted,
+            PremiumAmount = 2500,
+            PaymentFrequency = "Monthly",
+            TenureYears = 2,
+            PremiumSchedules = new List<PremiumSchedule>()
+        };
         _mockProposalRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(proposal);
 
-        PremiumSchedule? captured = null;
+        List<PremiumSchedule> captured = [];
         var mockScheduleRepo = new Mock<IRepository<PremiumSchedule>>();
-        mockScheduleRepo.Setup(r => r.AddAsync(It.IsAny<PremiumSchedule>()))
-            .Callback<PremiumSchedule>(ps => captured = ps)
+        mockScheduleRepo.Setup(r => r.AddRangeAsync(It.IsAny<IEnumerable<PremiumSchedule>>()))
+            .Callback<IEnumerable<PremiumSchedule>>(ps => captured = ps.ToList())
             .Returns(Task.CompletedTask);
         _mockUnitOfWork.Setup(u => u.PremiumSchedules).Returns(mockScheduleRepo.Object);
 
@@ -371,10 +450,41 @@ public class ProposalServiceTests
 
         Assert.That(proposal.Status, Is.EqualTo(ProposalStatus.Approved));
         Assert.That(proposal.UnderwriterNotes, Is.EqualTo("Looks good"));
-        mockScheduleRepo.Verify(r => r.AddAsync(It.IsAny<PremiumSchedule>()), Times.Once);
-        Assert.That(captured, Is.Not.Null);
-        Assert.That(captured!.Amount, Is.EqualTo(2500));
+        mockScheduleRepo.Verify(r => r.AddRangeAsync(It.IsAny<IEnumerable<PremiumSchedule>>()), Times.Once);
+        Assert.That(captured, Has.Count.EqualTo(24));
+        Assert.That(captured.First().InstallmentNumber, Is.EqualTo(1));
+        Assert.That(captured.First().Amount, Is.EqualTo(2500));
+        Assert.That(captured[1].DueDate, Is.EqualTo(captured[0].DueDate.AddMonths(1)));
+        Assert.That(captured.Last().InstallmentNumber, Is.EqualTo(24));
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public async Task ApproveOrRejectProposalAsync_Approved_AnnualPolicyCreatesOneInstallmentPerYear()
+    {
+        var proposal = new Proposal
+        {
+            Id = Guid.NewGuid(),
+            Status = ProposalStatus.Submitted,
+            PremiumAmount = 12000,
+            PaymentFrequency = "Annually",
+            TenureYears = 3,
+            PremiumSchedules = new List<PremiumSchedule>()
+        };
+        _mockProposalRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(proposal);
+
+        List<PremiumSchedule> captured = [];
+        var mockScheduleRepo = new Mock<IRepository<PremiumSchedule>>();
+        mockScheduleRepo.Setup(r => r.AddRangeAsync(It.IsAny<IEnumerable<PremiumSchedule>>()))
+            .Callback<IEnumerable<PremiumSchedule>>(ps => captured = ps.ToList())
+            .Returns(Task.CompletedTask);
+        _mockUnitOfWork.Setup(u => u.PremiumSchedules).Returns(mockScheduleRepo.Object);
+
+        await _proposalService.ApproveOrRejectProposalAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), true, "Looks good");
+
+        Assert.That(captured, Has.Count.EqualTo(3));
+        Assert.That(captured.Select(s => s.InstallmentNumber), Is.EqualTo(new[] { 1, 2, 3 }));
+        Assert.That(captured[1].DueDate, Is.EqualTo(captured[0].DueDate.AddYears(1)));
     }
 
     [Test]
@@ -401,15 +511,15 @@ public class ProposalServiceTests
     }
 
     [Test]
-    public void ApproveOrRejectProposalAsync_DocumentsPendingProposal_ThrowsUnprocessableException()
+    public async Task ApproveOrRejectProposalAsync_DocumentsPendingProposal_AllowsDecision()
     {
         var proposal = new Proposal { Status = ProposalStatus.DocumentsPending };
         _mockProposalRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(proposal);
 
-        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.UnprocessableException>(() =>
-            _proposalService.ApproveOrRejectProposalAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), true, "Looks good"));
+        await _proposalService.ApproveOrRejectProposalAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), true, "Looks good");
 
-        _mockProposalRepo.Verify(r => r.Update(It.IsAny<Proposal>()), Times.Never);
+        Assert.That(proposal.Status, Is.EqualTo(ProposalStatus.Approved));
+        _mockProposalRepo.Verify(r => r.Update(It.IsAny<Proposal>()), Times.Once);
     }
 
     [Test]
@@ -550,6 +660,7 @@ public class ProposalServiceTests
         var result = await proposalServiceWithStorage.UploadDocumentAsync(proposalId.ToString(), customerId.ToString(), "ID_PROOF", mockFile.Object);
 
         Assert.That(result, Is.EqualTo("/uploads/proposals/doc.pdf"));
+        Assert.That(proposal.Status, Is.EqualTo(ProposalStatus.UnderReview));
         mockDocRepo.Verify(r => r.AddAsync(It.IsAny<SubmittedDocument>()), Times.Once);
     }
 

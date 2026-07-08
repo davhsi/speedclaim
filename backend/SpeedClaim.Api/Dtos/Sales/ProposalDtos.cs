@@ -5,7 +5,7 @@ namespace SpeedClaim.Api.Dtos.Sales;
 
 public record GenerateQuoteRequest(
     string ProductId,
-    int Age,
+    int? Age,
     string? Gender,
     decimal SumAssured,
     int TenureYears

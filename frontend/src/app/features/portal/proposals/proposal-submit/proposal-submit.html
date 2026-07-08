@@ -64,7 +64,7 @@
         <p class="text-sm text-muted mb-4">Add at least one nominee. Shares must total 100%.</p>
         @for (n of nominees.controls; track $index; let i = $index) {
           <div class="p-4 bg-surface rounded-[10px] mb-3" [formGroup]="nominees.at(i)">
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="grid grid-cols-1 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_110px_minmax(150px,1fr)_32px] gap-3 items-start">
               <div>
                 <label [for]="'nominee-name-' + i" class="block text-xs text-muted mb-1">Name</label>
                 <input [id]="'nominee-name-' + i" formControlName="name" placeholder="Full name" class="h-[42px]" />
@@ -82,12 +82,15 @@
               </div>
               <div>
                 <label [for]="'nominee-dob-' + i" class="block text-xs text-muted mb-1">DOB</label>
-                <div class="flex items-center gap-2">
-                  <input [id]="'nominee-dob-' + i" type="date" formControlName="dateOfBirth" class="h-[42px] flex-1" />
-                  <button class="text-danger hover:text-red-700 shrink-0 p-1" (click)="nominees.removeAt(i)">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  </button>
-                </div>
+                <input [id]="'nominee-dob-' + i" type="date" formControlName="dateOfBirth" class="h-[42px]" [class.border-danger]="nominees.at(i).get('dateOfBirth')?.errors?.['pastDate'] && nominees.at(i).get('dateOfBirth')?.touched" />
+                @if (nominees.at(i).get('dateOfBirth')?.errors?.['pastDate'] && nominees.at(i).get('dateOfBirth')?.touched) {
+                  <p class="text-xs text-danger mt-1">Date of birth must be in the past.</p>
+                }
+              </div>
+              <div class="pt-6">
+                <button type="button" class="text-danger hover:text-red-700 shrink-0 p-1" aria-label="Remove nominee" (click)="nominees.removeAt(i)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
               </div>
             </div>
             @if (isMinorNominee(i)) {
@@ -118,7 +121,7 @@
         <p class="text-sm text-muted mb-4">Upload required documents.</p>
         @for (doc of docRequirements(); track doc.documentKey) {
           <div class="mb-4">
-            <app-file-upload [label]="doc.label" [hint]="doc.description" (fileSelected)="onDocSelected(doc.documentKey, $event)" />
+            <app-file-upload [label]="doc.label" [hint]="doc.description" [maxSizeMb]="5" (fileSelected)="onDocSelected(doc.documentKey, $event)" />
           </div>
         }
         @if (docRequirements().length === 0) {
