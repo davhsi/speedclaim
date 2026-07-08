@@ -16,6 +16,7 @@ describe('AdminAgentsComponent', () => {
     assignAgentToBranch: ReturnType<typeof vi.fn>;
     updateAgentLicense: ReturnType<typeof vi.fn>;
     updateBranch: ReturnType<typeof vi.fn>;
+    createBranch: ReturnType<typeof vi.fn>;
   };
   let toast: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn>; warning: ReturnType<typeof vi.fn> };
 
@@ -54,7 +55,7 @@ describe('AdminAgentsComponent', () => {
     adminService = {
       getAllUsers: vi.fn(), getAgentProfiles: vi.fn(), getBranches: vi.fn(),
       toggleAgentStatus: vi.fn(), registerAgent: vi.fn(), assignAgentToBranch: vi.fn(),
-      updateAgentLicense: vi.fn(), updateBranch: vi.fn(),
+      updateAgentLicense: vi.fn(), updateBranch: vi.fn(), createBranch: vi.fn(),
     };
     toast = { success: vi.fn(), error: vi.fn(), warning: vi.fn() };
 
@@ -143,19 +144,10 @@ describe('AdminAgentsComponent', () => {
     function validForm() {
       return {
         firstName: 'Priya', lastName: 'Sharma', email: 'priya@example.com', phone: '9876543210',
-        password: 'StrongP@ss1', licenseNumber: 'LIC001', licenseExpiry: '2030-01-01',
+        licenseNumber: 'LIC001', licenseExpiry: '2030-01-01',
         agencyName: 'Agency Co', aadhaarNumber: '123456789012', panNumber: 'ABCDE1234F',
       };
     }
-
-    it('warns on a weak password without submitting', () => {
-      const fixture = create();
-      const c = fixture.componentInstance;
-      c.regForm = { ...validForm(), password: 'weak' };
-      c.registerAgent();
-      expect(adminService.registerAgent).not.toHaveBeenCalled();
-      expect(toast.warning).toHaveBeenCalledWith(expect.stringContaining('Password must be'));
-    });
 
     it('warns on other invalid fields (e.g. missing agency name)', () => {
       const fixture = create();
@@ -174,7 +166,7 @@ describe('AdminAgentsComponent', () => {
       c.registerAgent();
 
       expect(adminService.registerAgent).toHaveBeenCalled();
-      expect(toast.success).toHaveBeenCalledWith('Agent registered successfully');
+      expect(toast.success).toHaveBeenCalledWith('Agent registered — they’ll get an email to set their password');
       expect(adminService.getAllUsers).toHaveBeenCalledTimes(2);
     });
 
@@ -185,6 +177,48 @@ describe('AdminAgentsComponent', () => {
       adminService.registerAgent.mockReturnValue(throwError(() => ({ status: 500 })));
       c.registerAgent();
       expect(toast.error).toHaveBeenCalledWith('Failed to register agent');
+    });
+  });
+
+  describe('inline field error getters', () => {
+    it('are empty until a field has content', () => {
+      const c = create().componentInstance;
+      expect(c.emailError()).toBe('');
+      expect(c.phoneError()).toBe('');
+      expect(c.aadhaarError()).toBe('');
+      expect(c.panError()).toBe('');
+    });
+
+    it('flag an invalid email', () => {
+      const c = create().componentInstance;
+      c.regForm.email = 'not-an-email';
+      expect(c.emailError()).toBe('Enter a valid email address.');
+      c.regForm.email = 'agent@example.com';
+      expect(c.emailError()).toBe('');
+    });
+
+    it('flag a phone number that is not exactly 10 digits', () => {
+      const c = create().componentInstance;
+      c.regForm.phone = '12345';
+      expect(c.phoneError()).toBe('Phone number must be exactly 10 digits.');
+      c.regForm.phone = '9876543210';
+      expect(c.phoneError()).toBe('');
+    });
+
+    it('flag an Aadhaar number that is not exactly 12 digits', () => {
+      const c = create().componentInstance;
+      c.regForm.aadhaarNumber = '123';
+      expect(c.aadhaarError()).toBe('Aadhaar must be exactly 12 digits.');
+      c.regForm.aadhaarNumber = '123456789012';
+      expect(c.aadhaarError()).toBe('');
+    });
+
+    it('flag a malformed PAN', () => {
+      const c = create().componentInstance;
+      c.regForm.panNumber = 'ABC123';
+      expect(c.panError()).toBe('PAN must be in the format ABCDE1234F.');
+      c.regForm.panNumber = 'ABCDE1234F';
+      expect(c.panError()).toBe('');
     });
   });
 
@@ -199,7 +233,7 @@ describe('AdminAgentsComponent', () => {
       expect(toast.warning).toHaveBeenCalledWith('Please select a branch to assign.');
     });
 
-    it('assigns using the profile agentId when available, falling back to the user id', () => {
+    it('assigns using the agent user id (the backend looks the agent up by UserId)', () => {
       const fixture = create([agentUser({ id: 'u1' })], [agentProfile({ userId: 'u1', agentId: 'ag-real' })]);
       const c = fixture.componentInstance;
       c.openAssignBranchModal(agentUser({ id: 'u1' }));
@@ -208,7 +242,7 @@ describe('AdminAgentsComponent', () => {
 
       c.assignBranch();
 
-      expect(adminService.assignAgentToBranch).toHaveBeenCalledWith('ag-real', 'b1');
+      expect(adminService.assignAgentToBranch).toHaveBeenCalledWith('u1', 'b1');
       expect(toast.success).toHaveBeenCalledWith('Branch assigned');
     });
   });
@@ -262,15 +296,62 @@ describe('AdminAgentsComponent', () => {
     });
   });
 
+  describe('openCreateBranchModal / submitCreateBranch', () => {
+    it('resets the branch form and opens the createBranch modal', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.branchForm.name = 'leftover';
+      c.openCreateBranchModal();
+      expect(c.branchForm).toEqual({ name: '', city: '', state: '', address: '', phone: '', email: '' });
+      expect(c.activeModal()).toBe('createBranch');
+    });
+
+    it('warns on an invalid branch form without calling the service', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.openCreateBranchModal();
+      c.branchForm.phone = 'not-a-phone';
+      c.submitCreateBranch();
+      expect(adminService.createBranch).not.toHaveBeenCalled();
+    });
+
+    it('creates the branch and appends it to the local list', () => {
+      const fixture = create([], [], [branch({ id: 'b1', name: 'Central' })]);
+      const c = fixture.componentInstance;
+      c.openCreateBranchModal();
+      c.branchForm = { name: 'New Branch', city: 'Pune', state: 'Maharashtra', address: '2 Side St', phone: '9876543211', email: 'new@x.com' };
+      const created = branch({ id: 'b2', name: 'New Branch', city: 'Pune' });
+      adminService.createBranch.mockReturnValue(of(created));
+
+      c.submitCreateBranch();
+
+      expect(adminService.createBranch).toHaveBeenCalledWith({
+        name: 'New Branch', city: 'Pune', state: 'Maharashtra', address: '2 Side St', phone: '9876543211', email: 'new@x.com',
+      });
+      expect(c.branches().map(b => b.id)).toEqual(['b1', 'b2']);
+      expect(toast.success).toHaveBeenCalledWith('Branch created');
+    });
+
+    it('shows an error toast on failure', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.openCreateBranchModal();
+      c.branchForm = { name: 'New Branch', city: 'Pune', state: 'Maharashtra', address: '2 Side St', phone: '9876543211', email: 'new@x.com' };
+      adminService.createBranch.mockReturnValue(throwError(() => ({ status: 500 })));
+      c.submitCreateBranch();
+      expect(toast.error).toHaveBeenCalledWith('Failed to create branch');
+    });
+  });
+
   describe('toggleAgentStatus', () => {
-    it('deactivates an active agent using the resolved agentId', () => {
+    it('deactivates an active agent using the agent user id', () => {
       const fixture = create([agentUser({ id: 'u1', isActive: true })], [agentProfile({ userId: 'u1', agentId: 'ag-real' })]);
       const c = fixture.componentInstance;
       adminService.toggleAgentStatus.mockReturnValue(of({ message: 'ok' }));
 
       c.toggleAgentStatus(agentUser({ id: 'u1', isActive: true }));
 
-      expect(adminService.toggleAgentStatus).toHaveBeenCalledWith('ag-real', false);
+      expect(adminService.toggleAgentStatus).toHaveBeenCalledWith('u1', false);
       expect(c.agents().find(a => a.id === 'u1')?.isActive).toBe(false);
     });
   });

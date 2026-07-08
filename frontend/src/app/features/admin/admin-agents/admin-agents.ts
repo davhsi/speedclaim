@@ -24,12 +24,12 @@ export class AdminAgentsComponent implements OnInit {
   loading = signal(true);
   searchQuery = signal('');
 
-  activeModal = signal<'register' | 'assignBranch' | 'updateLicense' | 'editBranch' | null>(null);
+  activeModal = signal<'register' | 'assignBranch' | 'updateLicense' | 'editBranch' | 'createBranch' | null>(null);
   selectedAgent = signal<UserDto | null>(null);
   selectedBranch = signal<BranchDto | null>(null);
   selectedBranchId = signal<string | null>(null);
 
-  regForm = { firstName: '', lastName: '', email: '', phone: '', password: '', licenseNumber: '', licenseExpiry: '', agencyName: '', aadhaarNumber: '', panNumber: '' };
+  regForm = { firstName: '', lastName: '', email: '', phone: '', licenseNumber: '', licenseExpiry: '', agencyName: '', aadhaarNumber: '', panNumber: '' };
   licForm = { licenseNumber: '', licenseExpiry: '' };
   branchForm = { name: '', city: '', state: '', address: '', phone: '', email: '' };
 
@@ -126,7 +126,7 @@ export class AdminAgentsComponent implements OnInit {
   }
 
   openRegisterModal(): void {
-    this.regForm = { firstName: '', lastName: '', email: '', phone: '', password: '', licenseNumber: '', licenseExpiry: '', agencyName: '', aadhaarNumber: '', panNumber: '' };
+    this.regForm = { firstName: '', lastName: '', email: '', phone: '', licenseNumber: '', licenseExpiry: '', agencyName: '', aadhaarNumber: '', panNumber: '' };
     this.activeModal.set('register');
   }
 
@@ -150,12 +150,13 @@ export class AdminAgentsComponent implements OnInit {
     this.activeModal.set('editBranch');
   }
 
-  closeModal(): void {
-    this.activeModal.set(null);
+  openCreateBranchModal(): void {
+    this.branchForm = { name: '', city: '', state: '', address: '', phone: '', email: '' };
+    this.activeModal.set('createBranch');
   }
 
-  private isPasswordStrong(pw: string): boolean {
-    return pw.length >= 8 && /[A-Z]/.test(pw) && /[a-z]/.test(pw) && /\d/.test(pw) && /[^a-zA-Z0-9]/.test(pw);
+  closeModal(): void {
+    this.activeModal.set(null);
   }
 
   private isValidEmail(v: string): boolean {
@@ -178,10 +179,34 @@ export class AdminAgentsComponent implements OnInit {
     return !!v && !isNaN(new Date(v).getTime());
   }
 
+  emailError(): string {
+    const v = this.regForm.email.trim();
+    if (!v) return '';
+    return this.isValidEmail(v) ? '' : 'Enter a valid email address.';
+  }
+
+  phoneError(): string {
+    const v = this.regForm.phone.trim();
+    if (!v) return '';
+    return this.isValidPhone(v) ? '' : 'Phone number must be exactly 10 digits.';
+  }
+
+  aadhaarError(): string {
+    const v = this.regForm.aadhaarNumber.trim();
+    if (!v) return '';
+    return this.isValidAadhaar(v) ? '' : 'Aadhaar must be exactly 12 digits.';
+  }
+
+  panError(): string {
+    const v = this.regForm.panNumber.trim();
+    if (!v) return '';
+    return this.isValidPan(v) ? '' : 'PAN must be in the format ABCDE1234F.';
+  }
+
   registerFormInvalid(): boolean {
     const f = this.regForm;
     return !f.firstName.trim() || !f.lastName.trim() || !this.isValidEmail(f.email)
-      || !this.isValidPhone(f.phone) || !this.isPasswordStrong(f.password)
+      || !this.isValidPhone(f.phone)
       || !f.licenseNumber.trim() || !this.isValidDate(f.licenseExpiry)
       || !f.agencyName.trim() || !this.isValidAadhaar(f.aadhaarNumber) || !this.isValidPan(f.panNumber);
   }
@@ -198,9 +223,7 @@ export class AdminAgentsComponent implements OnInit {
 
   toggleAgentStatus(agent: UserDto): void {
     const next = !agent.isActive;
-    const profile = this.getAgentProfile(agent.id);
-    const agentId = profile?.agentId ?? agent.id;
-    this.adminService.toggleAgentStatus(agentId, next).subscribe({
+    this.adminService.toggleAgentStatus(agent.id, next).subscribe({
       next: () => {
         this.agents.update(list => list.map(a => a.id === agent.id ? { ...a, isActive: next } : a));
         this.toastService.success(agent.fullName + (next ? ' activated' : ' deactivated'));
@@ -211,17 +234,12 @@ export class AdminAgentsComponent implements OnInit {
 
   registerAgent(): void {
     const f = this.regForm;
-    if (!this.isPasswordStrong(f.password)) {
-      this.toastService.warning('Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a digit, and a special character.');
-      return;
-    }
     if (this.registerFormInvalid()) {
       this.toastService.warning('Please fill in all fields with valid values (email, phone, Aadhaar, PAN, and license expiry) before registering the agent.');
       return;
     }
     this.adminService.registerAgent({
       email: f.email,
-      password: f.password,
       salutation: 'Mr',
       firstName: f.firstName,
       lastName: f.lastName,
@@ -237,7 +255,7 @@ export class AdminAgentsComponent implements OnInit {
       isSameAsPermanent: true,
     }).subscribe({
       next: () => {
-        this.toastService.success('Agent registered successfully');
+        this.toastService.success('Agent registered — they’ll get an email to set their password');
         this.closeModal();
         this.loadData();
       },
@@ -253,9 +271,7 @@ export class AdminAgentsComponent implements OnInit {
       this.toastService.warning('Please select a branch to assign.');
       return;
     }
-    const profile = this.getAgentProfile(agent.id);
-    const agentId = profile?.agentId ?? agent.id;
-    this.adminService.assignAgentToBranch(agentId, branchId).subscribe({
+    this.adminService.assignAgentToBranch(agent.id, branchId).subscribe({
       next: () => {
         this.toastService.success('Branch assigned');
         this.closeModal();
@@ -272,9 +288,7 @@ export class AdminAgentsComponent implements OnInit {
       this.toastService.warning('Please enter a license number and a valid expiry date.');
       return;
     }
-    const profile = this.getAgentProfile(agent.id);
-    const agentId = profile?.agentId ?? agent.id;
-    this.adminService.updateAgentLicense(agentId, {
+    this.adminService.updateAgentLicense(agent.id, {
       licenseNumber: this.licForm.licenseNumber,
       licenseExpiry: this.licForm.licenseExpiry,
     }).subscribe({
@@ -308,6 +322,28 @@ export class AdminAgentsComponent implements OnInit {
         this.closeModal();
       },
       error: () => this.toastService.error('Failed to update branch'),
+    });
+  }
+
+  submitCreateBranch(): void {
+    if (this.branchFormInvalid()) {
+      this.toastService.warning('Please fill in all branch fields with valid values (name, city, state, address, phone, and email).');
+      return;
+    }
+    this.adminService.createBranch({
+      name: this.branchForm.name,
+      city: this.branchForm.city,
+      state: this.branchForm.state,
+      address: this.branchForm.address,
+      phone: this.branchForm.phone,
+      email: this.branchForm.email,
+    }).subscribe({
+      next: created => {
+        this.branches.update(list => [...list, created]);
+        this.toastService.success('Branch created');
+        this.closeModal();
+      },
+      error: () => this.toastService.error('Failed to create branch'),
     });
   }
 }
