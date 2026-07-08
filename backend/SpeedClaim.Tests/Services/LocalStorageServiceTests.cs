@@ -105,15 +105,15 @@ public class LocalStorageServiceTests
     public void UploadFileAsync_ExceedsSizeLimit_ThrowsArgumentException()
     {
         // Arrange
-        // Create a mock stream that reports length > 10MB
+        // Create a mock stream that reports length > 5MB
         var mockStream = new Mock<Stream>();
-        mockStream.Setup(s => s.Length).Returns(11 * 1024 * 1024); // 11 MB
+        mockStream.Setup(s => s.Length).Returns(6 * 1024 * 1024); // 6 MB
 
         // Act & Assert
-        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(async () => 
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(async () =>
             await _storageService.UploadFileAsync(mockStream.Object, "test.pdf", "folder"));
-        
-        Assert.That(ex.Message, Does.Contain("exceeds the 10MB limit"));
+
+        Assert.That(ex.Message, Does.Contain("exceeds the 5MB limit"));
     }
 
     [Test]

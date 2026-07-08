@@ -32,9 +32,9 @@ public class LocalStorageService : IStorageService
             throw new ValidationException("Invalid file type. Only JPG, PNG, WebP, and PDF are allowed.");
         }
 
-        if (fileStream.Length > 10 * 1024 * 1024) // 10 MB limit
+        if (fileStream.Length > 5 * 1024 * 1024) // 5 MB limit
         {
-            throw new ValidationException("File size exceeds the 10MB limit.");
+            throw new ValidationException("File size exceeds the 5MB limit.");
         }
 
         // Relative path starting from wwwroot

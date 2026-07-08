@@ -52,7 +52,7 @@
 
     <div class="mb-5">
       <span class="block text-[13px] font-medium mb-1.5">Supporting document <span class="text-muted font-normal">(optional)</span></span>
-      <app-file-upload label="Attach a file" hint="PDF, JPG, PNG up to 10MB" (fileSelected)="onFileSelected($event)" />
+      <app-file-upload label="Attach a file" hint="PDF, JPG, PNG up to 5MB" [maxSizeMb]="5" (fileSelected)="onFileSelected($event)" />
       @if (attachedFile()) {
         <p class="text-xs text-success mt-1.5">{{ attachedFile()!.name }} selected</p>
       }
