@@ -184,6 +184,59 @@
             @if (schedules().length === 0) {
               <p class="text-sm text-muted py-6 text-center">No payment schedule available.</p>
             } @else {
+              <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+                <div class="border border-line rounded-[8px] px-3.5 py-3">
+                  <div class="text-[11px] font-semibold text-muted uppercase tracking-wide">Total installments</div>
+                  <div class="text-lg font-bold text-ink sc-numeric mt-1">{{ scheduleCount().total }}</div>
+                </div>
+                <div class="border border-line rounded-[8px] px-3.5 py-3">
+                  <div class="text-[11px] font-semibold text-muted uppercase tracking-wide">Paid</div>
+                  <div class="text-lg font-bold text-success sc-numeric mt-1">{{ scheduleCount().paid }}</div>
+                </div>
+                <div class="border border-line rounded-[8px] px-3.5 py-3">
+                  <div class="text-[11px] font-semibold text-muted uppercase tracking-wide">Upcoming</div>
+                  <div class="text-lg font-bold text-ink sc-numeric mt-1">{{ scheduleCount().upcoming }}</div>
+                </div>
+                <div class="border border-line rounded-[8px] px-3.5 py-3">
+                  <div class="text-[11px] font-semibold text-muted uppercase tracking-wide">Overdue</div>
+                  <div class="text-lg font-bold sc-numeric mt-1" [class]="scheduleCount().overdue > 0 ? 'text-danger' : 'text-ink'">{{ scheduleCount().overdue }}</div>
+                </div>
+              </div>
+
+              @if (nextPremium(); as next) {
+                <div class="mb-4 rounded-[8px] border border-line bg-surface px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
+                  <div>
+                    <div class="text-[11px] font-semibold text-muted uppercase tracking-wide">Next premium</div>
+                    <div class="text-sm font-semibold text-ink mt-1 sc-numeric">{{ next.amountDue | money }} due {{ next.dueDate | dateFormat }}</div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <app-status-badge [status]="next.status" />
+                    @if (next.status === 'Due' || next.status === 'Overdue') {
+                      <button class="h-8 px-3 text-[12px] font-semibold text-white bg-primary border-none rounded-control cursor-pointer hover:bg-primary-hover"
+                              (click)="router.navigate(['/pay', policy()!.id])">Pay now</button>
+                    }
+                  </div>
+                </div>
+              }
+
+              <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
+                <div class="inline-flex rounded-[8px] border border-line overflow-hidden bg-white">
+                  @for (filter of scheduleFilters; track filter) {
+                    <button
+                      type="button"
+                      class="h-9 px-3 text-[12px] font-semibold border-0 border-r border-line last:border-r-0"
+                      [class]="scheduleFilter() === filter ? 'bg-primary text-white' : 'bg-white text-body hover:bg-surface'"
+                      (click)="setScheduleFilter(filter)"
+                    >
+                      {{ filter }}
+                    </button>
+                  }
+                </div>
+                <div class="text-[12px] text-muted sc-numeric">
+                  Showing {{ pagedSchedules().length }} of {{ filteredSchedules().length }} installments
+                </div>
+              </div>
+
               <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
                   <thead>
@@ -195,7 +248,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    @for (s of schedules(); track s.id) {
+                    @for (s of pagedSchedules(); track s.id) {
                       <tr class="border-b border-line last:border-0" [class]="s.status === 'Overdue' ? 'bg-danger-bg/40' : ''">
                         <td class="py-3 pr-4 text-muted sc-numeric text-xs">{{ s.installmentNumber }}</td>
                         <td class="py-3 pr-4 sc-numeric" [class]="s.status === 'Overdue' ? 'text-danger font-medium' : 'text-ink'">{{ s.dueDate | dateFormat }}</td>
@@ -214,6 +267,15 @@
                   </tbody>
                 </table>
               </div>
+              @if (filteredSchedules().length === 0) {
+                <p class="text-sm text-muted py-6 text-center">No installments match this filter.</p>
+              }
+              <app-pagination
+                [currentPage]="schedulePage()"
+                [totalPages]="scheduleTotalPages()"
+                [pageSize]="schedulePageSize"
+                (pageChange)="onSchedulePageChange($event)"
+              />
             }
           }
           @case (4) {

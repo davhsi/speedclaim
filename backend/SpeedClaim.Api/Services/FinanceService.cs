@@ -192,18 +192,82 @@ public class FinanceService : IFinanceService
         if (policy == null || policy.CustomerId != customerRecord.Id)
             throw new ForbiddenException("Access denied to this policy schedule.");
 
-        var schedules = await _unitOfWork.PremiumSchedules.FindAsync(s => s.PolicyId == pid);
-        return schedules.Select(s => new PremiumScheduleDto
+        var schedules = await EnsurePolicyScheduleCompleteAsync(policy, await _unitOfWork.PremiumSchedules.FindAsync(s => s.PolicyId == pid));
+        return schedules
+            .OrderBy(s => s.InstallmentNumber)
+            .Select(s => new PremiumScheduleDto
+            {
+                Id = s.Id,
+                PolicyId = s.PolicyId,
+                ProposalId = s.ProposalId,
+                InstallmentNumber = s.InstallmentNumber,
+                AmountDue = s.Amount,
+                DueDate = s.DueDate,
+                Status = s.Status.ToString(),
+                PaymentId = s.PaymentId
+            });
+    }
+
+    private async Task<IEnumerable<PremiumSchedule>> EnsurePolicyScheduleCompleteAsync(Policy policy, IEnumerable<PremiumSchedule> currentSchedules)
+    {
+        var schedules = currentSchedules.ToList();
+        var intervalMonths = GetPaymentIntervalMonths(policy.PaymentFrequency);
+
+        if (policy.StartDate == default ||
+            policy.EndDate <= policy.StartDate ||
+            policy.PremiumAmount <= 0 ||
+            intervalMonths <= 0)
         {
-            Id = s.Id,
-            PolicyId = s.PolicyId,
-            ProposalId = s.ProposalId,
-            InstallmentNumber = s.InstallmentNumber,
-            AmountDue = s.Amount,
-            DueDate = s.DueDate,
-            Status = s.Status.ToString(),
-            PaymentId = s.PaymentId
-        });
+            return schedules;
+        }
+
+        var expectedDueDates = new List<DateTime>();
+        for (var dueDate = policy.StartDate; dueDate < policy.EndDate; dueDate = dueDate.AddMonths(intervalMonths))
+        {
+            expectedDueDates.Add(dueDate);
+        }
+
+        if (expectedDueDates.Count <= schedules.Count)
+            return schedules;
+
+        var existingInstallments = schedules.Select(s => s.InstallmentNumber).ToHashSet();
+        var createdAt = DateTimeOffset.UtcNow;
+        var missingSchedules = expectedDueDates
+            .Select((dueDate, index) => new { DueDate = dueDate, InstallmentNumber = index + 1 })
+            .Where(item => !existingInstallments.Contains(item.InstallmentNumber))
+            .Select(item => new PremiumSchedule
+            {
+                Id = Guid.NewGuid(),
+                ProposalId = policy.ProposalId,
+                PolicyId = policy.Id,
+                InstallmentNumber = item.InstallmentNumber,
+                DueDate = item.DueDate,
+                Amount = policy.PremiumAmount,
+                Status = PremiumScheduleStatus.Upcoming,
+                CreatedAt = createdAt
+            })
+            .ToList();
+
+        if (missingSchedules.Count == 0)
+            return schedules;
+
+        await _unitOfWork.PremiumSchedules.AddRangeAsync(missingSchedules);
+        await _unitOfWork.CompleteAsync();
+
+        schedules.AddRange(missingSchedules);
+        return schedules;
+    }
+
+    private static int GetPaymentIntervalMonths(string paymentFrequency)
+    {
+        return (paymentFrequency ?? string.Empty).Trim().ToLowerInvariant() switch
+        {
+            "monthly" => 1,
+            "quarterly" => 3,
+            "halfyearly" or "half-yearly" or "semiannually" or "semi-annually" => 6,
+            "annually" or "annual" or "yearly" => 12,
+            _ => 12
+        };
     }
 
     public async Task<IEnumerable<PaymentRecordDto>> GetMyPaymentHistoryAsync(string customerId)
@@ -370,6 +434,21 @@ public class FinanceService : IFinanceService
             }
 
             Guid.TryParse(financeOfficerId, out var reconcileOfficerGuid);
+
+            if (policyActivated && paidPolicy != null)
+            {
+                await _unitOfWork.PolicyStatusHistories.AddAsync(new PolicyStatusHistory
+                {
+                    Id = Guid.NewGuid(),
+                    PolicyId = paidPolicy.Id,
+                    OldStatus = PolicyStatus.Pending,
+                    NewStatus = PolicyStatus.Active,
+                    ChangedById = reconcileOfficerGuid == Guid.Empty ? null : reconcileOfficerGuid,
+                    Reason = "First premium paid; policy activated.",
+                    ChangedAt = DateTimeOffset.UtcNow
+                });
+            }
+
             await _unitOfWork.AuditLogs.AddAsync(new AuditLog
             {
                 Id = Guid.NewGuid(), UserId = reconcileOfficerGuid == Guid.Empty ? (Guid?)null : reconcileOfficerGuid,

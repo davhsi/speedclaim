@@ -41,6 +41,7 @@ public class FinanceServiceTests
         _mockUnitOfWork.Setup(u => u.StripeCustomers).Returns(new Mock<IRepository<SpeedClaim.Api.Models.StripeCustomer>>().Object);
         _mockUnitOfWork.Setup(u => u.Users).Returns(new Mock<IUserRepository>().Object);
         _mockUnitOfWork.Setup(u => u.Policies).Returns(new Mock<IPolicyRepository>().Object);
+        _mockUnitOfWork.Setup(u => u.PolicyStatusHistories).Returns(new Mock<IRepository<PolicyStatusHistory>>().Object);
         _mockUnitOfWork.Setup(u => u.Agents).Returns(new Mock<IRepository<Agent>>().Object);
         _mockUnitOfWork.Setup(u => u.InsuranceProducts).Returns(new Mock<IRepository<InsuranceProduct>>().Object);
         _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
@@ -164,7 +165,8 @@ public class FinanceServiceTests
         var policyId = Guid.NewGuid();
         var schedules = new List<PremiumSchedule>
         {
-            new PremiumSchedule { Id = Guid.NewGuid(), PolicyId = policyId, Amount = 100 }
+            new PremiumSchedule { Id = Guid.NewGuid(), PolicyId = policyId, InstallmentNumber = 2, Amount = 200 },
+            new PremiumSchedule { Id = Guid.NewGuid(), PolicyId = policyId, InstallmentNumber = 1, Amount = 100 }
         };
 
         var mockCustomerRepo = new Mock<IRepository<SpeedClaim.Api.Models.Customer>>();
@@ -182,7 +184,60 @@ public class FinanceServiceTests
 
         var result = await _financeService.GetPremiumScheduleAsync(policyId.ToString(), customerUserId.ToString());
 
-        Assert.That(result.Count(), Is.EqualTo(1));
+        Assert.That(result.Count(), Is.EqualTo(2));
+        Assert.That(result.Select(s => s.InstallmentNumber), Is.EqualTo(new[] { 1, 2 }));
+    }
+
+    [Test]
+    public async Task GetPremiumScheduleAsync_IncompleteMonthlySchedule_BackfillsUpcomingInstallments()
+    {
+        var customerUserId = Guid.NewGuid();
+        var customerRecordId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+        var existingSchedule = new PremiumSchedule
+        {
+            Id = Guid.NewGuid(),
+            PolicyId = policyId,
+            InstallmentNumber = 1,
+            DueDate = new DateTime(2026, 7, 14),
+            Amount = 8500,
+            Status = PremiumScheduleStatus.Paid
+        };
+
+        var mockCustomerRepo = new Mock<IRepository<SpeedClaim.Api.Models.Customer>>();
+        mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<SpeedClaim.Api.Models.Customer, bool>>>()))
+            .ReturnsAsync(new SpeedClaim.Api.Models.Customer { Id = customerRecordId, UserId = customerUserId });
+        _mockUnitOfWork.Setup(u => u.Customers).Returns(mockCustomerRepo.Object);
+
+        var mockPolicyRepo = new Mock<IPolicyRepository>();
+        mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(new Policy
+        {
+            Id = policyId,
+            CustomerId = customerRecordId,
+            PaymentFrequency = "Monthly",
+            PremiumAmount = 8500,
+            StartDate = new DateTime(2026, 7, 14),
+            EndDate = new DateTime(2027, 7, 14)
+        });
+        _mockUnitOfWork.Setup(u => u.Policies).Returns(mockPolicyRepo.Object);
+
+        List<PremiumSchedule> created = [];
+        var mockScheduleRepo = new Mock<IRepository<PremiumSchedule>>();
+        mockScheduleRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<PremiumSchedule, bool>>>()))
+            .ReturnsAsync(new List<PremiumSchedule> { existingSchedule });
+        mockScheduleRepo.Setup(r => r.AddRangeAsync(It.IsAny<IEnumerable<PremiumSchedule>>()))
+            .Callback<IEnumerable<PremiumSchedule>>(items => created = items.ToList())
+            .Returns(Task.CompletedTask);
+        _mockUnitOfWork.Setup(u => u.PremiumSchedules).Returns(mockScheduleRepo.Object);
+
+        var result = (await _financeService.GetPremiumScheduleAsync(policyId.ToString(), customerUserId.ToString())).ToList();
+
+        Assert.That(result, Has.Count.EqualTo(12));
+        Assert.That(result.First().Status, Is.EqualTo("Paid"));
+        Assert.That(created, Has.Count.EqualTo(11));
+        Assert.That(created.First().InstallmentNumber, Is.EqualTo(2));
+        Assert.That(created.First().DueDate, Is.EqualTo(new DateTime(2026, 8, 14)));
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
 
     [Test]
@@ -923,6 +978,11 @@ public class FinanceServiceTests
 
         Assert.That(policy.Status, Is.EqualTo(PolicyStatus.Active));
         Assert.That(payment.Status, Is.EqualTo(PaymentStatus.Paid));
+        _mockUnitOfWork.Verify(u => u.PolicyStatusHistories.AddAsync(It.Is<PolicyStatusHistory>(h =>
+            h.PolicyId == policyId &&
+            h.OldStatus == PolicyStatus.Pending &&
+            h.NewStatus == PolicyStatus.Active &&
+            h.Reason == "First premium paid; policy activated.")), Times.Once);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
 

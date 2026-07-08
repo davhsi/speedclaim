@@ -2,25 +2,30 @@ import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PolicyService } from '../services/policy.service';
-import { PolicyDto, EndorsementDto, PolicyNomineeDto, ProductDto, PremiumScheduleDto } from '../../../../core/models/api.models';
+import { PaymentRecordDto, PolicyDto, EndorsementDto, PolicyNomineeDto, ProductDto, PremiumScheduleDto } from '../../../../core/models/api.models';
+import { PaymentService } from '../../payments/services/payment.service';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge';
 import { TimelineComponent, TimelineItem } from '../../../../shared/components/timeline/timeline';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog';
+import { PaginationComponent } from '../../../../shared/components/pagination/pagination';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { DateFormatPipe } from '../../../../shared/pipes/date-format.pipe';
 import { SafeHtmlPipe } from '../../../../shared/pipes/safe-html.pipe';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
 import { ProductService } from '../../products/services/product.service';
 
+type ScheduleFilter = 'All' | 'Paid' | 'Upcoming' | 'Due' | 'Overdue';
+
 @Component({
   selector: 'app-policy-detail',
   standalone: true,
-  imports: [StatusBadgeComponent, TimelineComponent, ConfirmDialogComponent, MoneyPipe, DateFormatPipe, SafeHtmlPipe, ReactiveFormsModule],
+  imports: [StatusBadgeComponent, TimelineComponent, ConfirmDialogComponent, PaginationComponent, MoneyPipe, DateFormatPipe, SafeHtmlPipe, ReactiveFormsModule],
   templateUrl: './policy-detail.html',
 })
 export class PolicyDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly policyService = inject(PolicyService);
+  private readonly paymentService = inject(PaymentService);
   private readonly productService = inject(ProductService);
   private readonly fb = inject(FormBuilder);
   private readonly toast = inject(ToastService);
@@ -31,12 +36,40 @@ export class PolicyDetailComponent implements OnInit {
   nominees = signal<PolicyNomineeDto[]>([]);
   endorsements = signal<EndorsementDto[]>([]);
   schedules = signal<PremiumScheduleDto[]>([]);
-  historyItems = signal<TimelineItem[]>([]);
+  private readonly policyHistoryItems = signal<TimelineItem[]>([]);
+  private readonly paymentHistoryItems = signal<TimelineItem[]>([]);
+  historyItems = computed(() => [...this.paymentHistoryItems(), ...this.policyHistoryItems()]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
   loading = signal(true);
   activeTab = signal(0);
   showCancelDialog = signal(false);
   showEndorsementForm = signal(false);
   tabs = ['Overview', 'Nominees', 'Endorsements', 'Schedule', 'History'];
+  readonly schedulePageSize = 10;
+  readonly scheduleFilters: ScheduleFilter[] = ['All', 'Paid', 'Upcoming', 'Due', 'Overdue'];
+  scheduleFilter = signal<ScheduleFilter>('All');
+  schedulePage = signal(1);
+
+  filteredSchedules = computed(() => {
+    const filter = this.scheduleFilter();
+    return this.schedules().filter(s => filter === 'All' || s.status === filter);
+  });
+
+  pagedSchedules = computed(() => {
+    const start = (this.schedulePage() - 1) * this.schedulePageSize;
+    return this.filteredSchedules().slice(start, start + this.schedulePageSize);
+  });
+
+  scheduleTotalPages = computed(() => Math.max(1, Math.ceil(this.filteredSchedules().length / this.schedulePageSize)));
+
+  scheduleCount = computed(() => ({
+    total: this.schedules().length,
+    paid: this.schedules().filter(s => s.status === 'Paid').length,
+    upcoming: this.schedules().filter(s => s.status === 'Upcoming' || s.status === 'Due').length,
+    overdue: this.schedules().filter(s => s.status === 'Overdue').length,
+  }));
+
+  nextPremium = computed(() => this.schedules().find(s => s.status === 'Overdue' || s.status === 'Due' || s.status === 'Upcoming') ?? null);
 
   daysToExpiry = computed(() => {
     const p = this.policy();
@@ -66,8 +99,23 @@ export class PolicyDetailComponent implements OnInit {
     this.policyService.getEndorsements(id).subscribe(e => this.endorsements.set(e));
     this.policyService.getSchedule(id).subscribe({ next: s => this.schedules.set(s), error: () => {} });
     this.policyService.getHistory(id).subscribe(h =>
-      this.historyItems.set(h.map(i => ({ status: i.status, date: i.changedAt, remarks: i.remarks }))),
+      this.policyHistoryItems.set(h.map(i => ({ status: i.status, date: i.changedAt, remarks: i.remarks }))),
     );
+    this.paymentService.getHistory().subscribe({
+      next: payments => this.paymentHistoryItems.set(payments
+        .filter(p => p.policyId === id)
+        .map(p => this.mapPaymentToTimelineItem(p))),
+      error: () => {},
+    });
+  }
+
+  setScheduleFilter(filter: ScheduleFilter): void {
+    this.scheduleFilter.set(filter);
+    this.schedulePage.set(1);
+  }
+
+  onSchedulePageChange(page: number): void {
+    this.schedulePage.set(Math.min(Math.max(page, 1), this.scheduleTotalPages()));
   }
 
   domainBgClass(): string {
@@ -90,6 +138,32 @@ export class PolicyDetailComponent implements OnInit {
 
   displayDomain(): string {
     return this.product()?.domain ?? this.policy()?.domain ?? 'Unknown';
+  }
+
+  private mapPaymentToTimelineItem(payment: PaymentRecordDto): TimelineItem {
+    return {
+      status: payment.status,
+      date: payment.paidAt ?? payment.createdAt,
+      remarks: `${this.formatPaymentType(payment.paymentType)} ${payment.status.toLowerCase()} for ${this.formatAmount(payment.amount, payment.currency)}.`,
+    };
+  }
+
+  private formatPaymentType(type: string): string {
+    const map: Record<string, string> = {
+      FirstPremium: 'First premium',
+      Renewal: 'Renewal premium',
+      Reinstatement: 'Reinstatement premium',
+      ClaimPayout: 'Claim payout',
+    };
+    return map[type] ?? type;
+  }
+
+  private formatAmount(amount: number, currency: string): string {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: currency || 'INR',
+      maximumFractionDigits: 2,
+    }).format(amount);
   }
 
   downloadCert(): void {
