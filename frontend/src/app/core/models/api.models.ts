@@ -20,8 +20,8 @@ export interface RegisterUserRequest {
   dateOfBirth: string;
   gender: Gender;
   maritalStatus: MaritalStatus;
-  aadhaarNumber: string;
-  panNumber: string;
+  aadhaarNumber?: string;
+  panNumber?: string;
   permanentAddress: AddressRequest;
   currentAddress: AddressRequest;
   consentDataProcessing: boolean;
@@ -154,10 +154,8 @@ export interface KycRecordDto {
   aadhaarNumber?: string | null;
   panUploaded: boolean;
   panNumber?: string | null;
-  aadhaarFrontPath?: string;
-  aadhaarBackPath?: string;
-  panFrontPath?: string;
-  panBackPath?: string;
+  aadhaarDocumentPath?: string;
+  panDocumentPath?: string;
   rejectionReason?: string;
   createdAt: string;
   updatedAt?: string;
@@ -191,7 +189,7 @@ export interface DocumentRequirementDto {
 
 export interface GenerateQuoteRequest {
   productId: string;
-  age: number;
+  age?: number;
   sumAssured: number;
   tenureYears: number;
   gender?: Gender;
@@ -703,7 +701,6 @@ export interface EmailTemplateDto {
 
 export interface RegisterAgentRequest {
   email: string;
-  password: string;
   salutation: string;
   firstName: string;
   lastName: string;
@@ -717,4 +714,18 @@ export interface RegisterAgentRequest {
   permanentAddress: AddressRequest;
   currentAddress: AddressRequest;
   isSameAsPermanent: boolean;
+}
+
+export interface AgentAddCustomerRequest {
+  email: string;
+  salutation: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  permanentAddress: AddressRequest;
+  currentAddress: AddressRequest;
+  isSameAsPermanent: boolean;
+  dateOfBirth: string;
+  gender: Gender;
+  maritalStatus: MaritalStatus;
 }
