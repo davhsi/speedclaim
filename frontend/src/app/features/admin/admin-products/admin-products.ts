@@ -31,7 +31,16 @@ export class AdminProductsComponent implements OnInit {
   docsSubmitting = signal(false);
   statusUpdatingId = signal<string | null>(null);
 
-  createForm = { productName: '', domain: 'Motor', description: '', minAge: 18, maxAge: 65, minSumAssured: 100000, maxSumAssured: 5000000, minTenureYears: 1, maxTenureYears: 30, waitingPeriodDays: 30, allowsFamilyFloater: false, maxFamilyMembers: 1 };
+  // Sensible per-domain starting points for a new product's underwriting envelope — Motor cover
+  // is typically 1-3 years with no waiting period, Health is annually renewable with a 30-day
+  // waiting period, Life runs much longer with no waiting period. Admins can still edit any value.
+  private readonly domainDefaults: Record<string, { minAge: number; maxAge: number; minSumAssured: number; maxSumAssured: number; minTenureYears: number; maxTenureYears: number; waitingPeriodDays: number }> = {
+    Motor: { minAge: 18, maxAge: 70, minSumAssured: 100000, maxSumAssured: 2000000, minTenureYears: 1, maxTenureYears: 3, waitingPeriodDays: 0 },
+    Health: { minAge: 18, maxAge: 65, minSumAssured: 100000, maxSumAssured: 5000000, minTenureYears: 1, maxTenureYears: 10, waitingPeriodDays: 30 },
+    Life: { minAge: 18, maxAge: 60, minSumAssured: 100000, maxSumAssured: 5000000, minTenureYears: 5, maxTenureYears: 30, waitingPeriodDays: 0 },
+  };
+
+  createForm = { productName: '', domain: 'Motor', description: '', ...this.domainDefaults['Motor'], allowsFamilyFloater: false, maxFamilyMembers: 1 };
 
   currentPage = signal(1);
   readonly pageSize = 10;
@@ -85,6 +94,7 @@ export class AdminProductsComponent implements OnInit {
   }
 
   onDomainChange(domain: string): void {
+    Object.assign(this.createForm, this.domainDefaults[domain] ?? this.domainDefaults['Motor']);
     if (domain !== 'Health') {
       this.createForm.allowsFamilyFloater = false;
       this.createForm.maxFamilyMembers = 1;
@@ -92,7 +102,7 @@ export class AdminProductsComponent implements OnInit {
   }
 
   openCreateModal(): void {
-    this.createForm = { productName: '', domain: 'Motor', description: '', minAge: 18, maxAge: 65, minSumAssured: 100000, maxSumAssured: 5000000, minTenureYears: 1, maxTenureYears: 30, waitingPeriodDays: 30, allowsFamilyFloater: false, maxFamilyMembers: 1 };
+    this.createForm = { productName: '', domain: 'Motor', description: '', ...this.domainDefaults['Motor'], allowsFamilyFloater: false, maxFamilyMembers: 1 };
     this.activeModal.set('create');
   }
 
@@ -176,8 +186,16 @@ export class AdminProductsComponent implements OnInit {
     });
   }
 
+  isMotorProduct(): boolean {
+    return this.selectedProduct()?.domain.toUpperCase() === 'MOTOR';
+  }
+
   addRateBand(): void {
-    this.rateBands.update(bands => [...bands, { ageMin: 0, ageMax: 0, sumAssuredMin: 0, sumAssuredMax: 0, annualPremium: 0 }]);
+    // Motor isn't age-rated (see backend ProposalService.IsAgeRatedDomain) — rate lookup for
+    // Motor products matches on sum assured alone, so age bands are hidden in the UI and
+    // auto-filled with a full-range placeholder rather than asking the admin to fill them in.
+    const ageDefaults = this.isMotorProduct() ? { ageMin: 0, ageMax: 150 } : { ageMin: 0, ageMax: 0 };
+    this.rateBands.update(bands => [...bands, { ...ageDefaults, sumAssuredMin: 0, sumAssuredMax: 0, annualPremium: 0 }]);
   }
 
   removeRateBand(index: number): void {

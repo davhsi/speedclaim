@@ -106,6 +106,24 @@ describe('AdminProductsComponent', () => {
       expect(c.createForm.allowsFamilyFloater).toBe(true);
       expect(c.createForm.maxFamilyMembers).toBe(4);
     });
+
+    it('applies domain-specific underwriting defaults on switch', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+
+      c.onDomainChange('Motor');
+      expect(c.createForm.maxTenureYears).toBe(3);
+      expect(c.createForm.waitingPeriodDays).toBe(0);
+
+      c.onDomainChange('Health');
+      expect(c.createForm.maxTenureYears).toBe(10);
+      expect(c.createForm.waitingPeriodDays).toBe(30);
+
+      c.onDomainChange('Life');
+      expect(c.createForm.minTenureYears).toBe(5);
+      expect(c.createForm.maxTenureYears).toBe(30);
+      expect(c.createForm.waitingPeriodDays).toBe(0);
+    });
   });
 
   describe('createProductInvalid / createProduct', () => {
@@ -210,6 +228,28 @@ describe('AdminProductsComponent', () => {
       c.addRateBand();
       c.removeRateBand(0);
       expect(c.rateBands().length).toBe(1);
+    });
+
+    it('addRateBand defaults to a full age range for Motor products', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.selectedProduct.set(product({ domain: 'Motor' }));
+
+      c.addRateBand();
+
+      expect(c.isMotorProduct()).toBe(true);
+      expect(c.rateBands()).toEqual([{ ageMin: 0, ageMax: 150, sumAssuredMin: 0, sumAssuredMax: 0, annualPremium: 0 }]);
+    });
+
+    it('addRateBand leaves a zeroed age range for age-rated products', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.selectedProduct.set(product({ domain: 'Health' }));
+
+      c.addRateBand();
+
+      expect(c.isMotorProduct()).toBe(false);
+      expect(c.rateBands()).toEqual([{ ageMin: 0, ageMax: 0, sumAssuredMin: 0, sumAssuredMax: 0, annualPremium: 0 }]);
     });
 
     it('ratesInvalid is true for an empty band list or a malformed band', () => {

@@ -172,12 +172,17 @@
           </button>
         </div>
         <div class="px-6 py-5">
+          @if (isMotorProduct()) {
+            <p class="text-xs text-muted mb-2">Motor premiums are rated on IDV (sum assured) alone — age doesn't apply.</p>
+          }
           <div class="overflow-x-auto">
             <table class="w-full text-left mb-4">
               <thead>
                 <tr class="border-b border-line">
-                  <th class="px-3 py-2 text-[11px] font-semibold text-muted uppercase">Age Min</th>
-                  <th class="px-3 py-2 text-[11px] font-semibold text-muted uppercase">Age Max</th>
+                  @if (!isMotorProduct()) {
+                    <th class="px-3 py-2 text-[11px] font-semibold text-muted uppercase">Age Min</th>
+                    <th class="px-3 py-2 text-[11px] font-semibold text-muted uppercase">Age Max</th>
+                  }
                   <th class="px-3 py-2 text-[11px] font-semibold text-muted uppercase">Sum Min</th>
                   <th class="px-3 py-2 text-[11px] font-semibold text-muted uppercase">Sum Max</th>
                   <th class="px-3 py-2 text-[11px] font-semibold text-muted uppercase">Annual Premium</th>
@@ -186,19 +191,21 @@
               </thead>
               <tbody>
                 @if (ratesLoading()) {
-                  <tr><td colspan="6" class="px-3 py-6 text-center text-xs text-muted">Loading premium rates...</td></tr>
+                  <tr><td [attr.colspan]="isMotorProduct() ? 4 : 6" class="px-3 py-6 text-center text-xs text-muted">Loading premium rates...</td></tr>
                 } @else {
                 @for (band of rateBands(); track $index; let i = $index) {
                   <tr class="border-b border-line">
-                    <td class="px-3 py-2"><input type="number" aria-label="Age minimum" [value]="band.ageMin" (input)="updateRateBand(i, 'ageMin', $event)" class="w-16 h-7 px-2 border border-line rounded text-xs text-ink outline-none focus:border-primary" /></td>
-                    <td class="px-3 py-2"><input type="number" aria-label="Age maximum" [value]="band.ageMax" (input)="updateRateBand(i, 'ageMax', $event)" class="w-16 h-7 px-2 border border-line rounded text-xs text-ink outline-none focus:border-primary" /></td>
+                    @if (!isMotorProduct()) {
+                      <td class="px-3 py-2"><input type="number" aria-label="Age minimum" [value]="band.ageMin" (input)="updateRateBand(i, 'ageMin', $event)" class="w-16 h-7 px-2 border border-line rounded text-xs text-ink outline-none focus:border-primary" /></td>
+                      <td class="px-3 py-2"><input type="number" aria-label="Age maximum" [value]="band.ageMax" (input)="updateRateBand(i, 'ageMax', $event)" class="w-16 h-7 px-2 border border-line rounded text-xs text-ink outline-none focus:border-primary" /></td>
+                    }
                     <td class="px-3 py-2"><input type="number" aria-label="Sum assured minimum" [value]="band.sumAssuredMin" (input)="updateRateBand(i, 'sumAssuredMin', $event)" class="w-24 h-7 px-2 border border-line rounded text-xs text-ink outline-none focus:border-primary" /></td>
                     <td class="px-3 py-2"><input type="number" aria-label="Sum assured maximum" [value]="band.sumAssuredMax" (input)="updateRateBand(i, 'sumAssuredMax', $event)" class="w-24 h-7 px-2 border border-line rounded text-xs text-ink outline-none focus:border-primary" /></td>
                     <td class="px-3 py-2"><input type="number" aria-label="Annual premium" [value]="band.annualPremium" (input)="updateRateBand(i, 'annualPremium', $event)" class="w-24 h-7 px-2 border border-line rounded text-xs text-ink outline-none focus:border-primary" /></td>
                     <td class="px-3 py-2"><button (click)="removeRateBand(i)" class="text-danger text-xs bg-transparent border-none cursor-pointer font-medium">Remove</button></td>
                   </tr>
                 } @empty {
-                  <tr><td colspan="6" class="px-3 py-6 text-center text-xs text-muted">No rate bands — add one below</td></tr>
+                  <tr><td [attr.colspan]="isMotorProduct() ? 4 : 6" class="px-3 py-6 text-center text-xs text-muted">No rate bands — add one below</td></tr>
                 }
                 }
               </tbody>
