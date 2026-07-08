@@ -135,6 +135,30 @@ public class EmailService : IEmailService
         await SendEmailAsync(to, subject, body);
     }
 
+    public async Task SendAgentWelcomeAsync(string to, string firstName, string resetToken)
+    {
+        var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:4200";
+        var resetUrl = $"{frontendUrl}/auth/reset-password?token={Uri.EscapeDataString(resetToken)}";
+        await SendTemplatedEmailAsync("AgentWelcome", new Dictionary<string, string>
+        {
+            ["firstName"] = System.Net.WebUtility.HtmlEncode(firstName),
+            ["email"] = System.Net.WebUtility.HtmlEncode(to),
+            ["resetUrl"] = resetUrl
+        }, to);
+    }
+
+    public async Task SendCustomerWelcomeAsync(string to, string firstName, string resetToken)
+    {
+        var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:4200";
+        var resetUrl = $"{frontendUrl}/auth/reset-password?token={Uri.EscapeDataString(resetToken)}";
+        await SendTemplatedEmailAsync("CustomerWelcome", new Dictionary<string, string>
+        {
+            ["firstName"] = System.Net.WebUtility.HtmlEncode(firstName),
+            ["email"] = System.Net.WebUtility.HtmlEncode(to),
+            ["resetUrl"] = resetUrl
+        }, to);
+    }
+
     // Loads a template from the DB by key, substitutes {{variable}} placeholders, and returns
     // the rendered (subject, body) pair. Always injects {{year}} and {{logoUrl}} automatically.
     // Throws InvalidOperationException if the template key is missing or inactive — this is

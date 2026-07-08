@@ -16,4 +16,5 @@ public interface IAuthService
     Task ResetPasswordAsync(string targetUserId, string newPassword, string adminId);
     Task<RegistrationResponse> RegisterAgentAsync(RegisterAgentRequest request, string adminId);
     Task<RegistrationResponse> InviteStaffUserAsync(AdminInviteUserRequest request, string adminId);
+    Task<RegistrationResponse> AddCustomerAsync(AgentAddCustomerRequest request, string agentUserId);
 }

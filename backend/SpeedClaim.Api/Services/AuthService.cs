@@ -366,6 +366,12 @@ public class AuthService : IAuthService
         var user = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == email);
         if (user == null) return; // silent success to prevent email enumeration
 
+        var resetPayload = await CreatePasswordResetTokenAsync(user);
+        await _emailService.SendPasswordResetAsync(user.Email, resetPayload);
+    }
+
+    private async Task<string> CreatePasswordResetTokenAsync(User user)
+    {
         var existingTokens = await _unitOfWork.UserTokens.FindAsync(
             t => t.UserId == user.Id && t.TokenType == TokenType.PasswordReset && !t.IsUsed);
         foreach (var token in existingTokens ?? Array.Empty<UserToken>())
@@ -383,8 +389,7 @@ public class AuthService : IAuthService
         await _unitOfWork.UserTokens.AddAsync(userToken);
         await _unitOfWork.CompleteAsync();
 
-        var resetPayload = $"{userToken.Id}:{rawToken}";
-        await _emailService.SendPasswordResetAsync(user.Email, resetPayload);
+        return $"{userToken.Id}:{rawToken}";
     }
 
     public async Task ResetPasswordCustomerAsync(ResetPasswordRequest request)
@@ -465,7 +470,7 @@ public class AuthService : IAuthService
         var user = new User
         {
             Email = request.Email,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString()),
             Role = UserRole.Agent,
             IsEmailVerified = true,
             IsActive = true,
@@ -495,11 +500,130 @@ public class AuthService : IAuthService
         });
         await _unitOfWork.CompleteAsync();
 
-        await _emailService.SendTemplatedEmailAsync("AgentWelcome", new System.Collections.Generic.Dictionary<string, string>
+        var resetPayload = await CreatePasswordResetTokenAsync(user);
+        await _emailService.SendAgentWelcomeAsync(user.Email, user.FirstName, resetPayload);
+
+        return new RegistrationResponse(user.Email, user.Role.ToString());
+    }
+
+    public async Task<RegistrationResponse> AddCustomerAsync(AgentAddCustomerRequest request, string agentUserId)
+    {
+        var agentUid = Guid.Parse(agentUserId);
+        var agent = await _unitOfWork.Agents.FirstOrDefaultAsync(a => a.UserId == agentUid);
+        if (agent == null) throw new NotFoundException("Agent not found.");
+
+        var existingUser = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+        if (existingUser != null)
+            throw new ConflictException("Email already registered");
+
+        var existingPhone = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Phone == request.Phone);
+        if (existingPhone != null)
+            throw new ConflictException("Phone number already registered");
+
+        var salutation = Enum.TryParse<Salutation>(request.Salutation, ignoreCase: true, out var sal) ? sal : Salutation.Mr;
+
+        var user = new User
         {
-            ["firstName"] = System.Net.WebUtility.HtmlEncode(user.FirstName),
-            ["email"]     = System.Net.WebUtility.HtmlEncode(user.Email)
-        }, user.Email);
+            Email = request.Email,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString()),
+            Role = UserRole.Customer,
+            IsEmailVerified = true,
+            IsActive = true,
+            FirstName = request.FirstName,
+            LastName = request.LastName,
+            Phone = request.Phone,
+            Salutation = salutation
+        };
+
+        var customer = new Customer
+        {
+            User = user,
+            DateOfBirth = request.DateOfBirth,
+            Gender = request.Gender,
+            MaritalStatus = request.MaritalStatus,
+            OnboardingAgentId = agent.Id
+        };
+
+        var ip = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
+
+        await _unitOfWork.Users.AddAsync(user);
+        await _unitOfWork.Customers.AddAsync(customer);
+
+        await _unitOfWork.Addresses.AddAsync(new Address
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.Id,
+            AddressType = AddressType.Permanent,
+            AddressLine1 = request.PermanentAddress.Line1,
+            AddressLine2 = request.PermanentAddress.Line2,
+            City = request.PermanentAddress.City,
+            State = request.PermanentAddress.State,
+            Pincode = request.PermanentAddress.PostalCode,
+            Country = request.PermanentAddress.Country,
+            IsSameAsPermanent = false,
+            CreatedAt = DateTimeOffset.UtcNow
+        });
+
+        if (!request.IsSameAsPermanent && request.CurrentAddress != null)
+        {
+            await _unitOfWork.Addresses.AddAsync(new Address
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                AddressType = AddressType.Current,
+                AddressLine1 = request.CurrentAddress.Line1,
+                AddressLine2 = request.CurrentAddress.Line2,
+                City = request.CurrentAddress.City,
+                State = request.CurrentAddress.State,
+                Pincode = request.CurrentAddress.PostalCode,
+                Country = request.CurrentAddress.Country,
+                IsSameAsPermanent = request.IsSameAsPermanent,
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+        }
+        else if (request.IsSameAsPermanent)
+        {
+            await _unitOfWork.Addresses.AddAsync(new Address
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                AddressType = AddressType.Current,
+                AddressLine1 = request.PermanentAddress.Line1,
+                AddressLine2 = request.PermanentAddress.Line2,
+                City = request.PermanentAddress.City,
+                State = request.PermanentAddress.State,
+                Pincode = request.PermanentAddress.PostalCode,
+                Country = request.PermanentAddress.Country,
+                IsSameAsPermanent = true,
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+        }
+
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = agentUid, EntityType = "User", EntityId = user.Id,
+            Action = "CustomerOnboardedByAgent",
+            NewValue = JsonSerializer.Serialize(new { user.Email, agentId = agent.Id }),
+            IpAddress = ip, CreatedAt = DateTime.UtcNow
+        });
+
+        // Consent is recorded as granted at onboarding time (mirrors self-registration) since the agent
+        // captures it in person before submitting; IP reflects the agent's device, not the customer's.
+        foreach (var consentType in new[] { "DataProcessing", "KycDataCollection" })
+        {
+            await _unitOfWork.UserConsents.AddAsync(new UserConsent
+            {
+                Id = Guid.NewGuid(), UserId = user.Id,
+                ConsentType = consentType, IsGranted = true,
+                ConsentVersion = "1.0", IpAddress = ip,
+                ConsentedAt = DateTimeOffset.UtcNow
+            });
+        }
+
+        await _unitOfWork.CompleteAsync();
+
+        var resetPayload = await CreatePasswordResetTokenAsync(user);
+        await _emailService.SendCustomerWelcomeAsync(user.Email, user.FirstName, resetPayload);
 
         return new RegistrationResponse(user.Email, user.Role.ToString());
     }

@@ -404,16 +404,19 @@ public class AuthServiceTests
         _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>())).ReturnsAsync((User?)null);
         var mockAgentRepo = new Mock<IRepository<Agent>>();
         _mockUnitOfWork.Setup(u => u.Agents).Returns(mockAgentRepo.Object);
+        _mockJwtService.Setup(j => j.GenerateRefreshToken()).Returns("agent_reset_token");
 
         var addr = new AddressDto("123 Main St", null, "Mumbai", "MH", "400001", "India");
-        var request = new RegisterAgentRequest("agent@test.com", "pass123", "Mr", "Test", "Agent", "9999999999", addr, null, false, "LIC-001", DateOnly.FromDateTime(DateTime.UtcNow.AddYears(1)), "TestAgency", "123456789012", "ABCDE1234F", MaritalStatus.Single);
+        var request = new RegisterAgentRequest("agent@test.com", "Mr", "Test", "Agent", "9999999999", addr, null, false, "LIC-001", DateOnly.FromDateTime(DateTime.UtcNow.AddYears(1)), "TestAgency", "123456789012", "ABCDE1234F", MaritalStatus.Single);
 
         var result = await _authService.RegisterAgentAsync(request, Guid.NewGuid().ToString());
 
         Assert.That(result.Email, Is.EqualTo("agent@test.com"));
         Assert.That(result.Role, Is.EqualTo("Agent"));
         mockAgentRepo.Verify(r => r.AddAsync(It.IsAny<Agent>()), Times.Once);
-        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.AtLeastOnce);
+        _mockUserTokenRepository.Verify(r => r.AddAsync(It.IsAny<UserToken>()), Times.Once);
+        _mockEmailService.Verify(e => e.SendAgentWelcomeAsync("agent@test.com", "Test", It.IsAny<string>()), Times.Once);
     }
 
     [Test]
@@ -424,9 +427,77 @@ public class AuthServiceTests
         _mockUnitOfWork.Setup(u => u.Agents).Returns(mockAgentRepo.Object);
 
         var addr = new AddressDto("1 St", null, "City", "State", "000001", "India");
-        var request = new RegisterAgentRequest("agent@test.com", "pass", "Mr", "T", "A", "1", addr, null, false, "L", DateOnly.FromDateTime(DateTime.UtcNow.AddYears(1)), "Agency", "000000000000", "AAAAA0000A", MaritalStatus.Single);
+        var request = new RegisterAgentRequest("agent@test.com", "Mr", "T", "A", "1", addr, null, false, "L", DateOnly.FromDateTime(DateTime.UtcNow.AddYears(1)), "Agency", "000000000000", "AAAAA0000A", MaritalStatus.Single);
         var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() => _authService.RegisterAgentAsync(request, Guid.NewGuid().ToString()));
         Assert.That(ex.Message, Is.EqualTo("Email already registered"));
+    }
+
+    [Test]
+    public async Task AddCustomerAsync_NewEmail_CreatesCustomerTaggedToAgent()
+    {
+        var agentUserId = Guid.NewGuid();
+        var agent = new Agent { Id = Guid.NewGuid(), UserId = agentUserId };
+        var mockAgentRepo = new Mock<IRepository<Agent>>();
+        mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync(agent);
+        _mockUnitOfWork.Setup(u => u.Agents).Returns(mockAgentRepo.Object);
+        _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>())).ReturnsAsync((User?)null);
+        _mockJwtService.Setup(j => j.GenerateRefreshToken()).Returns("customer_reset_token");
+
+        Customer? savedCustomer = null;
+        _mockCustomerRepository.Setup(r => r.AddAsync(It.IsAny<Customer>()))
+            .Callback<Customer>(c => savedCustomer = c)
+            .Returns(Task.CompletedTask);
+
+        var addr = new AddressDto("1 Main St", null, "Mumbai", "MH", "400001", "India");
+        var request = new AgentAddCustomerRequest(
+            "cust@test.com", "Mr", "Rahul", "Verma", "9999999999",
+            addr, null, true, DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-25)),
+            Gender.Male, MaritalStatus.Single);
+
+        var result = await _authService.AddCustomerAsync(request, agentUserId.ToString());
+
+        Assert.That(result.Email, Is.EqualTo("cust@test.com"));
+        Assert.That(result.Role, Is.EqualTo("Customer"));
+        Assert.That(savedCustomer, Is.Not.Null);
+        Assert.That(savedCustomer!.OnboardingAgentId, Is.EqualTo(agent.Id));
+        _mockUserTokenRepository.Verify(r => r.AddAsync(It.IsAny<UserToken>()), Times.Once);
+        _mockEmailService.Verify(e => e.SendCustomerWelcomeAsync("cust@test.com", "Rahul", It.IsAny<string>()), Times.Once);
+    }
+
+    [Test]
+    public void AddCustomerAsync_EmailAlreadyExists_ThrowsException()
+    {
+        var agentUserId = Guid.NewGuid();
+        var agent = new Agent { Id = Guid.NewGuid(), UserId = agentUserId };
+        var mockAgentRepo = new Mock<IRepository<Agent>>();
+        mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync(agent);
+        _mockUnitOfWork.Setup(u => u.Agents).Returns(mockAgentRepo.Object);
+        _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>())).ReturnsAsync(new User { Email = "cust@test.com" });
+
+        var addr = new AddressDto("1 Main St", null, "Mumbai", "MH", "400001", "India");
+        var request = new AgentAddCustomerRequest(
+            "cust@test.com", "Mr", "Rahul", "Verma", "9999999999",
+            addr, null, true, DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-25)),
+            Gender.Male, MaritalStatus.Single);
+
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() => _authService.AddCustomerAsync(request, agentUserId.ToString()));
+        Assert.That(ex.Message, Is.EqualTo("Email already registered"));
+    }
+
+    [Test]
+    public void AddCustomerAsync_AgentNotFound_ThrowsNotFoundException()
+    {
+        var mockAgentRepo = new Mock<IRepository<Agent>>();
+        mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync((Agent?)null);
+        _mockUnitOfWork.Setup(u => u.Agents).Returns(mockAgentRepo.Object);
+
+        var addr = new AddressDto("1 Main St", null, "Mumbai", "MH", "400001", "India");
+        var request = new AgentAddCustomerRequest(
+            "cust@test.com", "Mr", "Rahul", "Verma", "9999999999",
+            addr, null, true, DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-25)),
+            Gender.Male, MaritalStatus.Single);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _authService.AddCustomerAsync(request, Guid.NewGuid().ToString()));
     }
 
     [Test]

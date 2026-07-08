@@ -163,4 +163,23 @@ public class AuthController : BaseApiController
     }
 
     #endregion
+
+    #region Agent Endpoints
+
+    /// <summary>Agent — onboard a new customer directly</summary>
+    /// <remarks>Creates the customer account and sends a password-reset link so they set their own
+    /// password on first login; the customer is immediately tagged as this agent's customer.</remarks>
+    [Authorize(Roles = "Agent")]
+    [HttpPost("agent/add-customer")]
+    [ProducesResponseType(typeof(RegistrationResponse), 200)]
+    [ProducesResponseType(409)]
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> AddCustomer([FromBody] AgentAddCustomerRequest request)
+    {
+        var agentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        var result = await _authService.AddCustomerAsync(request, agentUserId);
+        return Ok(result);
+    }
+
+    #endregion
 }

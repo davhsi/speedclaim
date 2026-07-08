@@ -15,6 +15,10 @@
         (input)="onSearch($any($event.target).value)"
         class="h-10 px-3 border border-line rounded-control text-[13px] bg-white outline-none min-w-[200px]"
       />
+      <a routerLink="/agent/customers/new"
+         class="h-10 px-4 bg-primary text-white text-[13px] font-semibold rounded-control inline-flex items-center hover:bg-primary-hover transition-colors">
+        + Add customer
+      </a>
     </div>
   </div>
 
@@ -74,7 +78,10 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
                   </div>
                   <p class="text-sm font-semibold text-ink mb-1">{{ searchQuery() ? 'No matches found' : 'No customers yet' }}</p>
-                  <p class="text-xs text-muted">{{ searchQuery() ? 'Try a different name or email.' : 'Customers assigned to you will appear here.' }}</p>
+                  <p class="text-xs text-muted">{{ searchQuery() ? 'Try a different name or email.' : 'Customers you onboard or submit proposals for will appear here.' }}</p>
+                  @if (!searchQuery()) {
+                    <a routerLink="/agent/customers/new" class="inline-block mt-3 text-[13px] font-semibold text-primary">+ Add your first customer</a>
+                  }
                 </td>
               </tr>
             }

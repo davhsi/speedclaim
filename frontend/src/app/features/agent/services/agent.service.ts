@@ -1,10 +1,10 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
   ApiMessage, PolicyDto, ProposalDto, SubmitProposalRequest,
   GenerateQuoteRequest, GenerateQuoteResponse,
-  ProductDto,
+  ProductDto, AgentAddCustomerRequest, RegistrationResponse,
 } from '../../../core/models/api.models';
 
 export interface AgentDashboardDto {
@@ -25,6 +25,9 @@ export interface AgentCustomerDto {
   isActive: boolean;
   createdAt: string;
   customerId?: string;
+  kycApproved?: boolean;
+  kycStatus?: string;
+  kycRejectionReason?: string;
 }
 
 export interface RenewalReminderDto {
@@ -78,6 +81,14 @@ export class AgentService {
 
   getCustomers(): Observable<AgentCustomerDto[]> {
     return this.http.get<AgentCustomerDto[]>('/api/v1/agents/customers');
+  }
+
+  searchCustomers(query: string): Observable<AgentCustomerDto[]> {
+    return this.http.get<AgentCustomerDto[]>('/api/v1/agents/customers/search', { params: new HttpParams().set('q', query) });
+  }
+
+  addCustomer(req: AgentAddCustomerRequest): Observable<RegistrationResponse> {
+    return this.http.post<RegistrationResponse>('/api/v1/auth/agent/add-customer', req);
   }
 
   getProfile(): Observable<AgentProfileDto> {

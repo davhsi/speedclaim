@@ -1,8 +1,10 @@
+using System;
 using SpeedClaim.Api.Dtos.Common;
+using SpeedClaim.Api.Models.Enums;
 
 namespace SpeedClaim.Api.Dtos.Auth;
 
-public record RegisterAgentRequest(
+public record AgentAddCustomerRequest(
     string Email,
     string Salutation,
     string FirstName,
@@ -11,10 +13,7 @@ public record RegisterAgentRequest(
     AddressDto PermanentAddress,
     AddressDto? CurrentAddress,
     bool IsSameAsPermanent,
-    string LicenseNumber,
-    DateOnly LicenseExpiry,
-    string AgencyName,
-    string AadhaarNumber,
-    string PanNumber,
-    SpeedClaim.Api.Models.Enums.MaritalStatus MaritalStatus
+    DateOnly DateOfBirth,
+    Gender Gender,
+    MaritalStatus MaritalStatus
 );

@@ -8,6 +8,7 @@ export const agentRoutes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', loadComponent: () => import('./agent-dashboard/agent-dashboard').then(m => m.AgentDashboardComponent) },
       { path: 'customers', loadComponent: () => import('./agent-customers/customer-list').then(m => m.AgentCustomerListComponent) },
+      { path: 'customers/new', loadComponent: () => import('./agent-customers/customer-add').then(m => m.AgentCustomerAddComponent) },
       { path: 'customers/:id', loadComponent: () => import('./agent-customers/customer-detail').then(m => m.AgentCustomerDetailComponent) },
       { path: 'proposals/new', loadComponent: () => import('./agent-proposals/proposal-submit').then(m => m.AgentProposalSubmitComponent) },
       { path: 'proposals/:id', loadComponent: () => import('./agent-proposals/proposal-detail').then(m => m.AgentProposalDetailComponent) },

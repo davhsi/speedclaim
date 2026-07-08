@@ -1,0 +1,221 @@
+<div class="animate-sc-fade max-w-[640px]">
+  <div class="flex flex-wrap gap-3 items-end justify-between mb-5">
+    <div>
+      <h1 class="text-xl font-semibold text-ink">Add customer</h1>
+      <p class="text-sm text-muted mt-0.5">Create an account on behalf of a new customer.</p>
+    </div>
+    <a routerLink="/agent/customers"
+       class="h-9 px-3.5 border border-line bg-white rounded-control text-[13px] font-medium text-body inline-flex items-center hover:bg-surface-alt transition-colors">
+      Back to my customers
+    </a>
+  </div>
+
+  <div class="bg-white border border-line rounded-card shadow-sm p-6">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-3">
+
+      <p class="text-xs font-semibold text-muted uppercase tracking-wide">Personal details</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <div class="block text-[13px] font-medium text-body mb-1.5">Salutation</div>
+          <app-select formControlName="salutationTitle" [options]="salutations" placeholder="Select"></app-select>
+          @if (form.controls.salutationTitle.touched && form.controls.salutationTitle.errors?.['required']) {
+            <p class="text-xs text-danger mt-0.5">Select a salutation.</p>
+          }
+        </div>
+        <div>
+          <div class="block text-[13px] font-medium text-body mb-1.5">Gender</div>
+          <app-select formControlName="gender" [options]="genders" placeholder="Select"></app-select>
+          @if (form.controls.gender.touched && form.controls.gender.errors?.['required']) {
+            <p class="text-xs text-danger mt-0.5">Select a gender.</p>
+          }
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label for="add-cust-first-name" class="block text-[13px] font-medium text-body mb-1.5">First name</label>
+          <input id="add-cust-first-name" type="text" formControlName="firstName" placeholder="First name">
+          @if (form.controls.firstName.touched && form.controls.firstName.errors?.['required']) {
+            <p class="text-xs text-danger mt-0.5">First name is required.</p>
+          } @else if (form.controls.firstName.touched && form.controls.firstName.errors?.['minlength']) {
+            <p class="text-xs text-danger mt-0.5">First name must be at least 2 characters.</p>
+          }
+        </div>
+        <div>
+          <label for="add-cust-last-name" class="block text-[13px] font-medium text-body mb-1.5">Last name</label>
+          <input id="add-cust-last-name" type="text" formControlName="lastName" placeholder="Last name">
+          @if (form.controls.lastName.touched && form.controls.lastName.errors?.['required']) {
+            <p class="text-xs text-danger mt-0.5">Last name is required.</p>
+          }
+        </div>
+      </div>
+
+      <div>
+        <label for="add-cust-email" class="block text-[13px] font-medium text-body mb-1.5">Email</label>
+        <input id="add-cust-email" type="email" formControlName="email" placeholder="customer@example.com">
+        @if (form.controls.email.touched && form.controls.email.errors?.['required']) {
+          <p class="text-xs text-danger mt-0.5">Email is required.</p>
+        } @else if (form.controls.email.touched && form.controls.email.errors?.['email']) {
+          <p class="text-xs text-danger mt-0.5">Enter a valid email address.</p>
+        }
+        <p class="text-xs text-muted mt-1">They'll get an email here to set their password and log in.</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label for="add-cust-phone" class="block text-[13px] font-medium text-body mb-1.5">Phone</label>
+          <input id="add-cust-phone" type="tel" formControlName="phone" placeholder="10-digit number">
+          @if (form.controls.phone.touched && form.controls.phone.errors?.['required']) {
+            <p class="text-xs text-danger mt-0.5">Phone number is required.</p>
+          } @else if (form.controls.phone.touched && form.controls.phone.errors?.['phone']) {
+            <p class="text-xs text-danger mt-0.5">Enter a valid 10-digit phone number.</p>
+          }
+        </div>
+        <div>
+          <label for="add-cust-dob" class="block text-[13px] font-medium text-body mb-1.5">Date of birth</label>
+          <input id="add-cust-dob" type="date" formControlName="dateOfBirth">
+          @if (form.controls.dateOfBirth.touched && form.controls.dateOfBirth.errors?.['required']) {
+            <p class="text-xs text-danger mt-0.5">Date of birth is required.</p>
+          } @else if (form.controls.dateOfBirth.touched && form.controls.dateOfBirth.errors?.['minAge']) {
+            <p class="text-xs text-danger mt-0.5">Must be at least 18 years old.</p>
+          }
+        </div>
+      </div>
+
+      <div>
+        <div class="block text-[13px] font-medium text-body mb-1.5">Marital status</div>
+        <app-select formControlName="maritalStatus" [options]="maritalStatuses" placeholder="Select"></app-select>
+        @if (form.controls.maritalStatus.touched && form.controls.maritalStatus.errors?.['required']) {
+          <p class="text-xs text-danger mt-0.5">Select a marital status.</p>
+        }
+      </div>
+
+      <hr class="border-line !my-4">
+
+      <p class="text-xs font-semibold text-muted uppercase tracking-wide">Permanent address</p>
+      <div class="space-y-3" formGroupName="permanentAddress">
+        <div>
+          <label for="add-cust-permanent-line1" class="block text-[13px] font-medium text-body mb-1.5">Address line 1</label>
+          <input id="add-cust-permanent-line1" type="text" formControlName="line1" placeholder="Street, building, flat number">
+          @if (form.controls.permanentAddress.controls.line1.touched && form.controls.permanentAddress.controls.line1.errors?.['required']) {
+            <p class="text-xs text-danger mt-0.5">Address line 1 is required.</p>
+          }
+        </div>
+        <div>
+          <label for="add-cust-permanent-line2" class="block text-[13px] font-medium text-body mb-1.5">Address line 2 (optional)</label>
+          <input id="add-cust-permanent-line2" type="text" formControlName="line2" placeholder="Landmark, area">
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="add-cust-permanent-city" class="block text-[13px] font-medium text-body mb-1.5">City</label>
+            <input id="add-cust-permanent-city" type="text" formControlName="city" placeholder="City">
+            @if (form.controls.permanentAddress.controls.city.touched && form.controls.permanentAddress.controls.city.errors?.['required']) {
+              <p class="text-xs text-danger mt-0.5">City is required.</p>
+            }
+          </div>
+          <div>
+            <div class="block text-[13px] font-medium text-body mb-1.5">State</div>
+            <app-select formControlName="state" [options]="states" placeholder="Select state" [searchable]="true"></app-select>
+            @if (form.controls.permanentAddress.controls.state.touched && form.controls.permanentAddress.controls.state.errors?.['required']) {
+              <p class="text-xs text-danger mt-0.5">Select a state.</p>
+            }
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="add-cust-permanent-postal-code" class="block text-[13px] font-medium text-body mb-1.5">Postal code</label>
+            <input id="add-cust-permanent-postal-code" type="text" formControlName="postalCode" placeholder="6-digit PIN" maxlength="6">
+            @if (form.controls.permanentAddress.controls.postalCode.touched && form.controls.permanentAddress.controls.postalCode.errors?.['required']) {
+              <p class="text-xs text-danger mt-0.5">Postal code is required.</p>
+            } @else if (form.controls.permanentAddress.controls.postalCode.touched && form.controls.permanentAddress.controls.postalCode.errors?.['postalCode']) {
+              <p class="text-xs text-danger mt-0.5">Enter a valid 6-digit postal code.</p>
+            }
+          </div>
+          <div>
+            <label for="add-cust-permanent-country" class="block text-[13px] font-medium text-body mb-1.5">Country</label>
+            <input id="add-cust-permanent-country" type="text" formControlName="country" readonly>
+          </div>
+        </div>
+      </div>
+
+      <label class="flex items-center gap-2 text-sm text-body cursor-pointer">
+        <input type="checkbox" [checked]="sameAsPermanent()" (change)="toggleSameAddress()" class="w-4 h-4 rounded accent-primary">
+        Same as permanent address
+      </label>
+
+      @if (!sameAsPermanent()) {
+        <p class="text-xs font-semibold text-muted uppercase tracking-wide mt-3">Current address</p>
+        <div class="space-y-3" formGroupName="currentAddress">
+          <div>
+            <label for="add-cust-current-line1" class="block text-[13px] font-medium text-body mb-1.5">Address line 1</label>
+            <input id="add-cust-current-line1" type="text" formControlName="line1" placeholder="Street, building, flat number">
+            @if (form.controls.currentAddress.controls.line1.touched && form.controls.currentAddress.controls.line1.errors?.['required']) {
+              <p class="text-xs text-danger mt-0.5">Address line 1 is required.</p>
+            }
+          </div>
+          <div>
+            <label for="add-cust-current-line2" class="block text-[13px] font-medium text-body mb-1.5">Address line 2 (optional)</label>
+            <input id="add-cust-current-line2" type="text" formControlName="line2" placeholder="Landmark, area">
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="add-cust-current-city" class="block text-[13px] font-medium text-body mb-1.5">City</label>
+              <input id="add-cust-current-city" type="text" formControlName="city" placeholder="City">
+              @if (form.controls.currentAddress.controls.city.touched && form.controls.currentAddress.controls.city.errors?.['required']) {
+                <p class="text-xs text-danger mt-0.5">City is required.</p>
+              }
+            </div>
+            <div>
+              <div class="block text-[13px] font-medium text-body mb-1.5">State</div>
+              <app-select formControlName="state" [options]="states" placeholder="Select state" [searchable]="true"></app-select>
+              @if (form.controls.currentAddress.controls.state.touched && form.controls.currentAddress.controls.state.errors?.['required']) {
+                <p class="text-xs text-danger mt-0.5">Select a state.</p>
+              }
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="add-cust-current-postal-code" class="block text-[13px] font-medium text-body mb-1.5">Postal code</label>
+              <input id="add-cust-current-postal-code" type="text" formControlName="postalCode" placeholder="6-digit PIN" maxlength="6">
+              @if (form.controls.currentAddress.controls.postalCode.touched && form.controls.currentAddress.controls.postalCode.errors?.['required']) {
+                <p class="text-xs text-danger mt-0.5">Postal code is required.</p>
+              } @else if (form.controls.currentAddress.controls.postalCode.touched && form.controls.currentAddress.controls.postalCode.errors?.['postalCode']) {
+                <p class="text-xs text-danger mt-0.5">Enter a valid 6-digit postal code.</p>
+              }
+            </div>
+            <div>
+              <label for="add-cust-current-country" class="block text-[13px] font-medium text-body mb-1.5">Country</label>
+              <input id="add-cust-current-country" type="text" formControlName="country" readonly>
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (errorMessage()) {
+        <div class="mt-2 p-3 rounded-control bg-danger-bg border border-danger-border text-sm text-danger">
+          {{ errorMessage() }}
+        </div>
+      }
+
+      <div class="flex justify-end gap-2 pt-2">
+        <a routerLink="/agent/customers" class="h-10 px-4 flex items-center border border-line bg-white rounded-control text-[13px] font-medium text-body hover:bg-surface-alt transition-colors">
+          Cancel
+        </a>
+        <button type="submit" [disabled]="loading()"
+                class="h-10 px-5 bg-primary text-white font-semibold text-[13px] rounded-control hover:bg-primary-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+          @if (loading()) {
+            <span class="inline-flex items-center gap-2">
+              <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+              Adding customer...
+            </span>
+          } @else {
+            Add customer
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

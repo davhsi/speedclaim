@@ -149,7 +149,8 @@ public partial class SpeedClaimDbContext : DbContext
             e.Property(x => x.Gender).HasConversion<string>();
             e.Property(x => x.MaritalStatus).HasConversion<string>();
             e.HasOne(x => x.User).WithOne(u => u.Customer).HasForeignKey<Customer>(x => x.UserId).HasConstraintName("FK_customers_users_user_id").OnDelete(DeleteBehavior.Cascade);
-            
+            e.HasOne(x => x.OnboardingAgent).WithMany().HasForeignKey(x => x.OnboardingAgentId).HasConstraintName("FK_customers_agents_onboarding_agent_id").OnDelete(DeleteBehavior.SetNull);
+
             e.HasData(
                 new Customer
                 {

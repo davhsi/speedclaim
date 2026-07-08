@@ -11,5 +11,7 @@ public interface IEmailService
     Task SendEmailAsync(string to, string subject, string body, EmailAttachment attachment);
     Task SendEmailVerificationAsync(string to, string token);
     Task SendPasswordResetAsync(string to, string token);
+    Task SendAgentWelcomeAsync(string to, string firstName, string resetToken);
+    Task SendCustomerWelcomeAsync(string to, string firstName, string resetToken);
     Task SendTemplatedEmailAsync(string templateKey, Dictionary<string, string> variables, string to, EmailAttachment? attachment = null);
 }
