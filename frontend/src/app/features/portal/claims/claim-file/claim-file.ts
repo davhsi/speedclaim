@@ -1,17 +1,23 @@
 import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { from, of } from 'rxjs';
+import { catchError, concatMap } from 'rxjs/operators';
 import { ClaimService } from '../services/claim.service';
 import { PolicyService } from '../../policies/services/policy.service';
 import { PolicyDto, IntimateClaimRequest } from '../../../../core/models/api.models';
+import { ClaimType } from '../../../../core/models/enums';
 import { FileUploadComponent } from '../../../../shared/components/file-upload/file-upload';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
+import { DateFormatPipe } from '../../../../shared/pipes/date-format.pipe';
+
+type ClaimTypeOption = { value: ClaimType; label: string };
 
 @Component({
   selector: 'app-claim-file',
   standalone: true,
-  imports: [ReactiveFormsModule, FileUploadComponent, MoneyPipe],
+  imports: [ReactiveFormsModule, FileUploadComponent, MoneyPipe, DateFormatPipe],
   templateUrl: './claim-file.html',
 })
 export class ClaimFileComponent implements OnInit {
@@ -28,6 +34,21 @@ export class ClaimFileComponent implements OnInit {
   uploadedFiles: File[] = [];
   stepLabels = ['Select Policy', 'Details', 'Documents'];
   today = new Date().toISOString().slice(0, 10);
+  readonly minClaimAmount = 500;
+  readonly maxDocuments = 5;
+  readonly maxFileSizeMb = 5;
+  private readonly claimTypesByDomain: Record<string, ClaimTypeOption[]> = {
+    health: [{ value: 'Health', label: 'Health' }],
+    life: [
+      { value: 'Death', label: 'Death' },
+      { value: 'Maturity', label: 'Maturity' },
+    ],
+    motor: [
+      { value: 'Accident', label: 'Accident' },
+      { value: 'Theft', label: 'Theft' },
+      { value: 'NaturalDamage', label: 'Natural Damage' },
+    ],
+  };
 
   policyControl = this.fb.control('', Validators.required);
   selectedPolicy = signal<PolicyDto | null>(null);
@@ -57,11 +78,10 @@ export class ClaimFileComponent implements OnInit {
   };
 
   claimForm = this.fb.group({
-    claimType: ['Health', Validators.required],
-    claimAmountRequested: [0, [Validators.required, Validators.min(1), this.withinPolicyCoverage]],
+    claimType: ['Health' as ClaimType, Validators.required],
+    claimAmountRequested: [0, [Validators.required, Validators.min(this.minClaimAmount), this.withinPolicyCoverage]],
     incidentDate: ['', [Validators.required, this.notFutureDate, this.withinPolicyPeriod]],
     incidentDescription: ['', [Validators.required, Validators.minLength(10)]],
-    isCashless: [false],
   });
 
   ngOnInit(): void {
@@ -72,7 +92,11 @@ export class ClaimFileComponent implements OnInit {
   }
 
   onFileSelected(file: File): void {
-    this.uploadedFiles = [file];
+    if (this.uploadedFiles.length >= this.maxDocuments) {
+      this.toast.warning(`You can attach up to ${this.maxDocuments} documents`);
+      return;
+    }
+    this.uploadedFiles = [...this.uploadedFiles, file];
   }
 
   onFileRemoved(file: File): void {
@@ -80,10 +104,40 @@ export class ClaimFileComponent implements OnInit {
   }
 
   selectPolicy(policy: PolicyDto): void {
+    if (!this.isPolicyClaimable(policy)) return;
     this.policyControl.setValue(policy.id);
     this.selectedPolicy.set(policy);
+    this.claimForm.controls.claimType.setValue(this.claimTypeOptions()[0]?.value ?? 'Health');
     this.claimForm.controls.claimAmountRequested.updateValueAndValidity();
     this.claimForm.controls.incidentDate.updateValueAndValidity();
+  }
+
+  claimTypeOptions(): ClaimTypeOption[] {
+    const domain = this.selectedPolicy()?.domain?.toString().toLowerCase();
+    if (!domain) return this.claimTypesByDomain['health'];
+    return this.claimTypesByDomain[domain] ?? this.claimTypesByDomain['health'];
+  }
+
+  isPolicyClaimable(policy: PolicyDto): boolean {
+    const startDate = policy.startDate?.slice(0, 10);
+    const endDate = policy.endDate?.slice(0, 10);
+    return (!startDate || startDate <= this.today) && (!endDate || endDate >= this.today);
+  }
+
+  policyClaimAvailability(policy: PolicyDto): string | null {
+    const startDate = policy.startDate?.slice(0, 10);
+    const endDate = policy.endDate?.slice(0, 10);
+    if (startDate && startDate > this.today) return 'Claims open from';
+    if (endDate && endDate < this.today) return 'Coverage ended on';
+    return null;
+  }
+
+  policyClaimAvailabilityDate(policy: PolicyDto): string | null {
+    const startDate = policy.startDate?.slice(0, 10);
+    const endDate = policy.endDate?.slice(0, 10);
+    if (startDate && startDate > this.today) return policy.startDate;
+    if (endDate && endDate < this.today) return policy.endDate;
+    return null;
   }
 
   submit(): void {
@@ -92,6 +146,7 @@ export class ClaimFileComponent implements OnInit {
     const req: IntimateClaimRequest = {
       policyId: this.policyControl.value ?? '',
       ...this.claimForm.getRawValue() as any,
+      isCashless: false,
     };
     this.claimService.intimate(req).subscribe({
       next: claim => {
@@ -100,14 +155,33 @@ export class ClaimFileComponent implements OnInit {
           this.router.navigate(['/claims', claim.id]);
           return;
         }
-        const files = [...this.uploadedFiles];
-        let done = 0;
-        for (const file of files) {
-          this.claimService.uploadDocument(claim.id, this.documentKeyFor(file), file).subscribe({
-            next: () => { if (++done === files.length) { this.toast.success('Claim filed successfully'); this.router.navigate(['/claims', claim.id]); } },
-            error: () => { if (++done === files.length) { this.toast.warning('Claim filed but some documents failed to upload'); this.router.navigate(['/claims', claim.id]); } },
-          });
-        }
+        const usedKeys = new Set<string>();
+        const files = this.uploadedFiles.map(file => {
+          const base = this.documentKeyFor(file);
+          let key = base;
+          let suffix = 2;
+          while (usedKeys.has(key)) key = `${base}_${suffix++}`;
+          usedKeys.add(key);
+          return { file, key };
+        });
+        // Uploaded sequentially, not in parallel: each upload can flip the claim's
+        // status from Intimated to UnderReview server-side, and concurrent requests
+        // would each read the pre-transition status and duplicate that transition
+        // (and its notification/email/audit entries) once per file.
+        let anyFailed = false;
+        from(files).pipe(
+          concatMap(({ file, key }) =>
+            this.claimService.uploadDocument(claim.id, key, file).pipe(
+              catchError(() => { anyFailed = true; return of(null); }),
+            ),
+          ),
+        ).subscribe({
+          complete: () => {
+            if (anyFailed) this.toast.warning('Claim filed but some documents failed to upload');
+            else this.toast.success('Claim filed successfully');
+            this.router.navigate(['/claims', claim.id]);
+          },
+        });
       },
       error: () => { this.submitting.set(false); this.toast.error('Failed to file claim. Please try again.'); },
     });

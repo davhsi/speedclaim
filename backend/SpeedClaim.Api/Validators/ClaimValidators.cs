@@ -5,6 +5,8 @@ namespace SpeedClaim.Api.Validators;
 
 public class IntimateClaimRequestValidator : AbstractValidator<IntimateClaimRequest>
 {
+    public const decimal MinimumClaimAmount = 500m;
+
     public IntimateClaimRequestValidator()
     {
         RuleFor(x => x.PolicyId)
@@ -14,7 +16,7 @@ public class IntimateClaimRequestValidator : AbstractValidator<IntimateClaimRequ
             .IsInEnum().WithMessage("Invalid claim type.");
 
         RuleFor(x => x.ClaimAmountRequested)
-            .GreaterThan(0).WithMessage("Claim amount must be greater than zero.");
+            .GreaterThanOrEqualTo(MinimumClaimAmount).WithMessage($"Claim amount must be at least INR {MinimumClaimAmount:0.##}.");
 
         RuleFor(x => x.IncidentDate)
             .NotEmpty().WithMessage("Incident date is required.")

@@ -2,6 +2,7 @@ import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { ClaimFileComponent } from './claim-file';
 import { ClaimService } from '../services/claim.service';
 import { PolicyService } from '../../policies/services/policy.service';
@@ -18,6 +19,27 @@ describe('ClaimFileComponent', () => {
     id: 'pol1', policyNumber: 'POL-1', userId: 'u1', productId: 'prod1', productName: 'Health Plus',
     status: 'Active', paymentFrequency: 'Monthly', premiumAmount: 500, coverageAmount: 100000, currency: 'INR',
     startDate: '2025-01-01', endDate: '2027-01-01', domain: 'Health', type: 'Health',
+  };
+  const futurePolicy: PolicyDto = {
+    ...activePolicy,
+    id: 'pol-future',
+    policyNumber: 'POL-FUTURE',
+    startDate: '2999-01-01',
+    endDate: '3000-01-01',
+  };
+  const lifePolicy: PolicyDto = {
+    ...activePolicy,
+    id: 'pol-life',
+    policyNumber: 'POL-LIFE',
+    domain: 'Life',
+    type: 'Life',
+  };
+  const motorPolicy: PolicyDto = {
+    ...activePolicy,
+    id: 'pol-motor',
+    policyNumber: 'POL-MOTOR',
+    domain: 'Motor',
+    type: 'Motor',
   };
 
   function create(policies: PolicyDto[] = [activePolicy]) {
@@ -75,10 +97,45 @@ describe('ClaimFileComponent', () => {
       c.selectPolicy(activePolicy);
       expect(c.policyControl.value).toBe('pol1');
       expect(c.selectedPolicy()).toEqual(activePolicy);
+      expect(c.claimForm.controls.claimType.value).toBe('Health');
+    });
+
+    it('does not select a policy whose coverage has not started', () => {
+      const fixture = create([futurePolicy]);
+      const c = fixture.componentInstance;
+      c.selectPolicy(futurePolicy);
+      expect(c.policyControl.value).toBe('');
+      expect(c.selectedPolicy()).toBeNull();
+      expect(c.isPolicyClaimable(futurePolicy)).toBe(false);
+      expect(c.policyClaimAvailability(futurePolicy)).toBe('Claims open from');
+    });
+
+    it('limits claim type options to the selected policy domain', () => {
+      const fixture = create([activePolicy, lifePolicy, motorPolicy]);
+      const c = fixture.componentInstance;
+
+      c.selectPolicy(activePolicy);
+      expect(c.claimTypeOptions().map(o => o.value)).toEqual(['Health']);
+
+      c.selectPolicy(lifePolicy);
+      expect(c.claimTypeOptions().map(o => o.value)).toEqual(['Death', 'Maturity']);
+      expect(c.claimForm.controls.claimType.value).toBe('Death');
+
+      c.selectPolicy(motorPolicy);
+      expect(c.claimTypeOptions().map(o => o.value)).toEqual(['Accident', 'Theft', 'NaturalDamage']);
+      expect(c.claimForm.controls.claimType.value).toBe('Accident');
     });
   });
 
   describe('claimAmountRequested validator (withinPolicyCoverage)', () => {
+    it('rejects an amount below the minimum claim amount', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.selectPolicy(activePolicy);
+      c.claimForm.controls.claimAmountRequested.setValue(c.minClaimAmount - 1);
+      expect(c.claimForm.controls.claimAmountRequested.errors).toEqual(expect.objectContaining({ min: expect.any(Object) }));
+    });
+
     it('rejects an amount above the policy coverage', () => {
       const fixture = create();
       const c = fixture.componentInstance;
@@ -139,6 +196,27 @@ describe('ClaimFileComponent', () => {
       fixture.componentInstance.onFileRemoved(file);
       expect(fixture.componentInstance.uploadedFiles).toEqual([]);
     });
+
+    it('appends multiple selected files instead of replacing', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      const first = new File(['x'], 'bill.pdf');
+      const second = new File(['y'], 'prescription.pdf');
+      c.onFileSelected(first);
+      c.onFileSelected(second);
+      expect(c.uploadedFiles).toEqual([first, second]);
+    });
+
+    it('rejects new files once the max document cap is reached', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      for (let i = 0; i < c.maxDocuments; i++) {
+        c.onFileSelected(new File(['x'], `doc${i}.pdf`));
+      }
+      c.onFileSelected(new File(['x'], 'onemore.pdf'));
+      expect(c.uploadedFiles.length).toBe(c.maxDocuments);
+      expect(toast.warning).toHaveBeenCalledWith(`You can attach up to ${c.maxDocuments} documents`);
+    });
   });
 
   describe('submit', () => {
@@ -147,7 +225,7 @@ describe('ClaimFileComponent', () => {
       c.selectPolicy(activePolicy);
       c.claimForm.setValue({
         claimType: 'Health', claimAmountRequested: 5000, incidentDate: '2025-06-01',
-        incidentDescription: 'A valid description over ten chars', isCashless: false,
+        incidentDescription: 'A valid description over ten chars',
       });
       return c;
     }
@@ -182,6 +260,39 @@ describe('ClaimFileComponent', () => {
       expect(claimService.uploadDocument).toHaveBeenCalledWith('claim1', 'PROOF', expect.any(File));
       expect(toast.success).toHaveBeenCalledWith('Claim filed successfully');
       expect(router.navigate).toHaveBeenCalledWith(['/claims', 'claim1']);
+    });
+
+    it('uploads multiple documents sequentially, not in parallel', () => {
+      // Concurrent uploads would each read the claim's pre-transition status server-side
+      // and duplicate the Intimated -> UnderReview status change once per file.
+      const fixture = create();
+      const c = fillValidForm(fixture);
+      claimService.intimate.mockReturnValue(of({ id: 'claim1' } as ClaimDto));
+      const callOrder: string[] = [];
+      claimService.uploadDocument.mockImplementation((_claimId: string, key: string) => {
+        callOrder.push(`start:${key}`);
+        return of({ message: 'ok' }).pipe(tap(() => callOrder.push(`end:${key}`)));
+      });
+      c.onFileSelected(new File(['x'], 'bill.pdf'));
+      c.onFileSelected(new File(['y'], 'prescription.pdf'));
+
+      c.submit();
+
+      expect(callOrder).toEqual(['start:BILL', 'end:BILL', 'start:PRESCRIPTION', 'end:PRESCRIPTION']);
+    });
+
+    it('dedupes document keys when two attached files share the same name', () => {
+      const fixture = create();
+      const c = fillValidForm(fixture);
+      claimService.intimate.mockReturnValue(of({ id: 'claim1' } as ClaimDto));
+      claimService.uploadDocument.mockReturnValue(of({ message: 'ok' }));
+      c.onFileSelected(new File(['x'], 'proof.pdf'));
+      c.onFileSelected(new File(['y'], 'proof.pdf'));
+
+      c.submit();
+
+      expect(claimService.uploadDocument).toHaveBeenCalledWith('claim1', 'PROOF', expect.any(File));
+      expect(claimService.uploadDocument).toHaveBeenCalledWith('claim1', 'PROOF_2', expect.any(File));
     });
 
     it('warns but still navigates when a document upload fails', () => {

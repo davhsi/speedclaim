@@ -69,10 +69,6 @@ export class ClaimsOfficerService {
     return this.http.put<ApiMessage>(`/api/v1/claims/${id}/approve`, request);
   }
 
-  settleClaim(id: string): Observable<ApiMessage> {
-    return this.http.put<ApiMessage>(`/api/v1/claims/${id}/settle`, {});
-  }
-
   updateStatus(id: string, request: UpdateClaimStatusRequest): Observable<ApiMessage> {
     return this.http.put<ApiMessage>(`/api/v1/claims/${id}/status`, request);
   }

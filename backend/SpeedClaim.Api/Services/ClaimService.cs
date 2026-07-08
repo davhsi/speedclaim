@@ -110,7 +110,20 @@ public class ClaimService : IClaimService
             ClaimStatus.UnderReview => next is ClaimStatus.DocumentsPending or ClaimStatus.PreAuthRequested or ClaimStatus.Approved or ClaimStatus.Rejected,
             ClaimStatus.PreAuthRequested => next is ClaimStatus.PreAuthApproved or ClaimStatus.DocumentsPending or ClaimStatus.Rejected,
             ClaimStatus.PreAuthApproved => next is ClaimStatus.UnderReview or ClaimStatus.DocumentsPending or ClaimStatus.Approved or ClaimStatus.Rejected,
-            ClaimStatus.Approved => next is ClaimStatus.Settled,
+            // Approved -> Settled only happens via FinanceService (real payout or manual settle),
+            // never through this generic claims-officer status endpoint — settlement implies money
+            // actually moved, which is a finance responsibility, not a claims-officer one.
+            _ => false
+        };
+    }
+
+    private static bool IsClaimTypeAllowedForDomain(ClaimType claimType, string? domain)
+    {
+        return domain?.Trim().ToUpperInvariant() switch
+        {
+            "HEALTH" => claimType == ClaimType.Health,
+            "LIFE" => claimType is ClaimType.Death or ClaimType.Maturity,
+            "MOTOR" => claimType is ClaimType.Accident or ClaimType.Theft or ClaimType.NaturalDamage,
             _ => false
         };
     }
@@ -191,6 +204,16 @@ public class ClaimService : IClaimService
         if (policy.Status != PolicyStatus.Active)
             throw new UnprocessableException("Claim can only be intimated for an active policy.");
 
+        var productDomain = policy.Product?.Domain;
+        if (string.IsNullOrWhiteSpace(productDomain))
+        {
+            var product = await _unitOfWork.InsuranceProducts.GetByIdAsync(policy.ProductId);
+            productDomain = product?.Domain;
+        }
+
+        if (!IsClaimTypeAllowedForDomain(request.ClaimType, productDomain))
+            throw new UnprocessableException("Claim type is not valid for the selected policy.");
+
         var incidentDate = request.IncidentDate.Date;
         if (incidentDate < policy.StartDate.Date || incidentDate > policy.EndDate.Date)
             throw new UnprocessableException("Incident date must fall within the active policy coverage period.");
@@ -210,7 +233,7 @@ public class ClaimService : IClaimService
             IsCashless = request.IsCashless,
             Status = ClaimStatus.Intimated,
             IntimationDate = DateTime.UtcNow,
-            IncidentDate = request.IncidentDate,
+            IncidentDate = DateTime.SpecifyKind(request.IncidentDate, DateTimeKind.Utc),
             IncidentDescription = request.IncidentDescription,
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -459,20 +482,6 @@ public class ClaimService : IClaimService
 
         claim.SurveyorId = surveyorId;
         await UpdateClaimStatusInternalAsync(claim, ClaimStatus.UnderReview, officerId, $"Surveyor assigned. Notes: {notes}");
-    }
-
-    public async Task MarkClaimAsSettledAsync(Guid claimId, Guid officerId)
-    {
-        var claim = await _unitOfWork.Claims.GetByIdAsync(claimId);
-        if (claim == null) throw new NotFoundException("Claim not found.");
-
-        EnsureAssignedOfficer(claim, officerId, "settle");
-        
-        if (claim.Status != ClaimStatus.Approved)
-            throw new UnprocessableException("Claim must be approved before settlement.");
-
-        claim.SettlementDate = DateTime.UtcNow;
-        await UpdateClaimStatusInternalAsync(claim, ClaimStatus.Settled, officerId, "Claim financially settled.");
     }
 
     public async Task<IEnumerable<ClaimDto>> GetAssignedMotorClaimsAsync(Guid surveyorId)

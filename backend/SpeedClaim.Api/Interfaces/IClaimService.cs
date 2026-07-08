@@ -26,7 +26,6 @@ public interface IClaimService
     Task ApproveOrRejectClaimAsync(Guid claimId, ApproveRejectClaimRequest request, Guid officerId);
     Task ApproveCashlessPreAuthAsync(Guid claimId, Guid officerId);
     Task AssignSurveyorAsync(Guid claimId, Guid surveyorId, Guid officerId, string notes);
-    Task MarkClaimAsSettledAsync(Guid claimId, Guid officerId);
 
     // Surveyor
     Task<IEnumerable<ClaimDto>> GetAssignedMotorClaimsAsync(Guid surveyorId);

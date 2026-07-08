@@ -21,6 +21,7 @@ public class ClaimServiceTests
     private Mock<IUnitOfWork> _mockUnitOfWork;
     private Mock<IClaimRepository> _mockClaimRepo;
     private Mock<IPolicyRepository> _mockPolicyRepo;
+    private Mock<IRepository<InsuranceProduct>> _mockProductRepo;
     private Mock<IRepository<ClaimStatusHistory>> _mockHistoryRepo;
     private Mock<ISubmittedDocumentRepository> _mockDocRepo;
     private Mock<IStorageService> _mockStorage;
@@ -33,6 +34,7 @@ public class ClaimServiceTests
         {
             Id = policyId,
             CustomerId = customerId,
+            ProductId = Guid.NewGuid(),
             Status = PolicyStatus.Active,
             SumAssured = 100000,
             StartDate = DateTime.UtcNow.AddMonths(-1),
@@ -46,12 +48,14 @@ public class ClaimServiceTests
         _mockUnitOfWork = new Mock<IUnitOfWork>();
         _mockClaimRepo = new Mock<IClaimRepository>();
         _mockPolicyRepo = new Mock<IPolicyRepository>();
+        _mockProductRepo = new Mock<IRepository<InsuranceProduct>>();
         _mockHistoryRepo = new Mock<IRepository<ClaimStatusHistory>>();
         _mockDocRepo = new Mock<ISubmittedDocumentRepository>();
         _mockStorage = new Mock<IStorageService>();
 
         _mockUnitOfWork.Setup(u => u.Claims).Returns(_mockClaimRepo.Object);
         _mockUnitOfWork.Setup(u => u.Policies).Returns(_mockPolicyRepo.Object);
+        _mockUnitOfWork.Setup(u => u.InsuranceProducts).Returns(_mockProductRepo.Object);
         _mockUnitOfWork.Setup(u => u.ClaimStatusHistories).Returns(_mockHistoryRepo.Object);
         _mockUnitOfWork.Setup(u => u.SubmittedDocuments).Returns(_mockDocRepo.Object);
         _mockDocRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<SubmittedDocument, bool>>>()))
@@ -60,6 +64,8 @@ public class ClaimServiceTests
             .ReturnsAsync(Array.Empty<SubmittedDocument>());
         _mockStorage.Setup(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync("uploads/claims/doc.pdf");
+        _mockProductRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(new InsuranceProduct { Domain = "HEALTH" });
         _mockUnitOfWork.Setup(u => u.Customers).Returns(new Mock<IRepository<Customer>>().Object);
         _mockUnitOfWork.Setup(u => u.Surveyors).Returns(new Mock<IRepository<Surveyor>>().Object);
         _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
@@ -105,6 +111,35 @@ public class ClaimServiceTests
         _mockClaimRepo.Verify(r => r.AddAsync(It.IsAny<Claim>()), Times.Once);
         _mockHistoryRepo.Verify(r => r.AddAsync(It.IsAny<ClaimStatusHistory>()), Times.Once);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public async Task IntimateClaimAsync_WithUnspecifiedKindIncidentDate_PersistsUtcKind()
+    {
+        // Arrange — mirrors what System.Text.Json produces for a plain "2026-07-06" date string:
+        // a DateTime with Kind=Unspecified, which Npgsql rejects for a timestamptz column.
+        var customerId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+        var incidentDate = new DateTime(2026, 7, 6, 0, 0, 0, DateTimeKind.Unspecified);
+
+        var request = new IntimateClaimRequest(
+            policyId, null, ClaimType.Health, 15000, true, incidentDate, "Fell and broke arm"
+        );
+
+        var policy = ActivePolicy(policyId, customerId);
+        _mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(policy);
+
+        Claim? savedClaim = null;
+        _mockClaimRepo.Setup(r => r.AddAsync(It.IsAny<Claim>()))
+            .Callback<Claim>(c => savedClaim = c)
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await _claimService.IntimateClaimAsync(customerId, request);
+
+        // Assert
+        Assert.That(savedClaim, Is.Not.Null);
+        Assert.That(savedClaim!.IncidentDate.Kind, Is.EqualTo(DateTimeKind.Utc));
     }
 
     [Test]
@@ -188,6 +223,58 @@ public class ClaimServiceTests
 
         Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.UnprocessableException>(() =>
             _claimService.IntimateClaimAsync(customerId, request));
+    }
+
+    [Test]
+    public void IntimateClaimAsync_WithMotorClaimTypeForHealthPolicy_ThrowsException()
+    {
+        var customerId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+        var policy = ActivePolicy(policyId, customerId);
+        var request = new IntimateClaimRequest(
+            policyId,
+            null,
+            ClaimType.Theft,
+            15000,
+            false,
+            DateTime.UtcNow.AddDays(-2),
+            "Theft claim cannot be raised against health policy"
+        );
+
+        _mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(policy);
+        _mockProductRepo.Setup(r => r.GetByIdAsync(policy.ProductId))
+            .ReturnsAsync(new InsuranceProduct { Domain = "HEALTH" });
+
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.UnprocessableException>(() =>
+            _claimService.IntimateClaimAsync(customerId, request));
+
+        Assert.That(ex.Message, Is.EqualTo("Claim type is not valid for the selected policy."));
+    }
+
+    [Test]
+    public async Task IntimateClaimAsync_WithMotorClaimTypeForMotorPolicy_CreatesClaim()
+    {
+        var customerId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+        var policy = ActivePolicy(policyId, customerId);
+        var request = new IntimateClaimRequest(
+            policyId,
+            null,
+            ClaimType.Theft,
+            15000,
+            false,
+            DateTime.UtcNow.AddDays(-2),
+            "Vehicle theft claim for a motor insurance policy"
+        );
+
+        _mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(policy);
+        _mockProductRepo.Setup(r => r.GetByIdAsync(policy.ProductId))
+            .ReturnsAsync(new InsuranceProduct { Domain = "MOTOR" });
+
+        var result = await _claimService.IntimateClaimAsync(customerId, request);
+
+        Assert.That(result.ClaimType, Is.EqualTo(ClaimType.Theft.ToString()));
+        _mockClaimRepo.Verify(r => r.AddAsync(It.IsAny<Claim>()), Times.Once);
     }
 
     [Test]
@@ -291,39 +378,6 @@ public class ClaimServiceTests
 
         Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() =>
             _claimService.ApproveOrRejectClaimAsync(claimId, request, officerId));
-    }
-
-    [Test]
-    public async Task MarkClaimAsSettledAsync_WhenApproved_UpdatesToSettled()
-    {
-        // Arrange
-        var claimId = Guid.NewGuid();
-        var officerId = Guid.NewGuid();
-        var claim = new Claim { Id = claimId, Status = ClaimStatus.Approved, AssignedOfficerId = officerId };
-
-        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
-
-        // Act
-        await _claimService.MarkClaimAsSettledAsync(claimId, officerId);
-
-        // Assert
-        Assert.That(claim.Status, Is.EqualTo(ClaimStatus.Settled));
-        Assert.That(claim.SettlementDate, Is.Not.Null);
-        _mockClaimRepo.Verify(r => r.Update(claim), Times.Once);
-        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
-    }
-
-    [Test]
-    public void MarkClaimAsSettledAsync_DifferentOfficer_ThrowsForbiddenException()
-    {
-        var claimId = Guid.NewGuid();
-        var assignedOfficerId = Guid.NewGuid();
-        var claim = new Claim { Id = claimId, Status = ClaimStatus.Approved, AssignedOfficerId = assignedOfficerId };
-
-        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
-
-        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() =>
-            _claimService.MarkClaimAsSettledAsync(claimId, Guid.NewGuid()));
     }
 
     [Test]
@@ -873,19 +927,6 @@ public class ClaimServiceTests
 
         Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
             _claimService.RequestAdditionalDocumentsAsync(claimId, "more docs needed", officerId));
-    }
-
-    [Test]
-    public void MarkClaimAsSettledAsync_ClaimNotApproved_ThrowsUnprocessableException()
-    {
-        var claimId = Guid.NewGuid();
-        var officerId = Guid.NewGuid();
-        var claim = new Claim { Id = claimId, Status = ClaimStatus.UnderReview, CustomerId = Guid.NewGuid(), ClaimNumber = "CLM-X", PolicyId = Guid.NewGuid(), AssignedOfficerId = officerId };
-
-        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
-
-        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.UnprocessableException>(() =>
-            _claimService.MarkClaimAsSettledAsync(claimId, officerId));
     }
 
     [Test]

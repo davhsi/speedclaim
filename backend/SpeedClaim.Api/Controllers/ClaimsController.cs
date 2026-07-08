@@ -185,20 +185,6 @@ public class ClaimsController : BaseApiController
         return Ok(new { message = request.IsApproved ? "Claim approved successfully." : "Claim rejected." });
     }
 
-    /// <summary>Mark an approved claim as financially settled</summary>
-    /// <param name="id">Claim ID</param>
-    [Authorize(Roles = "ClaimsOfficer")]
-    [HttpPut("{id}/settle")]
-    [ProducesResponseType(200)]
-    [ProducesResponseType(404)]
-    [ProducesResponseType(422)]
-    public async Task<IActionResult> MarkSettled(Guid id)
-    {
-        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var officerId)) return Unauthorized();
-        await _claimService.MarkClaimAsSettledAsync(id, officerId);
-        return Ok(new { message = "Claim marked as settled." });
-    }
-
     /// <summary>Assign a surveyor to a motor or property claim</summary>
     /// <param name="id">Claim ID</param>
     [Authorize(Roles = "ClaimsOfficer")]

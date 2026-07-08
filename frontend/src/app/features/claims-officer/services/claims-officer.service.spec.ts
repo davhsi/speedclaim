@@ -76,14 +76,6 @@ describe('ClaimsOfficerService', () => {
     call.flush(response);
   });
 
-  it('settleClaim PUTs an empty body to the settle endpoint', () => {
-    const response = { message: 'ok' };
-    service.settleClaim('c1').subscribe(res => expect(res).toEqual(response));
-    const call = httpMock.expectOne('/api/v1/claims/c1/settle');
-    expect(call.request.method).toBe('PUT');
-    expect(call.request.body).toEqual({});
-    call.flush(response);
-  });
 
   it('updateStatus PUTs the status update request body', () => {
     const req = { status: 'DocumentsPending' as never, remarks: 'need docs' };

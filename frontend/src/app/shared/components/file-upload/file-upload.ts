@@ -10,6 +10,9 @@ export class FileUploadComponent {
   maxSizeMb = input(5);
   label = input('');
   hint = input('');
+  /** When true, clears the selected file right after emitting so the dropzone
+   * reappears immediately — lets a parent collect multiple files one at a time. */
+  resetAfterSelect = input(false);
 
   fileSelected = output<File>();
   fileRemoved = output<File>();
@@ -20,6 +23,7 @@ export class FileUploadComponent {
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files?.length) this.validateAndSet(input.files[0]);
+    input.value = '';
   }
 
   onDragOver(event: DragEvent): void {
@@ -61,5 +65,6 @@ export class FileUploadComponent {
     }
     this.selectedFile.set(file);
     this.fileSelected.emit(file);
+    if (this.resetAfterSelect()) this.selectedFile.set(null);
   }
 }
