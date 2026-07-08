@@ -33,6 +33,7 @@ export class AdminUsersComponent implements OnInit {
   selectedRole = signal('');
   resetPwSent = signal(false);
   resetPwForm = { newPassword: '' };
+  showPassword = signal(false);
   actionInFlight = signal(false);
   inviteForm = { name: '', email: '', role: 'Surveyor' };
   inviteSuccess = signal(false);
@@ -174,6 +175,7 @@ export class AdminUsersComponent implements OnInit {
     this.selectedUser.set(user);
     this.resetPwSent.set(false);
     this.resetPwForm = { newPassword: '' };
+    this.showPassword.set(false);
     this.activeModal.set('resetPw');
   }
 
