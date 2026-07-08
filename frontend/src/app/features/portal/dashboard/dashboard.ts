@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 import { DashboardService } from './services/dashboard.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -71,17 +71,37 @@ export class DashboardComponent implements OnInit {
         this.activePoliciesCount.set(policies.filter(p => p.status === 'Active').length);
         this.openClaimsCount.set(claims.filter(c => !['Settled', 'Rejected', 'Withdrawn'].includes(c.status)).length);
 
-        const activePolicy = policies.find(p => p.status === 'Active');
-        if (activePolicy) {
-          this.dashService.getSchedule(activePolicy.id).subscribe(schedule => {
-            const due = schedule.find(s => s.status === 'Due' || s.status === 'Overdue');
-            this.nextDue.set(due ?? null);
-          });
-        }
-        this.loading.set(false);
+        this.loadNextPremium(policies.filter(p => p.status === 'Active'));
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  private loadNextPremium(activePolicies: PolicyDto[]): void {
+    if (activePolicies.length === 0) {
+      this.nextDue.set(null);
+      this.loading.set(false);
+      return;
+    }
+
+    forkJoin(activePolicies.map(policy =>
+      this.dashService.getSchedule(policy.id).pipe(catchError(() => of([] as PremiumScheduleDto[]))),
+    )).subscribe({
+      next: schedulesByPolicy => {
+        this.nextDue.set(this.findNextPremium(schedulesByPolicy.flat()));
+        this.loading.set(false);
+      },
+      error: () => {
+        this.nextDue.set(null);
+        this.loading.set(false);
+      },
+    });
+  }
+
+  private findNextPremium(schedules: PremiumScheduleDto[]): PremiumScheduleDto | null {
+    return schedules
+      .filter(s => s.status === 'Overdue' || s.status === 'Due' || s.status === 'Upcoming')
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0] ?? null;
   }
 
   nextPremiumDisplay(): string {
