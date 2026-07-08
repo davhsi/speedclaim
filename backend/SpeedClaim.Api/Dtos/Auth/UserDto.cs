@@ -20,5 +20,7 @@ public record UserDto(
     SpeedClaim.Api.Dtos.Common.AddressDto? CurrentAddress,
     string? AvatarUrl = null,
     DateOnly? DateOfBirth = null,
-    bool KycApproved = false
+    bool KycApproved = false,
+    string? KycStatus = null,
+    string? KycRejectionReason = null
 );

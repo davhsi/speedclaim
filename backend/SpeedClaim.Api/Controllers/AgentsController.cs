@@ -34,6 +34,16 @@ public class AgentsController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>Agent — search all registered customers by name/email/phone, to start a proposal for a customer not yet assigned to this agent</summary>
+    [Authorize(Roles = "Agent")]
+    [HttpGet("customers/search")]
+    [ProducesResponseType(typeof(IEnumerable<UserDto>), 200)]
+    public async Task<IActionResult> SearchCustomers([FromQuery] string? q)
+    {
+        var result = await _agentService.SearchCustomersAsync(q);
+        return Ok(result);
+    }
+
     /// <summary>Get dashboard summary for the authenticated agent — customers, policies, commissions, pending claims</summary>
     [Authorize(Roles = "Agent")]
     [HttpGet("dashboard")]

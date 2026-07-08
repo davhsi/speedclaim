@@ -13,16 +13,21 @@ describe('AgentProposalSubmitComponent', () => {
     getProducts: ReturnType<typeof vi.fn>;
     generateQuote: ReturnType<typeof vi.fn>;
     submitProposal: ReturnType<typeof vi.fn>;
+    searchCustomers: ReturnType<typeof vi.fn>;
   };
   let router: { navigate: ReturnType<typeof vi.fn> };
   let toast: { warning: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
 
-  const customers: AgentCustomerDto[] = [{ id: 'c1', customerId: 'cust1', fullName: 'Jane Doe' } as AgentCustomerDto];
+  const customers: AgentCustomerDto[] = [{ id: 'c1', customerId: 'cust1', fullName: 'Jane Doe', kycApproved: true } as AgentCustomerDto];
   const healthProduct = {
     id: 'prod-health', domain: 'Health', minSumAssured: 100000, maxSumAssured: 2000000,
     minTenureYears: 1, maxTenureYears: 5,
   } as ProductDto;
-  const products: ProductDto[] = [healthProduct];
+  const motorProduct = {
+    id: 'prod-motor', domain: 'Motor', minSumAssured: 100000, maxSumAssured: 2000000,
+    minTenureYears: 1, maxTenureYears: 3,
+  } as ProductDto;
+  const products: ProductDto[] = [healthProduct, motorProduct];
 
   function create() {
     agentService = {
@@ -30,6 +35,7 @@ describe('AgentProposalSubmitComponent', () => {
       getProducts: vi.fn(() => of(products)),
       generateQuote: vi.fn(),
       submitProposal: vi.fn(),
+      searchCustomers: vi.fn(() => of([])),
     };
     router = { navigate: vi.fn() };
     toast = { warning: vi.fn(), error: vi.fn() };
@@ -82,6 +88,43 @@ describe('AgentProposalSubmitComponent', () => {
       fixture.componentInstance.nextStep();
       expect(fixture.componentInstance.currentStep).toBe(1);
     });
+
+    it('warns and blocks when the selected customer\'s KYC is not approved', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.selectedCustomerKycApproved = false;
+      c.selectedType = 'Health';
+
+      c.nextStep();
+
+      expect(toast.warning).toHaveBeenCalledWith('This customer\'s KYC must be approved before you can submit a proposal for them.');
+      expect(c.currentStep).toBe(0);
+    });
+
+    it('applies the selected customer\'s KYC status/rejection reason when picked from "My customers"', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      const rejected = { id: 'c2', customerId: 'cust2', fullName: 'Arjun Nair', kycApproved: false, kycStatus: 'Rejected', kycRejectionReason: 'Blurry photo' } as AgentCustomerDto;
+      c.customers.set([...customers, rejected]);
+
+      c.onMyCustomerSelected('cust2');
+
+      expect(c.selectedCustomerKycApproved).toBe(false);
+      expect(c.selectedCustomerKycStatus).toBe('Rejected');
+      expect(c.selectedCustomerKycRejectionReason).toBe('Blurry photo');
+    });
+
+    it('applies the selected customer\'s KYC status when picked from search results', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      const approved = { id: 'c3', customerId: 'cust3', fullName: 'Priya Sharma', kycApproved: true, kycStatus: 'Approved' } as AgentCustomerDto;
+
+      c.selectCustomerFromSearch(approved);
+
+      expect(c.selectedCustomerKycApproved).toBe(true);
+      expect(c.selectedCustomerKycStatus).toBe('Approved');
+      expect(c.selectedCustomerKycRejectionReason).toBeNull();
+    });
   });
 
   describe('nextStep (step 1: quote)', () => {
@@ -115,11 +158,25 @@ describe('AgentProposalSubmitComponent', () => {
   });
 
   describe('calculateQuote', () => {
-    it('does nothing when no product matches the selected type', () => {
+    it('shows an error toast and does not call generateQuote when no product matches the selected type', () => {
       const fixture = create();
-      fixture.componentInstance.selectedType = 'Motor';
+      fixture.componentInstance.selectedType = 'Life';
       fixture.componentInstance.calculateQuote();
       expect(agentService.generateQuote).not.toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('No active Life product'));
+    });
+
+    it('does not send an age for Motor quotes (Motor is not age-rated)', () => {
+      const fixture = create();
+      fixture.componentInstance.selectedType = 'Motor';
+      fixture.componentInstance.motorForm.idv = '9,00,000';
+      agentService.generateQuote.mockReturnValue(of({ premiumAmount: 18000 }));
+
+      fixture.componentInstance.calculateQuote();
+
+      expect(agentService.generateQuote).toHaveBeenCalledWith({
+        productId: 'prod-motor', age: undefined, sumAssured: 900000, tenureYears: 1,
+      });
     });
 
     it('computes age/sumAssured/tenure for Health and calls generateQuote', () => {
@@ -202,6 +259,51 @@ describe('AgentProposalSubmitComponent', () => {
       fixture.componentInstance.nextStep();
 
       expect(toast.error).toHaveBeenCalledWith('Failed to submit proposal. Please try again.');
+    });
+  });
+
+  describe('customer search', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('does not search below 2 characters', () => {
+      const fixture = create();
+      fixture.componentInstance.onCustomerSearchInput('a');
+      vi.advanceTimersByTime(500);
+      expect(agentService.searchCustomers).not.toHaveBeenCalled();
+      expect(fixture.componentInstance.customerSearchResults()).toEqual([]);
+    });
+
+    it('debounces and searches after 2+ characters', () => {
+      const results = [{ id: 'c2', customerId: 'cust2', fullName: 'Arjun Nair', email: 'arjun@example.com' } as AgentCustomerDto];
+      const fixture = create();
+      agentService.searchCustomers.mockReturnValue(of(results));
+
+      fixture.componentInstance.onCustomerSearchInput('arjun');
+      expect(agentService.searchCustomers).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(300);
+
+      expect(agentService.searchCustomers).toHaveBeenCalledWith('arjun');
+      expect(fixture.componentInstance.customerSearchResults()).toEqual(results);
+    });
+
+    it('selecting a search result sets the customer and clears the search', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      const picked = { id: 'c2', customerId: 'cust2', fullName: 'Arjun Nair', email: 'arjun@example.com' } as AgentCustomerDto;
+
+      c.selectCustomerFromSearch(picked);
+
+      expect(c.selectedCustomerId).toBe('cust2');
+      expect(c.selectedCustomerName).toBe('Arjun Nair');
+      expect(c.proposerForm.fullName).toBe('Arjun Nair');
+      expect(c.customerSearchResults()).toEqual([]);
+      expect(c.customerSearchQuery()).toBe('');
     });
   });
 

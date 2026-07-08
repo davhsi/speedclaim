@@ -35,7 +35,10 @@ public class AgentService : IAgentService
         var aId = Guid.Parse(agentId);
         var agent = await ResolveAgentAsync(aId);
         var proposals = await _unitOfWork.Proposals.FindAsync(p => p.AgentId == agent.Id);
-        var customerIds = proposals.Select(p => p.CustomerId).Distinct().ToList();
+        var onboardedCustomers = await _unitOfWork.Customers.FindAsync(c => c.OnboardingAgentId == agent.Id);
+        var customerIds = proposals.Select(p => p.CustomerId)
+            .Concat(onboardedCustomers.Select(c => c.Id))
+            .Distinct().ToList();
 
         var customers = new List<UserDto>();
         foreach (var cid in customerIds)
@@ -46,6 +49,7 @@ public class AgentService : IAgentService
                 var user = await _unitOfWork.Users.GetByIdAsync(customer.UserId);
                 if (user != null)
                 {
+                    var kycInfo = await GetKycInfoAsync(user.Id);
                     customers.Add(new UserDto(
                         user.Id,
                         user.Email,
@@ -61,12 +65,72 @@ public class AgentService : IAgentService
                         user.IsActive,
                         user.CreatedAt,
                         null,
-                        null
+                        null,
+                        null,
+                        null,
+                        kycInfo.IsApproved,
+                        kycInfo.Status,
+                        kycInfo.RejectionReason
                     ));
                 }
             }
         }
         return customers;
+    }
+
+    private async Task<(bool IsApproved, string? Status, string? RejectionReason)> GetKycInfoAsync(Guid userId)
+    {
+        var kyc = await _unitOfWork.KycRecords.FirstOrDefaultAsync(k => k.UserId == userId);
+        if (kyc == null) return (false, null, null);
+        return (kyc.KycStatus == KycStatus.Approved, kyc.KycStatus.ToString(), kyc.RejectionReason);
+    }
+
+    public async Task<IEnumerable<UserDto>> SearchCustomersAsync(string? query)
+    {
+        var customerUsers = await _unitOfWork.Users.FindAsync(u => u.Role == UserRole.Customer);
+        IEnumerable<User> matches = customerUsers;
+
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            var term = query.Trim().ToLower();
+            matches = matches.Where(u =>
+                u.FirstName.ToLower().Contains(term) ||
+                u.LastName.ToLower().Contains(term) ||
+                u.Email.ToLower().Contains(term) ||
+                u.Phone.Contains(term));
+        }
+
+        var dtos = new List<UserDto>();
+        foreach (var user in matches.Take(20))
+        {
+            var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == user.Id);
+            if (customer == null) continue;
+
+            var kycInfo = await GetKycInfoAsync(user.Id);
+            dtos.Add(new UserDto(
+                user.Id,
+                user.Email,
+                user.Salutation.ToString(),
+                user.FirstName,
+                user.LastName,
+                user.FullName,
+                user.Phone,
+                user.Role.ToString(),
+                customer.MaritalStatus.ToString(),
+                customer.Id,
+                user.IsEmailVerified,
+                user.IsActive,
+                user.CreatedAt,
+                null,
+                null,
+                null,
+                null,
+                kycInfo.IsApproved,
+                kycInfo.Status,
+                kycInfo.RejectionReason
+            ));
+        }
+        return dtos;
     }
 
     public async Task EnsureCustomerAssignedAsync(string agentId, string customerUserId)

@@ -37,14 +37,67 @@
     <!-- Step 1: Customer & Product -->
     @if (currentStep === 0) {
       <div class="text-[15px] font-semibold text-ink mb-4">Select customer & product</div>
+      @if (customers().length > 0) {
+        <div class="mb-4">
+          <label for="proposal-customer-select" class="block text-[13px] font-medium mb-1.5">My customers</label>
+          <select id="proposal-customer-select" [(ngModel)]="selectedCustomerId" (ngModelChange)="onMyCustomerSelected($event)" class="h-[42px]">
+            <option [ngValue]="null" disabled>Select a customer...</option>
+            @for (c of customers(); track c.id) {
+              <option [ngValue]="c.customerId ?? c.id">{{ c.fullName }} · ID {{ c.customerId ?? c.id }}</option>
+            }
+          </select>
+        </div>
+      }
       <div class="mb-5">
-        <label for="proposal-customer-select" class="block text-[13px] font-medium mb-1.5">Customer</label>
-        <select id="proposal-customer-select" [(ngModel)]="selectedCustomerId" class="h-[42px]">
-          <option [ngValue]="null" disabled>Select a customer...</option>
-          @for (c of customers(); track c.id) {
-            <option [ngValue]="c.customerId ?? c.id">{{ c.fullName }} · ID {{ c.customerId ?? c.id }}</option>
+        <label for="proposal-customer-search" class="block text-[13px] font-medium mb-1.5">
+          {{ customers().length > 0 ? 'Or find any other registered customer' : 'Find a registered customer' }}
+        </label>
+        <div class="relative">
+          <input
+            id="proposal-customer-search"
+            type="text"
+            placeholder="Search by name, email, or phone..."
+            [ngModel]="customerSearchQuery()"
+            (ngModelChange)="onCustomerSearchInput($event)"
+            class="h-[42px] w-full" />
+          @if (searchingCustomers()) {
+            <div class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">Searching…</div>
           }
-        </select>
+        </div>
+        @if (customerSearchResults().length > 0) {
+          <div class="mt-2 border border-line rounded-[10px] overflow-hidden divide-y divide-line max-h-[220px] overflow-y-auto">
+            @for (c of customerSearchResults(); track c.id) {
+              <button type="button" (click)="selectCustomerFromSearch(c)"
+                      class="w-full text-left px-3.5 py-2.5 bg-white hover:bg-surface-alt cursor-pointer transition-colors">
+                <div class="text-[13px] font-semibold text-ink">{{ c.fullName }}</div>
+                <div class="text-[12px] text-muted">{{ c.email }}</div>
+              </button>
+            }
+          </div>
+        } @else if (customerSearchQuery().trim().length >= 2 && !searchingCustomers()) {
+          <div class="mt-2 text-[12px] text-muted">No matching customers found.</div>
+        }
+        @if (selectedCustomerName) {
+          <div class="mt-2 text-[12px] text-body">Selected: <span class="font-semibold">{{ selectedCustomerName }}</span></div>
+        }
+        @if (selectedCustomerId && !selectedCustomerKycApproved) {
+          <div class="mt-2.5 p-3 rounded-[10px] border" [class]="selectedCustomerKycStatus === 'Rejected' ? 'bg-danger-bg border-danger-border' : 'bg-warning-bg border-warning-border'">
+            @if (selectedCustomerKycStatus === 'Pending' || selectedCustomerKycStatus === 'UnderReview') {
+              <div class="text-[13px] font-semibold text-ink">KYC submitted — awaiting Underwriter review</div>
+              <p class="text-[12px] text-muted mt-0.5">You'll be able to submit a proposal for this customer once their KYC is approved.</p>
+            } @else if (selectedCustomerKycStatus === 'Rejected') {
+              <div class="text-[13px] font-semibold text-ink">KYC was rejected</div>
+              <p class="text-[12px] text-muted mt-0.5">{{ selectedCustomerKycRejectionReason || 'No reason given.' }} Re-submit corrected documents to continue.</p>
+              <a [routerLink]="['/agent/customer-kyc']" [queryParams]="{ customerId: selectedCustomerId }"
+                 class="inline-block mt-2 text-[12px] font-semibold text-primary">Resubmit KYC →</a>
+            } @else {
+              <div class="text-[13px] font-semibold text-ink">This customer hasn't submitted KYC yet</div>
+              <p class="text-[12px] text-muted mt-0.5">KYC must be approved by an Underwriter before you can submit a proposal for them.</p>
+              <a [routerLink]="['/agent/customer-kyc']" [queryParams]="{ customerId: selectedCustomerId }"
+                 class="inline-block mt-2 text-[12px] font-semibold text-primary">Submit KYC →</a>
+            }
+          </div>
+        }
       </div>
       <div class="text-[13px] font-medium text-body mb-2.5">Product type</div>
       <div class="grid grid-cols-3 gap-2.5">
@@ -72,7 +125,6 @@
           <div><label for="ps-health-members" class="block text-[13px] font-medium mb-1.5">Members covered</label><input id="ps-health-members" type="number" [(ngModel)]="healthForm.members" class="sc-numeric" /></div>
           <div><label for="ps-health-sum-assured" class="block text-[13px] font-medium mb-1.5">Sum assured</label><input id="ps-health-sum-assured" type="text" [(ngModel)]="healthForm.sumAssured" class="sc-numeric" /></div>
           <div><label for="ps-health-eldest-age" class="block text-[13px] font-medium mb-1.5">Eldest member age</label><input id="ps-health-eldest-age" type="number" [(ngModel)]="healthForm.eldestAge" class="sc-numeric" /></div>
-          <div><label for="ps-health-discount" class="block text-[13px] font-medium mb-1.5">Agent discount %</label><input id="ps-health-discount" type="number" [(ngModel)]="healthForm.discount" /></div>
         </div>
       }
 
@@ -82,7 +134,6 @@
           <div><label for="ps-motor-reg-year" class="block text-[13px] font-medium mb-1.5">Registration year</label><input id="ps-motor-reg-year" type="number" [(ngModel)]="motorForm.regYear" class="sc-numeric" /></div>
           <div><label for="ps-motor-idv" class="block text-[13px] font-medium mb-1.5">Insured declared value (IDV)</label><input id="ps-motor-idv" type="text" [(ngModel)]="motorForm.idv" class="sc-numeric" /></div>
           <div><label for="ps-motor-ncb" class="block text-[13px] font-medium mb-1.5">No-Claim Bonus (NCB)</label><input id="ps-motor-ncb" type="text" [(ngModel)]="motorForm.ncb" /></div>
-          <div><label for="ps-motor-discount" class="block text-[13px] font-medium mb-1.5">Agent discount %</label><input id="ps-motor-discount" type="number" [(ngModel)]="motorForm.discount" /></div>
         </div>
       }
 
@@ -92,7 +143,6 @@
           <div><label for="ps-life-term" class="block text-[13px] font-medium mb-1.5">Policy term</label><input id="ps-life-term" type="text" [(ngModel)]="lifeForm.term" /></div>
           <div><label for="ps-life-age" class="block text-[13px] font-medium mb-1.5">Customer age</label><input id="ps-life-age" type="number" [(ngModel)]="lifeForm.age" class="sc-numeric" /></div>
           <div><label for="ps-life-tobacco" class="block text-[13px] font-medium mb-1.5">Tobacco user</label><input id="ps-life-tobacco" type="text" [(ngModel)]="lifeForm.tobaccoUser" /></div>
-          <div><label for="ps-life-discount" class="block text-[13px] font-medium mb-1.5">Agent discount %</label><input id="ps-life-discount" type="number" [(ngModel)]="lifeForm.discount" /></div>
         </div>
       }
 
@@ -102,19 +152,13 @@
       </button>
 
       @if (quoteResult()) {
-        <div class="bg-primary-light border border-primary-muted rounded-card p-5 flex flex-wrap justify-between items-center gap-4 animate-sc-fade">
-          <div>
-            <div class="text-[13px] font-medium mb-1" style="color: var(--color-primary-dark);">Estimated premium</div>
-            <div class="text-[32px] font-bold sc-numeric leading-none" style="color: var(--color-primary-dark);">
-              {{ quoteResult()!.premiumAmount | money }}<span class="text-sm font-medium">/yr</span>
-            </div>
-            <div class="text-xs mt-1.5" style="color: var(--color-primary-dark);">
-              Inclusive of 18% GST · {{ quoteResult()!.sumAssured | money }} cover
-            </div>
+        <div class="bg-primary-light border border-primary-muted rounded-card p-5 animate-sc-fade">
+          <div class="text-[13px] font-medium mb-1" style="color: var(--color-primary-dark);">Estimated premium</div>
+          <div class="text-[32px] font-bold sc-numeric leading-none" style="color: var(--color-primary-dark);">
+            {{ quoteResult()!.premiumAmount | money }}<span class="text-sm font-medium">/yr</span>
           </div>
-          <div class="text-right">
-            <div class="text-xs text-muted mb-1">Agent discount applied</div>
-            <div class="text-[13px] font-semibold text-ink">Commission estimate: {{ quoteResult()!.premiumAmount * 0.05 | money }}</div>
+          <div class="text-xs mt-1.5" style="color: var(--color-primary-dark);">
+            Inclusive of 18% GST · {{ quoteResult()!.sumAssured | money }} cover
           </div>
         </div>
       }

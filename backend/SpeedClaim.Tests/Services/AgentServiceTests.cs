@@ -25,6 +25,7 @@ public class AgentServiceTests
     private Mock<IPolicyRepository> _mockPolicyRepo = null!;
     private Mock<IRepository<AgentCommission>> _mockCommissionRepo = null!;
     private Mock<IClaimRepository> _mockClaimRepo = null!;
+    private Mock<IRepository<KycRecord>> _mockKycRepo = null!;
     private AgentService _agentService = null!;
 
     [SetUp]
@@ -39,7 +40,9 @@ public class AgentServiceTests
         _mockPolicyRepo = new Mock<IPolicyRepository>();
         _mockCommissionRepo = new Mock<IRepository<AgentCommission>>();
         _mockClaimRepo = new Mock<IClaimRepository>();
+        _mockKycRepo = new Mock<IRepository<KycRecord>>();
 
+        _mockUnitOfWork.Setup(u => u.KycRecords).Returns(_mockKycRepo.Object);
         _mockUnitOfWork.Setup(u => u.Agents).Returns(_mockAgentRepo.Object);
         _mockUnitOfWork.Setup(u => u.Branches).Returns(_mockBranchRepo.Object);
         _mockUnitOfWork.Setup(u => u.Proposals).Returns(_mockProposalRepo.Object);
@@ -70,11 +73,102 @@ public class AgentServiceTests
         _mockCustomerRepo.Setup(r => r.GetByIdAsync(customerId)).ReturnsAsync(customer);
         _mockUserRepo.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
 
+        _mockKycRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>()))
+            .ReturnsAsync(new KycRecord { UserId = userId, KycStatus = KycStatus.Approved });
+
         var result = await _agentService.GetAssignedCustomersAsync(agentId.ToString());
 
         var resultList = result.ToList();
         Assert.That(resultList.Count, Is.EqualTo(1));
+        Assert.That(resultList[0].KycApproved, Is.True);
+        Assert.That(resultList[0].KycStatus, Is.EqualTo("Approved"));
         Assert.That(resultList[0].Email, Is.EqualTo("test@test.com"));
+    }
+
+    [Test]
+    public async Task GetAssignedCustomersAsync_RejectedKyc_IncludesStatusAndReason()
+    {
+        var agentId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+
+        var proposals = new List<Proposal> { new Proposal { AgentId = agentId, CustomerId = customerId } };
+        var customer = new Customer { Id = customerId, UserId = userId, MaritalStatus = MaritalStatus.Married };
+        var user = new User { Id = userId, Email = "test@test.com", Role = UserRole.Customer, Salutation = Salutation.Mr, FirstName = "John", LastName = "Doe" };
+
+        _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync(new Agent { Id = agentId, UserId = agentId });
+        _mockProposalRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Proposal, bool>>>())).ReturnsAsync(proposals);
+        _mockCustomerRepo.Setup(r => r.GetByIdAsync(customerId)).ReturnsAsync(customer);
+        _mockUserRepo.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
+        _mockKycRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>()))
+            .ReturnsAsync(new KycRecord { UserId = userId, KycStatus = KycStatus.Rejected, RejectionReason = "Blurry Aadhaar photo" });
+
+        var result = (await _agentService.GetAssignedCustomersAsync(agentId.ToString())).ToList();
+
+        Assert.That(result[0].KycApproved, Is.False);
+        Assert.That(result[0].KycStatus, Is.EqualTo("Rejected"));
+        Assert.That(result[0].KycRejectionReason, Is.EqualTo("Blurry Aadhaar photo"));
+    }
+
+    [Test]
+    public async Task GetAssignedCustomersAsync_IncludesOnboardedCustomerWithNoProposal()
+    {
+        var agentId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+
+        var customer = new Customer { Id = customerId, UserId = userId, MaritalStatus = MaritalStatus.Single, OnboardingAgentId = agentId };
+        var user = new User { Id = userId, Email = "onboarded@test.com", Role = UserRole.Customer, Salutation = Salutation.Ms, FirstName = "Priya", LastName = "Nair" };
+
+        _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync(new Agent { Id = agentId, UserId = agentId });
+        _mockProposalRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Proposal, bool>>>())).ReturnsAsync(new List<Proposal>());
+        _mockCustomerRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Customer, bool>>>())).ReturnsAsync(new List<Customer> { customer });
+        _mockCustomerRepo.Setup(r => r.GetByIdAsync(customerId)).ReturnsAsync(customer);
+        _mockUserRepo.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
+
+        var result = (await _agentService.GetAssignedCustomersAsync(agentId.ToString())).ToList();
+
+        Assert.That(result.Count, Is.EqualTo(1));
+        Assert.That(result[0].Email, Is.EqualTo("onboarded@test.com"));
+        Assert.That(result[0].KycApproved, Is.False); // no KycRecord mocked — never submitted KYC
+        Assert.That(result[0].KycStatus, Is.Null);
+    }
+
+    [Test]
+    public async Task SearchCustomersAsync_NoQuery_ReturnsAllCustomerUsers()
+    {
+        var userId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var user = new User { Id = userId, Email = "priya@test.com", Role = UserRole.Customer, Salutation = Salutation.Ms, FirstName = "Priya", LastName = "Sharma", Phone = "9876543210" };
+        var customer = new Customer { Id = customerId, UserId = userId, MaritalStatus = MaritalStatus.Single };
+
+        _mockUserRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<User, bool>>>())).ReturnsAsync(new List<User> { user });
+        _mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>())).ReturnsAsync(customer);
+        _mockKycRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>()))
+            .ReturnsAsync(new KycRecord { UserId = userId, KycStatus = KycStatus.Approved });
+
+        var result = (await _agentService.SearchCustomersAsync(null)).ToList();
+
+        Assert.That(result.Count, Is.EqualTo(1));
+        Assert.That(result[0].Email, Is.EqualTo("priya@test.com"));
+        Assert.That(result[0].KycApproved, Is.True);
+        Assert.That(result[0].KycStatus, Is.EqualTo("Approved"));
+    }
+
+    [Test]
+    public async Task SearchCustomersAsync_WithQuery_FiltersCaseInsensitively()
+    {
+        var matchUser = new User { Id = Guid.NewGuid(), Email = "priya@test.com", Role = UserRole.Customer, Salutation = Salutation.Ms, FirstName = "Priya", LastName = "Sharma", Phone = "9876543210" };
+        var otherUser = new User { Id = Guid.NewGuid(), Email = "arjun@test.com", Role = UserRole.Customer, Salutation = Salutation.Mr, FirstName = "Arjun", LastName = "Nair", Phone = "9123456780" };
+        var customer = new Customer { Id = Guid.NewGuid(), UserId = matchUser.Id, MaritalStatus = MaritalStatus.Single };
+
+        _mockUserRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<User, bool>>>())).ReturnsAsync(new List<User> { matchUser, otherUser });
+        _mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>())).ReturnsAsync(customer);
+
+        var result = (await _agentService.SearchCustomersAsync("PRIYA")).ToList();
+
+        Assert.That(result.Count, Is.EqualTo(1));
+        Assert.That(result[0].Email, Is.EqualTo("priya@test.com"));
     }
 
     [Test]

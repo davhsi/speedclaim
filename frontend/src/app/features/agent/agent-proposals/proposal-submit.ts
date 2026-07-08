@@ -35,14 +35,23 @@ export class AgentProposalSubmitComponent implements OnInit {
 
   currentStep = 0;
   selectedCustomerId: string | null = null;
+  selectedCustomerName: string | null = null;
+  selectedCustomerKycApproved = false;
+  selectedCustomerKycStatus: string | null = null;
+  selectedCustomerKycRejectionReason: string | null = null;
   selectedType: ProductType | null = null;
   confirmReady = false;
 
+  customerSearchQuery = signal('');
+  customerSearchResults = signal<AgentCustomerDto[]>([]);
+  searchingCustomers = signal(false);
+  private customerSearchTimeout: ReturnType<typeof setTimeout> | undefined;
+
   productTypes: ProductType[] = ['Health', 'Motor', 'Life'];
 
-  healthForm = { coverType: 'Family floater', members: 4, sumAssured: '₹10,00,000', eldestAge: 67, discount: 5 };
-  motorForm = { vehicleMakeModel: '', regYear: 2022, idv: '', ncb: '20%', discount: 5 };
-  lifeForm = { sumAssured: '', term: '30 years', age: 38, tobaccoUser: 'No', discount: 5 };
+  healthForm = { coverType: 'Family floater', members: 4, sumAssured: '₹10,00,000', eldestAge: 67 };
+  motorForm = { vehicleMakeModel: '', regYear: 2022, idv: '', ncb: '20%' };
+  lifeForm = { sumAssured: '', term: '30 years', age: 38, tobaccoUser: 'No' };
   proposerForm = { fullName: '', dob: '', annualIncome: '', occupation: '', pan: '', aadhaarLast4: '' };
 
   kycDocs = [
@@ -70,17 +79,62 @@ export class AgentProposalSubmitComponent implements OnInit {
 
         if (customers.length > 0) {
           this.selectedCustomerId = customers[0].customerId ?? customers[0].id;
-          const cust = customers[0];
-          this.proposerForm.fullName = cust.fullName;
+          this.applySelectedCustomer(customers[0]);
         }
       },
     });
+  }
+
+  private applySelectedCustomer(c: AgentCustomerDto): void {
+    this.selectedCustomerName = c.fullName;
+    this.selectedCustomerKycApproved = c.kycApproved === true;
+    this.selectedCustomerKycStatus = c.kycStatus ?? null;
+    this.selectedCustomerKycRejectionReason = c.kycRejectionReason ?? null;
+    this.proposerForm.fullName = c.fullName;
+  }
+
+  onMyCustomerSelected(id: string): void {
+    const cust = this.customers().find(c => (c.customerId ?? c.id) === id);
+    if (cust) this.applySelectedCustomer(cust);
+  }
+
+  onCustomerSearchInput(query: string): void {
+    this.customerSearchQuery.set(query);
+    clearTimeout(this.customerSearchTimeout);
+    if (query.trim().length < 2) {
+      this.customerSearchResults.set([]);
+      return;
+    }
+    this.customerSearchTimeout = setTimeout(() => {
+      this.searchingCustomers.set(true);
+      this.agentService.searchCustomers(query.trim()).subscribe({
+        next: results => {
+          this.customerSearchResults.set(results);
+          this.searchingCustomers.set(false);
+        },
+        error: () => {
+          this.customerSearchResults.set([]);
+          this.searchingCustomers.set(false);
+        },
+      });
+    }, 300);
+  }
+
+  selectCustomerFromSearch(c: AgentCustomerDto): void {
+    this.selectedCustomerId = c.customerId ?? c.id;
+    this.applySelectedCustomer(c);
+    this.customerSearchResults.set([]);
+    this.customerSearchQuery.set('');
   }
 
   nextStep(): void {
     if (this.currentStep === 0) {
       if (!this.selectedCustomerId) {
         this.toast.warning('Please select a customer before continuing.');
+        return;
+      }
+      if (!this.selectedCustomerKycApproved) {
+        this.toast.warning('This customer\'s KYC must be approved before you can submit a proposal for them.');
         return;
       }
       if (!this.selectedType) {
@@ -116,9 +170,14 @@ export class AgentProposalSubmitComponent implements OnInit {
 
   calculateQuote(): void {
     const product = this.products().find(p => p.domain.toUpperCase() === this.selectedType?.toUpperCase());
-    if (!product) return;
+    if (!product) {
+      this.toast.error(`No active ${this.selectedType} product is available right now. Please choose a different type or contact an admin.`);
+      return;
+    }
 
-    let age = 35;
+    // Motor isn't age-rated (see backend ProposalService.IsAgeRatedDomain) — the Motor form
+    // never collects a driver/policyholder age, so age stays undefined for Motor quotes.
+    let age: number | undefined;
     let sumAssured = product.minSumAssured;
     let tenureYears = product.minTenureYears;
 
