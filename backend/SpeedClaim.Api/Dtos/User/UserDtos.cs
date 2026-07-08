@@ -39,15 +39,13 @@ public record UpdateFamilyMemberRequest(
 public record AadhaarUploadRequest(
     Guid? CustomerId,
     string AadhaarNumber,
-    IFormFile FrontDocument,
-    IFormFile? BackDocument
+    IFormFile Document
 );
 
 public record PanUploadRequest(
     Guid? CustomerId,
     string PanNumber,
-    IFormFile FrontDocument,
-    IFormFile? BackDocument
+    IFormFile Document
 );
 
 public record KycRecordDto(
@@ -60,10 +58,13 @@ public record KycRecordDto(
     string? PanNumber,
     string? RejectionReason,
     DateTimeOffset CreatedAt,
-    string? AadhaarFrontPath = null,
-    string? AadhaarBackPath = null,
-    string? PanFrontPath = null,
-    string? PanBackPath = null
+    string? AadhaarDocumentPath = null,
+    string? PanDocumentPath = null
+);
+
+public record KycIdentityRevealDto(
+    string? AadhaarNumber,
+    string? PanNumber
 );
 
 public record SingleAddressRequest(

@@ -12,14 +12,17 @@ export interface UnderwriterKycDto {
   kycStatus: string;
   aadhaarUploaded: boolean;
   aadhaarNumber?: string;
-  aadhaarFrontPath?: string;
-  aadhaarBackPath?: string;
+  aadhaarDocumentPath?: string;
   panUploaded: boolean;
   panNumber?: string;
-  panFrontPath?: string;
-  panBackPath?: string;
+  panDocumentPath?: string;
   rejectionReason?: string;
   createdAt: string;
+}
+
+export interface KycIdentityRevealDto {
+  aadhaarNumber?: string;
+  panNumber?: string;
 }
 
 export interface ReviewProposalRequest {
@@ -65,6 +68,10 @@ export class UnderwriterService {
 
   getKycByUserId(customerId: string): Observable<UnderwriterKycDto> {
     return this.http.get<UnderwriterKycDto>(`/api/v1/users/${customerId}/kyc`);
+  }
+
+  revealKycIdentity(customerId: string): Observable<KycIdentityRevealDto> {
+    return this.http.get<KycIdentityRevealDto>(`/api/v1/users/${customerId}/kyc/reveal`);
   }
 
   reviewKyc(customerId: string, isApproved: boolean, reason: string): Observable<UnderwriterKycDto> {

@@ -263,18 +263,10 @@ public class UserService : IUserService
         record.KycStatus = KycStatus.Pending;
         record.UpdatedAt = DateTimeOffset.UtcNow;
 
-        var frontKey = $"kyc/{uid}/aadhaar/front";
-        using var frontStream = request.FrontDocument.OpenReadStream();
-        await _storageService.UploadFileAsync(frontStream, request.FrontDocument.FileName, frontKey);
-        record.AadhaarDocumentKeyFront = frontKey;
-
-        if (request.BackDocument != null)
-        {
-            var backKey = $"kyc/{uid}/aadhaar/back";
-            using var backStream = request.BackDocument.OpenReadStream();
-            await _storageService.UploadFileAsync(backStream, request.BackDocument.FileName, backKey);
-            record.AadhaarDocumentKeyBack = backKey;
-        }
+        var key = $"kyc/{uid}/aadhaar";
+        using var stream = request.Document.OpenReadStream();
+        await _storageService.UploadFileAsync(stream, request.Document.FileName, key);
+        record.AadhaarDocumentKey = key;
 
         await _unitOfWork.AuditLogs.AddAsync(new AuditLog
         {
@@ -312,18 +304,10 @@ public class UserService : IUserService
         record.KycStatus = KycStatus.Pending;
         record.UpdatedAt = DateTimeOffset.UtcNow;
 
-        var frontKey = $"kyc/{uid}/pan/front";
-        using var frontStream = request.FrontDocument.OpenReadStream();
-        await _storageService.UploadFileAsync(frontStream, request.FrontDocument.FileName, frontKey);
-        record.PanDocumentKeyFront = frontKey;
-
-        if (request.BackDocument != null)
-        {
-            var backKey = $"kyc/{uid}/pan/back";
-            using var backStream = request.BackDocument.OpenReadStream();
-            await _storageService.UploadFileAsync(backStream, request.BackDocument.FileName, backKey);
-            record.PanDocumentKeyBack = backKey;
-        }
+        var key = $"kyc/{uid}/pan";
+        using var stream = request.Document.OpenReadStream();
+        await _storageService.UploadFileAsync(stream, request.Document.FileName, key);
+        record.PanDocumentKey = key;
 
         await _unitOfWork.AuditLogs.AddAsync(new AuditLog
         {
@@ -509,8 +493,7 @@ public class UserService : IUserService
             k.AadhaarNumber != null, aadhaarMasked,
             k.PanNumber != null, panMasked,
             k.RejectionReason, k.CreatedAt,
-            k.AadhaarDocumentKeyFront, k.AadhaarDocumentKeyBack,
-            k.PanDocumentKeyFront, k.PanDocumentKeyBack);
+            k.AadhaarDocumentKey, k.PanDocumentKey);
     }
 
     public async Task<KycRecordDto?> GetMyKycAsync(string customerId)
@@ -518,6 +501,31 @@ public class UserService : IUserService
         var uid = Guid.Parse(customerId);
         var kycRecord = await _unitOfWork.KycRecords.FirstOrDefaultAsync(k => k.UserId == uid);
         return kycRecord == null ? null : MapToKycDto(kycRecord);
+    }
+
+    // Underwriter/Admin-only, on-demand decrypt so a reviewer can actually compare the typed
+    // number against the uploaded document photo (the list/detail views only ever return the
+    // last-4-masked value). Every reveal is audit-logged with the actor and target — never the
+    // decrypted value itself — since this is sensitive PII access, not a routine read.
+    public async Task<KycIdentityRevealDto> RevealKycIdentityAsync(string customerId, string revealerId)
+    {
+        var uid = Guid.Parse(customerId);
+        var kycRecord = await _unitOfWork.KycRecords.FirstOrDefaultAsync(k => k.UserId == uid);
+        if (kycRecord == null) throw new NotFoundException("KYC Record not found");
+
+        var aadhaar = kycRecord.AadhaarNumber != null ? _encryptionService.Decrypt(kycRecord.AadhaarNumber) : null;
+        var pan = kycRecord.PanNumber != null ? _encryptionService.Decrypt(kycRecord.PanNumber) : null;
+
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = Guid.Parse(revealerId), EntityType = "KycRecord", EntityId = kycRecord.Id,
+            Action = "KycIdentityRevealed",
+            NewValue = JsonSerializer.Serialize(new { targetUserId = uid }),
+            CreatedAt = DateTime.UtcNow
+        });
+        await _unitOfWork.CompleteAsync();
+
+        return new KycIdentityRevealDto(aadhaar, pan);
     }
 
     public async Task ApproveRejectKycAsync(string customerId, bool isApproved, string reason, string reviewerId)

@@ -331,29 +331,6 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task UploadAadhaarAsync_WithBackDocument_UploadsBack()
-    {
-        var customerId = Guid.NewGuid();
-        _mockKycRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>())).ReturnsAsync((KycRecord?)null);
-        _mockUnitOfWork.Setup(u => u.KycRecords).Returns(_mockKycRepository.Object);
-
-        var mockFront = new Mock<IFormFile>();
-        mockFront.Setup(f => f.FileName).Returns("front.jpg");
-        mockFront.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
-
-        var mockBack = new Mock<IFormFile>();
-        mockBack.Setup(f => f.FileName).Returns("back.jpg");
-        mockBack.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
-
-        var mockStorage = new Mock<IStorageService>();
-        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object, new Mock<IEmailService>().Object);
-
-        await svc.UploadAadhaarAsync(customerId.ToString(), new AadhaarUploadRequest(null, "123456789012", mockFront.Object, mockBack.Object));
-
-        mockStorage.Verify(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), "back.jpg", It.IsAny<string>()), Times.Once);
-    }
-
-    [Test]
     public async Task GetAllUsersAsync_CustomerWithRecord_IncludesMaritalStatus()
     {
         var userId = Guid.NewGuid();
@@ -453,7 +430,7 @@ public class UserServiceTests
         var mockStorage = new Mock<IStorageService>();
         var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object, new Mock<IEmailService>().Object);
 
-        await svc.UploadAadhaarAsync(customerId.ToString(), new AadhaarUploadRequest(null, "123456789012", mockFile.Object, null));
+        await svc.UploadAadhaarAsync(customerId.ToString(), new AadhaarUploadRequest(null, "123456789012", mockFile.Object));
 
         _mockKycRepository.Verify(r => r.AddAsync(It.IsAny<KycRecord>()), Times.Once);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
@@ -473,7 +450,7 @@ public class UserServiceTests
         var mockStorage = new Mock<IStorageService>();
         var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object, new Mock<IEmailService>().Object);
 
-        await svc.UploadAadhaarAsync(customerId.ToString(), new AadhaarUploadRequest(null, "123456789012", mockFile.Object, null));
+        await svc.UploadAadhaarAsync(customerId.ToString(), new AadhaarUploadRequest(null, "123456789012", mockFile.Object));
 
         Assert.That(existing.AadhaarNumber, Is.EqualTo("123456789012"));
         Assert.That(existing.KycStatus, Is.EqualTo(KycStatus.Pending));
@@ -612,6 +589,37 @@ public class UserServiceTests
     }
 
     [Test]
+    public async Task RevealKycIdentityAsync_RecordExists_ReturnsDecryptedNumbersAndAuditLogs()
+    {
+        var userId = Guid.NewGuid();
+        var revealerId = Guid.NewGuid();
+        var kycRecordId = Guid.NewGuid();
+        var kycRecord = new KycRecord { Id = kycRecordId, UserId = userId, KycStatus = KycStatus.Pending, AadhaarNumber = "123456789012", PanNumber = "ABCDE1234F" };
+        _mockKycRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>())).ReturnsAsync(kycRecord);
+        _mockUnitOfWork.Setup(u => u.KycRecords).Returns(_mockKycRepository.Object);
+        var mockAuditRepo = new Mock<IRepository<AuditLog>>();
+        _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(mockAuditRepo.Object);
+
+        var result = await _userService.RevealKycIdentityAsync(userId.ToString(), revealerId.ToString());
+
+        Assert.That(result.AadhaarNumber, Is.EqualTo("123456789012"));
+        Assert.That(result.PanNumber, Is.EqualTo("ABCDE1234F"));
+        mockAuditRepo.Verify(r => r.AddAsync(It.Is<AuditLog>(a =>
+            a.Action == "KycIdentityRevealed" && a.UserId == revealerId && a.EntityId == kycRecordId)), Times.Once);
+    }
+
+    [Test]
+    public void RevealKycIdentityAsync_NoRecord_ThrowsNotFoundException()
+    {
+        _mockKycRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>())).ReturnsAsync((KycRecord?)null);
+        _mockUnitOfWork.Setup(u => u.KycRecords).Returns(_mockKycRepository.Object);
+
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() =>
+            _userService.RevealKycIdentityAsync(Guid.NewGuid().ToString(), Guid.NewGuid().ToString()));
+        Assert.That(ex.Message, Is.EqualTo("KYC Record not found"));
+    }
+
+    [Test]
     public async Task GetPendingKycAsync_ReturnsPendingRecords()
     {
         var records = new List<KycRecord>
@@ -665,7 +673,7 @@ public class UserServiceTests
         mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
 
         var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
-            _userService.UploadAadhaarAsync(customerId.ToString(), new AadhaarUploadRequest(null, "123456789012", mockFile.Object, null)));
+            _userService.UploadAadhaarAsync(customerId.ToString(), new AadhaarUploadRequest(null, "123456789012", mockFile.Object)));
         Assert.That(ex.Message, Does.Contain("Aadhaar number is already registered"));
     }
 
@@ -684,7 +692,7 @@ public class UserServiceTests
         mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
 
         var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
-            _userService.UploadPanAsync(customerId.ToString(), new PanUploadRequest(null, "ABCDE1234F", mockFile.Object, null)));
+            _userService.UploadPanAsync(customerId.ToString(), new PanUploadRequest(null, "ABCDE1234F", mockFile.Object)));
         Assert.That(ex.Message, Does.Contain("PAN number is already registered"));
     }
 
@@ -703,7 +711,7 @@ public class UserServiceTests
         var mockStorage = new Mock<IStorageService>();
         var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object, new Mock<IEmailService>().Object);
 
-        await svc.UploadAadhaarAsync(customerId.ToString(), new AadhaarUploadRequest(null, "123456789012", mockFile.Object, null));
+        await svc.UploadAadhaarAsync(customerId.ToString(), new AadhaarUploadRequest(null, "123456789012", mockFile.Object));
 
         Assert.That(existing.AadhaarNumber, Is.EqualTo("123456789012"));
     }
@@ -758,7 +766,7 @@ public class UserServiceTests
         var mockStorage = new Mock<IStorageService>();
         var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object, new Mock<IEmailService>().Object);
 
-        await svc.UploadPanAsync(customerId.ToString(), new PanUploadRequest(null, "ABCDE1234F", mockFile.Object, null));
+        await svc.UploadPanAsync(customerId.ToString(), new PanUploadRequest(null, "ABCDE1234F", mockFile.Object));
 
         Assert.That(existing.PanNumber, Is.EqualTo("ABCDE1234F"));
     }

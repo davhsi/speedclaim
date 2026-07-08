@@ -53,14 +53,14 @@ export class ProfileService {
 
   uploadAadhaar(file: File, aadhaarNumber: string): Observable<KycRecordDto> {
     const fd = new FormData();
-    fd.append('frontDocument', file);
+    fd.append('document', file);
     fd.append('aadhaarNumber', aadhaarNumber);
     return this.http.post<KycRecordDto>(`${this.api}/kyc/aadhaar`, fd);
   }
 
   uploadPan(file: File, panNumber: string): Observable<KycRecordDto> {
     const fd = new FormData();
-    fd.append('frontDocument', file);
+    fd.append('document', file);
     fd.append('panNumber', panNumber);
     return this.http.post<KycRecordDto>(`${this.api}/kyc/pan`, fd);
   }

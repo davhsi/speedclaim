@@ -17,7 +17,7 @@ describe('AgentCustomerKycComponent', () => {
 
   const customers: AgentCustomerDto[] = [{ id: 'c1', fullName: 'Jane Doe' } as AgentCustomerDto];
 
-  function create() {
+  function create(queryParams: Record<string, string> = {}) {
     agentService = { getCustomers: vi.fn(() => of(customers)) };
     toast = { success: vi.fn(), error: vi.fn() };
     router = { navigate: vi.fn(() => Promise.resolve(true)) };
@@ -30,7 +30,7 @@ describe('AgentCustomerKycComponent', () => {
         { provide: AgentService, useValue: agentService },
         { provide: ToastService, useValue: toast },
         { provide: Router, useValue: router },
-        { provide: ActivatedRoute, useValue: {} },
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: (key: string) => queryParams[key] ?? null } } } },
       ],
     });
     const fixture = TestBed.createComponent(AgentCustomerKycComponent);
@@ -44,6 +44,30 @@ describe('AgentCustomerKycComponent', () => {
   it('loads customers on init', () => {
     const fixture = create();
     expect(fixture.componentInstance.customers()).toEqual(customers);
+  });
+
+  describe('customerId query param preselect', () => {
+    it('preselects the customer and fetches their KYC record when the id matches', () => {
+      const fixture = create({ customerId: 'c1' });
+
+      const call = httpMock.expectOne('/api/v1/agents/customers/c1/kyc');
+      call.flush({ id: 'k1' } as KycRecordDto);
+
+      expect(fixture.componentInstance.selectedCustomerId()).toBe('c1');
+      expect(fixture.componentInstance.existingKyc()).toEqual({ id: 'k1' });
+    });
+
+    it('ignores the query param when it does not match any of the agent\'s customers', () => {
+      const fixture = create({ customerId: 'not-mine' });
+      expect(fixture.componentInstance.selectedCustomerId()).toBeNull();
+      httpMock.expectNone(() => true);
+    });
+
+    it('does nothing when there is no customerId query param', () => {
+      const fixture = create();
+      expect(fixture.componentInstance.selectedCustomerId()).toBeNull();
+      httpMock.expectNone(() => true);
+    });
   });
 
   describe('onCustomerChange', () => {
@@ -123,14 +147,14 @@ describe('AgentCustomerKycComponent', () => {
   describe('submit', () => {
     it('does nothing when no customer is selected', () => {
       const fixture = create();
-      fixture.componentInstance.frontFile = new File(['x'], 'a.jpg');
+      fixture.componentInstance.documentFile = new File(['x'], 'a.jpg');
       fixture.componentInstance.idType.set('aadhaar');
       fixture.componentInstance.idNumber.set('123456789012');
       fixture.componentInstance.submit();
       httpMock.expectNone(() => true);
     });
 
-    it('does nothing without a front file', () => {
+    it('does nothing without a document file', () => {
       const fixture = create();
       fixture.componentInstance.selectedCustomerId.set('c1');
       fixture.componentInstance.idType.set('aadhaar');
@@ -142,20 +166,18 @@ describe('AgentCustomerKycComponent', () => {
     it('does nothing when the id number is invalid', () => {
       const fixture = create();
       fixture.componentInstance.selectedCustomerId.set('c1');
-      fixture.componentInstance.frontFile = new File(['x'], 'a.jpg');
+      fixture.componentInstance.documentFile = new File(['x'], 'a.jpg');
       fixture.componentInstance.idType.set('aadhaar');
       fixture.componentInstance.idNumber.set('123');
       fixture.componentInstance.submit();
       httpMock.expectNone(() => true);
     });
 
-    it('uploads Aadhaar as multipart form data including the back document when present', () => {
+    it('uploads Aadhaar as multipart form data', () => {
       const fixture = create();
-      const front = new File(['x'], 'front.jpg');
-      const back = new File(['x'], 'back.jpg');
+      const doc = new File(['x'], 'aadhaar.jpg');
       fixture.componentInstance.selectedCustomerId.set('c1');
-      fixture.componentInstance.frontFile = front;
-      fixture.componentInstance.backFile = back;
+      fixture.componentInstance.documentFile = doc;
       fixture.componentInstance.idType.set('aadhaar');
       fixture.componentInstance.idNumber.set('123456789012');
 
@@ -163,8 +185,7 @@ describe('AgentCustomerKycComponent', () => {
 
       const call = httpMock.expectOne('/api/v1/users/kyc/aadhaar');
       const body = call.request.body as FormData;
-      expect(body.get('frontDocument')).toBe(front);
-      expect(body.get('backDocument')).toBe(back);
+      expect(body.get('document')).toBe(doc);
       expect(body.get('customerId')).toBe('c1');
       expect(body.get('aadhaarNumber')).toBe('123456789012');
       call.flush({});
@@ -175,9 +196,9 @@ describe('AgentCustomerKycComponent', () => {
 
     it('uploads PAN as multipart form data', () => {
       const fixture = create();
-      const front = new File(['x'], 'front.jpg');
+      const doc = new File(['x'], 'pan.jpg');
       fixture.componentInstance.selectedCustomerId.set('c1');
-      fixture.componentInstance.frontFile = front;
+      fixture.componentInstance.documentFile = doc;
       fixture.componentInstance.idType.set('pan');
       fixture.componentInstance.idNumber.set('abcde1234f');
 
@@ -194,7 +215,7 @@ describe('AgentCustomerKycComponent', () => {
     it('shows an error toast and resets submitting on upload failure', () => {
       const fixture = create();
       fixture.componentInstance.selectedCustomerId.set('c1');
-      fixture.componentInstance.frontFile = new File(['x'], 'front.jpg');
+      fixture.componentInstance.documentFile = new File(['x'], 'front.jpg');
       fixture.componentInstance.idType.set('aadhaar');
       fixture.componentInstance.idNumber.set('123456789012');
 

@@ -27,7 +27,7 @@
         <div class="bg-white border border-line rounded-card shadow-sm p-5">
           <div class="flex justify-between items-center mb-4">
             <div class="text-sm font-semibold text-ink">Identity documents</div>
-            <button (click)="revealed.set(!revealed())" class="flex items-center gap-1.5 h-[34px] px-3.5 border border-line bg-white rounded-lg text-xs font-semibold text-primary cursor-pointer hover:bg-surface transition-colors">
+            <button (click)="toggleReveal()" [disabled]="revealing()" class="flex items-center gap-1.5 h-[34px] px-3.5 border border-line bg-white rounded-lg text-xs font-semibold text-primary cursor-pointer hover:bg-surface transition-colors disabled:opacity-50 disabled:cursor-wait">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 @if (revealed()) {
                   <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>
@@ -35,7 +35,7 @@
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
                 }
               </svg>
-              {{ revealed() ? 'Hide identity' : 'Reveal identity' }}
+              {{ revealing() ? 'Revealing…' : (revealed() ? 'Hide identity' : 'Reveal identity') }}
             </button>
           </div>
 
@@ -51,24 +51,15 @@
               }
             </div>
             @if (k.aadhaarNumber) {
-              <div class="text-sm text-body sc-numeric mb-3">{{ revealed() ? k.aadhaarNumber : maskAadhaar(k.aadhaarNumber) }}</div>
+              <div class="text-sm text-body sc-numeric mb-3">{{ revealed() ? (revealedIdentity()?.aadhaarNumber ?? k.aadhaarNumber) : k.aadhaarNumber }}</div>
             }
-            @if (k.aadhaarFrontPath || k.aadhaarBackPath) {
+            @if (k.aadhaarDocumentPath) {
               <div class="flex gap-2 flex-wrap">
-                @if (k.aadhaarFrontPath) {
-                  <a [href]="'/' + k.aadhaarFrontPath" target="_blank" rel="noopener"
-                     class="flex items-center gap-1.5 h-8 px-3 border border-line rounded-lg text-xs font-medium text-primary hover:bg-surface transition-colors no-underline">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                    Front
-                  </a>
-                }
-                @if (k.aadhaarBackPath) {
-                  <a [href]="'/' + k.aadhaarBackPath" target="_blank" rel="noopener"
-                     class="flex items-center gap-1.5 h-8 px-3 border border-line rounded-lg text-xs font-medium text-primary hover:bg-surface transition-colors no-underline">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                    Back
-                  </a>
-                }
+                <button type="button" (click)="openPreview(k.aadhaarDocumentPath, 'Aadhaar')"
+                   class="flex items-center gap-1.5 h-8 px-3 border border-line rounded-lg text-xs font-medium text-primary hover:bg-surface transition-colors cursor-pointer bg-white">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  View document
+                </button>
               </div>
             }
           </div>
@@ -85,24 +76,15 @@
               }
             </div>
             @if (k.panNumber) {
-              <div class="text-sm text-body sc-numeric mb-3">{{ revealed() ? k.panNumber : maskPan(k.panNumber) }}</div>
+              <div class="text-sm text-body sc-numeric mb-3">{{ revealed() ? (revealedIdentity()?.panNumber ?? k.panNumber) : k.panNumber }}</div>
             }
-            @if (k.panFrontPath || k.panBackPath) {
+            @if (k.panDocumentPath) {
               <div class="flex gap-2 flex-wrap">
-                @if (k.panFrontPath) {
-                  <a [href]="'/' + k.panFrontPath" target="_blank" rel="noopener"
-                     class="flex items-center gap-1.5 h-8 px-3 border border-line rounded-lg text-xs font-medium text-primary hover:bg-surface transition-colors no-underline">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                    Front
-                  </a>
-                }
-                @if (k.panBackPath) {
-                  <a [href]="'/' + k.panBackPath" target="_blank" rel="noopener"
-                     class="flex items-center gap-1.5 h-8 px-3 border border-line rounded-lg text-xs font-medium text-primary hover:bg-surface transition-colors no-underline">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                    Back
-                  </a>
-                }
+                <button type="button" (click)="openPreview(k.panDocumentPath, 'PAN')"
+                   class="flex items-center gap-1.5 h-8 px-3 border border-line rounded-lg text-xs font-medium text-primary hover:bg-surface transition-colors cursor-pointer bg-white">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  View document
+                </button>
               </div>
             }
           </div>
@@ -162,4 +144,6 @@
       </div>
     </div>
   }
+
+  <app-document-preview [doc]="previewDoc()" (closed)="closePreview()" />
 </div>

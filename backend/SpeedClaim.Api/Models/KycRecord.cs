@@ -11,13 +11,11 @@ public class KycRecord
 
     // Aadhaar document
     public string? AadhaarNumber { get; set; }
-    public string? AadhaarDocumentKeyFront { get; set; }
-    public string? AadhaarDocumentKeyBack { get; set; }
+    public string? AadhaarDocumentKey { get; set; }
 
     // PAN document
     public string? PanNumber { get; set; }
-    public string? PanDocumentKeyFront { get; set; }
-    public string? PanDocumentKeyBack { get; set; }
+    public string? PanDocumentKey { get; set; }
 
     public Guid? ReviewedById { get; set; }
     public DateTimeOffset? ReviewedAt { get; set; }

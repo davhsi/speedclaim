@@ -7,7 +7,7 @@ import { UnderwriterService, UnderwriterKycDto } from '../services/underwriter.s
 import { ToastService } from '../../../shared/components/toast/toast.service';
 
 describe('KycDetailComponent', () => {
-  let uwService: { getKycByUserId: ReturnType<typeof vi.fn>; reviewKyc: ReturnType<typeof vi.fn> };
+  let uwService: { getKycByUserId: ReturnType<typeof vi.fn>; reviewKyc: ReturnType<typeof vi.fn>; revealKycIdentity: ReturnType<typeof vi.fn> };
   let router: { navigate: ReturnType<typeof vi.fn> };
   let toast: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
 
@@ -35,7 +35,7 @@ describe('KycDetailComponent', () => {
   }
 
   beforeEach(() => {
-    uwService = { getKycByUserId: vi.fn(), reviewKyc: vi.fn() };
+    uwService = { getKycByUserId: vi.fn(), reviewKyc: vi.fn(), revealKycIdentity: vi.fn() };
     router = { navigate: vi.fn() };
     toast = { success: vi.fn(), error: vi.fn() };
   });
@@ -55,20 +55,53 @@ describe('KycDetailComponent', () => {
     });
   });
 
-  describe('maskAadhaar / maskPan', () => {
-    it('masks all but the last 4 digits of an Aadhaar number', () => {
+  describe('toggleReveal', () => {
+    it('fetches and shows the decrypted identity on first reveal', () => {
       const fixture = create();
-      expect(fixture.componentInstance.maskAadhaar('123456789012')).toBe('XXXXXXXX9012');
+      const c = fixture.componentInstance;
+      uwService.revealKycIdentity.mockReturnValue(of({ aadhaarNumber: '123456789012', panNumber: 'ABCDE1234F' }));
+
+      c.toggleReveal();
+
+      expect(uwService.revealKycIdentity).toHaveBeenCalledWith('u1');
+      expect(c.revealed()).toBe(true);
+      expect(c.revealedIdentity()).toEqual({ aadhaarNumber: '123456789012', panNumber: 'ABCDE1234F' });
     });
 
-    it('returns short Aadhaar numbers unmasked', () => {
+    it('does not re-fetch on a second reveal — reuses the cached value', () => {
       const fixture = create();
-      expect(fixture.componentInstance.maskAadhaar('1234')).toBe('1234');
+      const c = fixture.componentInstance;
+      uwService.revealKycIdentity.mockReturnValue(of({ aadhaarNumber: '123456789012', panNumber: 'ABCDE1234F' }));
+
+      c.toggleReveal();
+      c.toggleReveal(); // hide
+      c.toggleReveal(); // reveal again
+
+      expect(uwService.revealKycIdentity).toHaveBeenCalledTimes(1);
+      expect(c.revealed()).toBe(true);
     });
 
-    it('masks the middle of a PAN, keeping the first 3 and last char', () => {
+    it('toggles hidden without calling the API', () => {
       const fixture = create();
-      expect(fixture.componentInstance.maskPan('ABCDE1234F')).toBe('ABC******F');
+      const c = fixture.componentInstance;
+      uwService.revealKycIdentity.mockReturnValue(of({ aadhaarNumber: '123456789012', panNumber: 'ABCDE1234F' }));
+      c.toggleReveal();
+
+      c.toggleReveal();
+
+      expect(c.revealed()).toBe(false);
+    });
+
+    it('shows an error toast and resets revealing on failure', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      uwService.revealKycIdentity.mockReturnValue(throwError(() => ({ status: 500 })));
+
+      c.toggleReveal();
+
+      expect(toast.error).toHaveBeenCalledWith('Failed to reveal identity details.');
+      expect(c.revealing()).toBe(false);
+      expect(c.revealed()).toBe(false);
     });
   });
 
@@ -166,6 +199,16 @@ describe('KycDetailComponent', () => {
       const fixture = create();
       fixture.componentInstance.goBack();
       expect(router.navigate).toHaveBeenCalledWith(['/underwriter/kyc']);
+    });
+  });
+
+  describe('document preview', () => {
+    it('openPreview/closePreview toggle the previewed document with a friendly label', () => {
+      const fixture = create();
+      fixture.componentInstance.openPreview('uploads/kyc/x.jpg', 'Aadhaar');
+      expect(fixture.componentInstance.previewDoc()).toEqual({ url: '/uploads/kyc/x.jpg', label: 'Aadhaar' });
+      fixture.componentInstance.closePreview();
+      expect(fixture.componentInstance.previewDoc()).toBeNull();
     });
   });
 });

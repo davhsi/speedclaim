@@ -1,6 +1,6 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AgentService, AgentCustomerDto } from '../services/agent.service';
 import { KycRecordDto } from '../../../core/models/api.models';
@@ -21,14 +21,14 @@ export class AgentCustomerKycComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   customers = signal<AgentCustomerDto[]>([]);
   selectedCustomerId = signal<string | null>(null);
   existingKyc = signal<KycRecordDto | null>(null);
   idType = signal<'aadhaar' | 'pan'>('aadhaar');
   idNumber = signal('');
-  frontFile: File | null = null;
-  backFile: File | null = null;
+  documentFile: File | null = null;
   submitting = signal(false);
 
   idValid = computed(() => {
@@ -46,12 +46,22 @@ export class AgentCustomerKycComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.agentService.getCustomers().subscribe(c => this.customers.set(c));
+    this.agentService.getCustomers().subscribe(c => {
+      this.customers.set(c);
+      const preselectId = this.route.snapshot.queryParamMap.get('customerId');
+      if (preselectId && c.some(cust => cust.id === preselectId)) {
+        this.selectCustomer(preselectId);
+      }
+    });
   }
 
   onCustomerChange(event: Event): void {
     const id = (event.target as HTMLSelectElement).value;
-    this.selectedCustomerId.set(id || null);
+    this.selectCustomer(id || null);
+  }
+
+  private selectCustomer(id: string | null): void {
+    this.selectedCustomerId.set(id);
     this.existingKyc.set(null);
     if (id) {
       this.http.get<KycRecordDto>(`/api/v1/agents/customers/${id}/kyc`).subscribe({
@@ -62,17 +72,16 @@ export class AgentCustomerKycComponent implements OnInit {
   }
 
   submit(): void {
-    if (this.submitting() || !this.selectedCustomerId() || !this.frontFile || !this.idValid()) return;
+    if (this.submitting() || !this.selectedCustomerId() || !this.documentFile || !this.idValid()) return;
     this.submitting.set(true);
 
     const idValue = this.idNumber().trim().toUpperCase();
     const fd = new FormData();
-    fd.append('frontDocument', this.frontFile);
+    fd.append('document', this.documentFile);
     fd.append('customerId', this.selectedCustomerId()!.toString());
 
     if (this.idType() === 'aadhaar') {
       fd.append('aadhaarNumber', idValue);
-      if (this.backFile) fd.append('backDocument', this.backFile);
       this.http.post<KycRecordDto>('/api/v1/users/kyc/aadhaar', fd).subscribe({
         next: () => {
           this.toast.success('Aadhaar uploaded successfully');

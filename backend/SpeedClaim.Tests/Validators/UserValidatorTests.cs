@@ -86,45 +86,45 @@ public class AadhaarUploadRequestValidatorTests
     [Test]
     public void Valid_Aadhaar_Request_Passes()
     {
-        var req = new AadhaarUploadRequest(null, "123456789012", MockFile().Object, null);
+        var req = new AadhaarUploadRequest(null, "123456789012", MockFile().Object);
         _validator.TestValidate(req).ShouldNotHaveAnyValidationErrors();
     }
 
     [Test]
     public void Aadhaar_With_11_Digits_Fails()
     {
-        var req = new AadhaarUploadRequest(null, "12345678901", MockFile().Object, null);
+        var req = new AadhaarUploadRequest(null, "12345678901", MockFile().Object);
         _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.AadhaarNumber);
     }
 
     [Test]
     public void Aadhaar_With_Letters_Fails()
     {
-        var req = new AadhaarUploadRequest(null, "12345678901A", MockFile().Object, null);
+        var req = new AadhaarUploadRequest(null, "12345678901A", MockFile().Object);
         _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.AadhaarNumber);
     }
 
     [Test]
-    public void Null_FrontDocument_Fails()
+    public void Null_Document_Fails()
     {
-        var req = new AadhaarUploadRequest(null, "123456789012", null!, null);
-        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.FrontDocument);
+        var req = new AadhaarUploadRequest(null, "123456789012", null!);
+        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.Document);
     }
 
     [Test]
     public void File_Exceeding_5MB_Fails()
     {
         var bigFile = MockFile("doc.pdf", 6 * 1024 * 1024);
-        var req = new AadhaarUploadRequest(null, "123456789012", bigFile.Object, null);
-        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.FrontDocument);
+        var req = new AadhaarUploadRequest(null, "123456789012", bigFile.Object);
+        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.Document);
     }
 
     [Test]
     public void Disallowed_File_Type_Fails()
     {
         var exeFile = MockFile("document.exe");
-        var req = new AadhaarUploadRequest(null, "123456789012", exeFile.Object, null);
-        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.FrontDocument);
+        var req = new AadhaarUploadRequest(null, "123456789012", exeFile.Object);
+        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.Document);
     }
 }
 
@@ -147,38 +147,38 @@ public class PanUploadRequestValidatorTests
     [Test]
     public void Valid_Pan_Request_Passes()
     {
-        var req = new PanUploadRequest(null, "ABCDE1234F", MockFile().Object, null);
+        var req = new PanUploadRequest(null, "ABCDE1234F", MockFile().Object);
         _validator.TestValidate(req).ShouldNotHaveAnyValidationErrors();
     }
 
     [Test]
     public void Invalid_Pan_Format_Fails()
     {
-        var req = new PanUploadRequest(null, "ABCDE12345", MockFile().Object, null);
+        var req = new PanUploadRequest(null, "ABCDE12345", MockFile().Object);
         _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.PanNumber);
     }
 
     [Test]
-    public void Null_FrontDocument_Fails()
+    public void Null_Document_Fails()
     {
-        var req = new PanUploadRequest(null, "ABCDE1234F", null!, null);
-        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.FrontDocument);
+        var req = new PanUploadRequest(null, "ABCDE1234F", null!);
+        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.Document);
     }
 
     [Test]
     public void File_Exceeding_5MB_Fails()
     {
         var bigFile = MockFile("doc.pdf", 6 * 1024 * 1024);
-        var req = new PanUploadRequest(null, "ABCDE1234F", bigFile.Object, null);
-        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.FrontDocument);
+        var req = new PanUploadRequest(null, "ABCDE1234F", bigFile.Object);
+        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.Document);
     }
 
     [Test]
     public void Disallowed_File_Type_Fails()
     {
         var exeFile = MockFile("document.exe");
-        var req = new PanUploadRequest(null, "ABCDE1234F", exeFile.Object, null);
-        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.FrontDocument);
+        var req = new PanUploadRequest(null, "ABCDE1234F", exeFile.Object);
+        _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.Document);
     }
 }
 

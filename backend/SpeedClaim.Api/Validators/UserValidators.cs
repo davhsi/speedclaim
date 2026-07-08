@@ -67,21 +67,12 @@ public class AadhaarUploadRequestValidator : AbstractValidator<AadhaarUploadRequ
             .NotEmpty().WithMessage("Aadhaar number is required.")
             .Matches(@"^\d{12}$").WithMessage("Aadhaar number must be exactly 12 digits.");
 
-        RuleFor(x => x.FrontDocument)
-            .NotNull().WithMessage("Front document is required.")
-            .Must(f => f != null && f.Length > 0).WithMessage("Front document cannot be empty.")
-            .Must(f => f == null || f.Length <= MaxFileSizeBytes).WithMessage("Front document must not exceed 5 MB.")
+        RuleFor(x => x.Document)
+            .NotNull().WithMessage("Document is required.")
+            .Must(f => f != null && f.Length > 0).WithMessage("Document cannot be empty.")
+            .Must(f => f == null || f.Length <= MaxFileSizeBytes).WithMessage("Document must not exceed 5 MB.")
             .Must(f => f == null || IsAllowedFileType(f.FileName))
-            .WithMessage("Front document must be a PDF, JPG, JPEG, or PNG file.");
-
-        When(x => x.BackDocument != null, () =>
-        {
-            RuleFor(x => x.BackDocument)
-                .Must(f => f == null || f.Length > 0).WithMessage("Back document cannot be empty.")
-                .Must(f => f == null || f.Length <= MaxFileSizeBytes).WithMessage("Back document must not exceed 5 MB.")
-                .Must(f => f == null || IsAllowedFileType(f.FileName))
-                .WithMessage("Back document must be a PDF, JPG, JPEG, or PNG file.");
-        });
+            .WithMessage("Document must be a PDF, JPG, JPEG, or PNG file.");
     }
 
     private static bool IsAllowedFileType(string fileName)
@@ -101,21 +92,12 @@ public class PanUploadRequestValidator : AbstractValidator<PanUploadRequest>
             .NotEmpty().WithMessage("PAN number is required.")
             .Matches(@"^[A-Z]{5}[0-9]{4}[A-Z]{1}$").WithMessage("PAN number must be in the format ABCDE1234F.");
 
-        RuleFor(x => x.FrontDocument)
-            .NotNull().WithMessage("Front document is required.")
-            .Must(f => f != null && f.Length > 0).WithMessage("Front document cannot be empty.")
-            .Must(f => f == null || f.Length <= MaxFileSizeBytes).WithMessage("Front document must not exceed 5 MB.")
+        RuleFor(x => x.Document)
+            .NotNull().WithMessage("Document is required.")
+            .Must(f => f != null && f.Length > 0).WithMessage("Document cannot be empty.")
+            .Must(f => f == null || f.Length <= MaxFileSizeBytes).WithMessage("Document must not exceed 5 MB.")
             .Must(f => f == null || IsAllowedFileType(f.FileName))
-            .WithMessage("Front document must be a PDF, JPG, JPEG, or PNG file.");
-
-        When(x => x.BackDocument != null, () =>
-        {
-            RuleFor(x => x.BackDocument)
-                .Must(f => f == null || f.Length > 0).WithMessage("Back document cannot be empty.")
-                .Must(f => f == null || f.Length <= MaxFileSizeBytes).WithMessage("Back document must not exceed 5 MB.")
-                .Must(f => f == null || IsAllowedFileType(f.FileName))
-                .WithMessage("Back document must be a PDF, JPG, JPEG, or PNG file.");
-        });
+            .WithMessage("Document must be a PDF, JPG, JPEG, or PNG file.");
     }
 
     private static bool IsAllowedFileType(string fileName)

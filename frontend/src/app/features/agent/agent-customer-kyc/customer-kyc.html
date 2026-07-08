@@ -13,7 +13,7 @@
     <!-- Customer selector -->
     <div>
       <label for="kyc-customer-select" class="block text-xs font-medium text-body mb-1.5">Select customer</label>
-      <select id="kyc-customer-select" class="h-[42px]" (change)="onCustomerChange($event)">
+      <select id="kyc-customer-select" class="h-[42px]" [value]="selectedCustomerId() ?? ''" (change)="onCustomerChange($event)">
         <option value="">Choose a customer...</option>
         @for (c of customers(); track c.id) {
           <option [value]="c.id">{{ c.fullName }} ({{ c.email }})</option>
@@ -75,18 +75,11 @@
       }
     </div>
 
-    <!-- File uploads -->
+    <!-- File upload -->
     <div>
-      <div class="block text-xs font-medium text-body mb-1.5">{{ idType() === 'aadhaar' ? 'Aadhaar front' : 'PAN front' }}</div>
-      <app-file-upload label="Upload front page" hint="PDF, JPG, PNG up to 5MB" (fileSelected)="frontFile = $event" />
+      <div class="block text-xs font-medium text-body mb-1.5">{{ idType() === 'aadhaar' ? 'Aadhaar' : 'PAN' }}</div>
+      <app-file-upload label="Upload document" hint="PDF, JPG, PNG up to 5MB" [maxSizeMb]="5" (fileSelected)="documentFile = $event" />
     </div>
-
-    @if (idType() === 'aadhaar') {
-      <div>
-        <div class="block text-xs font-medium text-body mb-1.5">Aadhaar back (optional)</div>
-        <app-file-upload label="Upload back page" hint="PDF, JPG, PNG up to 5MB" (fileSelected)="backFile = $event" />
-      </div>
-    }
 
     <!-- DPDP consent -->
     <div class="p-3.5 bg-warning-bg border border-warning-border rounded-[10px]">
@@ -99,7 +92,7 @@
       <a routerLink="/agent/customers" class="h-10 px-5 bg-white border border-line text-[13px] font-semibold text-body rounded-control hover:bg-surface transition-colors flex items-center">Cancel</a>
       <button
         class="h-10 px-5 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover disabled:opacity-40 transition-colors"
-        [disabled]="!selectedCustomerId() || !frontFile || !idValid() || submitting()"
+        [disabled]="!selectedCustomerId() || !documentFile || !idValid() || submitting()"
         (click)="submit()"
       >{{ submitting() ? 'Submitting...' : 'Submit KYC' }}</button>
     </div>

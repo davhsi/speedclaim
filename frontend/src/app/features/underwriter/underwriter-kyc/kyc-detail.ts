@@ -3,14 +3,15 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
-import { UnderwriterService, UnderwriterKycDto } from '../services/underwriter.service';
+import { UnderwriterService, UnderwriterKycDto, KycIdentityRevealDto } from '../services/underwriter.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { FormsModule } from '@angular/forms';
+import { DocumentPreviewComponent, PreviewDoc } from '../../../shared/components/document-preview/document-preview';
 
 @Component({
   selector: 'app-uw-kyc-detail',
   standalone: true,
-  imports: [StatusBadgeComponent, ConfirmDialogComponent, DateFormatPipe, FormsModule],
+  imports: [StatusBadgeComponent, ConfirmDialogComponent, DateFormatPipe, FormsModule, DocumentPreviewComponent],
   templateUrl: './kyc-detail.html',
 })
 export class KycDetailComponent implements OnInit {
@@ -23,8 +24,11 @@ export class KycDetailComponent implements OnInit {
   loading = signal(true);
   notFound = signal(false);
   revealed = signal(false);
+  revealedIdentity = signal<KycIdentityRevealDto | null>(null);
+  revealing = signal(false);
   showDialog = signal<'approve' | 'reject' | null>(null);
   actionInFlight = signal(false);
+  previewDoc = signal<PreviewDoc | null>(null);
   rejectReason = '';
 
   ngOnInit(): void {
@@ -41,14 +45,32 @@ export class KycDetailComponent implements OnInit {
     });
   }
 
-  maskAadhaar(num: string): string {
-    if (num.length <= 4) return num;
-    return 'X'.repeat(num.length - 4) + num.slice(-4);
-  }
-
-  maskPan(num: string): string {
-    if (num.length <= 4) return num;
-    return num.slice(0, 3) + '*'.repeat(num.length - 4) + num.slice(-1);
+  // The list/detail KYC endpoints only ever return the last-4-masked number (see
+  // UserService.MapToKycDto). Revealing the full number is a separate, audited, on-demand
+  // call — fetched once per visit and cached, not re-requested on every toggle.
+  toggleReveal(): void {
+    if (this.revealed()) {
+      this.revealed.set(false);
+      return;
+    }
+    if (this.revealedIdentity()) {
+      this.revealed.set(true);
+      return;
+    }
+    const userId = this.kyc()?.userId;
+    if (!userId || this.revealing()) return;
+    this.revealing.set(true);
+    this.uwService.revealKycIdentity(userId).subscribe({
+      next: identity => {
+        this.revealedIdentity.set(identity);
+        this.revealed.set(true);
+        this.revealing.set(false);
+      },
+      error: () => {
+        this.toast.error('Failed to reveal identity details.');
+        this.revealing.set(false);
+      },
+    });
   }
 
   onApprove(): void {
@@ -93,4 +115,9 @@ export class KycDetailComponent implements OnInit {
   goBack(): void {
     this.router.navigate(['/underwriter/kyc']);
   }
+
+  openPreview(path: string, label: string): void {
+    this.previewDoc.set({ url: '/' + path, label });
+  }
+  closePreview(): void { this.previewDoc.set(null); }
 }

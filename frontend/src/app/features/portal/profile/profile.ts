@@ -1,10 +1,10 @@
 import { Component, inject, signal, computed, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ProfileService } from './services/profile.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserDto, FamilyMemberDto, KycRecordDto, AddressDto } from '../../../core/models/api.models';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge';
-import { FileUploadComponent } from '../../../shared/components/file-upload/file-upload';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
@@ -17,7 +17,7 @@ const PAN_PATTERN = /^[A-Z]{5}\d{4}[A-Z]$/;
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [FormsModule, ReactiveFormsModule, StatusBadgeComponent, FileUploadComponent, ConfirmDialogComponent, DateFormatPipe, AppSelectComponent],
+  imports: [ReactiveFormsModule, RouterLink, StatusBadgeComponent, ConfirmDialogComponent, DateFormatPipe, AppSelectComponent],
   templateUrl: './profile.html',
 })
 export class ProfileComponent implements OnInit {
@@ -60,6 +60,14 @@ export class ProfileComponent implements OnInit {
   panValid = computed(() => PAN_PATTERN.test(this.panNum().trim().toUpperCase()));
 
   kycApproved = computed(() => this.profile()?.kycApproved ?? false);
+  kycStatus = computed(() => this.kyc()?.kycStatus ?? (this.kycApproved() ? 'Approved' : 'Pending'));
+  kycMessage = computed(() => {
+    switch (this.kycStatus()) {
+      case 'Approved': return 'Identity verification is complete. Your verified profile fields are locked for security.';
+      case 'Rejected': return this.kyc()?.rejectionReason || 'Your KYC was rejected. Please review and re-upload documents.';
+      default: return this.kyc() ? 'Your documents are under review.' : 'Upload Aadhaar and PAN from the KYC page.';
+    }
+  });
 
   profileForm = this.fb.group({
     salutation: ['Mr'],
@@ -94,6 +102,11 @@ export class ProfileComponent implements OnInit {
     const u = this.authService.currentUser();
     if (!u) return '?';
     return (u.firstName.charAt(0) + u.lastName.charAt(0)).toUpperCase();
+  }
+
+  kycDocumentStatus(uploaded?: boolean): string {
+    if (this.kycStatus() === 'Approved') return 'Approved';
+    return uploaded ? this.kycStatus() : 'NotUploaded';
   }
 
   avatarUrl(): string | null {

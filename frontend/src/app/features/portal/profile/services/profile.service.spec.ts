@@ -140,7 +140,7 @@ describe('ProfileService', () => {
     expect(result).toEqual(kyc);
   });
 
-  it('uploadAadhaar POSTs multipart form data with frontDocument and aadhaarNumber', () => {
+  it('uploadAadhaar POSTs multipart form data with document and aadhaarNumber', () => {
     const file = new File(['x'], 'aadhaar.jpg');
 
     service.uploadAadhaar(file, '123456789012').subscribe();
@@ -149,12 +149,12 @@ describe('ProfileService', () => {
     expect(call.request.method).toBe('POST');
     const body = call.request.body as FormData;
     expect(body).toBeInstanceOf(FormData);
-    expect(body.get('frontDocument')).toBe(file);
+    expect(body.get('document')).toBe(file);
     expect(body.get('aadhaarNumber')).toBe('123456789012');
     call.flush({ id: 'k1' } as KycRecordDto);
   });
 
-  it('uploadPan POSTs multipart form data with frontDocument and panNumber', () => {
+  it('uploadPan POSTs multipart form data with document and panNumber', () => {
     const file = new File(['x'], 'pan.jpg');
 
     service.uploadPan(file, 'ABCDE1234F').subscribe();
@@ -163,7 +163,7 @@ describe('ProfileService', () => {
     expect(call.request.method).toBe('POST');
     const body = call.request.body as FormData;
     expect(body).toBeInstanceOf(FormData);
-    expect(body.get('frontDocument')).toBe(file);
+    expect(body.get('document')).toBe(file);
     expect(body.get('panNumber')).toBe('ABCDE1234F');
     call.flush({ id: 'k1' } as KycRecordDto);
   });

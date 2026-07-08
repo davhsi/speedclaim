@@ -305,6 +305,19 @@ public class UsersController : BaseApiController
         return kyc == null ? NotFound(new { message = "KYC record not found." }) : Ok(kyc);
     }
 
+    /// <summary>Underwriter/Admin — reveal the full decrypted Aadhaar/PAN numbers for a KYC submission, to compare against the uploaded document. Audit-logged.</summary>
+    /// <param name="customerId">Customer user ID</param>
+    [Authorize(Roles = "Underwriter,Admin")]
+    [HttpGet("{customerId}/kyc/reveal")]
+    [ProducesResponseType(typeof(KycIdentityRevealDto), 200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> RevealCustomerKycIdentity(string customerId)
+    {
+        var revealerId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        var result = await _userService.RevealKycIdentityAsync(customerId, revealerId);
+        return Ok(result);
+    }
+
     /// <summary>Approve or reject a customer's KYC submission. Both Aadhaar and PAN must be uploaded before approval.</summary>
     /// <param name="customerId">Customer user ID</param>
     [Authorize(Roles = "Underwriter,Admin")]

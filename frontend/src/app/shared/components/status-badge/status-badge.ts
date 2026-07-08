@@ -31,6 +31,7 @@ export class StatusBadgeComponent {
       DocumentsPending: 'Docs Pending',
       InProgress: 'In Progress',
       Requested: 'Requested',
+      NotUploaded: 'Not Uploaded',
     };
     return labels[s] ?? s;
   });
@@ -71,6 +72,7 @@ export class StatusBadgeComponent {
       Expired: 'bg-[#F0F1F3] text-muted border border-[#D1D5DB]',
       Closed: 'bg-[#F0F1F3] text-muted border border-[#D1D5DB]',
       Claimed: 'bg-[#F0F1F3] text-muted border border-[#D1D5DB]',
+      NotUploaded: 'bg-[#F0F1F3] text-muted border border-[#D1D5DB]',
     };
     return map[s] ?? 'bg-[#F0F1F3] text-muted border border-[#D1D5DB]';
   });
@@ -86,6 +88,7 @@ export class StatusBadgeComponent {
       Lapsed: 'bg-danger', Withdrawn: 'bg-danger', Escalated: 'bg-danger',
       Assigned: 'bg-info', PreAuthApproved: 'bg-info', DocumentsPending: 'bg-info',
       Draft: 'bg-muted', Expired: 'bg-muted', Closed: 'bg-muted', Claimed: 'bg-muted',
+      NotUploaded: 'bg-muted',
     };
     return map[s] ?? 'bg-muted';
   });
