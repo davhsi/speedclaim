@@ -152,6 +152,7 @@ describe('AgentCustomerKycComponent', () => {
       fixture.componentInstance.idNumber.set('123456789012');
       fixture.componentInstance.submit();
       httpMock.expectNone(() => true);
+      expect(fixture.componentInstance.submitting()).toBe(false);
     });
 
     it('does nothing without a document file', () => {
@@ -161,6 +162,7 @@ describe('AgentCustomerKycComponent', () => {
       fixture.componentInstance.idNumber.set('123456789012');
       fixture.componentInstance.submit();
       httpMock.expectNone(() => true);
+      expect(fixture.componentInstance.submitting()).toBe(false);
     });
 
     it('does nothing when the id number is invalid', () => {
@@ -171,6 +173,7 @@ describe('AgentCustomerKycComponent', () => {
       fixture.componentInstance.idNumber.set('123');
       fixture.componentInstance.submit();
       httpMock.expectNone(() => true);
+      expect(fixture.componentInstance.submitting()).toBe(false);
     });
 
     it('uploads Aadhaar as multipart form data', () => {

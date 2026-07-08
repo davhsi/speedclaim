@@ -75,10 +75,14 @@ describe('authGuard', () => {
     expect(result).toEqual({ __urlTree: true, commands: ['/'] });
   });
 
-  it('allows a role-matching route (e.g. Admin hitting /admin)', async () => {
-    currentUser.set(userWithRole('Admin'));
+  it.each<[string, UserRole, string]>([
+    ['allows a role-matching route (e.g. Admin hitting /admin)', 'Admin', 'admin'],
+    ['allows a Customer (no role-route mapping) to hit any customer-portal route', 'Customer', 'claims'],
+    ['always allows the "auth" route regardless of role', 'Admin', 'auth'],
+  ])('%s', async (_description, role, path) => {
+    currentUser.set(userWithRole(role));
 
-    const result = await runGuard(routeWithPath('admin'));
+    const result = await runGuard(routeWithPath(path));
 
     expect(result).toBe(true);
     expect(createUrlTree).not.toHaveBeenCalled();
@@ -91,24 +95,6 @@ describe('authGuard', () => {
 
     expect(createUrlTree).toHaveBeenCalledWith(['/agent']);
     expect(result).toEqual({ __urlTree: true, commands: ['/agent'] });
-  });
-
-  it('allows a Customer (no role-route mapping) to hit any customer-portal route', async () => {
-    currentUser.set(userWithRole('Customer'));
-
-    const result = await runGuard(routeWithPath('claims'));
-
-    expect(result).toBe(true);
-    expect(createUrlTree).not.toHaveBeenCalled();
-  });
-
-  it('always allows the "auth" route regardless of role', async () => {
-    currentUser.set(userWithRole('Admin'));
-
-    const result = await runGuard(routeWithPath('auth'));
-
-    expect(result).toBe(true);
-    expect(createUrlTree).not.toHaveBeenCalled();
   });
 
   it('waits on initFromStorage when not yet initialized and not authenticated, then evaluates with the resolved state', async () => {

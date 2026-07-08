@@ -38,20 +38,12 @@ describe('authInterceptor', () => {
     expect(capturedReq?.headers.has('Authorization')).toBe(false);
   });
 
-  it('does not attach a token to a public GET product list request', () => {
-    const req = new HttpRequest('GET', '/api/v1/products');
-    run(req).subscribe();
-    expect(capturedReq?.headers.has('Authorization')).toBe(false);
-  });
-
-  it('does not attach a token to a public GET single-product request', () => {
-    const req = new HttpRequest('GET', '/api/v1/products/abc-123');
-    run(req).subscribe();
-    expect(capturedReq?.headers.has('Authorization')).toBe(false);
-  });
-
-  it('does not attach a token to a public GET product-documents request', () => {
-    const req = new HttpRequest('GET', '/api/v1/products/abc-123/documents');
+  it.each([
+    ['a public GET product list request', '/api/v1/products'],
+    ['a public GET single-product request', '/api/v1/products/abc-123'],
+    ['a public GET product-documents request', '/api/v1/products/abc-123/documents'],
+  ])('does not attach a token to %s', (_description, url) => {
+    const req = new HttpRequest('GET', url);
     run(req).subscribe();
     expect(capturedReq?.headers.has('Authorization')).toBe(false);
   });

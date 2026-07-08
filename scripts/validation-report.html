@@ -629,7 +629,7 @@ function openModal(id) {
   const content = document.getElementById('modalContent');
   modal.classList.remove('hidden');
   modal.classList.add('flex');
-  const forceReflow = modal.offsetWidth; // flush layout so the transition below animates
+  void modal.offsetWidth; // flush layout so the transition below animates
   modal.classList.remove('opacity-0');
   content.classList.remove('scale-95');
 }

@@ -108,14 +108,14 @@ describe('ProposalSubmitComponent', () => {
     it('starts with exactly one nominee group', () => {
       withHistoryState(quoteState);
       const fixture = create();
-      expect(fixture.componentInstance.nominees.length).toBe(1);
+      expect(fixture.componentInstance.nominees).toHaveLength(1);
     });
 
     it('addNominee appends another group', () => {
       withHistoryState(quoteState);
       const fixture = create();
       fixture.componentInstance.addNominee();
-      expect(fixture.componentInstance.nominees.length).toBe(2);
+      expect(fixture.componentInstance.nominees).toHaveLength(2);
     });
 
     it('totalShares sums sharePercentage across all nominee groups', () => {

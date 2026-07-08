@@ -176,7 +176,7 @@ export class AdminAgentsComponent implements OnInit {
   }
 
   private isValidDate(v: string): boolean {
-    return !!v && !isNaN(new Date(v).getTime());
+    return !!v && !Number.isNaN(new Date(v).getTime());
   }
 
   emailError(): string {

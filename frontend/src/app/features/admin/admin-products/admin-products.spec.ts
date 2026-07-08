@@ -54,7 +54,7 @@ describe('AdminProductsComponent', () => {
   describe('loadProducts', () => {
     it('loads products and clears the loading flag', () => {
       const fixture = create([product({ id: 'p1' }), product({ id: 'p2' })]);
-      expect(fixture.componentInstance.products().length).toBe(2);
+      expect(fixture.componentInstance.products()).toHaveLength(2);
       expect(fixture.componentInstance.loading()).toBe(false);
     });
 
@@ -224,10 +224,10 @@ describe('AdminProductsComponent', () => {
       const fixture = create();
       const c = fixture.componentInstance;
       c.addRateBand();
-      expect(c.rateBands().length).toBe(1);
+      expect(c.rateBands()).toHaveLength(1);
       c.addRateBand();
       c.removeRateBand(0);
-      expect(c.rateBands().length).toBe(1);
+      expect(c.rateBands()).toHaveLength(1);
     });
 
     it('addRateBand defaults to a full age range for Motor products', () => {
@@ -283,7 +283,7 @@ describe('AdminProductsComponent', () => {
       const fixture = create();
       adminService.getProductDocuments.mockReturnValue(of([doc()]));
       fixture.componentInstance.openEditDocsModal(product());
-      expect(fixture.componentInstance.productDocs().length).toBe(1);
+      expect(fixture.componentInstance.productDocs()).toHaveLength(1);
       expect(fixture.componentInstance.activeModal()).toBe('editDocs');
     });
 

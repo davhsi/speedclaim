@@ -73,8 +73,8 @@ describe('AdminAgentsComponent', () => {
       const fixture = create([agentUser({ id: 'u1' }), { ...agentUser({ id: 'u2' }), role: 'Customer' }], [agentProfile()], [branch()]);
       const c = fixture.componentInstance;
       expect(c.agents().map(a => a.id)).toEqual(['u1']);
-      expect(c.agentProfiles().length).toBe(1);
-      expect(c.branches().length).toBe(1);
+      expect(c.agentProfiles()).toHaveLength(1);
+      expect(c.branches()).toHaveLength(1);
       expect(c.loading()).toBe(false);
     });
   });
@@ -96,7 +96,7 @@ describe('AdminAgentsComponent', () => {
     it('paginates with pageSize=10', () => {
       const agents = Array.from({ length: 15 }, (_, i) => agentUser({ id: `u${i}` }));
       const fixture = create(agents);
-      expect(fixture.componentInstance.pagedAgents().length).toBe(10);
+      expect(fixture.componentInstance.pagedAgents()).toHaveLength(10);
       expect(fixture.componentInstance.totalPages()).toBe(2);
     });
   });

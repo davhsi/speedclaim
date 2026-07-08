@@ -214,7 +214,7 @@ describe('ClaimFileComponent', () => {
         c.onFileSelected(new File(['x'], `doc${i}.pdf`));
       }
       c.onFileSelected(new File(['x'], 'onemore.pdf'));
-      expect(c.uploadedFiles.length).toBe(c.maxDocuments);
+      expect(c.uploadedFiles).toHaveLength(c.maxDocuments);
       expect(toast.warning).toHaveBeenCalledWith(`You can attach up to ${c.maxDocuments} documents`);
     });
   });

@@ -62,8 +62,8 @@ describe('AdminUsersComponent', () => {
     it('loads users and sessions and clears the loading flag', () => {
       const fixture = create([user({ id: 'u1' }), user({ id: 'u2' })], [session()]);
       const c = fixture.componentInstance;
-      expect(c.allUsers().length).toBe(2);
-      expect(c.sessions().length).toBe(1);
+      expect(c.allUsers()).toHaveLength(2);
+      expect(c.sessions()).toHaveLength(1);
       expect(c.loading()).toBe(false);
     });
 
@@ -100,7 +100,7 @@ describe('AdminUsersComponent', () => {
     it('paginates using pageSize=5 and computes totalPages', () => {
       const users = Array.from({ length: 12 }, (_, i) => user({ id: `u${i}` }));
       const fixture = create(users);
-      expect(fixture.componentInstance.paginatedUsers().length).toBe(5);
+      expect(fixture.componentInstance.paginatedUsers()).toHaveLength(5);
       expect(fixture.componentInstance.totalPages()).toBe(3);
     });
 

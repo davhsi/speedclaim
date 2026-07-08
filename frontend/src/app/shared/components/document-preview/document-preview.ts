@@ -8,7 +8,10 @@ export interface PreviewDoc {
   label: string;
 }
 
-const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'];
+const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif']);
+
+// Matches LocalStorageService's own output shape: uploads/<folder>/<guid>.<allowlisted-ext>
+const SERVER_UPLOAD_PATH = /^\/uploads\/[\w-]+(?:\/[\w-]+)*\/[\w-]+\.(?:jpe?g|png|webp|pdf)$/i;
 
 @Component({
   selector: 'app-document-preview',
@@ -21,15 +24,16 @@ export class DocumentPreviewComponent {
   doc = input<PreviewDoc | null>(null);
   closed = output<void>();
 
-  private extension = computed(() => this.doc()?.url.split('.').pop()?.toLowerCase() ?? '');
-  isImage = computed(() => IMAGE_EXTENSIONS.includes(this.extension()));
+  private readonly extension = computed(() => this.doc()?.url.split('.').pop()?.toLowerCase() ?? '');
+  isImage = computed(() => IMAGE_EXTENSIONS.has(this.extension()));
   isPdf = computed(() => this.extension() === 'pdf');
 
   safePreviewUrl = computed<SafeResourceUrl | null>(() => {
     const doc = this.doc();
-    // url is always server-generated (LocalStorageService writes uploads/<folder>/<guid>.<ext>
-    // with an allowlisted extension) — never a raw user-supplied path or URL.
-    return doc ? this.sanitizer.bypassSecurityTrustResourceUrl(doc.url) : null;
+    if (!doc || !SERVER_UPLOAD_PATH.test(doc.url)) {
+      return null;
+    }
+    return this.sanitizer.bypassSecurityTrustResourceUrl(doc.url);
   });
 
   close(): void {

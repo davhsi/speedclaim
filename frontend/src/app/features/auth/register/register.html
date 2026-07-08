@@ -3,13 +3,14 @@
 
 <!-- Progress bar -->
 <div class="mb-6">
-  <div class="flex gap-1.5 mb-2" role="progressbar" [attr.aria-valuenow]="currentStep()" aria-valuemin="1" [attr.aria-valuemax]="steps.length">
+  <div class="flex gap-1.5 mb-2" aria-hidden="true">
     @for (step of steps; track step.label; let i = $index) {
       <div class="flex-1 h-1 rounded-full transition-colors duration-300"
            [class]="i < currentStep() ? 'bg-primary' : 'bg-line'">
       </div>
     }
   </div>
+  <progress class="sr-only" [value]="currentStep()" [attr.max]="steps.length">Step {{ currentStep() }} of {{ steps.length }}</progress>
   <p class="text-xs text-muted">Step {{ currentStep() }} of {{ steps.length }}</p>
 </div>
 
