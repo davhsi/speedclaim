@@ -7,6 +7,7 @@ import { AdminService } from '../services/admin.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { UserDto, SessionDto } from '../../../core/models/api.models';
 import { AuthService } from '../../../core/services/auth.service';
+import { passwordStrengthValidator } from '../../../shared/validators/password.validator';
 
 @Component({
   selector: 'app-admin-users',
@@ -33,6 +34,7 @@ export class AdminUsersComponent implements OnInit {
   selectedRole = signal('');
   resetPwSent = signal(false);
   resetPwForm = { newPassword: '' };
+  resetPwTouched = signal(false);
   showPassword = signal(false);
   actionInFlight = signal(false);
   inviteForm = { name: '', email: '', role: 'Surveyor' };
@@ -175,8 +177,14 @@ export class AdminUsersComponent implements OnInit {
     this.selectedUser.set(user);
     this.resetPwSent.set(false);
     this.resetPwForm = { newPassword: '' };
+    this.resetPwTouched.set(false);
     this.showPassword.set(false);
     this.activeModal.set('resetPw');
+  }
+
+  resetPwErrors(): Record<string, boolean> | null {
+    const result = passwordStrengthValidator()({ value: this.resetPwForm.newPassword } as any);
+    return result?.['passwordStrength'] ?? null;
   }
 
   openInviteModal(): void {
@@ -250,8 +258,9 @@ export class AdminUsersComponent implements OnInit {
     const u = this.selectedUser();
     if (!u || this.actionInFlight()) return;
     const pw = this.resetPwForm.newPassword.trim();
-    if (!pw || pw.length < 8) {
-      this.toastService.warning('Password must be at least 8 characters.');
+    this.resetPwTouched.set(true);
+    if (!pw || this.resetPwErrors()) {
+      this.toastService.warning('Password does not meet the requirements below.');
       return;
     }
     this.actionInFlight.set(true);
@@ -261,14 +270,26 @@ export class AdminUsersComponent implements OnInit {
         this.toastService.success('Password reset for ' + u.email);
         this.actionInFlight.set(false);
       },
-      error: () => {
+      error: (err) => {
         this.actionInFlight.set(false);
-        this.toastService.error('Failed to reset password');
+        this.toastService.error(this.getPasswordErrorMessage(err));
       },
     });
   }
 
+  private getPasswordErrorMessage(err: any): string {
+    if (err.error?.errors && typeof err.error.errors === 'object') {
+      const messages = Object.values(err.error.errors)
+        .flat()
+        .filter((msg): msg is string => typeof msg === 'string');
+      if (messages.length > 0) return messages.join(' ');
+    }
+    if (err.error?.detail) return err.error.detail;
+    return 'Failed to reset password';
+  }
+
   submitInvite(): void {
+    if (this.actionInFlight()) return;
     const name = this.inviteForm.name.trim();
     const email = this.inviteForm.email.trim();
     if (!name || !email) {

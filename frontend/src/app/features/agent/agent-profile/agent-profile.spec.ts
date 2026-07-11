@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
 import { AgentProfileComponent } from './agent-profile';
 import { AgentService, AgentProfileDto } from '../services/agent.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -102,6 +102,24 @@ describe('AgentProfileComponent', () => {
       fixture.componentInstance.saveProfile();
       expect(toast.error).toHaveBeenCalledWith('Update failed');
       expect(fixture.componentInstance.saving()).toBe(false);
+    });
+
+    it('sets saving while in flight and blocks a duplicate submit until it clears', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      const subject = new Subject<{ message: string }>();
+      agentService.updateProfile.mockReturnValue(subject);
+
+      c.saveProfile();
+
+      expect(c.saving()).toBe(true);
+      c.saveProfile();
+      expect(agentService.updateProfile).toHaveBeenCalledTimes(1);
+
+      subject.next({ message: 'ok' });
+      subject.complete();
+
+      expect(c.saving()).toBe(false);
     });
   });
 

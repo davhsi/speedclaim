@@ -198,9 +198,9 @@ describe('QuoteComponent', () => {
       fixture.componentInstance.applyNow();
 
       expect(router.navigate).toHaveBeenCalledWith(['/proposals/new'], {
-        state: {
+        state: expect.objectContaining({
           productId: 'prod1', sumAssured: 500000, tenureYears: 5, premiumAmount: 2000, paymentFrequency: 'Monthly',
-        },
+        }),
       });
     });
   });

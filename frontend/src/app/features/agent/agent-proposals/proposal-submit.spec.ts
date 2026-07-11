@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { Router, ActivatedRoute } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
 import { AgentProposalSubmitComponent } from './proposal-submit';
 import { AgentService, AgentCustomerDto } from '../services/agent.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
@@ -14,6 +14,9 @@ describe('AgentProposalSubmitComponent', () => {
     generateQuote: ReturnType<typeof vi.fn>;
     submitProposal: ReturnType<typeof vi.fn>;
     searchCustomers: ReturnType<typeof vi.fn>;
+    getCustomerKyc: ReturnType<typeof vi.fn>;
+    getProductDocuments: ReturnType<typeof vi.fn>;
+    uploadProposalDocument: ReturnType<typeof vi.fn>;
   };
   let router: { navigate: ReturnType<typeof vi.fn> };
   let toast: { warning: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
@@ -36,6 +39,9 @@ describe('AgentProposalSubmitComponent', () => {
       generateQuote: vi.fn(),
       submitProposal: vi.fn(),
       searchCustomers: vi.fn(() => of([])),
+      getCustomerKyc: vi.fn(() => of(null)),
+      getProductDocuments: vi.fn(() => of([])),
+      uploadProposalDocument: vi.fn(() => of({ message: 'ok' })),
     };
     router = { navigate: vi.fn() };
     toast = { warning: vi.fn(), error: vi.fn() };
@@ -64,6 +70,19 @@ describe('AgentProposalSubmitComponent', () => {
     });
   });
 
+  describe('hasActiveProduct', () => {
+    it('is true for a domain with an active product', () => {
+      const fixture = create();
+      expect(fixture.componentInstance.hasActiveProduct('Health')).toBe(true);
+      expect(fixture.componentInstance.hasActiveProduct('Motor')).toBe(true);
+    });
+
+    it('is false for a domain with no active product', () => {
+      const fixture = create();
+      expect(fixture.componentInstance.hasActiveProduct('Life')).toBe(false);
+    });
+  });
+
   describe('nextStep (step 0: customer + type)', () => {
     it('warns and blocks when no customer is selected', () => {
       const fixture = create();
@@ -87,6 +106,20 @@ describe('AgentProposalSubmitComponent', () => {
       fixture.componentInstance.selectedType = 'Health';
       fixture.componentInstance.nextStep();
       expect(fixture.componentInstance.currentStep).toBe(1);
+    });
+
+    it('warns and blocks up front when the selected type has no active product, instead of failing later at calculateQuote', () => {
+      // Regression test: the type-selector buttons used to render Health/Motor/Life
+      // unconditionally regardless of whether an active product existed for that domain —
+      // the agent could fill in the whole quote step before ever finding out. Life has no
+      // product in this test's fixture (only Health and Motor do).
+      const fixture = create();
+      fixture.componentInstance.selectedType = 'Life';
+
+      fixture.componentInstance.nextStep();
+
+      expect(toast.warning).toHaveBeenCalledWith(expect.stringContaining('No active Life product'));
+      expect(fixture.componentInstance.currentStep).toBe(0);
     });
 
     it('warns and blocks when the selected customer\'s KYC is not approved', () => {
@@ -214,6 +247,41 @@ describe('AgentProposalSubmitComponent', () => {
 
       expect(toast.error).toHaveBeenCalledWith('Failed to calculate quote. Please check the values and try again.');
     });
+
+    it('sets calculatingQuote while in flight, blocks a duplicate call, and clears on success', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.selectedType = 'Health';
+      const subject = new Subject<any>();
+      agentService.generateQuote.mockReturnValue(subject);
+
+      c.calculateQuote();
+
+      expect(c.calculatingQuote()).toBe(true);
+      c.calculateQuote();
+      expect(agentService.generateQuote).toHaveBeenCalledTimes(1);
+
+      subject.next({ premiumAmount: 4000 });
+      subject.complete();
+
+      expect(c.calculatingQuote()).toBe(false);
+      expect(c.quoteResult()).toEqual({ premiumAmount: 4000 });
+    });
+
+    it('clears calculatingQuote on error', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.selectedType = 'Health';
+      const subject = new Subject<any>();
+      agentService.generateQuote.mockReturnValue(subject);
+
+      c.calculateQuote();
+      expect(c.calculatingQuote()).toBe(true);
+
+      subject.error({ status: 500 });
+
+      expect(c.calculatingQuote()).toBe(false);
+    });
   });
 
   describe('nextStep (step 3: confirm + submit)', () => {
@@ -222,6 +290,7 @@ describe('AgentProposalSubmitComponent', () => {
       fixture.componentInstance.currentStep = 3;
       fixture.componentInstance.selectedCustomerId = 'cust1';
       fixture.componentInstance.quoteResult.set({ sumAssured: 500000, tenureYears: 1, premiumAmount: 4000 });
+      fixture.componentInstance.docRequirementsLoaded.set(true);
     }
 
     it('warns and blocks submission when the confirmation checkbox is unchecked', () => {
@@ -259,6 +328,65 @@ describe('AgentProposalSubmitComponent', () => {
       fixture.componentInstance.nextStep();
 
       expect(toast.error).toHaveBeenCalledWith('Failed to submit proposal. Please try again.');
+    });
+
+    it('sets submitting while in flight, blocks a duplicate submit, and clears on success', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      setupReadyToSubmit(fixture);
+      c.confirmReady = true;
+      const subject = new Subject<any>();
+      agentService.submitProposal.mockReturnValue(subject);
+
+      c.nextStep();
+
+      expect(c.submitting()).toBe(true);
+      c.nextStep();
+      expect(agentService.submitProposal).toHaveBeenCalledTimes(1);
+
+      subject.next({ id: 'p-new' });
+      subject.complete();
+
+      expect(c.submitting()).toBe(false);
+      expect(router.navigate).toHaveBeenCalledWith(['/agent/proposals']);
+    });
+
+    it('clears submitting on error', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      setupReadyToSubmit(fixture);
+      c.confirmReady = true;
+      const subject = new Subject<any>();
+      agentService.submitProposal.mockReturnValue(subject);
+
+      c.nextStep();
+      expect(c.submitting()).toBe(true);
+
+      subject.error({ status: 500 });
+
+      expect(c.submitting()).toBe(false);
+    });
+
+    it('waits for document uploads to finish before clearing submitting and navigating', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      setupReadyToSubmit(fixture);
+      c.confirmReady = true;
+      c.uploadedFiles.set('doc1', new File(['x'], 'a.pdf'));
+      agentService.submitProposal.mockReturnValue(of({ id: 'p-new' }));
+      const uploadSubject = new Subject<any>();
+      agentService.uploadProposalDocument.mockReturnValue(uploadSubject);
+
+      c.nextStep();
+
+      expect(c.submitting()).toBe(true);
+      expect(router.navigate).not.toHaveBeenCalled();
+
+      uploadSubject.next({ message: 'ok' });
+      uploadSubject.complete();
+
+      expect(c.submitting()).toBe(false);
+      expect(router.navigate).toHaveBeenCalledWith(['/agent/proposals']);
     });
   });
 
@@ -313,6 +441,52 @@ describe('AgentProposalSubmitComponent', () => {
       const c = fixture.componentInstance;
       const icons = new Set([c.typeIcon('Health'), c.typeIcon('Motor'), c.typeIcon('Life')]);
       expect(icons.size).toBe(3);
+    });
+  });
+
+  describe('canDeactivate', () => {
+    it('allows navigation while still on step 0 (customer/type selection)', () => {
+      const fixture = create();
+      fixture.componentInstance.selectedType = 'Health';
+      expect(fixture.componentInstance.canDeactivate()).toBe(true);
+    });
+
+    it('prompts for confirmation once past step 0', () => {
+      const fixture = create();
+      fixture.componentInstance.currentStep = 1;
+
+      const result = fixture.componentInstance.canDeactivate();
+
+      expect(fixture.componentInstance.showLeaveConfirm()).toBe(true);
+      expect(result).not.toBe(true);
+    });
+
+    it('resolves true on confirmLeave and false on cancelLeave', async () => {
+      const fixture = create();
+      fixture.componentInstance.currentStep = 1;
+
+      const result$ = fixture.componentInstance.canDeactivate();
+      const resultPromise = new Promise(resolve => (result$ as any).subscribe(resolve));
+      fixture.componentInstance.confirmLeave();
+
+      expect(await resultPromise).toBe(true);
+      expect(fixture.componentInstance.showLeaveConfirm()).toBe(false);
+    });
+
+    it('allows navigation without prompting right after a successful submit', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.selectedType = 'Health';
+      c.currentStep = 3;
+      c.selectedCustomerId = 'cust1';
+      c.quoteResult.set({ sumAssured: 500000, tenureYears: 1, premiumAmount: 4000 });
+      c.docRequirementsLoaded.set(true);
+      c.confirmReady = true;
+      agentService.submitProposal.mockReturnValue(of({ id: 'p-new' }));
+
+      c.nextStep();
+
+      expect(c.canDeactivate()).toBe(true);
     });
   });
 });

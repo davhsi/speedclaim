@@ -122,9 +122,23 @@
                 <input id="profile-dob" type="date" formControlName="dateOfBirth" class="h-[42px]" />
               }
             </div>
+            <div>
+              <label for="profile-occupation" class="block text-xs text-muted mb-1.5">Occupation</label>
+              <input id="profile-occupation" formControlName="occupation" class="h-[42px]" placeholder="e.g., Software Engineer" />
+            </div>
+            <div>
+              <label for="profile-annual-income" class="block text-xs text-muted mb-1.5">Annual income (₹)</label>
+              <input id="profile-annual-income" type="number" min="0" formControlName="annualIncome" class="h-[42px] sc-numeric" placeholder="e.g., 600000" />
+            </div>
           </div>
           <div class="flex justify-end mt-5 pt-5 border-t border-line">
-            <button class="h-10 px-5 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover transition-colors" (click)="saveProfile()">Save changes</button>
+            <button class="h-10 px-5 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    [disabled]="savingProfile()" (click)="saveProfile()">
+              @if (savingProfile()) {
+                <span class="w-3.5 h-3.5 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+              }
+              {{ savingProfile() ? 'Saving…' : 'Save changes' }}
+            </button>
           </div>
         </div>
 
@@ -132,7 +146,7 @@
         <div class="bg-white border border-line rounded-card shadow-sm p-6">
           <div class="flex items-center justify-between mb-4">
             <div class="text-[13px] font-semibold text-ink">Addresses</div>
-            <button class="text-[13px] text-primary font-semibold hover:underline" (click)="showAddressForm.set(!showAddressForm())">{{ showAddressForm() ? 'Cancel' : '+ Add address' }}</button>
+            <button class="text-[13px] text-primary font-semibold hover:underline disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="savingAddress()" (click)="toggleAddressForm()">{{ showAddressForm() ? 'Cancel' : '+ Add address' }}</button>
           </div>
           @if (showAddressForm()) {
             <div class="p-4 bg-surface rounded-[10px] mb-4 space-y-3" [formGroup]="addressForm">
@@ -148,7 +162,13 @@
                 </div>
                 <div><label for="address-type" class="block text-xs text-muted mb-1.5">Type</label><select id="address-type" formControlName="type" class="h-[42px]"><option value="Permanent">Permanent</option><option value="Current">Current</option></select></div>
               </div>
-              <button class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover" (click)="saveAddress()">Save address</button>
+              <button class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      [disabled]="savingAddress()" (click)="saveAddress()">
+                @if (savingAddress()) {
+                  <span class="w-3.5 h-3.5 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+                }
+                {{ savingAddress() ? 'Saving…' : 'Save address' }}
+              </button>
             </div>
           }
           @if (profile()?.permanentAddress) {
@@ -181,7 +201,7 @@
           <div class="text-[15px] font-semibold text-ink">Family members</div>
           <div class="text-sm text-muted mt-0.5">Dependents you can add to family floater policies.</div>
         </div>
-        <button class="h-10 px-4 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover transition-colors" (click)="showMemberForm.set(!showMemberForm())">{{ showMemberForm() ? 'Cancel' : '+ Add member' }}</button>
+        <button class="h-10 px-4 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="savingMember()" (click)="toggleMemberForm()">{{ showMemberForm() ? 'Cancel' : '+ Add member' }}</button>
       </div>
 
       @if (showMemberForm()) {
@@ -202,7 +222,13 @@
               </select>
             </div>
           </div>
-          <button class="h-10 px-5 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover" (click)="saveMember()">Add member</button>
+          <button class="h-10 px-5 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  [disabled]="savingMember()" (click)="saveMember()">
+            @if (savingMember()) {
+              <span class="w-3.5 h-3.5 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+            }
+            {{ savingMember() ? 'Adding…' : 'Add member' }}
+          </button>
         </div>
       }
 
@@ -298,5 +324,5 @@
 </div>
 
 @if (deleteConfirm()) {
-  <app-confirm-dialog title="Confirm Delete" message="Are you sure?" variant="danger" (confirmed)="confirmDelete()" (cancelled)="deleteConfirm.set(null)" />
+  <app-confirm-dialog title="Confirm Delete" message="Are you sure?" variant="danger" [disabled]="deleting()" (confirmed)="confirmDelete()" (cancelled)="deleteConfirm.set(null)" />
 }

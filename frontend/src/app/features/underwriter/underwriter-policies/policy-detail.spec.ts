@@ -13,7 +13,7 @@ describe('PolicyDetailComponent', () => {
   let router: { navigate: ReturnType<typeof vi.fn> };
 
   const policy: PolicyDto = {
-    id: 'pol1', policyNumber: 'PN1', userId: 'u1', productId: 'prod1', productName: 'Fallback Product',
+    id: 'pol1', policyNumber: 'PN1', customerId: 'u1', productId: 'prod1', productName: 'Fallback Product',
     status: 'Active', paymentFrequency: 'Annually', premiumAmount: 1000, coverageAmount: 100000,
     currency: 'INR', startDate: '2026-01-01', endDate: '2027-01-01', domain: 'Motor', type: 'Comprehensive',
   };

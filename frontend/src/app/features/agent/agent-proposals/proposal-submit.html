@@ -102,14 +102,17 @@
       <div class="text-[13px] font-medium text-body mb-2.5">Product type</div>
       <div class="grid grid-cols-3 gap-2.5">
         @for (type of productTypes; track type) {
-          <button type="button" (click)="selectedType = type"
-               class="border-[1.5px] rounded-[10px] p-4 text-center cursor-pointer transition-colors w-full"
-               [class]="selectedType === type ? 'border-primary bg-primary-light' : 'border-line bg-white hover:border-primary-muted'">
+          <button type="button" (click)="selectedType = type" [disabled]="!hasActiveProduct(type)"
+               class="border-[1.5px] rounded-[10px] p-4 text-center transition-colors w-full"
+               [class]="!hasActiveProduct(type) ? 'border-line bg-surface-alt opacity-50 cursor-not-allowed' : selectedType === type ? 'border-primary bg-primary-light cursor-pointer' : 'border-line bg-white hover:border-primary-muted cursor-pointer'">
             <div class="w-9 h-9 rounded-[9px] flex items-center justify-center mx-auto mb-2"
-                 [class]="selectedType === type ? 'bg-primary text-white' : 'bg-surface text-muted'">
+                 [class]="selectedType === type && hasActiveProduct(type) ? 'bg-primary text-white' : 'bg-surface text-muted'">
               <span [innerHTML]="typeIcon(type) | safeHtml"></span>
             </div>
             <div class="text-[13px] font-semibold text-ink">{{ type }}</div>
+            @if (!hasActiveProduct(type)) {
+              <div class="text-[11px] text-muted mt-1">Unavailable</div>
+            }
           </button>
         }
       </div>
@@ -130,10 +133,12 @@
 
       @if (selectedType === 'Motor') {
         <div class="grid grid-cols-2 gap-3.5 mb-4">
-          <div><label for="ps-motor-vehicle" class="block text-[13px] font-medium mb-1.5">Vehicle make & model</label><input id="ps-motor-vehicle" type="text" [(ngModel)]="motorForm.vehicleMakeModel" /></div>
-          <div><label for="ps-motor-reg-year" class="block text-[13px] font-medium mb-1.5">Registration year</label><input id="ps-motor-reg-year" type="number" [(ngModel)]="motorForm.regYear" class="sc-numeric" /></div>
+          <div><label for="ps-motor-reg-no" class="block text-[13px] font-medium mb-1.5">Vehicle registration number</label><input id="ps-motor-reg-no" type="text" [(ngModel)]="motorForm.vehicleNumber" placeholder="e.g., TN 09 AB 1234" class="sc-numeric" /></div>
+          <div><label for="ps-motor-make" class="block text-[13px] font-medium mb-1.5">Vehicle make</label><input id="ps-motor-make" type="text" [(ngModel)]="motorForm.vehicleMake" placeholder="e.g., Maruti Suzuki" /></div>
+          <div><label for="ps-motor-model" class="block text-[13px] font-medium mb-1.5">Vehicle model</label><input id="ps-motor-model" type="text" [(ngModel)]="motorForm.vehicleModel" placeholder="e.g., Swift VXi" /></div>
+          <div><label for="ps-motor-reg-year" class="block text-[13px] font-medium mb-1.5">Manufacture year</label><input id="ps-motor-reg-year" type="number" [(ngModel)]="motorForm.regYear" class="sc-numeric" /></div>
           <div><label for="ps-motor-idv" class="block text-[13px] font-medium mb-1.5">Insured declared value (IDV)</label><input id="ps-motor-idv" type="text" [(ngModel)]="motorForm.idv" class="sc-numeric" /></div>
-          <div><label for="ps-motor-ncb" class="block text-[13px] font-medium mb-1.5">No-Claim Bonus (NCB)</label><input id="ps-motor-ncb" type="text" [(ngModel)]="motorForm.ncb" /></div>
+          <div><label for="ps-motor-cover" class="block text-[13px] font-medium mb-1.5">Cover type</label><select id="ps-motor-cover" [(ngModel)]="motorForm.coverType" class="h-[42px]"><option value="Comprehensive">Comprehensive</option><option value="ThirdParty">Third-party only</option></select></div>
         </div>
       }
 
@@ -147,8 +152,12 @@
       }
 
       <button (click)="calculateQuote()"
-              class="w-full h-11 border-none rounded-control bg-primary text-white text-sm font-semibold cursor-pointer mb-4">
-        Calculate premium
+              [disabled]="calculatingQuote()"
+              class="w-full h-11 border-none rounded-control bg-primary text-white text-sm font-semibold cursor-pointer mb-4 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+        @if (calculatingQuote()) {
+          <span class="w-3.5 h-3.5 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+        }
+        {{ calculatingQuote() ? 'Calculating…' : 'Calculate premium' }}
       </button>
 
       @if (quoteResult()) {
@@ -166,48 +175,93 @@
 
     <!-- Step 3: Proposer Details -->
     @if (currentStep === 2) {
-      <div class="text-[15px] font-semibold text-ink mb-4">Proposer details</div>
+      <div class="text-[15px] font-semibold text-ink mb-1">Proposer details</div>
+      <p class="text-[13px] text-muted mb-4">Read-only snapshot from the customer's approved KYC and profile. To change any of this, the customer must update their profile or re-submit KYC.</p>
       <div class="grid grid-cols-2 gap-3.5">
-        <div><label for="ps-proposer-full-name" class="block text-[13px] font-medium mb-1.5">Full name</label><input id="ps-proposer-full-name" type="text" [(ngModel)]="proposerForm.fullName" /></div>
-        <div><label for="ps-proposer-dob" class="block text-[13px] font-medium mb-1.5">Date of birth</label><input id="ps-proposer-dob" type="date" [(ngModel)]="proposerForm.dob" class="sc-numeric" /></div>
-        <div><label for="ps-proposer-income" class="block text-[13px] font-medium mb-1.5">Annual income</label><input id="ps-proposer-income" type="text" [(ngModel)]="proposerForm.annualIncome" class="sc-numeric" /></div>
-        <div><label for="ps-proposer-occupation" class="block text-[13px] font-medium mb-1.5">Occupation</label><input id="ps-proposer-occupation" type="text" [(ngModel)]="proposerForm.occupation" /></div>
-        <div><label for="ps-proposer-pan" class="block text-[13px] font-medium mb-1.5">PAN</label><input id="ps-proposer-pan" type="text" [(ngModel)]="proposerForm.pan" class="sc-numeric" /></div>
-        <div><label for="ps-proposer-aadhaar" class="block text-[13px] font-medium mb-1.5">Aadhaar (last 4 digits)</label><input id="ps-proposer-aadhaar" type="text" [(ngModel)]="proposerForm.aadhaarLast4" class="sc-numeric" maxlength="4" /></div>
+        <div><label for="ps-proposer-full-name" class="block text-[13px] font-medium mb-1.5">Full name</label><input id="ps-proposer-full-name" type="text" [ngModel]="proposerForm.fullName" readonly class="bg-surface-alt cursor-not-allowed" /></div>
+        <div><label for="ps-proposer-dob" class="block text-[13px] font-medium mb-1.5">Date of birth</label><input id="ps-proposer-dob" type="text" [ngModel]="proposerForm.dob || 'Not on file'" readonly class="sc-numeric bg-surface-alt cursor-not-allowed" /></div>
+        <div><label for="ps-proposer-income" class="block text-[13px] font-medium mb-1.5">Annual income</label><input id="ps-proposer-income" type="text" [ngModel]="proposerForm.annualIncome || 'Not on file'" readonly class="sc-numeric bg-surface-alt cursor-not-allowed" /></div>
+        <div><label for="ps-proposer-occupation" class="block text-[13px] font-medium mb-1.5">Occupation</label><input id="ps-proposer-occupation" type="text" [ngModel]="proposerForm.occupation || 'Not on file'" readonly class="bg-surface-alt cursor-not-allowed" /></div>
+        <div><label for="ps-proposer-pan" class="block text-[13px] font-medium mb-1.5">PAN (masked)</label><input id="ps-proposer-pan" type="text" [ngModel]="proposerForm.pan || 'Not on file'" readonly class="sc-numeric bg-surface-alt cursor-not-allowed" /></div>
+        <div><label for="ps-proposer-aadhaar" class="block text-[13px] font-medium mb-1.5">Aadhaar (masked)</label><input id="ps-proposer-aadhaar" type="text" [ngModel]="proposerForm.aadhaarLast4 || 'Not on file'" readonly class="sc-numeric bg-surface-alt cursor-not-allowed" /></div>
+      </div>
+
+      <!-- Nominees -->
+      <div class="text-[15px] font-semibold text-ink mt-6 mb-1">Nominees @if (selectedType !== 'Life') { <span class="text-xs font-normal text-muted">(optional)</span> }</div>
+      <p class="text-[13px] text-muted mb-3">
+        @if (selectedType === 'Life') { At least one nominee is required for Life cover. Shares must total 100%. }
+        @else { If added, shares must total 100%. }
+      </p>
+      @for (n of nominees; track $index; let i = $index) {
+        <div class="p-4 bg-surface rounded-[10px] mb-3">
+          <div class="grid grid-cols-1 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_90px_minmax(140px,1fr)_32px] gap-3 items-start">
+            <div>
+              <label [for]="'ps-nominee-name-' + i" class="block text-xs text-muted mb-1">Name</label>
+              <input [id]="'ps-nominee-name-' + i" [(ngModel)]="n.fullName" placeholder="Full name" class="h-[42px]" />
+            </div>
+            <div>
+              <label [for]="'ps-nominee-relationship-' + i" class="block text-xs text-muted mb-1">Relationship</label>
+              <select [id]="'ps-nominee-relationship-' + i" [(ngModel)]="n.relationship" class="h-[42px]">
+                @for (rel of relationships; track rel) { <option [value]="rel">{{ rel }}</option> }
+              </select>
+            </div>
+            <div>
+              <label [for]="'ps-nominee-share-' + i" class="block text-xs text-muted mb-1">Share %</label>
+              <input [id]="'ps-nominee-share-' + i" type="number" min="1" max="100" [(ngModel)]="n.sharePercentage" class="h-[42px] sc-numeric" />
+            </div>
+            <div>
+              <label [for]="'ps-nominee-dob-' + i" class="block text-xs text-muted mb-1">DOB</label>
+              <input [id]="'ps-nominee-dob-' + i" type="date" [(ngModel)]="n.dateOfBirth" class="h-[42px]" />
+            </div>
+            <div class="pt-6">
+              <button type="button" class="text-danger hover:text-red-700 shrink-0 p-1" aria-label="Remove nominee" (click)="removeNominee(i)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+          @if (isMinorNominee(i)) {
+            <div class="mt-3">
+              <label [for]="'ps-nominee-appointee-' + i" class="block text-xs text-muted mb-1">Appointee name <span class="text-danger">*</span></label>
+              <input [id]="'ps-nominee-appointee-' + i" [(ngModel)]="n.appointeeName" placeholder="Guardian / appointee full name" class="h-[42px]" />
+              <p class="text-[11px] text-muted mt-1">Required because this nominee is a minor (under 18).</p>
+            </div>
+          }
+        </div>
+      }
+      <div class="flex items-center justify-between">
+        <button type="button" (click)="addNominee()" class="h-9 px-3.5 bg-white border border-line text-[13px] font-semibold text-body rounded-control hover:bg-surface transition-colors">+ Add nominee</button>
+        @if (nominees.length > 0) {
+          <span class="text-xs" [class]="totalNomineeShares() === 100 ? 'text-success' : 'text-danger'">Total share: {{ totalNomineeShares() }}%</span>
+        }
       </div>
     }
 
     <!-- Step 4: Documents -->
     @if (currentStep === 3) {
-      <div class="text-[15px] font-semibold text-ink mb-1">Document checklist</div>
-      <p class="text-[13px] text-muted mb-5">Ensure KYC is approved before submission. KYC documents can be uploaded via <a routerLink="/agent/customer-kyc" class="text-primary font-medium hover:underline">Customer KYC</a> before creating this proposal.</p>
+      <div class="text-[15px] font-semibold text-ink mb-1">Supporting documents</div>
+      <p class="text-[13px] text-muted mb-5">KYC (Aadhaar/PAN) was already verified at Step 1 — the uploads below are the product's own requirements and are attached to this proposal for underwriting review.</p>
 
-      <div class="text-[11px] font-semibold uppercase tracking-widest text-muted mb-2.5">KYC documents</div>
-      @for (doc of kycDocs; track doc.label) {
-        <div class="border border-line rounded-[10px] p-3.5 mb-2 flex items-center gap-3">
-          <span class="w-[34px] h-[34px] rounded-[9px] bg-primary-light flex items-center justify-center shrink-0">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          </span>
-          <div class="flex-1">
-            <div class="text-[13px] font-semibold text-ink">{{ doc.label }}</div>
-            <div class="text-xs text-muted mt-0.5">{{ doc.hint }}</div>
+      @if (!docRequirementsLoaded()) {
+        <div class="text-[13px] text-muted py-4">Loading document requirements…</div>
+      } @else if (docRequirements().length === 0) {
+        <div class="text-[13px] text-muted py-4">No documents are required for this product.</div>
+      } @else {
+        @for (doc of docRequirements(); track doc.documentKey) {
+          <div class="border border-line rounded-[10px] p-3.5 mb-3">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="text-[13px] font-semibold text-ink">{{ doc.label }}</div>
+              @if (doc.isMandatory) {
+                <span class="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-danger-bg text-danger border border-danger-border">Required</span>
+              } @else {
+                <span class="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-[#F0F1F3] text-muted border border-[#D1D5DB]">Optional</span>
+              }
+            </div>
+            @if (doc.description) {
+              <p class="text-xs text-muted mb-2">{{ doc.description }}</p>
+            }
+            <app-file-upload label="Upload document" hint="PDF, JPG, PNG up to 5MB" [maxSizeMb]="5" (fileSelected)="onDocSelected(doc.documentKey, $event)" />
           </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        </div>
-      }
-
-      <div class="text-[11px] font-semibold uppercase tracking-widest text-muted mt-5 mb-2.5">Proposal documents</div>
-      @for (doc of proposalDocs; track doc.label) {
-        <div class="border border-line rounded-[10px] p-3.5 mb-2 flex items-center gap-3">
-          <span class="w-[34px] h-[34px] rounded-[9px] bg-surface flex items-center justify-center shrink-0">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          </span>
-          <div class="flex-1">
-            <div class="text-[13px] font-semibold text-ink">{{ doc.label }}</div>
-            <div class="text-xs text-muted mt-0.5">{{ doc.hint }}</div>
-          </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        </div>
+        }
       }
 
       <label class="flex gap-2.5 items-start text-[13px] text-body leading-relaxed mt-5 cursor-pointer">
@@ -219,17 +273,32 @@
     <!-- Navigation -->
     <div class="flex justify-between gap-3 mt-6 pt-5 border-t border-line">
       @if (currentStep > 0) {
-        <button (click)="prevStep()"
-                class="h-11 px-5 border border-line bg-white rounded-control text-sm font-semibold text-body cursor-pointer">
+        <button (click)="prevStep()" [disabled]="submitting()"
+                class="h-11 px-5 border border-line bg-white rounded-control text-sm font-semibold text-body cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
           Back
         </button>
       }
       <div class="flex-1"></div>
-      <button (click)="nextStep()"
-              class="h-11 px-6 border-none rounded-control text-sm font-semibold text-white cursor-pointer"
+      <button (click)="nextStep()" [disabled]="submitting()"
+              class="h-11 px-6 border-none rounded-control text-sm font-semibold text-white cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               [class]="currentStep === 3 ? 'bg-accent hover:bg-accent-dark' : 'bg-primary hover:bg-primary-dark'">
-        {{ currentStep === 3 ? 'Submit proposal' : 'Next' }}
+        @if (currentStep === 3 && submitting()) {
+          <span class="w-3.5 h-3.5 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+        }
+        {{ currentStep === 3 ? (submitting() ? 'Submitting…' : 'Submit proposal') : 'Next' }}
       </button>
     </div>
   </div>
 </div>
+
+@if (showLeaveConfirm()) {
+  <app-confirm-dialog
+    title="Leave without submitting?"
+    message="You have unsaved changes to this proposal. If you leave now, the details you've entered will be lost."
+    confirmLabel="Leave"
+    cancelLabel="Stay"
+    variant="danger"
+    (confirmed)="confirmLeave()"
+    (cancelled)="cancelLeave()"
+  />
+}

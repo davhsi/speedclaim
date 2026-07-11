@@ -16,7 +16,7 @@ describe('ClaimFileComponent', () => {
   let router: { navigate: ReturnType<typeof vi.fn> };
 
   const activePolicy: PolicyDto = {
-    id: 'pol1', policyNumber: 'POL-1', userId: 'u1', productId: 'prod1', productName: 'Health Plus',
+    id: 'pol1', policyNumber: 'POL-1', customerId: 'u1', productId: 'prod1', productName: 'Health Plus',
     status: 'Active', paymentFrequency: 'Monthly', premiumAmount: 500, coverageAmount: 100000, currency: 'INR',
     startDate: '2025-01-01', endDate: '2027-01-01', domain: 'Health', type: 'Health',
   };
@@ -317,6 +317,57 @@ describe('ClaimFileComponent', () => {
 
       expect(toast.error).toHaveBeenCalledWith('Failed to file claim. Please try again.');
       expect(c.submitting()).toBe(false);
+    });
+  });
+
+  describe('canDeactivate', () => {
+    it('allows navigation when nothing has been touched', () => {
+      const fixture = create();
+      expect(fixture.componentInstance.canDeactivate()).toBe(true);
+    });
+
+    it('prompts for confirmation once the claim form has been edited', () => {
+      const fixture = create();
+      fixture.componentInstance.claimForm.markAsDirty();
+
+      const result = fixture.componentInstance.canDeactivate();
+
+      expect(fixture.componentInstance.showLeaveConfirm()).toBe(true);
+      expect(result).not.toBe(true);
+    });
+
+    it('prompts for confirmation when a file has been attached', () => {
+      const fixture = create();
+      fixture.componentInstance.onFileSelected(new File(['x'], 'proof.pdf'));
+
+      expect(fixture.componentInstance.canDeactivate()).not.toBe(true);
+    });
+
+    it('resolves true on confirmLeave and false on cancelLeave', async () => {
+      const fixture = create();
+      fixture.componentInstance.claimForm.markAsDirty();
+
+      const result$ = fixture.componentInstance.canDeactivate();
+      const resultPromise = new Promise(resolve => (result$ as any).subscribe(resolve));
+      fixture.componentInstance.confirmLeave();
+
+      expect(await resultPromise).toBe(true);
+      expect(fixture.componentInstance.showLeaveConfirm()).toBe(false);
+    });
+
+    it('allows navigation without prompting right after a successful submit', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.selectPolicy(activePolicy);
+      c.claimForm.setValue({
+        claimType: 'Health', claimAmountRequested: 5000, incidentDate: '2025-06-01',
+        incidentDescription: 'A valid description over ten chars',
+      });
+      claimService.intimate.mockReturnValue(of({ id: 'claim1' } as ClaimDto));
+
+      c.submit();
+
+      expect(c.canDeactivate()).toBe(true);
     });
   });
 });

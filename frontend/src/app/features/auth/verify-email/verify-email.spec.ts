@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
 import { VerifyEmailComponent } from './verify-email';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -94,6 +94,25 @@ describe('VerifyEmailComponent', () => {
 
       expect(fixture.componentInstance.resendLoading()).toBe(false);
       expect(fixture.componentInstance.resendSuccess()).toBe(false);
+    });
+
+    it('shows a loading state while in flight, blocks a duplicate resend, and clears on success', () => {
+      const fixture = create({});
+      fixture.componentInstance.resendForm.setValue({ email: 'jane@example.com' });
+      const request$ = new Subject<{ message: string }>();
+      authService.resendVerificationEmail.mockReturnValue(request$);
+
+      fixture.componentInstance.resendVerification();
+      expect(fixture.componentInstance.resendLoading()).toBe(true);
+
+      fixture.componentInstance.resendVerification();
+      expect(authService.resendVerificationEmail).toHaveBeenCalledTimes(1);
+
+      request$.next({ message: 'sent' });
+      request$.complete();
+
+      expect(fixture.componentInstance.resendLoading()).toBe(false);
+      expect(fixture.componentInstance.resendSuccess()).toBe(true);
     });
   });
 });

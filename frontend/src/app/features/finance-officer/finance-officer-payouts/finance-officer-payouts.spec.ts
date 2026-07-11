@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
 import { FinanceOfficerPayoutsComponent } from './finance-officer-payouts';
 import { FinanceOfficerService } from '../services/finance-officer.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
@@ -140,6 +140,38 @@ describe('FinanceOfficerPayoutsComponent', () => {
       expect(toast.error).toHaveBeenCalledWith('Failed to process payout');
       expect(fixture.componentInstance.processing().has('c1')).toBe(false);
     });
+
+    it('shows the processing label while in flight, blocks a duplicate click, and clears on success', () => {
+      const fixture = create([claim({ id: 'c1' })]);
+      const subject = new Subject<{ message: string }>();
+      financeService.processClaimPayout.mockReturnValue(subject);
+      const target = fixture.componentInstance.allClaims()[0];
+
+      fixture.componentInstance.processPayout(target);
+      expect(fixture.componentInstance.processing().has('c1')).toBe(true);
+      expect(fixture.componentInstance.isPayoutProcessing('c1')).toBe(true);
+
+      fixture.componentInstance.processPayout(target);
+      expect(financeService.processClaimPayout).toHaveBeenCalledTimes(1);
+
+      subject.next({ message: 'ok' });
+      subject.complete();
+      expect(fixture.componentInstance.processing().has('c1')).toBe(false);
+      expect(fixture.componentInstance.isPayoutProcessing('c1')).toBe(false);
+    });
+
+    it('clears the processing label on error too', () => {
+      const fixture = create([claim({ id: 'c1' })]);
+      const subject = new Subject<{ message: string }>();
+      financeService.processClaimPayout.mockReturnValue(subject);
+
+      fixture.componentInstance.processPayout(fixture.componentInstance.allClaims()[0]);
+      expect(fixture.componentInstance.isPayoutProcessing('c1')).toBe(true);
+
+      subject.error({ status: 500 });
+      expect(fixture.componentInstance.isPayoutProcessing('c1')).toBe(false);
+      expect(fixture.componentInstance.processing().has('c1')).toBe(false);
+    });
   });
 
   describe('markSettled', () => {
@@ -161,6 +193,25 @@ describe('FinanceOfficerPayoutsComponent', () => {
       fixture.componentInstance.markSettled(fixture.componentInstance.allClaims()[0]);
 
       expect(toast.error).toHaveBeenCalledWith('Failed to mark claim as settled');
+    });
+
+    it('shows the settling label while in flight and blocks a duplicate click', () => {
+      const fixture = create([claim({ id: 'c1' })]);
+      const subject = new Subject<{ message: string }>();
+      financeService.markClaimSettled.mockReturnValue(subject);
+      const target = fixture.componentInstance.allClaims()[0];
+
+      fixture.componentInstance.markSettled(target);
+      expect(fixture.componentInstance.isSettling('c1')).toBe(true);
+      expect(fixture.componentInstance.isPayoutProcessing('c1')).toBe(false);
+
+      fixture.componentInstance.markSettled(target);
+      expect(financeService.markClaimSettled).toHaveBeenCalledTimes(1);
+
+      subject.next({ message: 'ok' });
+      subject.complete();
+      expect(fixture.componentInstance.isSettling('c1')).toBe(false);
+      expect(fixture.componentInstance.processing().has('c1')).toBe(false);
     });
   });
 });

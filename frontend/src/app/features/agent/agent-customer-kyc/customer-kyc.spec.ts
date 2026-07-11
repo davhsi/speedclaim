@@ -110,7 +110,7 @@ describe('AgentCustomerKycComponent', () => {
     it('validates a 12-digit Aadhaar number', () => {
       const fixture = create();
       fixture.componentInstance.idType.set('aadhaar');
-      fixture.componentInstance.idNumber.set('123456789012');
+      fixture.componentInstance.aadhaarNumber.set('123456789012');
       expect(fixture.componentInstance.idValid()).toBe(true);
       expect(fixture.componentInstance.idError()).toBe('');
     });
@@ -118,7 +118,7 @@ describe('AgentCustomerKycComponent', () => {
     it('flags an invalid Aadhaar number', () => {
       const fixture = create();
       fixture.componentInstance.idType.set('aadhaar');
-      fixture.componentInstance.idNumber.set('123');
+      fixture.componentInstance.aadhaarNumber.set('123');
       expect(fixture.componentInstance.idValid()).toBe(false);
       expect(fixture.componentInstance.idError()).toBe('Aadhaar must be exactly 12 digits.');
     });
@@ -126,30 +126,102 @@ describe('AgentCustomerKycComponent', () => {
     it('validates a PAN case-insensitively', () => {
       const fixture = create();
       fixture.componentInstance.idType.set('pan');
-      fixture.componentInstance.idNumber.set('abcde1234f');
+      fixture.componentInstance.panNumber.set('abcde1234f');
       expect(fixture.componentInstance.idValid()).toBe(true);
     });
 
     it('flags an invalid PAN', () => {
       const fixture = create();
       fixture.componentInstance.idType.set('pan');
-      fixture.componentInstance.idNumber.set('123');
+      fixture.componentInstance.panNumber.set('123');
       expect(fixture.componentInstance.idError()).toBe('PAN must be in the format ABCDE1234F.');
     });
 
     it('shows no error for an empty id field', () => {
       const fixture = create();
-      fixture.componentInstance.idNumber.set('');
+      fixture.componentInstance.aadhaarNumber.set('');
       expect(fixture.componentInstance.idError()).toBe('');
+    });
+  });
+
+  describe('switching document type tabs', () => {
+    it('keeps each document type\'s number and file independently instead of wiping them', () => {
+      const fixture = create();
+      const aadhaarDoc = new File(['x'], 'aadhaar.jpg');
+      fixture.componentInstance.idType.set('aadhaar');
+      fixture.componentInstance.aadhaarNumber.set('123456789012');
+      fixture.componentInstance.aadhaarFile.set(aadhaarDoc);
+
+      fixture.componentInstance.selectIdType('pan');
+      fixture.componentInstance.panNumber.set('abcde1234f');
+      fixture.componentInstance.panFile.set(new File(['x'], 'pan.jpg'));
+
+      fixture.componentInstance.selectIdType('aadhaar');
+
+      expect(fixture.componentInstance.aadhaarNumber()).toBe('123456789012');
+      expect(fixture.componentInstance.aadhaarFile()).toBe(aadhaarDoc);
+      expect(fixture.componentInstance.aadhaarReady()).toBe(true);
+      expect(fixture.componentInstance.panReady()).toBe(true);
+    });
+  });
+
+  describe('canEditKyc / canSubmit gated by KYC status', () => {
+    function readyToSubmit(fixture: ReturnType<typeof create>) {
+      fixture.componentInstance.selectedCustomerId.set('c1');
+      fixture.componentInstance.aadhaarFile.set(new File(['x'], 'a.jpg'));
+      fixture.componentInstance.aadhaarNumber.set('123456789012');
+    }
+
+    it('allows editing when the customer has never submitted KYC', () => {
+      const fixture = create();
+      readyToSubmit(fixture);
+      expect(fixture.componentInstance.canEditKyc()).toBe(true);
+      expect(fixture.componentInstance.canSubmit()).toBe(true);
+    });
+
+    it('blocks editing while KYC is Pending review', () => {
+      const fixture = create();
+      readyToSubmit(fixture);
+      fixture.componentInstance.existingKyc.set({ id: 'k1', kycStatus: 'Pending' } as KycRecordDto);
+
+      expect(fixture.componentInstance.canEditKyc()).toBe(false);
+      expect(fixture.componentInstance.canSubmit()).toBe(false);
+    });
+
+    it('blocks editing once KYC is Approved', () => {
+      const fixture = create();
+      readyToSubmit(fixture);
+      fixture.componentInstance.existingKyc.set({ id: 'k1', kycStatus: 'Approved' } as KycRecordDto);
+
+      expect(fixture.componentInstance.canEditKyc()).toBe(false);
+      expect(fixture.componentInstance.canSubmit()).toBe(false);
+    });
+
+    it('allows re-editing once KYC is Rejected', () => {
+      const fixture = create();
+      readyToSubmit(fixture);
+      fixture.componentInstance.existingKyc.set({ id: 'k1', kycStatus: 'Rejected' } as KycRecordDto);
+
+      expect(fixture.componentInstance.canEditKyc()).toBe(true);
+      expect(fixture.componentInstance.canSubmit()).toBe(true);
+    });
+
+    it('submit() is a no-op while KYC is Pending, even with valid input', () => {
+      const fixture = create();
+      readyToSubmit(fixture);
+      fixture.componentInstance.existingKyc.set({ id: 'k1', kycStatus: 'Pending' } as KycRecordDto);
+
+      fixture.componentInstance.submit();
+
+      httpMock.expectNone(() => true);
     });
   });
 
   describe('submit', () => {
     it('does nothing when no customer is selected', () => {
       const fixture = create();
-      fixture.componentInstance.documentFile = new File(['x'], 'a.jpg');
-      fixture.componentInstance.idType.set('aadhaar');
-      fixture.componentInstance.idNumber.set('123456789012');
+      fixture.componentInstance.aadhaarFile.set(new File(['x'], 'a.jpg'));
+      fixture.componentInstance.aadhaarNumber.set('123456789012');
       fixture.componentInstance.submit();
       httpMock.expectNone(() => true);
       expect(fixture.componentInstance.submitting()).toBe(false);
@@ -158,8 +230,7 @@ describe('AgentCustomerKycComponent', () => {
     it('does nothing without a document file', () => {
       const fixture = create();
       fixture.componentInstance.selectedCustomerId.set('c1');
-      fixture.componentInstance.idType.set('aadhaar');
-      fixture.componentInstance.idNumber.set('123456789012');
+      fixture.componentInstance.aadhaarNumber.set('123456789012');
       fixture.componentInstance.submit();
       httpMock.expectNone(() => true);
       expect(fixture.componentInstance.submitting()).toBe(false);
@@ -168,21 +239,19 @@ describe('AgentCustomerKycComponent', () => {
     it('does nothing when the id number is invalid', () => {
       const fixture = create();
       fixture.componentInstance.selectedCustomerId.set('c1');
-      fixture.componentInstance.documentFile = new File(['x'], 'a.jpg');
-      fixture.componentInstance.idType.set('aadhaar');
-      fixture.componentInstance.idNumber.set('123');
+      fixture.componentInstance.aadhaarFile.set(new File(['x'], 'a.jpg'));
+      fixture.componentInstance.aadhaarNumber.set('123');
       fixture.componentInstance.submit();
       httpMock.expectNone(() => true);
       expect(fixture.componentInstance.submitting()).toBe(false);
     });
 
-    it('uploads Aadhaar as multipart form data', () => {
+    it('uploads only Aadhaar when only it is complete', () => {
       const fixture = create();
       const doc = new File(['x'], 'aadhaar.jpg');
       fixture.componentInstance.selectedCustomerId.set('c1');
-      fixture.componentInstance.documentFile = doc;
-      fixture.componentInstance.idType.set('aadhaar');
-      fixture.componentInstance.idNumber.set('123456789012');
+      fixture.componentInstance.aadhaarFile.set(doc);
+      fixture.componentInstance.aadhaarNumber.set('123456789012');
 
       fixture.componentInstance.submit();
 
@@ -192,18 +261,18 @@ describe('AgentCustomerKycComponent', () => {
       expect(body.get('customerId')).toBe('c1');
       expect(body.get('aadhaarNumber')).toBe('123456789012');
       call.flush({});
+      httpMock.expectNone('/api/v1/users/kyc/pan');
 
       expect(toast.success).toHaveBeenCalledWith('Aadhaar uploaded successfully');
       expect(fixture.componentInstance.submitting()).toBe(false);
     });
 
-    it('uploads PAN as multipart form data', () => {
+    it('uploads only PAN when only it is complete', () => {
       const fixture = create();
       const doc = new File(['x'], 'pan.jpg');
       fixture.componentInstance.selectedCustomerId.set('c1');
-      fixture.componentInstance.documentFile = doc;
-      fixture.componentInstance.idType.set('pan');
-      fixture.componentInstance.idNumber.set('abcde1234f');
+      fixture.componentInstance.panFile.set(doc);
+      fixture.componentInstance.panNumber.set('abcde1234f');
 
       fixture.componentInstance.submit();
 
@@ -215,19 +284,125 @@ describe('AgentCustomerKycComponent', () => {
       expect(toast.success).toHaveBeenCalledWith('PAN uploaded successfully');
     });
 
+    it('does not send the PAN request until the Aadhaar request has completed', () => {
+      // Regression test: both uploads used to fire via forkJoin (in parallel), and for a
+      // brand-new customer both requests race to create the same underlying KycRecord row
+      // server-side, tripping a unique-constraint violation. Sequential-only prevents that.
+      const fixture = create();
+      fixture.componentInstance.selectedCustomerId.set('c1');
+      fixture.componentInstance.aadhaarFile.set(new File(['x'], 'aadhaar.jpg'));
+      fixture.componentInstance.aadhaarNumber.set('123456789012');
+      fixture.componentInstance.panFile.set(new File(['x'], 'pan.jpg'));
+      fixture.componentInstance.panNumber.set('abcde1234f');
+
+      fixture.componentInstance.submit();
+
+      httpMock.expectOne('/api/v1/users/kyc/aadhaar');
+      httpMock.expectNone('/api/v1/users/kyc/pan');
+    });
+
+    it('uploads both Aadhaar and PAN together in a single submit when both are complete', () => {
+      const fixture = create();
+      fixture.componentInstance.selectedCustomerId.set('c1');
+      fixture.componentInstance.aadhaarFile.set(new File(['x'], 'aadhaar.jpg'));
+      fixture.componentInstance.aadhaarNumber.set('123456789012');
+      fixture.componentInstance.panFile.set(new File(['x'], 'pan.jpg'));
+      fixture.componentInstance.panNumber.set('abcde1234f');
+
+      fixture.componentInstance.submit();
+
+      // Sequential, not parallel — the PAN request isn't sent until Aadhaar's response
+      // lands, so that a brand-new customer's shared KycRecord row is created by the
+      // first call before the second one looks for it (see submit()'s race-condition note).
+      httpMock.expectOne('/api/v1/users/kyc/aadhaar').flush({});
+      httpMock.expectOne('/api/v1/users/kyc/pan').flush({});
+
+      expect(toast.success).toHaveBeenCalledWith('Aadhaar & PAN uploaded successfully');
+      expect(router.navigate).toHaveBeenCalledWith(['/agent/customers']);
+    });
+
     it('shows an error toast and resets submitting on upload failure', () => {
       const fixture = create();
       fixture.componentInstance.selectedCustomerId.set('c1');
-      fixture.componentInstance.documentFile = new File(['x'], 'front.jpg');
-      fixture.componentInstance.idType.set('aadhaar');
-      fixture.componentInstance.idNumber.set('123456789012');
+      fixture.componentInstance.aadhaarFile.set(new File(['x'], 'front.jpg'));
+      fixture.componentInstance.aadhaarNumber.set('123456789012');
 
       fixture.componentInstance.submit();
       const call = httpMock.expectOne('/api/v1/users/kyc/aadhaar');
       call.flush({ message: 'error' }, { status: 500, statusText: 'Server Error' });
 
-      expect(toast.error).toHaveBeenCalledWith('Upload failed');
+      expect(toast.error).toHaveBeenCalledWith('Aadhaar upload failed');
       expect(fixture.componentInstance.submitting()).toBe(false);
+      expect(router.navigate).not.toHaveBeenCalled();
+    });
+
+    it('reports partial failure and still navigates for the succeeded one when only one of two succeeds', () => {
+      const fixture = create();
+      fixture.componentInstance.selectedCustomerId.set('c1');
+      fixture.componentInstance.aadhaarFile.set(new File(['x'], 'aadhaar.jpg'));
+      fixture.componentInstance.aadhaarNumber.set('123456789012');
+      fixture.componentInstance.panFile.set(new File(['x'], 'pan.jpg'));
+      fixture.componentInstance.panNumber.set('abcde1234f');
+
+      fixture.componentInstance.submit();
+
+      httpMock.expectOne('/api/v1/users/kyc/aadhaar').flush({});
+      httpMock.expectOne('/api/v1/users/kyc/pan').flush({ message: 'error' }, { status: 500, statusText: 'Server Error' });
+
+      expect(toast.success).toHaveBeenCalledWith('Aadhaar uploaded successfully');
+      expect(toast.error).toHaveBeenCalledWith('PAN upload failed');
+      expect(router.navigate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('canDeactivate', () => {
+    it('allows navigation when nothing has been entered', () => {
+      const fixture = create();
+      expect(fixture.componentInstance.canDeactivate()).toBe(true);
+    });
+
+    it('prompts for confirmation when an id number has been typed but not submitted', () => {
+      const fixture = create();
+      fixture.componentInstance.aadhaarNumber.set('123456789012');
+
+      const result = fixture.componentInstance.canDeactivate();
+
+      expect(fixture.componentInstance.showLeaveConfirm()).toBe(true);
+      expect(result).not.toBe(true);
+    });
+
+    it('prompts for confirmation when a file has been attached but not submitted', () => {
+      const fixture = create();
+      fixture.componentInstance.panFile.set(new File(['x'], 'pan.jpg'));
+
+      const result = fixture.componentInstance.canDeactivate();
+
+      expect(fixture.componentInstance.showLeaveConfirm()).toBe(true);
+      expect(result).not.toBe(true);
+    });
+
+    it('resolves true on confirmLeave and false on cancelLeave', async () => {
+      const fixture = create();
+      fixture.componentInstance.aadhaarNumber.set('123456789012');
+
+      const result$ = fixture.componentInstance.canDeactivate();
+      const resultPromise = new Promise(resolve => (result$ as any).subscribe(resolve));
+      fixture.componentInstance.confirmLeave();
+
+      expect(await resultPromise).toBe(true);
+      expect(fixture.componentInstance.showLeaveConfirm()).toBe(false);
+    });
+
+    it('allows navigation without prompting right after a successful submit', () => {
+      const fixture = create();
+      fixture.componentInstance.selectedCustomerId.set('c1');
+      fixture.componentInstance.aadhaarFile.set(new File(['x'], 'aadhaar.jpg'));
+      fixture.componentInstance.aadhaarNumber.set('123456789012');
+
+      fixture.componentInstance.submit();
+      httpMock.expectOne('/api/v1/users/kyc/aadhaar').flush({});
+
+      expect(fixture.componentInstance.canDeactivate()).toBe(true);
     });
   });
 });

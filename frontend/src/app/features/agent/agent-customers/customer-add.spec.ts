@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
 import { AgentCustomerAddComponent } from './customer-add';
 import { AgentService } from '../services/agent.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
@@ -105,6 +105,39 @@ describe('AgentCustomerAddComponent', () => {
 
       expect(fixture.componentInstance.errorMessage()).toBe('This information is already registered.');
       expect(router.navigate).not.toHaveBeenCalled();
+    });
+
+    it('sets loading while in flight, blocks a duplicate submit, and clears on success', () => {
+      const fixture = create();
+      fillForm(fixture);
+      const subject = new Subject<any>();
+      agentService.addCustomer.mockReturnValue(subject);
+
+      fixture.componentInstance.onSubmit();
+
+      expect(fixture.componentInstance.loading()).toBe(true);
+      fixture.componentInstance.onSubmit();
+      expect(agentService.addCustomer).toHaveBeenCalledTimes(1);
+
+      subject.next({ email: 'rahul@example.com', role: 'Customer' });
+      subject.complete();
+
+      expect(fixture.componentInstance.loading()).toBe(false);
+      expect(router.navigate).toHaveBeenCalledWith(['/agent/customers']);
+    });
+
+    it('clears loading on error', () => {
+      const fixture = create();
+      fillForm(fixture);
+      const subject = new Subject<any>();
+      agentService.addCustomer.mockReturnValue(subject);
+
+      fixture.componentInstance.onSubmit();
+      expect(fixture.componentInstance.loading()).toBe(true);
+
+      subject.error({ status: 500 });
+
+      expect(fixture.componentInstance.loading()).toBe(false);
     });
   });
 

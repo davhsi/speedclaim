@@ -99,6 +99,19 @@ describe('errorInterceptor', () => {
     expect(toast.error).toHaveBeenCalledWith('Invalid claim date');
   });
 
+  it('joins ASP.NET ValidationProblemDetails field errors into the toast when there is no detail/message', () => {
+    const req = new HttpRequest('GET', '/api/v1/claims');
+    const next: HttpHandlerFn = () => throwError(() => errorResponse(400, {
+      title: 'One or more validation errors occurred.',
+      status: 400,
+      errors: { AadhaarNumber: ['Aadhaar number must be exactly 12 digits.'] },
+    }));
+
+    run(req, next).subscribe({ error: () => {} });
+
+    expect(toast.error).toHaveBeenCalledWith('Aadhaar number must be exactly 12 digits.');
+  });
+
   it('suppresses toasts for non-429 errors on auth endpoints (auth pages handle their own errors)', () => {
     const req = new HttpRequest('POST', '/api/v1/auth/some-endpoint', {});
     const next: HttpHandlerFn = () => throwError(() => errorResponse(400, { message: 'bad request' }));

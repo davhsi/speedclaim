@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
 import { GrievanceDetailComponent } from './grievance-detail';
 import { ClaimsOfficerService } from '../services/claims-officer.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -94,6 +94,24 @@ describe('GrievanceDetailComponent', () => {
       expect(toast.error).toHaveBeenCalledWith('Failed to assign grievance');
       expect(fixture.componentInstance.actionInFlight()).toBe(false);
     });
+
+    it('sets pendingAction to assign while in flight, blocks a duplicate click, and clears on success', () => {
+      const fixture = create();
+      const subject = new Subject<{ message: string }>();
+      claimsService.assignGrievance.mockReturnValue(subject);
+
+      fixture.componentInstance.onAssignToSelf();
+      expect(fixture.componentInstance.actionInFlight()).toBe(true);
+      expect(fixture.componentInstance.pendingAction()).toBe('assign');
+
+      fixture.componentInstance.onAssignToSelf();
+      expect(claimsService.assignGrievance).toHaveBeenCalledTimes(1);
+
+      subject.next({ message: 'ok' });
+      subject.complete();
+      expect(fixture.componentInstance.actionInFlight()).toBe(false);
+      expect(fixture.componentInstance.pendingAction()).toBeNull();
+    });
   });
 
   describe('onUpdateStatus', () => {
@@ -120,6 +138,21 @@ describe('GrievanceDetailComponent', () => {
       claimsService.updateGrievanceStatus.mockReturnValue(throwError(() => ({ status: 500 })));
       fixture.componentInstance.onUpdateStatus();
       expect(toast.error).toHaveBeenCalledWith('Failed to update status');
+    });
+
+    it('sets pendingAction to status while in flight and clears on error', () => {
+      const fixture = create();
+      const subject = new Subject<{ message: string }>();
+      claimsService.updateGrievanceStatus.mockReturnValue(subject);
+
+      fixture.componentInstance.onUpdateStatus();
+      expect(fixture.componentInstance.pendingAction()).toBe('status');
+
+      fixture.componentInstance.onUpdateStatus();
+      expect(claimsService.updateGrievanceStatus).toHaveBeenCalledTimes(1);
+
+      subject.error({ status: 500 });
+      expect(fixture.componentInstance.pendingAction()).toBeNull();
     });
   });
 
@@ -149,6 +182,24 @@ describe('GrievanceDetailComponent', () => {
       fixture.componentInstance.notes = 'x';
       fixture.componentInstance.onSaveNotes();
       expect(toast.error).toHaveBeenCalledWith('Failed to save notes');
+    });
+
+    it('sets pendingAction to notes while in flight and blocks a duplicate click', () => {
+      const fixture = create();
+      const subject = new Subject<{ message: string }>();
+      claimsService.updateGrievanceStatus.mockReturnValue(subject);
+      fixture.componentInstance.notes = 'called customer';
+
+      fixture.componentInstance.onSaveNotes();
+      expect(fixture.componentInstance.pendingAction()).toBe('notes');
+
+      fixture.componentInstance.notes = 'called customer';
+      fixture.componentInstance.onSaveNotes();
+      expect(claimsService.updateGrievanceStatus).toHaveBeenCalledTimes(1);
+
+      subject.next({ message: 'ok' });
+      subject.complete();
+      expect(fixture.componentInstance.pendingAction()).toBeNull();
     });
   });
 });

@@ -1,11 +1,13 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
   ApiMessage, PolicyDto, ProposalDto, SubmitProposalRequest,
   GenerateQuoteRequest, GenerateQuoteResponse,
-  ProductDto, AgentAddCustomerRequest, RegistrationResponse,
+  ProductDto, AgentAddCustomerRequest, RegistrationResponse, KycRecordDto,
+  DocumentRequirementDto,
 } from '../../../core/models/api.models';
+import { SKIP_ERROR_TOAST } from '../../../core/interceptors/error.interceptor';
 
 export interface AgentDashboardDto {
   totalCustomers: number;
@@ -28,6 +30,9 @@ export interface AgentCustomerDto {
   kycApproved?: boolean;
   kycStatus?: string;
   kycRejectionReason?: string;
+  dateOfBirth?: string | null;
+  occupation?: string | null;
+  annualIncome?: number | null;
 }
 
 export interface RenewalReminderDto {
@@ -85,6 +90,22 @@ export class AgentService {
 
   searchCustomers(query: string): Observable<AgentCustomerDto[]> {
     return this.http.get<AgentCustomerDto[]>('/api/v1/agents/customers/search', { params: new HttpParams().set('q', query) });
+  }
+
+  getCustomerKyc(customerId: string): Observable<KycRecordDto | null> {
+    return this.http.get<KycRecordDto | null>(`/api/v1/agents/customers/${customerId}/kyc`, {
+      context: new HttpContext().set(SKIP_ERROR_TOAST, true),
+    });
+  }
+
+  getProductDocuments(productId: string): Observable<DocumentRequirementDto[]> {
+    return this.http.get<DocumentRequirementDto[]>(`/api/v1/products/${productId}/documents`);
+  }
+
+  uploadProposalDocument(proposalId: string, documentKey: string, file: File): Observable<ApiMessage> {
+    const fd = new FormData();
+    fd.append('file', file);
+    return this.http.put<ApiMessage>(`/api/v1/proposals/${proposalId}/documents/${documentKey}`, fd);
   }
 
   addCustomer(req: AgentAddCustomerRequest): Observable<RegistrationResponse> {

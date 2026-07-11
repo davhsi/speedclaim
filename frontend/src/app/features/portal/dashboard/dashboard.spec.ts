@@ -20,7 +20,7 @@ describe('DashboardComponent', () => {
   const activePolicy = {
     id: 'pol1',
     policyNumber: 'POL-1',
-    userId: 'user1',
+    customerId: 'user1',
     status: 'Active',
     productId: 'prod1',
     productName: 'Term Life Basic',

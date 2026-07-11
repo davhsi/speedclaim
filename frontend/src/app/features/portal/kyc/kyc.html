@@ -65,7 +65,7 @@
     </div>
   }
 
-  @if (!kyc() || kyc()!.kycStatus !== 'Approved') {
+  @if (!kyc() || kyc()!.kycStatus === 'Rejected') {
     <div class="bg-white border border-line rounded-card shadow-sm p-6 space-y-5">
       <div class="text-[13px] font-semibold text-ink">Upload KYC documents</div>
 
@@ -77,12 +77,17 @@
         @if (aadhaarError()) {
           <div class="text-[11px] text-danger mb-1.5">{{ aadhaarError() }}</div>
         }
-        <app-file-upload label="Aadhaar document" hint="PDF, JPG, PNG up to 5MB" [maxSizeMb]="5" (fileSelected)="aadhaarFile = $event" />
+        <app-file-upload label="Aadhaar document" hint="PDF, JPG, PNG up to 5MB" [maxSizeMb]="5" (fileSelected)="aadhaarFile.set($event)" />
         <button
-          class="mt-3 h-9 px-4 bg-primary text-white text-xs font-semibold rounded-control hover:bg-primary-hover disabled:opacity-40"
-          [disabled]="!aadhaarFile || !aadhaarValid() || submitting()"
+          class="mt-3 h-9 px-4 bg-primary text-white text-xs font-semibold rounded-control hover:bg-primary-hover disabled:opacity-40 flex items-center gap-2"
+          [disabled]="!aadhaarFile() || !aadhaarValid() || submitting()"
           (click)="uploadAadhaar()"
-        >Upload Aadhaar</button>
+        >
+          @if (uploadingAadhaar()) {
+            <span class="w-3 h-3 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+          }
+          {{ uploadingAadhaar() ? 'Uploading…' : 'Upload Aadhaar' }}
+        </button>
       </div>
 
       <div class="pt-4 border-t border-line">
@@ -93,13 +98,30 @@
         @if (panError()) {
           <div class="text-[11px] text-danger mb-1.5">{{ panError() }}</div>
         }
-        <app-file-upload label="PAN document" hint="PDF, JPG, PNG up to 5MB" [maxSizeMb]="5" (fileSelected)="panFile = $event" />
+        <app-file-upload label="PAN document" hint="PDF, JPG, PNG up to 5MB" [maxSizeMb]="5" (fileSelected)="panFile.set($event)" />
         <button
-          class="mt-3 h-9 px-4 bg-primary text-white text-xs font-semibold rounded-control hover:bg-primary-hover disabled:opacity-40"
-          [disabled]="!panFile || !panValid() || submitting()"
+          class="mt-3 h-9 px-4 bg-primary text-white text-xs font-semibold rounded-control hover:bg-primary-hover disabled:opacity-40 flex items-center gap-2"
+          [disabled]="!panFile() || !panValid() || submitting()"
           (click)="uploadPan()"
-        >Upload PAN</button>
+        >
+          @if (uploadingPan()) {
+            <span class="w-3 h-3 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+          }
+          {{ uploadingPan() ? 'Uploading…' : 'Upload PAN' }}
+        </button>
       </div>
     </div>
   }
 </div>
+
+@if (showLeaveConfirm()) {
+  <app-confirm-dialog
+    title="Leave without uploading?"
+    message="You've entered an ID number or attached a document that hasn't been uploaded yet. If you leave now, that will be lost."
+    confirmLabel="Leave"
+    cancelLabel="Stay"
+    variant="danger"
+    (confirmed)="confirmLeave()"
+    (cancelled)="cancelLeave()"
+  />
+}

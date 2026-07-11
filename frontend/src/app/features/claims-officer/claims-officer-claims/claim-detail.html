@@ -58,6 +58,29 @@
           <p class="text-[13px] text-body leading-relaxed">{{ c.incidentDescription }}</p>
         </div>
 
+        <!-- Survey assessment -->
+        @if (c.surveyEstimatedCost != null) {
+          <div class="bg-white border border-line rounded-card shadow-sm p-5 mb-4">
+            <h3 class="text-sm font-semibold text-ink mb-3">Survey assessment</h3>
+            <div class="grid grid-cols-2 gap-4 mb-3">
+              <div>
+                <div class="text-xs text-muted mb-0.5">Estimated repair cost</div>
+                <div class="text-lg font-bold text-ink sc-numeric">{{ c.surveyEstimatedCost | money }}</div>
+              </div>
+              @if (c.surveyDate) {
+                <div>
+                  <div class="text-xs text-muted mb-0.5">Survey date</div>
+                  <div class="text-[13px] font-medium text-ink sc-numeric">{{ c.surveyDate | dateFormat }}</div>
+                </div>
+              }
+            </div>
+            @if (c.surveyorRemarks) {
+              <div class="text-xs text-muted mb-0.5">Surveyor remarks</div>
+              <p class="text-[13px] text-body leading-relaxed">{{ c.surveyorRemarks }}</p>
+            }
+          </div>
+        }
+
         <!-- Status timeline -->
         <div class="bg-white border border-line rounded-card shadow-sm p-5 mb-4">
           <h3 class="text-sm font-semibold text-ink mb-5">Status timeline</h3>

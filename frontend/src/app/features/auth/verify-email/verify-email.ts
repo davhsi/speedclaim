@@ -50,6 +50,7 @@ export class VerifyEmailComponent implements OnInit {
   }
 
   resendVerification(): void {
+    if (this.resendLoading()) return;
     if (this.resendForm.invalid) {
       this.resendForm.markAllAsTouched();
       return;

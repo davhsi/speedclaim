@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { ProposalDetailComponent } from './proposal-detail';
 import { ProposalService } from '../services/proposal.service';
 import { ProductService } from '../../products/services/product.service';
@@ -125,6 +125,38 @@ describe('ProposalDetailComponent', () => {
       fixture.componentInstance.confirmWithdraw();
       expect(proposalService.withdraw).not.toHaveBeenCalled();
     });
+
+    it('sets withdrawing true while in flight, blocks a duplicate call, and clears on success', () => {
+      const fixture = create();
+      const subject = new Subject<{ message: string }>();
+      proposalService.withdraw.mockReturnValue(subject.asObservable());
+      fixture.componentInstance.showWithdrawDialog.set(true);
+
+      fixture.componentInstance.confirmWithdraw();
+      expect(fixture.componentInstance.withdrawing()).toBe(true);
+      expect(fixture.componentInstance.showWithdrawDialog()).toBe(true);
+
+      fixture.componentInstance.confirmWithdraw();
+      expect(proposalService.withdraw).toHaveBeenCalledTimes(1);
+
+      subject.next({ message: 'ok' });
+      subject.complete();
+
+      expect(fixture.componentInstance.withdrawing()).toBe(false);
+      expect(fixture.componentInstance.showWithdrawDialog()).toBe(false);
+    });
+
+    it('clears withdrawing on error', () => {
+      const fixture = create();
+      const subject = new Subject<{ message: string }>();
+      proposalService.withdraw.mockReturnValue(subject.asObservable());
+
+      fixture.componentInstance.confirmWithdraw();
+      subject.error({ status: 500 });
+
+      expect(fixture.componentInstance.withdrawing()).toBe(false);
+      expect(toast.error).toHaveBeenCalledWith('Failed to withdraw proposal');
+    });
   });
 
   describe('onDocUpload', () => {
@@ -150,6 +182,33 @@ describe('ProposalDetailComponent', () => {
       const fixture = create(null);
       fixture.componentInstance.onDocUpload(new File(['x'], 'doc.pdf'));
       expect(proposalService.uploadDocument).not.toHaveBeenCalled();
+    });
+
+    it('sets uploadingDoc true while in flight, blocks a duplicate call, and clears on success', () => {
+      const fixture = create();
+      const subject = new Subject<{ message: string }>();
+      proposalService.uploadDocument.mockReturnValue(subject.asObservable());
+      const file = new File(['x'], 'doc.pdf');
+
+      fixture.componentInstance.onDocUpload(file);
+      expect(fixture.componentInstance.uploadingDoc()).toBe(true);
+
+      fixture.componentInstance.onDocUpload(file);
+      expect(proposalService.uploadDocument).toHaveBeenCalledTimes(1);
+
+      subject.next({ message: 'ok' });
+      subject.complete();
+      expect(fixture.componentInstance.uploadingDoc()).toBe(false);
+    });
+
+    it('clears uploadingDoc on error', () => {
+      const fixture = create();
+      const subject = new Subject<{ message: string }>();
+      proposalService.uploadDocument.mockReturnValue(subject.asObservable());
+
+      fixture.componentInstance.onDocUpload(new File(['x'], 'doc.pdf'));
+      subject.error({ status: 500 });
+      expect(fixture.componentInstance.uploadingDoc()).toBe(false);
     });
   });
 

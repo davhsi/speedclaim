@@ -1,12 +1,15 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Observable, Subject } from 'rxjs';
 import { AgentService, AgentCustomerDto } from '../services/agent.service';
-import { ProductDto } from '../../../core/models/api.models';
+import { DocumentRequirementDto, ProductDto } from '../../../core/models/api.models';
+import { FileUploadComponent } from '../../../shared/components/file-upload/file-upload';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { SafeHtmlPipe } from '../../../shared/pipes/safe-html.pipe';
+import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+import { CanComponentDeactivate } from '../../../core/guards/unsaved-changes.guard';
 
 type ProductType = 'Health' | 'Motor' | 'Life';
 
@@ -21,10 +24,10 @@ interface StepDef {
 @Component({
   selector: 'app-agent-proposal-submit',
   standalone: true,
-  imports: [RouterLink, FormsModule, MoneyPipe, SafeHtmlPipe],
+  imports: [RouterLink, FormsModule, MoneyPipe, SafeHtmlPipe, FileUploadComponent, ConfirmDialogComponent],
   templateUrl: './proposal-submit.html',
 })
-export class AgentProposalSubmitComponent implements OnInit {
+export class AgentProposalSubmitComponent implements OnInit, CanComponentDeactivate {
   private readonly agentService = inject(AgentService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
@@ -32,6 +35,8 @@ export class AgentProposalSubmitComponent implements OnInit {
   customers = signal<AgentCustomerDto[]>([]);
   products = signal<ProductDto[]>([]);
   quoteResult = signal<any>(null);
+  calculatingQuote = signal(false);
+  submitting = signal(false);
 
   currentStep = 0;
   selectedCustomerId: string | null = null;
@@ -49,24 +54,52 @@ export class AgentProposalSubmitComponent implements OnInit {
 
   productTypes: ProductType[] = ['Health', 'Motor', 'Life'];
 
-  healthForm = { coverType: 'Family floater', members: 4, sumAssured: '₹10,00,000', eldestAge: 67 };
-  motorForm = { vehicleMakeModel: '', regYear: 2022, idv: '', ncb: '20%' };
+  // Defaults sit inside the seeded Health product's limits (age ≤ 65, rate bands up to ₹5,00,000)
+  // so the happy path works on a fresh database without tripping eligibility/rate errors.
+  healthForm = { coverType: 'Family floater', members: 4, sumAssured: '₹5,00,000', eldestAge: 35 };
+  motorForm = { vehicleNumber: '', vehicleMake: '', vehicleModel: '', regYear: 2022, idv: '', coverType: 'Comprehensive' };
   lifeForm = { sumAssured: '', term: '30 years', age: 38, tobaccoUser: 'No' };
   proposerForm = { fullName: '', dob: '', annualIncome: '', occupation: '', pan: '', aadhaarLast4: '' };
 
-  kycDocs = [
-    { label: 'Aadhaar card (front & back)', hint: 'JPG, PNG, or PDF — max 5 MB' },
-    { label: 'PAN card', hint: 'JPG, PNG, or PDF — max 5 MB' },
-  ];
+  nominees: { fullName: string; relationship: string; dateOfBirth: string; sharePercentage: number; appointeeName: string }[] = [];
+  relationships = ['Spouse', 'Son', 'Daughter', 'Father', 'Mother', 'Other'];
 
-  proposalDocs = [
-    { label: 'Proposal form (signed)', hint: 'PDF only — max 10 MB' },
-    { label: 'Medical records (if applicable)', hint: 'PDF, JPG, or PNG — max 10 MB' },
-  ];
+  docRequirements = signal<DocumentRequirementDto[]>([]);
+  docRequirementsLoaded = signal(false);
+  uploadedFiles = new Map<string, File>();
 
   stepLabels = ['Customer', 'Quote', 'Details', 'Documents'];
 
   steps = signal<StepDef[]>(this.buildSteps());
+
+  showLeaveConfirm = signal(false);
+  private navigatedAfterSubmit = false;
+  private leaveSubject: Subject<boolean> | null = null;
+
+  // Step 0 is just picking a customer/product type — trivially redoable, so nothing
+  // worth guarding exists until the agent has actually progressed into the quote/
+  // details/documents steps (calculated quote, typed nominees, attached files).
+  canDeactivate(): boolean | Observable<boolean> {
+    if (this.navigatedAfterSubmit || this.currentStep === 0) return true;
+
+    this.showLeaveConfirm.set(true);
+    this.leaveSubject = new Subject<boolean>();
+    return this.leaveSubject.asObservable();
+  }
+
+  confirmLeave(): void {
+    this.showLeaveConfirm.set(false);
+    this.leaveSubject?.next(true);
+    this.leaveSubject?.complete();
+    this.leaveSubject = null;
+  }
+
+  cancelLeave(): void {
+    this.showLeaveConfirm.set(false);
+    this.leaveSubject?.next(false);
+    this.leaveSubject?.complete();
+    this.leaveSubject = null;
+  }
 
   ngOnInit(): void {
     forkJoin({
@@ -90,7 +123,23 @@ export class AgentProposalSubmitComponent implements OnInit {
     this.selectedCustomerKycApproved = c.kycApproved === true;
     this.selectedCustomerKycStatus = c.kycStatus ?? null;
     this.selectedCustomerKycRejectionReason = c.kycRejectionReason ?? null;
+
     this.proposerForm.fullName = c.fullName;
+    this.proposerForm.dob = c.dateOfBirth ?? '';
+    this.proposerForm.annualIncome = c.annualIncome != null ? `₹${c.annualIncome.toLocaleString('en-IN')}` : '';
+    this.proposerForm.occupation = c.occupation ?? '';
+    this.proposerForm.pan = '';
+    this.proposerForm.aadhaarLast4 = '';
+
+    // GetCustomerKyc matches against the User ID (c.id), not the Customer row's own PK
+    // (c.customerId) — see CLAUDE.md §21 for the analogous agent-management ID mixup.
+    this.agentService.getCustomerKyc(c.id).subscribe({
+      next: kyc => {
+        this.proposerForm.pan = kyc?.panNumber ?? '';
+        this.proposerForm.aadhaarLast4 = kyc?.aadhaarNumber ?? '';
+      },
+      error: () => {},
+    });
   }
 
   onMyCustomerSelected(id: string): void {
@@ -127,6 +176,51 @@ export class AgentProposalSubmitComponent implements OnInit {
     this.customerSearchQuery.set('');
   }
 
+  addNominee(): void {
+    this.nominees.push({ fullName: '', relationship: 'Spouse', dateOfBirth: '', sharePercentage: this.nominees.length === 0 ? 100 : 0, appointeeName: '' });
+  }
+
+  removeNominee(index: number): void {
+    this.nominees.splice(index, 1);
+  }
+
+  isMinorNominee(index: number): boolean {
+    const dob = this.nominees[index]?.dateOfBirth;
+    return !!dob && this.calculateAge(dob) < 18;
+  }
+
+  totalNomineeShares(): number {
+    return this.nominees.reduce((sum, n) => sum + (Number(n.sharePercentage) || 0), 0);
+  }
+
+  private nomineesError(): string | null {
+    if (this.selectedType === 'Life' && this.nominees.length === 0) {
+      return 'Life proposals require at least one nominee.';
+    }
+    if (this.nominees.length === 0) return null;
+    for (const [i, n] of this.nominees.entries()) {
+      if (!n.fullName.trim() || !n.dateOfBirth) return `Nominee ${i + 1} needs a name and date of birth.`;
+      if (this.isMinorNominee(i) && !n.appointeeName.trim()) return `Nominee ${i + 1} is a minor — an appointee name is required.`;
+    }
+    if (this.totalNomineeShares() !== 100) return 'Nominee shares must total 100%.';
+    return null;
+  }
+
+  private calculateAge(dateOfBirth: string): number {
+    const dob = new Date(dateOfBirth);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDelta = today.getMonth() - dob.getMonth();
+    if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+    return age;
+  }
+
+  hasActiveProduct(type: ProductType): boolean {
+    return this.products().some(p => p.domain.toUpperCase() === type.toUpperCase());
+  }
+
   nextStep(): void {
     if (this.currentStep === 0) {
       if (!this.selectedCustomerId) {
@@ -141,14 +235,38 @@ export class AgentProposalSubmitComponent implements OnInit {
         this.toast.warning('Please select a product type before continuing.');
         return;
       }
+      if (!this.hasActiveProduct(this.selectedType)) {
+        this.toast.warning(`No active ${this.selectedType} product is available right now. Please choose a different type or contact an admin.`);
+        return;
+      }
     }
 
-    if (this.currentStep === 1 && !this.quoteResult()) {
-      this.toast.warning('Please calculate the premium before continuing.');
-      return;
+    if (this.currentStep === 1) {
+      if (!this.quoteResult()) {
+        this.toast.warning('Please calculate the premium before continuing.');
+        return;
+      }
+      // Life requires a nominee — seed one row so the Details step isn't empty.
+      if (this.selectedType === 'Life' && this.nominees.length === 0) {
+        this.addNominee();
+      }
+    }
+
+    if (this.currentStep === 2) {
+      const nomineeError = this.nomineesError();
+      if (nomineeError) {
+        this.toast.warning(nomineeError);
+        return;
+      }
+      this.loadDocRequirements();
     }
 
     if (this.currentStep === 3) {
+      if (this.submitting()) return;
+      if (!this.requiredDocumentsUploaded()) {
+        this.toast.warning('Please upload all required documents before submitting.');
+        return;
+      }
       if (!this.confirmReady) {
         this.toast.warning('Please confirm that all documents are accurate before submitting.');
         return;
@@ -169,6 +287,7 @@ export class AgentProposalSubmitComponent implements OnInit {
   }
 
   calculateQuote(): void {
+    if (this.calculatingQuote()) return;
     const product = this.products().find(p => p.domain.toUpperCase() === this.selectedType?.toUpperCase());
     if (!product) {
       this.toast.error(`No active ${this.selectedType} product is available right now. Please choose a different type or contact an admin.`);
@@ -198,14 +317,18 @@ export class AgentProposalSubmitComponent implements OnInit {
     sumAssured = Math.max(product.minSumAssured, Math.min(product.maxSumAssured, sumAssured));
     tenureYears = Math.max(product.minTenureYears, Math.min(product.maxTenureYears, tenureYears));
 
+    this.calculatingQuote.set(true);
     this.agentService.generateQuote({
       productId: product.id,
       age,
       sumAssured,
       tenureYears,
     }).subscribe({
-      next: res => this.quoteResult.set(res),
-      error: () => this.toast.error('Failed to calculate quote. Please check the values and try again.'),
+      next: res => { this.quoteResult.set(res); this.calculatingQuote.set(false); },
+      error: () => {
+        this.toast.error('Failed to calculate quote. Please check the values and try again.');
+        this.calculatingQuote.set(false);
+      },
     });
   }
 
@@ -217,11 +340,37 @@ export class AgentProposalSubmitComponent implements OnInit {
     return Number.parseInt(val, 10) || 0;
   }
 
+  private loadDocRequirements(): void {
+    const product = this.products().find(p => p.domain.toUpperCase() === this.selectedType?.toUpperCase());
+    if (!product || this.docRequirementsLoaded()) return;
+    this.agentService.getProductDocuments(product.id).subscribe({
+      next: docs => {
+        this.docRequirements.set(docs);
+        this.docRequirementsLoaded.set(true);
+      },
+      error: () => {
+        this.docRequirementsLoaded.set(true);
+        this.toast.warning('Document requirements could not be loaded.');
+      },
+    });
+  }
+
+  onDocSelected(key: string, file: File): void {
+    this.uploadedFiles.set(key, file);
+  }
+
+  requiredDocumentsUploaded(): boolean {
+    return this.docRequirementsLoaded() && this.docRequirements()
+      .filter(d => d.isMandatory)
+      .every(d => this.uploadedFiles.has(d.documentKey));
+  }
+
   private submitProposal(): void {
     const product = this.products().find(p => p.domain.toUpperCase() === this.selectedType?.toUpperCase());
     const quote = this.quoteResult();
     if (!product || !this.selectedCustomerId || !quote) return;
 
+    this.submitting.set(true);
     this.agentService.submitProposal({
       productId: product.id,
       customerId: this.selectedCustomerId,
@@ -229,11 +378,58 @@ export class AgentProposalSubmitComponent implements OnInit {
       tenureYears: quote.tenureYears,
       premiumAmount: quote.premiumAmount,
       paymentFrequency: 'Annually',
+      motorDetail: this.selectedType === 'Motor' ? {
+        vehicleNumber: this.motorForm.vehicleNumber.trim(),
+        vehicleMake: this.motorForm.vehicleMake.trim(),
+        vehicleModel: this.motorForm.vehicleModel.trim(),
+        manufactureYear: Number(this.motorForm.regYear) || 0,
+        vehicleType: 'PrivateCar',
+        idv: quote.sumAssured,
+        engineNumber: '',
+        chassisNumber: '',
+        coverType: this.motorForm.coverType,
+      } : undefined,
       customerMemberIds: [],
-      nominees: [],
+      nominees: this.nominees.map((n, i) => ({
+        fullName: n.fullName.trim(),
+        relationship: n.relationship as any,
+        sharePercentage: Number(n.sharePercentage),
+        dateOfBirth: n.dateOfBirth,
+        isMinor: this.isMinorNominee(i),
+        appointeeName: n.appointeeName.trim() || undefined,
+      })),
     }).subscribe({
-      next: () => this.router.navigate(['/agent/proposals']),
-      error: () => this.toast.error('Failed to submit proposal. Please try again.'),
+      next: proposal => {
+        this.navigatedAfterSubmit = true;
+        const uploads = Array.from(this.uploadedFiles.entries());
+        if (uploads.length === 0) {
+          this.submitting.set(false);
+          this.router.navigate(['/agent/proposals']);
+          return;
+        }
+        let done = 0;
+        for (const [key, file] of uploads) {
+          this.agentService.uploadProposalDocument(proposal.id, key, file).subscribe({
+            next: () => {
+              if (++done === uploads.length) {
+                this.submitting.set(false);
+                this.router.navigate(['/agent/proposals']);
+              }
+            },
+            error: () => {
+              if (++done === uploads.length) {
+                this.submitting.set(false);
+                this.toast.warning('Proposal submitted but some documents failed to upload.');
+                this.router.navigate(['/agent/proposals']);
+              }
+            },
+          });
+        }
+      },
+      error: () => {
+        this.submitting.set(false);
+        this.toast.error('Failed to submit proposal. Please try again.');
+      },
     });
   }
 

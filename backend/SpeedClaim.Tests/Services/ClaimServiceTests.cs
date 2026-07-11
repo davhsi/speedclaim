@@ -70,6 +70,7 @@ public class ClaimServiceTests
         _mockUnitOfWork.Setup(u => u.Surveyors).Returns(new Mock<IRepository<Surveyor>>().Object);
         _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
         _mockUnitOfWork.Setup(u => u.Users).Returns(new Mock<IUserRepository>().Object);
+        _mockUnitOfWork.Setup(u => u.MotorClaimDetails).Returns(new Mock<IRepository<MotorClaimDetail>>().Object);
 
         var mockKycRepo = new Mock<IRepository<KycRecord>>();
         mockKycRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>()))
@@ -793,6 +794,56 @@ public class ClaimServiceTests
     }
 
     [Test]
+    public async Task SubmitSurveyReportAsync_NoExistingMotorDetail_CreatesRowWithAssessment()
+    {
+        var claimId = Guid.NewGuid();
+        var surveyorId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, SurveyorId = surveyorId, CustomerId = Guid.NewGuid(), Status = ClaimStatus.UnderReview, ClaimNumber = "CLM-001", PolicyId = Guid.NewGuid() };
+
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+        var mockMotorRepo = new Mock<IRepository<MotorClaimDetail>>();
+        mockMotorRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<MotorClaimDetail, bool>>>())).ReturnsAsync((MotorClaimDetail?)null);
+        MotorClaimDetail? added = null;
+        mockMotorRepo.Setup(r => r.AddAsync(It.IsAny<MotorClaimDetail>()))
+            .Callback<MotorClaimDetail>(d => added = d)
+            .Returns(Task.CompletedTask);
+        _mockUnitOfWork.Setup(u => u.MotorClaimDetails).Returns(mockMotorRepo.Object);
+
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.FileName).Returns("report.pdf");
+        mockFile.Setup(f => f.Length).Returns(2048);
+        mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
+
+        var request = new SubmitSurveyReportRequest(78500m, DateTime.UtcNow.AddDays(-1), "front bumper + radiator", mockFile.Object);
+        await _claimService.SubmitSurveyReportAsync(claimId, surveyorId, request);
+
+        Assert.That(added, Is.Not.Null, "survey submission must create the MotorClaimDetail row when none exists");
+        Assert.That(added!.ClaimId, Is.EqualTo(claimId));
+        Assert.That(added.EstimatedRepairCost, Is.EqualTo(78500m));
+        Assert.That(added.SurveyorRemarks, Is.EqualTo("front bumper + radiator"));
+    }
+
+    [Test]
+    public async Task GetClaimByIdAsync_WithSurveyAssessment_IncludesSurveyFields()
+    {
+        var claimId = Guid.NewGuid();
+        var claim = new Claim { Id = claimId, CustomerId = Guid.NewGuid(), Status = ClaimStatus.UnderReview, ClaimNumber = "CLM-002", PolicyId = Guid.NewGuid() };
+        _mockClaimRepo.Setup(r => r.GetByIdAsync(claimId)).ReturnsAsync(claim);
+
+        var surveyDate = DateTime.UtcNow.AddDays(-2);
+        var mockMotorRepo = new Mock<IRepository<MotorClaimDetail>>();
+        mockMotorRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<MotorClaimDetail, bool>>>()))
+            .ReturnsAsync(new MotorClaimDetail { ClaimId = claimId, EstimatedRepairCost = 42000m, SurveyDate = surveyDate, SurveyorRemarks = "repairable" });
+        _mockUnitOfWork.Setup(u => u.MotorClaimDetails).Returns(mockMotorRepo.Object);
+
+        var result = await _claimService.GetClaimByIdAsync(claimId);
+
+        Assert.That(result.SurveyEstimatedCost, Is.EqualTo(42000m));
+        Assert.That(result.SurveyDate, Is.EqualTo(surveyDate));
+        Assert.That(result.SurveyorRemarks, Is.EqualTo("repairable"));
+    }
+
+    [Test]
     public async Task SubmitSurveyReportAsync_WithPhotos_UploadsReportAndPhotos()
     {
         var claimId = Guid.NewGuid();
@@ -886,7 +937,7 @@ public class ClaimServiceTests
 
         await svc.UpdateClaimStatusAsync(claimId, ClaimStatus.UnderReview, officerId, "reviewing");
 
-        mockNotif.Verify(n => n.CreateAsync(userId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        mockNotif.Verify(n => n.CreateAsync(userId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()), Times.Once);
     }
 
     [Test]

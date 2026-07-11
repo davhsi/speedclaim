@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
 import { RegisterComponent } from './register';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
@@ -186,6 +186,36 @@ describe('RegisterComponent', () => {
 
       expect(toast.success).toHaveBeenCalled();
       expect(router.navigate).toHaveBeenCalledWith(['/auth/login']);
+      expect(fixture.componentInstance.loading()).toBe(false);
+    });
+
+    it('shows a loading state while in flight, blocks a duplicate submit, and clears on success', () => {
+      const fixture = create();
+      fillAllStepsAndGoToLast(fixture);
+      const request$ = new Subject<{ message: string }>();
+      authService.register.mockReturnValue(request$);
+
+      fixture.componentInstance.onSubmit();
+      expect(fixture.componentInstance.loading()).toBe(true);
+
+      fixture.componentInstance.onSubmit();
+      expect(authService.register).toHaveBeenCalledTimes(1);
+
+      request$.next({ message: 'ok' });
+      request$.complete();
+
+      expect(fixture.componentInstance.loading()).toBe(false);
+    });
+
+    it('clears the loading state on failure so the form can be retried', () => {
+      const fixture = create();
+      fillAllStepsAndGoToLast(fixture);
+      const request$ = new Subject<{ message: string }>();
+      authService.register.mockReturnValue(request$);
+
+      fixture.componentInstance.onSubmit();
+      request$.error({ status: 500, error: {} });
+
       expect(fixture.componentInstance.loading()).toBe(false);
     });
 

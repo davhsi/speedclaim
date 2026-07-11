@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
 import { EndorsementListComponent } from './endorsement-list';
 import { UnderwriterService } from '../services/underwriter.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
@@ -103,6 +103,43 @@ describe('EndorsementListComponent', () => {
       expect(toast.success).toHaveBeenCalledWith('Endorsement approved.');
       expect(uwService.getPendingEndorsements).toHaveBeenCalledTimes(2); // init + reload
     });
+
+    it('marks only the target endorsement as submitting while the request is in flight, and blocks a duplicate click', () => {
+      const fixture = create([endorsement({ id: 'e1' }), endorsement({ id: 'e2' })]);
+      const c = fixture.componentInstance;
+      const subject = new Subject<{ message: string }>();
+      uwService.reviewEndorsement.mockReturnValue(subject);
+
+      const e1 = endorsement({ id: 'e1' });
+      c.onApprove(e1);
+
+      expect(c.isSubmitting(e1)).toBe(true);
+      expect(c.isSubmitting(endorsement({ id: 'e2' }))).toBe(false);
+
+      c.onApprove(e1);
+      expect(uwService.reviewEndorsement).toHaveBeenCalledTimes(1);
+
+      subject.next({ message: 'ok' });
+      subject.complete();
+
+      expect(c.isSubmitting(e1)).toBe(false);
+    });
+
+    it('clears the submitting state on error without a success toast', () => {
+      const fixture = create([endorsement({ id: 'e1' })]);
+      const c = fixture.componentInstance;
+      const subject = new Subject<{ message: string }>();
+      uwService.reviewEndorsement.mockReturnValue(subject);
+
+      const e1 = endorsement({ id: 'e1' });
+      c.onApprove(e1);
+      expect(c.isSubmitting(e1)).toBe(true);
+
+      subject.error({ status: 500 });
+
+      expect(c.isSubmitting(e1)).toBe(false);
+      expect(toast.success).not.toHaveBeenCalled();
+    });
   });
 
   describe('reject flow', () => {
@@ -138,6 +175,48 @@ describe('EndorsementListComponent', () => {
       expect(uwService.reviewEndorsement).toHaveBeenCalledWith('e2', { isApproved: false, reason: 'Insufficient documents' });
       expect(toast.error).toHaveBeenCalledWith('Endorsement rejected.');
       expect(fixture.componentInstance.rejectingEndorsement()).toBeNull();
+    });
+
+    it('sets isSubmitting while in flight, blocks a duplicate confirm and closeReject, and clears on success', () => {
+      const fixture = create([endorsement({ id: 'e2' })]);
+      const c = fixture.componentInstance;
+      const e2 = endorsement({ id: 'e2' });
+      c.openReject(e2);
+      c.rejectReason = 'Insufficient documents';
+      const subject = new Subject<{ message: string }>();
+      uwService.reviewEndorsement.mockReturnValue(subject);
+
+      c.confirmReject();
+      expect(c.isSubmitting(e2)).toBe(true);
+
+      c.confirmReject();
+      expect(uwService.reviewEndorsement).toHaveBeenCalledTimes(1);
+
+      c.closeReject();
+      expect(c.rejectingEndorsement()).not.toBeNull();
+
+      subject.next({ message: 'ok' });
+      subject.complete();
+
+      expect(c.isSubmitting(e2)).toBe(false);
+      expect(c.rejectingEndorsement()).toBeNull();
+    });
+
+    it('clears isSubmitting on error and keeps the dialog open for retry', () => {
+      const fixture = create([endorsement({ id: 'e2' })]);
+      const c = fixture.componentInstance;
+      const e2 = endorsement({ id: 'e2' });
+      c.openReject(e2);
+      c.rejectReason = 'Insufficient documents';
+      const subject = new Subject<{ message: string }>();
+      uwService.reviewEndorsement.mockReturnValue(subject);
+
+      c.confirmReject();
+      subject.error({ status: 500 });
+
+      expect(c.isSubmitting(e2)).toBe(false);
+      expect(c.rejectingEndorsement()).not.toBeNull();
+      expect(toast.error).not.toHaveBeenCalled();
     });
   });
 });

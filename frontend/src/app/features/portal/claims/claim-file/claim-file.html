@@ -131,8 +131,11 @@
           <p class="text-xs text-muted">Maximum of {{ maxDocuments }} documents reached — remove one above to add another.</p>
         }
         <div class="flex justify-between mt-5 pt-5 border-t border-line">
-          <button class="h-10 px-5 border border-line bg-white text-[13px] font-semibold text-body rounded-control hover:bg-surface-alt transition-colors" (click)="step.set(1)">Back</button>
-          <button class="h-10 px-5 bg-accent text-white text-[13px] font-semibold rounded-control hover:bg-accent-hover transition-colors disabled:opacity-50" [disabled]="submitting()" (click)="submit()">
+          <button class="h-10 px-5 border border-line bg-white text-[13px] font-semibold text-body rounded-control hover:bg-surface-alt transition-colors disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="submitting()" (click)="step.set(1)">Back</button>
+          <button class="h-10 px-5 bg-accent text-white text-[13px] font-semibold rounded-control hover:bg-accent-hover transition-colors disabled:opacity-50 flex items-center gap-2" [disabled]="submitting()" (click)="submit()">
+            @if (submitting()) {
+              <span class="w-3.5 h-3.5 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+            }
             {{ submitting() ? 'Filing...' : 'File Claim' }}
           </button>
         </div>
@@ -140,3 +143,15 @@
     }
   </div>
 </div>
+
+@if (showLeaveConfirm()) {
+  <app-confirm-dialog
+    title="Leave without filing?"
+    message="You have unsaved changes to this claim. If you leave now, the details you've entered will be lost."
+    confirmLabel="Leave"
+    cancelLabel="Stay"
+    variant="danger"
+    (confirmed)="confirmLeave()"
+    (cancelled)="cancelLeave()"
+  />
+}

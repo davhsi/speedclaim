@@ -44,6 +44,8 @@ export class PolicyDetailComponent implements OnInit {
   activeTab = signal(0);
   showCancelDialog = signal(false);
   showEndorsementForm = signal(false);
+  submittingEndorsement = signal(false);
+  cancelling = signal(false);
   tabs = ['Overview', 'Nominees', 'Endorsements', 'Schedule', 'History'];
   readonly schedulePageSize = 10;
   readonly scheduleFilters: ScheduleFilter[] = ['All', 'Paid', 'Upcoming', 'Due', 'Overdue'];
@@ -178,29 +180,46 @@ export class PolicyDetailComponent implements OnInit {
   }
 
   submitEndorsement(): void {
+    if (this.submittingEndorsement()) return;
     if (this.endorsementForm.invalid) {
       this.endorsementForm.markAllAsTouched();
       return;
     }
+    this.submittingEndorsement.set(true);
     this.policyService.requestEndorsement(this.policy()!.id, this.endorsementForm.getRawValue() as any).subscribe({
       next: () => {
+        this.submittingEndorsement.set(false);
         this.toast.success('Endorsement request submitted');
         this.showEndorsementForm.set(false);
         this.endorsementForm.reset({ endorsementType: 'NomineeChange' });
         this.policyService.getEndorsements(this.policy()!.id).subscribe(e => this.endorsements.set(e));
       },
-      error: () => this.toast.error('Failed to submit endorsement'),
+      error: () => {
+        this.submittingEndorsement.set(false);
+        this.toast.error('Failed to submit endorsement');
+      },
     });
   }
 
+  cancelEndorsementForm(): void {
+    if (this.submittingEndorsement()) return;
+    this.showEndorsementForm.set(false);
+  }
+
   confirmCancel(): void {
+    if (this.cancelling()) return;
+    this.cancelling.set(true);
     this.policyService.cancelPolicy(this.policy()!.id).subscribe({
       next: () => {
+        this.cancelling.set(false);
         this.toast.success('Policy cancelled');
         this.showCancelDialog.set(false);
         this.policy.update(p => p ? { ...p, status: 'Cancelled' as any } : p);
       },
-      error: () => this.toast.error('Cancellation failed'),
+      error: () => {
+        this.cancelling.set(false);
+        this.toast.error('Cancellation failed');
+      },
     });
   }
 }

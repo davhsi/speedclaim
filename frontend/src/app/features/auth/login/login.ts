@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+import { DashboardService } from '../../portal/dashboard/services/dashboard.service';
 
 const SAVED_EMAIL_KEY = 'sc_saved_email';
 
@@ -18,6 +19,7 @@ export class LoginComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly dashboardService = inject(DashboardService);
   private readonly platformId = inject(PLATFORM_ID);
 
   loading = signal(false);
@@ -45,6 +47,7 @@ export class LoginComponent implements OnInit {
   }
 
   onSubmit(): void {
+    if (this.loading()) return;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -77,7 +80,11 @@ export class LoginComponent implements OnInit {
           Underwriter: '/underwriter',
           Surveyor: '/surveyor',
         };
-        this.router.navigate([roleRoutes[res.user.role] ?? '/dashboard']);
+        const destination = roleRoutes[res.user.role] ?? '/dashboard';
+        if (destination === '/dashboard') {
+          this.dashboardService.prefetchDashboard();
+        }
+        this.router.navigate([destination]);
       },
       error: (err) => {
         this.loading.set(false);
@@ -95,7 +102,7 @@ export class LoginComponent implements OnInit {
   }
 
   resendVerification(): void {
-    if (!this.lastEmail) return;
+    if (this.resendLoading() || !this.lastEmail) return;
     this.resendLoading.set(true);
     this.authService.resendVerificationEmail({ email: this.lastEmail }).subscribe({
       next: () => {

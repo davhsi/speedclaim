@@ -35,7 +35,12 @@
             <div class="bg-surface rounded-lg px-3.5 py-3 mb-3 text-[13px] text-body leading-relaxed whitespace-pre-wrap">{{ g.resolutionNotes }}</div>
           }
           <textarea id="grievance-notes" aria-label="Resolution notes" [(ngModel)]="notes" placeholder="Add investigation notes or internal comments..." class="w-full h-24 px-3 py-2.5 border border-line rounded-lg text-[13px] text-body resize-y outline-none leading-relaxed"></textarea>
-          <button (click)="onSaveNotes()" [disabled]="isTerminal(g) || actionInFlight() || !notes.trim()" class="mt-2 w-full h-[38px] border-none bg-primary rounded-lg text-[13px] font-semibold text-white cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed">Save notes</button>
+          <button (click)="onSaveNotes()" [disabled]="isTerminal(g) || actionInFlight() || !notes.trim()" class="mt-2 w-full h-[38px] border-none bg-primary rounded-lg text-[13px] font-semibold text-white cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+            @if (pendingAction() === 'notes') {
+              <span class="w-3.5 h-3.5 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+            }
+            {{ pendingAction() === 'notes' ? 'Saving…' : 'Save notes' }}
+          </button>
         </div>
       </div>
 
@@ -51,8 +56,12 @@
             </div>
           }
           <button (click)="onAssignToSelf()" [disabled]="isTerminal(g) || actionInFlight()" class="flex items-center justify-center gap-2 w-full h-[38px] border border-primary bg-primary-light rounded-lg text-[13px] font-semibold text-primary cursor-pointer hover:bg-primary/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-            Assign to self
+            @if (pendingAction() === 'assign') {
+              <span class="w-3.5 h-3.5 border-[1.5px] border-primary border-t-transparent rounded-full animate-spin"></span>
+            } @else {
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+            }
+            {{ pendingAction() === 'assign' ? 'Assigning…' : 'Assign to self' }}
           </button>
         </div>
 
@@ -66,7 +75,12 @@
             <option value="Escalated">Escalated</option>
             <option value="Closed">Closed</option>
           </select>
-          <button (click)="onUpdateStatus()" [disabled]="isTerminal(g) || actionInFlight()" class="w-full h-[38px] border-none bg-primary rounded-lg text-[13px] font-semibold text-white cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed">Update</button>
+          <button (click)="onUpdateStatus()" [disabled]="isTerminal(g) || actionInFlight()" class="w-full h-[38px] border-none bg-primary rounded-lg text-[13px] font-semibold text-white cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+            @if (pendingAction() === 'status') {
+              <span class="w-3.5 h-3.5 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+            }
+            {{ pendingAction() === 'status' ? 'Updating…' : 'Update' }}
+          </button>
         </div>
 
         <!-- Details -->

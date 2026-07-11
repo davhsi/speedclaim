@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
 import { AdminUsersComponent } from './admin-users';
 import { AdminService } from '../services/admin.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
@@ -171,6 +171,30 @@ describe('AdminUsersComponent', () => {
 
       expect(toast.error).toHaveBeenCalledWith('Failed to update role');
     });
+
+    it('shows a submitting state while in flight, blocks a duplicate save and close, and clears on success', () => {
+      const fixture = create([user({ id: 'u2', role: 'Customer' })]);
+      const c = fixture.componentInstance;
+      c.openChangeRoleModal(user({ id: 'u2', role: 'Customer' }));
+      c.selectedRole.set('Agent');
+      const request$ = new Subject<{ message: string }>();
+      adminService.changeUserRole.mockReturnValue(request$);
+
+      c.saveRole();
+      expect(c.actionInFlight()).toBe(true);
+
+      c.saveRole();
+      expect(adminService.changeUserRole).toHaveBeenCalledTimes(1);
+
+      c.closeModal();
+      expect(c.activeModal()).toBe('changeRole');
+
+      request$.next({ message: 'ok' });
+      request$.complete();
+
+      expect(c.actionInFlight()).toBe(false);
+      expect(c.activeModal()).toBeNull();
+    });
   });
 
   describe('confirmToggleStatus', () => {
@@ -198,6 +222,29 @@ describe('AdminUsersComponent', () => {
       expect(adminService.toggleUserStatus).toHaveBeenCalledWith('u2', true);
       expect(toast.success).toHaveBeenCalledWith('Bob Smith activated');
     });
+
+    it('shows a submitting state while in flight, blocks a duplicate confirm and close, and clears on success', () => {
+      const fixture = create([user({ id: 'u2', isActive: true })]);
+      const c = fixture.componentInstance;
+      c.openToggleStatusModal(user({ id: 'u2', isActive: true }));
+      const request$ = new Subject<{ message: string }>();
+      adminService.toggleUserStatus.mockReturnValue(request$);
+
+      c.confirmToggleStatus();
+      expect(c.actionInFlight()).toBe(true);
+
+      c.confirmToggleStatus();
+      expect(adminService.toggleUserStatus).toHaveBeenCalledTimes(1);
+
+      c.closeModal();
+      expect(c.activeModal()).toBe('toggleStatus');
+
+      request$.next({ message: 'ok' });
+      request$.complete();
+
+      expect(c.actionInFlight()).toBe(false);
+      expect(c.activeModal()).toBeNull();
+    });
   });
 
   describe('confirmResetPw', () => {
@@ -210,7 +257,7 @@ describe('AdminUsersComponent', () => {
       c.confirmResetPw();
 
       expect(adminService.resetPassword).not.toHaveBeenCalled();
-      expect(toast.warning).toHaveBeenCalledWith('Password must be at least 8 characters.');
+      expect(toast.warning).toHaveBeenCalledWith('Password does not meet the requirements below.');
     });
 
     it('resets the password and marks resetPwSent on success', () => {
@@ -225,6 +272,45 @@ describe('AdminUsersComponent', () => {
       expect(adminService.resetPassword).toHaveBeenCalledWith('u2', { newPassword: 'LongEnough1!' });
       expect(c.resetPwSent()).toBe(true);
       expect(toast.success).toHaveBeenCalledWith('Password reset for bob@x.com');
+    });
+
+    it('shows a submitting state while in flight, blocks a duplicate submit and close, and clears on success', () => {
+      const fixture = create([user({ id: 'u2', email: 'bob@x.com' })]);
+      const c = fixture.componentInstance;
+      c.openResetPwModal(user({ id: 'u2', email: 'bob@x.com' }));
+      c.resetPwForm.newPassword = 'LongEnough1!';
+      const request$ = new Subject<{ message: string }>();
+      adminService.resetPassword.mockReturnValue(request$);
+
+      c.confirmResetPw();
+      expect(c.actionInFlight()).toBe(true);
+
+      c.confirmResetPw();
+      expect(adminService.resetPassword).toHaveBeenCalledTimes(1);
+
+      c.closeModal();
+      expect(c.activeModal()).toBe('resetPw');
+
+      request$.next({ message: 'ok' });
+      request$.complete();
+
+      expect(c.actionInFlight()).toBe(false);
+      expect(c.resetPwSent()).toBe(true);
+    });
+
+    it('clears the submitting state on failure so the reset can be retried', () => {
+      const fixture = create([user({ id: 'u2', email: 'bob@x.com' })]);
+      const c = fixture.componentInstance;
+      c.openResetPwModal(user({ id: 'u2', email: 'bob@x.com' }));
+      c.resetPwForm.newPassword = 'LongEnough1!';
+      const request$ = new Subject<{ message: string }>();
+      adminService.resetPassword.mockReturnValue(request$);
+
+      c.confirmResetPw();
+      request$.error({ status: 500 });
+
+      expect(c.actionInFlight()).toBe(false);
+      expect(c.resetPwSent()).toBe(false);
     });
   });
 
@@ -278,6 +364,46 @@ describe('AdminUsersComponent', () => {
       c.submitInvite();
 
       expect(c.inviteError()).toBe('Email already registered');
+    });
+
+    it('shows a submitting state while the request is in flight, blocks a second submit, blocks closing, and clears it on success', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.openInviteModal();
+      c.inviteForm = { name: 'Priya Sharma', email: 'priya@example.com', role: 'Surveyor' };
+      const request$ = new Subject<{ message: string }>();
+      adminService.inviteUser.mockReturnValue(request$);
+
+      c.submitInvite();
+      expect(c.actionInFlight()).toBe(true);
+
+      c.submitInvite();
+      expect(adminService.inviteUser).toHaveBeenCalledTimes(1);
+
+      c.closeModal();
+      expect(c.activeModal()).toBe('invite');
+
+      request$.next({ message: 'ok' });
+      request$.complete();
+
+      expect(c.actionInFlight()).toBe(false);
+      expect(c.inviteSuccess()).toBe(true);
+    });
+
+    it('clears the submitting state on failure so the invite can be retried', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.openInviteModal();
+      c.inviteForm = { name: 'Priya Sharma', email: 'priya@example.com', role: 'Surveyor' };
+      const request$ = new Subject<{ message: string }>();
+      adminService.inviteUser.mockReturnValue(request$);
+
+      c.submitInvite();
+      expect(c.actionInFlight()).toBe(true);
+
+      request$.error({ status: 500 });
+
+      expect(c.actionInFlight()).toBe(false);
     });
   });
 

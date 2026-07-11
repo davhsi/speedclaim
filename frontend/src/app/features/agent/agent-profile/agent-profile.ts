@@ -51,7 +51,7 @@ export class AgentProfileComponent implements OnInit {
   }
 
   saveProfile(): void {
-    if (this.profileForm.invalid) return;
+    if (this.saving() || this.profileForm.invalid) return;
     this.saving.set(true);
     const request = this.profileForm.getRawValue() as { salutation: string; firstName: string; lastName: string; phone: string };
     this.agentService.updateProfile(request).subscribe({

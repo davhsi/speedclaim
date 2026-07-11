@@ -28,8 +28,10 @@ export class AdminAgentsComponent implements OnInit {
   selectedAgent = signal<UserDto | null>(null);
   selectedBranch = signal<BranchDto | null>(null);
   selectedBranchId = signal<string | null>(null);
+  submitting = signal(false);
+  togglingStatusIds = signal<Set<string>>(new Set());
 
-  regForm = { firstName: '', lastName: '', email: '', phone: '', licenseNumber: '', licenseExpiry: '', agencyName: '', aadhaarNumber: '', panNumber: '' };
+  regForm = this.emptyRegForm();
   licForm = { licenseNumber: '', licenseExpiry: '' };
   branchForm = { name: '', city: '', state: '', address: '', phone: '', email: '' };
 
@@ -125,8 +127,18 @@ export class AdminAgentsComponent implements OnInit {
     return { label: 'Valid', bg: '#E8F7F1', fg: '#1F9D6B', bdr: '#B2E4CE' };
   }
 
+  private emptyRegForm() {
+    const emptyAddress = { line1: '', line2: '', city: '', state: '', postalCode: '', country: 'India' };
+    return {
+      firstName: '', lastName: '', email: '', phone: '', licenseNumber: '', licenseExpiry: '', agencyName: '', aadhaarNumber: '', panNumber: '',
+      permanentAddress: { ...emptyAddress },
+      currentAddress: { ...emptyAddress },
+      sameAsPermanent: true,
+    };
+  }
+
   openRegisterModal(): void {
-    this.regForm = { firstName: '', lastName: '', email: '', phone: '', licenseNumber: '', licenseExpiry: '', agencyName: '', aadhaarNumber: '', panNumber: '' };
+    this.regForm = this.emptyRegForm();
     this.activeModal.set('register');
   }
 
@@ -156,6 +168,7 @@ export class AdminAgentsComponent implements OnInit {
   }
 
   closeModal(): void {
+    if (this.submitting()) return;
     this.activeModal.set(null);
   }
 
@@ -177,6 +190,42 @@ export class AdminAgentsComponent implements OnInit {
 
   private isValidDate(v: string): boolean {
     return !!v && !Number.isNaN(new Date(v).getTime());
+  }
+
+  private isValidPostalCode(v: string): boolean {
+    return /^\d{6}$/.test(v.trim());
+  }
+
+  private isAddressValid(addr: { line1: string; city: string; state: string; postalCode: string; country: string }): boolean {
+    return !!addr.line1.trim() && !!addr.city.trim() && !!addr.state.trim() && !!addr.country.trim() && this.isValidPostalCode(addr.postalCode);
+  }
+
+  /** Bound to (blur) on every text input: strips leading/trailing whitespace the moment a field
+   *  loses focus so the value shown, validated, and submitted always agree. Without this a
+   *  padded value (e.g. " 234512348765") silently passes inline validation (which trims before
+   *  checking) and the disabled state on the submit button, but the server enforces the exact
+   *  format and rejects it — a confusing "form says valid, server says invalid" gap. */
+  trimField<T extends object, K extends keyof T>(form: T, key: K): void {
+    const value = form[key];
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (trimmed !== value) {
+        form[key] = trimmed as T[K];
+      }
+    }
+  }
+
+  /** Trims every top-level string field of a form object; nested objects (e.g. an address) and
+   *  non-string fields (e.g. a "same as permanent" checkbox) pass through unchanged. */
+  private trimmedForm<T extends object>(form: T): T {
+    const result = { ...form };
+    for (const key of Object.keys(result) as (keyof T)[]) {
+      const value = result[key];
+      if (typeof value === 'string') {
+        result[key] = value.trim() as T[keyof T];
+      }
+    }
+    return result;
   }
 
   emailError(): string {
@@ -203,12 +252,26 @@ export class AdminAgentsComponent implements OnInit {
     return this.isValidPan(v) ? '' : 'PAN must be in the format ABCDE1234F.';
   }
 
+  permanentPostalCodeError(): string {
+    const v = this.regForm.permanentAddress.postalCode.trim();
+    if (!v) return '';
+    return this.isValidPostalCode(v) ? '' : 'Postal code must be exactly 6 digits.';
+  }
+
+  currentPostalCodeError(): string {
+    const v = this.regForm.currentAddress.postalCode.trim();
+    if (!v) return '';
+    return this.isValidPostalCode(v) ? '' : 'Postal code must be exactly 6 digits.';
+  }
+
   registerFormInvalid(): boolean {
     const f = this.regForm;
     return !f.firstName.trim() || !f.lastName.trim() || !this.isValidEmail(f.email)
       || !this.isValidPhone(f.phone)
       || !f.licenseNumber.trim() || !this.isValidDate(f.licenseExpiry)
-      || !f.agencyName.trim() || !this.isValidAadhaar(f.aadhaarNumber) || !this.isValidPan(f.panNumber);
+      || !f.agencyName.trim() || !this.isValidAadhaar(f.aadhaarNumber) || !this.isValidPan(f.panNumber)
+      || !this.isAddressValid(f.permanentAddress)
+      || (!f.sameAsPermanent && !this.isAddressValid(f.currentAddress));
   }
 
   licenseFormInvalid(): boolean {
@@ -221,23 +284,36 @@ export class AdminAgentsComponent implements OnInit {
       || !this.isValidPhone(f.phone) || !this.isValidEmail(f.email);
   }
 
+  isTogglingStatus(agentId: string): boolean {
+    return this.togglingStatusIds().has(agentId);
+  }
+
   toggleAgentStatus(agent: UserDto): void {
+    if (this.isTogglingStatus(agent.id)) return;
     const next = !agent.isActive;
+    this.togglingStatusIds.update(ids => new Set(ids).add(agent.id));
     this.adminService.toggleAgentStatus(agent.id, next).subscribe({
       next: () => {
         this.agents.update(list => list.map(a => a.id === agent.id ? { ...a, isActive: next } : a));
         this.toastService.success(agent.fullName + (next ? ' activated' : ' deactivated'));
+        this.togglingStatusIds.update(ids => { const s = new Set(ids); s.delete(agent.id); return s; });
       },
-      error: () => this.toastService.error('Failed to update status'),
+      error: () => {
+        this.togglingStatusIds.update(ids => { const s = new Set(ids); s.delete(agent.id); return s; });
+      },
     });
   }
 
   registerAgent(): void {
-    const f = this.regForm;
+    if (this.submitting()) return;
+    const f = this.trimmedForm(this.regForm);
     if (this.registerFormInvalid()) {
-      this.toastService.warning('Please fill in all fields with valid values (email, phone, Aadhaar, PAN, and license expiry) before registering the agent.');
+      this.toastService.warning('Please fill in all fields with valid values (email, phone, Aadhaar, PAN, address, and license expiry) before registering the agent.');
       return;
     }
+    const permanentAddress = this.trimmedForm(this.regForm.permanentAddress);
+    const currentAddress = f.sameAsPermanent ? permanentAddress : this.trimmedForm(this.regForm.currentAddress);
+    this.submitting.set(true);
     this.adminService.registerAgent({
       email: f.email,
       salutation: 'Mr',
@@ -250,20 +326,22 @@ export class AdminAgentsComponent implements OnInit {
       aadhaarNumber: f.aadhaarNumber,
       panNumber: f.panNumber,
       maritalStatus: 'Single',
-      permanentAddress: { line1: 'Admin onboarding desk', city: 'Bengaluru', state: 'Karnataka', postalCode: '560001', country: 'India' },
-      currentAddress: { line1: 'Admin onboarding desk', city: 'Bengaluru', state: 'Karnataka', postalCode: '560001', country: 'India' },
-      isSameAsPermanent: true,
+      permanentAddress,
+      currentAddress,
+      isSameAsPermanent: f.sameAsPermanent,
     }).subscribe({
       next: () => {
+        this.submitting.set(false);
         this.toastService.success('Agent registered — they’ll get an email to set their password');
         this.closeModal();
         this.loadData();
       },
-      error: () => this.toastService.error('Failed to register agent'),
+      error: () => { this.submitting.set(false); },
     });
   }
 
   assignBranch(): void {
+    if (this.submitting()) return;
     const agent = this.selectedAgent();
     const branchId = this.selectedBranchId();
     if (!agent) return;
@@ -271,79 +349,93 @@ export class AdminAgentsComponent implements OnInit {
       this.toastService.warning('Please select a branch to assign.');
       return;
     }
+    this.submitting.set(true);
     this.adminService.assignAgentToBranch(agent.id, branchId).subscribe({
       next: () => {
+        this.submitting.set(false);
         this.toastService.success('Branch assigned');
         this.closeModal();
         this.loadData();
       },
-      error: () => this.toastService.error('Failed to assign branch'),
+      error: () => { this.submitting.set(false); },
     });
   }
 
   updateLicense(): void {
+    if (this.submitting()) return;
     const agent = this.selectedAgent();
     if (!agent) return;
     if (this.licenseFormInvalid()) {
       this.toastService.warning('Please enter a license number and a valid expiry date.');
       return;
     }
+    const f = this.trimmedForm(this.licForm);
+    this.submitting.set(true);
     this.adminService.updateAgentLicense(agent.id, {
-      licenseNumber: this.licForm.licenseNumber,
-      licenseExpiry: this.licForm.licenseExpiry,
+      licenseNumber: f.licenseNumber,
+      licenseExpiry: f.licenseExpiry,
     }).subscribe({
       next: () => {
+        this.submitting.set(false);
         this.toastService.success('License updated');
         this.closeModal();
         this.loadData();
       },
-      error: () => this.toastService.error('Failed to update license'),
+      error: () => { this.submitting.set(false); },
     });
   }
 
   saveBranch(): void {
+    if (this.submitting()) return;
     const br = this.selectedBranch();
     if (!br) return;
     if (this.branchFormInvalid()) {
       this.toastService.warning('Please fill in all branch fields with valid values (name, city, state, address, phone, and email).');
       return;
     }
+    const f = this.trimmedForm(this.branchForm);
+    this.submitting.set(true);
     this.adminService.updateBranch(br.id.toString(), {
-      name: this.branchForm.name,
-      city: this.branchForm.city,
-      state: this.branchForm.state,
-      address: this.branchForm.address,
-      phone: this.branchForm.phone,
-      email: this.branchForm.email,
+      name: f.name,
+      city: f.city,
+      state: f.state,
+      address: f.address,
+      phone: f.phone,
+      email: f.email,
     }).subscribe({
       next: updated => {
+        this.submitting.set(false);
         this.branches.update(list => list.map(b => b.id === br.id ? updated : b));
         this.toastService.success('Branch updated');
         this.closeModal();
       },
-      error: () => this.toastService.error('Failed to update branch'),
+      error: () => { this.submitting.set(false); },
     });
   }
 
   submitCreateBranch(): void {
+    if (this.submitting()) return;
     if (this.branchFormInvalid()) {
       this.toastService.warning('Please fill in all branch fields with valid values (name, city, state, address, phone, and email).');
       return;
     }
+    const f = this.trimmedForm(this.branchForm);
+    this.submitting.set(true);
     this.adminService.createBranch({
-      name: this.branchForm.name,
-      city: this.branchForm.city,
-      state: this.branchForm.state,
-      address: this.branchForm.address,
-      phone: this.branchForm.phone,
-      email: this.branchForm.email,
+      name: f.name,
+      city: f.city,
+      state: f.state,
+      address: f.address,
+      phone: f.phone,
+      email: f.email,
     }).subscribe({
       next: created => {
+        this.submitting.set(false);
         this.branches.update(list => [...list, created]);
         this.toastService.success('Branch created');
         this.closeModal();
       },
-      error: () => this.toastService.error('Failed to create branch'),
+      error: () => { this.submitting.set(false); },
     });
   }
 }

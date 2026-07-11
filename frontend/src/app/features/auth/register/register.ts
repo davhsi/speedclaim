@@ -159,6 +159,7 @@ export class RegisterComponent implements CanComponentDeactivate {
   }
 
   onSubmit(): void {
+    if (this.loading()) return;
     if (this.sameAsPermanent()) {
       const perm = this.form.controls.permanentAddress.getRawValue();
       this.form.controls.currentAddress.patchValue(perm);

@@ -28,6 +28,7 @@ export class ClaimDetailComponent implements OnInit {
   timeline = signal<TimelineItem[]>([]);
   loading = signal(true);
   uploading = signal(false);
+  withdrawing = signal(false);
   showWithdrawDialog = signal(false);
   previewDoc = signal<PreviewDoc | null>(null);
 
@@ -84,14 +85,17 @@ export class ClaimDetailComponent implements OnInit {
 
   confirmWithdraw(): void {
     const c = this.claim();
-    if (!c) return;
+    if (!c || this.withdrawing()) return;
+    this.withdrawing.set(true);
     this.claimService.withdraw(c.id).subscribe({
       next: () => {
+        this.withdrawing.set(false);
         this.toast.success('Claim withdrawn successfully');
         this.showWithdrawDialog.set(false);
         this.claim.update(cl => cl ? { ...cl, status: 'Withdrawn' as typeof cl.status } : cl);
       },
       error: () => {
+        this.withdrawing.set(false);
         this.showWithdrawDialog.set(false);
         this.toast.error('Failed to withdraw claim');
       },

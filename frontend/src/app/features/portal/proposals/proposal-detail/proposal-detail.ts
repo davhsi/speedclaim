@@ -29,6 +29,8 @@ export class ProposalDetailComponent implements OnInit {
   product = signal<ProductDto | null>(null);
   loading = signal(true);
   showWithdrawDialog = signal(false);
+  withdrawing = signal(false);
+  uploadingDoc = signal(false);
   previewDoc = signal<PreviewDoc | null>(null);
 
   ngOnInit(): void {
@@ -80,15 +82,19 @@ export class ProposalDetailComponent implements OnInit {
   }
 
   confirmWithdraw(): void {
+    if (this.withdrawing()) return;
     const p = this.proposal();
     if (!p) return;
+    this.withdrawing.set(true);
     this.proposalService.withdraw(p.id).subscribe({
       next: () => {
+        this.withdrawing.set(false);
         this.toast.success('Proposal withdrawn');
         this.showWithdrawDialog.set(false);
         this.proposal.update(pr => pr ? { ...pr, status: 'Withdrawn' as typeof pr.status } : pr);
       },
       error: () => {
+        this.withdrawing.set(false);
         this.showWithdrawDialog.set(false);
         this.toast.error('Failed to withdraw proposal');
       },
@@ -101,11 +107,13 @@ export class ProposalDetailComponent implements OnInit {
   closePreview(): void { this.previewDoc.set(null); }
 
   onDocUpload(file: File): void {
+    if (this.uploadingDoc()) return;
     const p = this.proposal();
     if (!p) return;
+    this.uploadingDoc.set(true);
     this.proposalService.uploadDocument(p.id, file.name.split('.')[0], file).subscribe({
-      next: () => this.toast.success('Document uploaded'),
-      error: () => this.toast.error('Upload failed'),
+      next: () => { this.uploadingDoc.set(false); this.toast.success('Document uploaded'); },
+      error: () => { this.uploadingDoc.set(false); this.toast.error('Upload failed'); },
     });
   }
 }

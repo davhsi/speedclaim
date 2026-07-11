@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { ProfileComponent } from './profile';
 import { ProfileService } from './services/profile.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -211,6 +211,32 @@ describe('ProfileComponent', () => {
       fixture.componentInstance.saveProfile();
       expect(toast.error).toHaveBeenCalledWith('Update failed');
     });
+
+    it('sets savingProfile true while in flight, blocks a duplicate call, and clears on success', () => {
+      const fixture = create();
+      const subject = new Subject<{ message: string }>();
+      profileService.updateProfile.mockReturnValue(subject.asObservable());
+
+      fixture.componentInstance.saveProfile();
+      expect(fixture.componentInstance.savingProfile()).toBe(true);
+
+      fixture.componentInstance.saveProfile();
+      expect(profileService.updateProfile).toHaveBeenCalledTimes(1);
+
+      subject.next({ message: 'ok' });
+      subject.complete();
+      expect(fixture.componentInstance.savingProfile()).toBe(false);
+    });
+
+    it('clears savingProfile on error', () => {
+      const fixture = create();
+      const subject = new Subject<{ message: string }>();
+      profileService.updateProfile.mockReturnValue(subject.asObservable());
+
+      fixture.componentInstance.saveProfile();
+      subject.error({ status: 500 });
+      expect(fixture.componentInstance.savingProfile()).toBe(false);
+    });
   });
 
   describe('saveAddress', () => {
@@ -245,6 +271,45 @@ describe('ProfileComponent', () => {
       profileService.addAddress.mockReturnValue(throwError(() => ({ status: 500 })));
       fixture.componentInstance.saveAddress();
       expect(toast.error).toHaveBeenCalledWith('Failed to add address');
+    });
+
+    it('sets savingAddress true while in flight and blocks a duplicate call', () => {
+      const fixture = create();
+      fixture.componentInstance.addressForm.setValue({
+        line1: '123 St', line2: '', city: 'Mumbai', state: 'Maharashtra', postalCode: '400001', country: 'India', type: 'Permanent',
+      });
+      const subject = new Subject<{ message: string }>();
+      profileService.addAddress.mockReturnValue(subject.asObservable());
+      profileService.getProfile.mockReturnValue(of(baseProfile));
+
+      fixture.componentInstance.saveAddress();
+      expect(fixture.componentInstance.savingAddress()).toBe(true);
+
+      fixture.componentInstance.saveAddress();
+      expect(profileService.addAddress).toHaveBeenCalledTimes(1);
+
+      subject.next({ message: 'ok' });
+      subject.complete();
+      expect(fixture.componentInstance.savingAddress()).toBe(false);
+    });
+  });
+
+  describe('toggleAddressForm', () => {
+    it('toggles the form open and closed', () => {
+      const fixture = create();
+      expect(fixture.componentInstance.showAddressForm()).toBe(false);
+      fixture.componentInstance.toggleAddressForm();
+      expect(fixture.componentInstance.showAddressForm()).toBe(true);
+      fixture.componentInstance.toggleAddressForm();
+      expect(fixture.componentInstance.showAddressForm()).toBe(false);
+    });
+
+    it('does nothing while an address save is in flight', () => {
+      const fixture = create();
+      fixture.componentInstance.savingAddress.set(true);
+      fixture.componentInstance.showAddressForm.set(true);
+      fixture.componentInstance.toggleAddressForm();
+      expect(fixture.componentInstance.showAddressForm()).toBe(true);
     });
   });
 
@@ -299,6 +364,38 @@ describe('ProfileComponent', () => {
       expect(fixture.componentInstance.familyMembers().map(m => m.id)).toEqual(['m2']);
       expect(toast.success).toHaveBeenCalledWith('Member removed');
     });
+
+    it('sets deleting true while in flight, keeps the dialog open, blocks a duplicate call, and clears on success', () => {
+      const fixture = create();
+      const subject = new Subject<{ message: string }>();
+      profileService.deleteAddress.mockReturnValue(subject.asObservable());
+      profileService.getProfile.mockReturnValue(of(baseProfile));
+      fixture.componentInstance.deleteAddr({ id: 'addr1' } as never);
+
+      fixture.componentInstance.confirmDelete();
+      expect(fixture.componentInstance.deleting()).toBe(true);
+      expect(fixture.componentInstance.deleteConfirm()).toEqual({ type: 'address', id: 'addr1' });
+
+      fixture.componentInstance.confirmDelete();
+      expect(profileService.deleteAddress).toHaveBeenCalledTimes(1);
+
+      subject.next({ message: 'ok' });
+      subject.complete();
+      expect(fixture.componentInstance.deleting()).toBe(false);
+      expect(fixture.componentInstance.deleteConfirm()).toBeNull();
+    });
+
+    it('clears deleting on error', () => {
+      const fixture = create();
+      const subject = new Subject<{ message: string }>();
+      profileService.deleteAddress.mockReturnValue(subject.asObservable());
+      fixture.componentInstance.deleteAddr({ id: 'addr1' } as never);
+
+      fixture.componentInstance.confirmDelete();
+      subject.error({ status: 500 });
+      expect(fixture.componentInstance.deleting()).toBe(false);
+      expect(fixture.componentInstance.deleteConfirm()).toBeNull();
+    });
   });
 
   describe('saveMember', () => {
@@ -335,6 +432,42 @@ describe('ProfileComponent', () => {
       profileService.addFamilyMember.mockReturnValue(throwError(() => ({ status: 500 })));
       fixture.componentInstance.saveMember();
       expect(toast.error).toHaveBeenCalledWith('Failed to add member');
+    });
+
+    it('sets savingMember true while in flight and blocks a duplicate call', () => {
+      const fixture = create();
+      fixture.componentInstance.memberForm.setValue({
+        firstName: 'Sam', lastName: 'Doe', dateOfBirth: '2010-01-01', relationship: 'Child', gender: 'Male', salutation: 'Mr',
+      });
+      const subject = new Subject<FamilyMemberDto>();
+      profileService.addFamilyMember.mockReturnValue(subject.asObservable());
+
+      fixture.componentInstance.saveMember();
+      expect(fixture.componentInstance.savingMember()).toBe(true);
+
+      fixture.componentInstance.saveMember();
+      expect(profileService.addFamilyMember).toHaveBeenCalledTimes(1);
+
+      subject.next({ id: 'm-new', firstName: 'Sam' } as FamilyMemberDto);
+      subject.complete();
+      expect(fixture.componentInstance.savingMember()).toBe(false);
+    });
+  });
+
+  describe('toggleMemberForm', () => {
+    it('toggles the form open and closed', () => {
+      const fixture = create();
+      expect(fixture.componentInstance.showMemberForm()).toBe(false);
+      fixture.componentInstance.toggleMemberForm();
+      expect(fixture.componentInstance.showMemberForm()).toBe(true);
+    });
+
+    it('does nothing while a member save is in flight', () => {
+      const fixture = create();
+      fixture.componentInstance.savingMember.set(true);
+      fixture.componentInstance.showMemberForm.set(true);
+      fixture.componentInstance.toggleMemberForm();
+      expect(fixture.componentInstance.showMemberForm()).toBe(true);
     });
   });
 

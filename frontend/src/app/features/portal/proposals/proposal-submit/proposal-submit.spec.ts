@@ -2,7 +2,7 @@ import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { ProposalSubmitComponent } from './proposal-submit';
 import { ProposalService } from '../services/proposal.service';
 import { ProfileService } from '../../profile/services/profile.service';
@@ -303,6 +303,79 @@ describe('ProposalSubmitComponent', () => {
 
       expect(toast.error).toHaveBeenCalledWith('Submission failed');
       expect(fixture.componentInstance.submitting()).toBe(false);
+    });
+
+    it('sets submitting true while in flight and blocks a duplicate submit', () => {
+      withHistoryState(quoteState);
+      const fixture = create({ requirements: [] });
+      fixture.componentInstance.nominees.at(0).setValue({
+        name: 'Jane Doe', relationship: 'Spouse', sharePercentage: 100, dateOfBirth: '1990-01-01', appointeeName: '',
+      });
+      const subject = new Subject<ProposalDto>();
+      proposalService.submit.mockReturnValue(subject.asObservable());
+
+      fixture.componentInstance.submit();
+      expect(fixture.componentInstance.submitting()).toBe(true);
+
+      fixture.componentInstance.submit();
+      expect(proposalService.submit).toHaveBeenCalledTimes(1);
+
+      subject.next({ id: 'proposal1' } as ProposalDto);
+      subject.complete();
+      expect(toast.success).toHaveBeenCalledWith('Proposal submitted');
+    });
+  });
+
+  describe('canDeactivate', () => {
+    it('allows navigation when nothing has been touched', () => {
+      withHistoryState(quoteState);
+      const fixture = create();
+      expect(fixture.componentInstance.canDeactivate()).toBe(true);
+    });
+
+    it('prompts for confirmation when a nominee field has been edited', () => {
+      withHistoryState(quoteState);
+      const fixture = create();
+      fixture.componentInstance.nominees.markAsDirty();
+
+      const result = fixture.componentInstance.canDeactivate();
+
+      expect(fixture.componentInstance.showLeaveConfirm()).toBe(true);
+      expect(result).not.toBe(true);
+    });
+
+    it('prompts for confirmation when a document has been attached', () => {
+      withHistoryState(quoteState);
+      const fixture = create();
+      fixture.componentInstance.onDocSelected('ID_PROOF', new File(['x'], 'id.pdf'));
+
+      expect(fixture.componentInstance.canDeactivate()).not.toBe(true);
+    });
+
+    it('resolves true on confirmLeave and false on cancelLeave', async () => {
+      withHistoryState(quoteState);
+      const fixture = create();
+      fixture.componentInstance.nominees.markAsDirty();
+
+      const result$ = fixture.componentInstance.canDeactivate();
+      const resultPromise = new Promise(resolve => (result$ as any).subscribe(resolve));
+      fixture.componentInstance.confirmLeave();
+
+      expect(await resultPromise).toBe(true);
+      expect(fixture.componentInstance.showLeaveConfirm()).toBe(false);
+    });
+
+    it('allows navigation without prompting right after a successful submit', () => {
+      withHistoryState(quoteState);
+      const fixture = create({ requirements: [] });
+      fixture.componentInstance.nominees.at(0).setValue({
+        name: 'Jane Doe', relationship: 'Spouse', sharePercentage: 100, dateOfBirth: '1990-01-01', appointeeName: '',
+      });
+      proposalService.submit.mockReturnValue(of({ id: 'proposal1' } as ProposalDto));
+
+      fixture.componentInstance.submit();
+
+      expect(fixture.componentInstance.canDeactivate()).toBe(true);
     });
   });
 });

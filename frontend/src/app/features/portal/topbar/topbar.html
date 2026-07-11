@@ -41,7 +41,7 @@
           <div class="px-4 py-8 text-center text-[13px] text-muted">No notifications yet.</div>
         } @else {
           @for (n of recentNotifs(); track n.id) {
-            <button (click)="markReadAndNavigate(n.id)"
+            <button (click)="markReadAndNavigate(n)"
                     class="w-full text-left flex gap-3 px-4 py-3 border-b border-line last:border-0 hover:bg-surface transition-colors bg-transparent cursor-pointer"
                     [class.bg-primary-light]="!n.isRead">
               <div class="mt-0.5 shrink-0 w-2 h-2 rounded-full mt-[6px]"

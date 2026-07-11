@@ -69,6 +69,7 @@ export class QuoteComponent implements OnInit {
   }
 
   onSubmit(): void {
+    if (this.submitting()) return;
     if (this.form.invalid) return;
     const v = this.form.value;
     if (!this.selectedProduct()) {
@@ -105,6 +106,7 @@ export class QuoteComponent implements OnInit {
         tenureYears: quote.tenureYears,
         premiumAmount: quote.premiumAmount,
         paymentFrequency: quote.paymentFrequency,
+        domain: this.selectedProduct()?.domain,
       },
     });
   }

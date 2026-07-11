@@ -75,8 +75,12 @@
                     <button title="Update license" (click)="openUpdateLicenseModal(agent)" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface transition-colors">
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                     </button>
-                    <button title="Toggle status" (click)="toggleAgentStatus(agent)" class="w-7 h-7 rounded-md border flex items-center justify-center cursor-pointer hover:bg-surface transition-colors" [style.border-color]="agent.isActive ? '#F5B4B4' : '#B2E4CE'">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" [attr.stroke]="agent.isActive ? '#D14343' : '#1F9D6B'" stroke-width="2"><path d="M18.36 6.64a9 9 0 11-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+                    <button title="Toggle status" (click)="toggleAgentStatus(agent)" [disabled]="isTogglingStatus(agent.id)" class="w-7 h-7 rounded-md border flex items-center justify-center cursor-pointer hover:bg-surface transition-colors disabled:opacity-50 disabled:cursor-wait" [style.border-color]="agent.isActive ? '#F5B4B4' : '#B2E4CE'">
+                      @if (isTogglingStatus(agent.id)) {
+                        <span class="w-3 h-3 rounded-full animate-spin" style="border-width: 1.5px; border-style: solid; border-color: transparent;" [style.border-top-color]="agent.isActive ? '#D14343' : '#1F9D6B'"></span>
+                      } @else {
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" [attr.stroke]="agent.isActive ? '#D14343' : '#1F9D6B'" stroke-width="2"><path d="M18.36 6.64a9 9 0 11-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+                      }
                     </button>
                   </div>
                 </td>
@@ -134,7 +138,7 @@
   @if (activeModal() === 'register') {
     <div class="fixed inset-0 z-[400] flex items-center justify-center p-4">
       <button type="button" aria-label="Close dialog" (click)="closeModal()" class="absolute inset-0 bg-black/40 border-none cursor-default"></button>
-      <div class="relative bg-white rounded-card shadow-lg max-w-lg w-full p-6 animate-[sc-modal_.2s_ease-out]">
+      <div class="relative bg-white rounded-card shadow-lg max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto animate-[sc-modal_.2s_ease-out]">
         <div class="flex items-center justify-between mb-5">
           <h3 class="text-[15px] font-bold text-ink">Register new agent</h3>
           <button (click)="closeModal()" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface">
@@ -144,24 +148,24 @@
         <div class="grid grid-cols-2 gap-3 mb-4">
           <div>
             <label for="agent-reg-first-name" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">First name</label>
-            <input id="agent-reg-first-name" type="text" [(ngModel)]="regForm.firstName" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            <input id="agent-reg-first-name" type="text" [(ngModel)]="regForm.firstName" (blur)="trimField(regForm, 'firstName')" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
           <div>
             <label for="agent-reg-last-name" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Last name</label>
-            <input id="agent-reg-last-name" type="text" [(ngModel)]="regForm.lastName" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            <input id="agent-reg-last-name" type="text" [(ngModel)]="regForm.lastName" (blur)="trimField(regForm, 'lastName')" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
         </div>
         <div class="grid grid-cols-2 gap-3 mb-4">
           <div>
             <label for="agent-reg-email" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Email</label>
-            <input id="agent-reg-email" type="email" [(ngModel)]="regForm.email" [class]="emailError() ? 'border-danger' : 'border-line'" class="w-full h-9 px-3 border-[1.5px] rounded-[7px] text-[13px] text-ink outline-none" />
+            <input id="agent-reg-email" type="email" [(ngModel)]="regForm.email" (blur)="trimField(regForm, 'email')" [class]="emailError() ? 'border-danger' : 'border-line'" class="w-full h-9 px-3 border-[1.5px] rounded-[7px] text-[13px] text-ink outline-none" />
             @if (emailError()) {
               <p class="mt-1 text-[11px] text-danger">{{ emailError() }}</p>
             }
           </div>
           <div>
             <label for="agent-reg-phone" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Phone</label>
-            <input id="agent-reg-phone" type="tel" [(ngModel)]="regForm.phone" [class]="phoneError() ? 'border-danger' : 'border-line'" class="w-full h-9 px-3 border-[1.5px] rounded-[7px] text-[13px] text-ink outline-none" />
+            <input id="agent-reg-phone" type="tel" [(ngModel)]="regForm.phone" (blur)="trimField(regForm, 'phone')" [class]="phoneError() ? 'border-danger' : 'border-line'" class="w-full h-9 px-3 border-[1.5px] rounded-[7px] text-[13px] text-ink outline-none" />
             @if (phoneError()) {
               <p class="mt-1 text-[11px] text-danger">{{ phoneError() }}</p>
             }
@@ -170,7 +174,7 @@
         <div class="grid grid-cols-2 gap-3 mb-4">
           <div>
             <label for="agent-reg-license-number" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">License number</label>
-            <input id="agent-reg-license-number" type="text" [(ngModel)]="regForm.licenseNumber" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            <input id="agent-reg-license-number" type="text" [(ngModel)]="regForm.licenseNumber" (blur)="trimField(regForm, 'licenseNumber')" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
           <div>
             <label for="agent-reg-license-expiry" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">License expiry</label>
@@ -180,11 +184,11 @@
         <div class="grid grid-cols-2 gap-3 mb-5">
           <div>
             <label for="agent-reg-agency-name" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Agency name</label>
-            <input id="agent-reg-agency-name" type="text" [(ngModel)]="regForm.agencyName" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            <input id="agent-reg-agency-name" type="text" [(ngModel)]="regForm.agencyName" (blur)="trimField(regForm, 'agencyName')" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
           <div>
             <label for="agent-reg-aadhaar-number" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Aadhaar number</label>
-            <input id="agent-reg-aadhaar-number" type="text" [(ngModel)]="regForm.aadhaarNumber" [class]="aadhaarError() ? 'border-danger' : 'border-line'" class="w-full h-9 px-3 border-[1.5px] rounded-[7px] text-[13px] text-ink outline-none" />
+            <input id="agent-reg-aadhaar-number" type="text" [(ngModel)]="regForm.aadhaarNumber" (blur)="trimField(regForm, 'aadhaarNumber')" [class]="aadhaarError() ? 'border-danger' : 'border-line'" class="w-full h-9 px-3 border-[1.5px] rounded-[7px] text-[13px] text-ink outline-none" />
             @if (aadhaarError()) {
               <p class="mt-1 text-[11px] text-danger">{{ aadhaarError() }}</p>
             }
@@ -193,16 +197,94 @@
         <div class="grid grid-cols-2 gap-3 mb-5">
           <div>
             <label for="agent-reg-pan-number" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">PAN number</label>
-            <input id="agent-reg-pan-number" type="text" [(ngModel)]="regForm.panNumber" [class]="panError() ? 'border-danger' : 'border-line'" class="w-full h-9 px-3 border-[1.5px] rounded-[7px] text-[13px] text-ink outline-none" />
+            <input id="agent-reg-pan-number" type="text" [(ngModel)]="regForm.panNumber" (blur)="trimField(regForm, 'panNumber')" [class]="panError() ? 'border-danger' : 'border-line'" class="w-full h-9 px-3 border-[1.5px] rounded-[7px] text-[13px] text-ink outline-none" />
             @if (panError()) {
               <p class="mt-1 text-[11px] text-danger">{{ panError() }}</p>
             }
           </div>
         </div>
+        <h4 class="text-[12px] font-bold text-ink uppercase tracking-wide mb-3">Permanent address</h4>
+        <div class="mb-4">
+          <label for="agent-reg-permanent-line1" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Address line 1</label>
+          <input id="agent-reg-permanent-line1" type="text" placeholder="Street, building, flat number" [(ngModel)]="regForm.permanentAddress.line1" (blur)="trimField(regForm.permanentAddress, 'line1')" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+        </div>
+        <div class="mb-4">
+          <label for="agent-reg-permanent-line2" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Address line 2 (optional)</label>
+          <input id="agent-reg-permanent-line2" type="text" [(ngModel)]="regForm.permanentAddress.line2" (blur)="trimField(regForm.permanentAddress, 'line2')" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div>
+            <label for="agent-reg-permanent-city" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">City</label>
+            <input id="agent-reg-permanent-city" type="text" [(ngModel)]="regForm.permanentAddress.city" (blur)="trimField(regForm.permanentAddress, 'city')" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          </div>
+          <div>
+            <label for="agent-reg-permanent-state" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">State</label>
+            <input id="agent-reg-permanent-state" type="text" [(ngModel)]="regForm.permanentAddress.state" (blur)="trimField(regForm.permanentAddress, 'state')" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div>
+            <label for="agent-reg-permanent-postal-code" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Postal code</label>
+            <input id="agent-reg-permanent-postal-code" type="text" maxlength="6" placeholder="6-digit PIN" [(ngModel)]="regForm.permanentAddress.postalCode" (blur)="trimField(regForm.permanentAddress, 'postalCode')" [class]="permanentPostalCodeError() ? 'border-danger' : 'border-line'" class="w-full h-9 px-3 border-[1.5px] rounded-[7px] text-[13px] text-ink outline-none" />
+            @if (permanentPostalCodeError()) {
+              <p class="mt-1 text-[11px] text-danger">{{ permanentPostalCodeError() }}</p>
+            }
+          </div>
+          <div>
+            <label for="agent-reg-permanent-country" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Country</label>
+            <input id="agent-reg-permanent-country" type="text" [(ngModel)]="regForm.permanentAddress.country" readonly class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-muted bg-surface cursor-not-allowed outline-none" />
+          </div>
+        </div>
+
+        <label class="flex items-center gap-2 mb-4 cursor-pointer select-none">
+          <input type="checkbox" [(ngModel)]="regForm.sameAsPermanent" class="w-4 h-4 rounded accent-primary" />
+          <span class="text-[12.5px] text-body">Current address same as permanent</span>
+        </label>
+
+        @if (!regForm.sameAsPermanent) {
+          <h4 class="text-[12px] font-bold text-ink uppercase tracking-wide mb-3">Current address</h4>
+          <div class="mb-4">
+            <label for="agent-reg-current-line1" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Address line 1</label>
+            <input id="agent-reg-current-line1" type="text" placeholder="Street, building, flat number" [(ngModel)]="regForm.currentAddress.line1" (blur)="trimField(regForm.currentAddress, 'line1')" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          </div>
+          <div class="mb-4">
+            <label for="agent-reg-current-line2" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Address line 2 (optional)</label>
+            <input id="agent-reg-current-line2" type="text" [(ngModel)]="regForm.currentAddress.line2" (blur)="trimField(regForm.currentAddress, 'line2')" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          </div>
+          <div class="grid grid-cols-2 gap-3 mb-4">
+            <div>
+              <label for="agent-reg-current-city" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">City</label>
+              <input id="agent-reg-current-city" type="text" [(ngModel)]="regForm.currentAddress.city" (blur)="trimField(regForm.currentAddress, 'city')" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            </div>
+            <div>
+              <label for="agent-reg-current-state" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">State</label>
+              <input id="agent-reg-current-state" type="text" [(ngModel)]="regForm.currentAddress.state" (blur)="trimField(regForm.currentAddress, 'state')" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3 mb-4">
+            <div>
+              <label for="agent-reg-current-postal-code" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Postal code</label>
+              <input id="agent-reg-current-postal-code" type="text" maxlength="6" placeholder="6-digit PIN" [(ngModel)]="regForm.currentAddress.postalCode" (blur)="trimField(regForm.currentAddress, 'postalCode')" [class]="currentPostalCodeError() ? 'border-danger' : 'border-line'" class="w-full h-9 px-3 border-[1.5px] rounded-[7px] text-[13px] text-ink outline-none" />
+              @if (currentPostalCodeError()) {
+                <p class="mt-1 text-[11px] text-danger">{{ currentPostalCodeError() }}</p>
+              }
+            </div>
+            <div>
+              <label for="agent-reg-current-country" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Country</label>
+              <input id="agent-reg-current-country" type="text" [(ngModel)]="regForm.currentAddress.country" readonly class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-muted bg-surface cursor-not-allowed outline-none" />
+            </div>
+          </div>
+        }
+
         <p class="mb-4 text-[12px] text-muted">The agent will get an email with a link to set their own password and log in — no password to hand off.</p>
         <div class="flex justify-end gap-2">
-          <button (click)="closeModal()" class="h-9 px-4 bg-white border-[1.5px] border-line text-[13px] font-medium text-body rounded-[7px] cursor-pointer">Cancel</button>
-          <button (click)="registerAgent()" [disabled]="registerFormInvalid()" class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-[7px] border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">Register</button>
+          <button (click)="closeModal()" [disabled]="submitting()" class="h-9 px-4 bg-white border-[1.5px] border-line text-[13px] font-medium text-body rounded-[7px] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">Cancel</button>
+          <button (click)="registerAgent()" [disabled]="registerFormInvalid() || submitting()" class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-[7px] border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+            @if (submitting()) {
+              <span class="w-3.5 h-3.5 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+            }
+            {{ submitting() ? 'Registering…' : 'Register' }}
+          </button>
         </div>
       </div>
     </div>
@@ -233,8 +315,13 @@
           }
         </div>
         <div class="flex justify-end gap-2">
-          <button (click)="closeModal()" class="h-9 px-4 bg-white border-[1.5px] border-line text-[13px] font-medium text-body rounded-[7px] cursor-pointer">Cancel</button>
-          <button (click)="assignBranch()" [disabled]="!selectedBranchId()" class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-[7px] border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">Assign</button>
+          <button (click)="closeModal()" [disabled]="submitting()" class="h-9 px-4 bg-white border-[1.5px] border-line text-[13px] font-medium text-body rounded-[7px] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">Cancel</button>
+          <button (click)="assignBranch()" [disabled]="!selectedBranchId() || submitting()" class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-[7px] border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+            @if (submitting()) {
+              <span class="w-3.5 h-3.5 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+            }
+            {{ submitting() ? 'Assigning…' : 'Assign' }}
+          </button>
         </div>
       </div>
     </div>
@@ -253,15 +340,20 @@
         </div>
         <div class="mb-4">
           <label for="agent-update-license-number" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">License number</label>
-          <input id="agent-update-license-number" type="text" [(ngModel)]="licForm.licenseNumber" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          <input id="agent-update-license-number" type="text" [(ngModel)]="licForm.licenseNumber" (blur)="trimField(licForm, 'licenseNumber')" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
         </div>
         <div class="mb-5">
           <label for="agent-update-license-expiry" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">License expiry</label>
           <input id="agent-update-license-expiry" type="date" [(ngModel)]="licForm.licenseExpiry" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
         </div>
         <div class="flex justify-end gap-2">
-          <button (click)="closeModal()" class="h-9 px-4 bg-white border-[1.5px] border-line text-[13px] font-medium text-body rounded-[7px] cursor-pointer">Cancel</button>
-          <button (click)="updateLicense()" [disabled]="licenseFormInvalid()" class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-[7px] border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">Save</button>
+          <button (click)="closeModal()" [disabled]="submitting()" class="h-9 px-4 bg-white border-[1.5px] border-line text-[13px] font-medium text-body rounded-[7px] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">Cancel</button>
+          <button (click)="updateLicense()" [disabled]="licenseFormInvalid() || submitting()" class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-[7px] border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+            @if (submitting()) {
+              <span class="w-3.5 h-3.5 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+            }
+            {{ submitting() ? 'Saving…' : 'Save' }}
+          </button>
         </div>
       </div>
     </div>
@@ -281,34 +373,39 @@
         <div class="grid grid-cols-2 gap-3 mb-4">
           <div>
             <label for="branch-edit-name" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Name</label>
-            <input id="branch-edit-name" type="text" [(ngModel)]="branchForm.name" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            <input id="branch-edit-name" type="text" [(ngModel)]="branchForm.name" (blur)="trimField(branchForm, 'name')" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
           <div>
             <label for="branch-edit-city" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">City</label>
-            <input id="branch-edit-city" type="text" [(ngModel)]="branchForm.city" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            <input id="branch-edit-city" type="text" [(ngModel)]="branchForm.city" (blur)="trimField(branchForm, 'city')" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
         </div>
         <div class="grid grid-cols-2 gap-3 mb-4">
           <div>
             <label for="branch-edit-state" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">State</label>
-            <input id="branch-edit-state" type="text" [(ngModel)]="branchForm.state" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            <input id="branch-edit-state" type="text" [(ngModel)]="branchForm.state" (blur)="trimField(branchForm, 'state')" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
           <div>
             <label for="branch-edit-phone" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Phone</label>
-            <input id="branch-edit-phone" type="tel" [(ngModel)]="branchForm.phone" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            <input id="branch-edit-phone" type="tel" [(ngModel)]="branchForm.phone" (blur)="trimField(branchForm, 'phone')" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
         </div>
         <div class="mb-4">
           <label for="branch-edit-address" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Address</label>
-          <input id="branch-edit-address" type="text" [(ngModel)]="branchForm.address" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          <input id="branch-edit-address" type="text" [(ngModel)]="branchForm.address" (blur)="trimField(branchForm, 'address')" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
         </div>
         <div class="mb-5">
           <label for="branch-edit-email" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Email</label>
-          <input id="branch-edit-email" type="email" [(ngModel)]="branchForm.email" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          <input id="branch-edit-email" type="email" [(ngModel)]="branchForm.email" (blur)="trimField(branchForm, 'email')" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
         </div>
         <div class="flex justify-end gap-2">
-          <button (click)="closeModal()" class="h-9 px-4 bg-white border-[1.5px] border-line text-[13px] font-medium text-body rounded-[7px] cursor-pointer">Cancel</button>
-          <button (click)="saveBranch()" [disabled]="branchFormInvalid()" class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-[7px] border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">Save</button>
+          <button (click)="closeModal()" [disabled]="submitting()" class="h-9 px-4 bg-white border-[1.5px] border-line text-[13px] font-medium text-body rounded-[7px] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">Cancel</button>
+          <button (click)="saveBranch()" [disabled]="branchFormInvalid() || submitting()" class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-[7px] border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+            @if (submitting()) {
+              <span class="w-3.5 h-3.5 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+            }
+            {{ submitting() ? 'Saving…' : 'Save' }}
+          </button>
         </div>
       </div>
     </div>
@@ -328,34 +425,39 @@
         <div class="grid grid-cols-2 gap-3 mb-4">
           <div>
             <label for="branch-create-name" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Name</label>
-            <input id="branch-create-name" type="text" [(ngModel)]="branchForm.name" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            <input id="branch-create-name" type="text" [(ngModel)]="branchForm.name" (blur)="trimField(branchForm, 'name')" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
           <div>
             <label for="branch-create-city" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">City</label>
-            <input id="branch-create-city" type="text" [(ngModel)]="branchForm.city" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            <input id="branch-create-city" type="text" [(ngModel)]="branchForm.city" (blur)="trimField(branchForm, 'city')" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
         </div>
         <div class="grid grid-cols-2 gap-3 mb-4">
           <div>
             <label for="branch-create-state" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">State</label>
-            <input id="branch-create-state" type="text" [(ngModel)]="branchForm.state" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            <input id="branch-create-state" type="text" [(ngModel)]="branchForm.state" (blur)="trimField(branchForm, 'state')" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
           <div>
             <label for="branch-create-phone" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Phone</label>
-            <input id="branch-create-phone" type="tel" [(ngModel)]="branchForm.phone" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+            <input id="branch-create-phone" type="tel" [(ngModel)]="branchForm.phone" (blur)="trimField(branchForm, 'phone')" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
           </div>
         </div>
         <div class="mb-4">
           <label for="branch-create-address" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Address</label>
-          <input id="branch-create-address" type="text" [(ngModel)]="branchForm.address" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          <input id="branch-create-address" type="text" [(ngModel)]="branchForm.address" (blur)="trimField(branchForm, 'address')" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
         </div>
         <div class="mb-5">
           <label for="branch-create-email" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Email</label>
-          <input id="branch-create-email" type="email" [(ngModel)]="branchForm.email" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
+          <input id="branch-create-email" type="email" [(ngModel)]="branchForm.email" (blur)="trimField(branchForm, 'email')" class="w-full h-9 px-3 border-[1.5px] border-line rounded-[7px] text-[13px] text-ink outline-none" />
         </div>
         <div class="flex justify-end gap-2">
-          <button (click)="closeModal()" class="h-9 px-4 bg-white border-[1.5px] border-line text-[13px] font-medium text-body rounded-[7px] cursor-pointer">Cancel</button>
-          <button (click)="submitCreateBranch()" [disabled]="branchFormInvalid()" class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-[7px] border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">Create</button>
+          <button (click)="closeModal()" [disabled]="submitting()" class="h-9 px-4 bg-white border-[1.5px] border-line text-[13px] font-medium text-body rounded-[7px] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">Cancel</button>
+          <button (click)="submitCreateBranch()" [disabled]="branchFormInvalid() || submitting()" class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-[7px] border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+            @if (submitting()) {
+              <span class="w-3.5 h-3.5 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+            }
+            {{ submitting() ? 'Creating…' : 'Create' }}
+          </button>
         </div>
       </div>
     </div>

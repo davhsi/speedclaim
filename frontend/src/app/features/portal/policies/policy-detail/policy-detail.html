@@ -159,8 +159,15 @@
                   }
                 </div>
                 <div class="flex gap-2">
-                  <button class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover" (click)="submitEndorsement()">Submit</button>
-                  <button class="h-9 px-4 border border-line text-[13px] font-medium text-body rounded-control hover:bg-surface-alt" (click)="showEndorsementForm.set(false)">Cancel</button>
+                  <button class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          [disabled]="submittingEndorsement()" (click)="submitEndorsement()">
+                    @if (submittingEndorsement()) {
+                      <span class="w-3.5 h-3.5 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+                    }
+                    {{ submittingEndorsement() ? 'Submitting…' : 'Submit' }}
+                  </button>
+                  <button class="h-9 px-4 border border-line text-[13px] font-medium text-body rounded-control hover:bg-surface-alt disabled:opacity-50 disabled:cursor-not-allowed"
+                          [disabled]="submittingEndorsement()" (click)="cancelEndorsementForm()">Cancel</button>
                 </div>
               </div>
             } @else if (policy()!.status === 'Active') {
@@ -297,6 +304,7 @@
       message="Are you sure you want to cancel this policy? This action cannot be undone."
       confirmLabel="Cancel Policy"
       variant="danger"
+      [disabled]="cancelling()"
       (confirmed)="confirmCancel()"
       (cancelled)="showCancelDialog.set(false)"
     />

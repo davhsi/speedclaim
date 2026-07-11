@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Moq;
+using Npgsql;
 using NUnit.Framework;
 using SpeedClaim.Api.Dtos.Financial;
 using SpeedClaim.Api.Dtos.Payments;
@@ -901,6 +903,77 @@ public class FinanceServiceTests
 
         Assert.That(result.PaymentIntentId, Is.EqualTo("pi_new_123"));
         mockStripeCustomerRepo.Verify(r => r.AddAsync(It.IsAny<SpeedClaim.Api.Models.StripeCustomer>()), Times.Once);
+    }
+
+    [Test]
+    public async Task PayPremiumAsync_ConcurrentFirstTimePayment_RecoversFromStripeCustomerRaceInsteadOf500ing()
+    {
+        // Simulates two concurrent PayPremiumAsync calls for the same brand-new customer:
+        // both see "no StripeCustomer row" and race to insert one. stripe_customers.user_id
+        // is uniquely constrained (same shape as the KYC-record race fixed earlier), so the
+        // loser's SaveChanges throws a Postgres unique-violation. The fix must catch that,
+        // discard its own (never-persisted) row, and re-fetch the row the winner actually
+        // committed — then build the PaymentIntent against THAT customer, not its own.
+        var customerId = Guid.NewGuid();
+        var scheduleId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+        var request = new CreatePaymentIntentRequest { PolicyId = policyId };
+
+        var schedule = new PremiumSchedule { Id = scheduleId, PolicyId = policyId, Amount = 200m, Status = PremiumScheduleStatus.Upcoming, InstallmentNumber = 2 };
+        var mockScheduleRepo = new Mock<IRepository<PremiumSchedule>>();
+        mockScheduleRepo.Setup(r => r.GetByIdAsync(scheduleId)).ReturnsAsync(schedule);
+        _mockUnitOfWork.Setup(u => u.PremiumSchedules).Returns(mockScheduleRepo.Object);
+
+        var customerEntity = new SpeedClaim.Api.Models.Customer { Id = customerId, UserId = userId };
+        var mockCustomerRepo = new Mock<IRepository<SpeedClaim.Api.Models.Customer>>();
+        mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<SpeedClaim.Api.Models.Customer, bool>>>())).ReturnsAsync(customerEntity);
+        _mockUnitOfWork.Setup(u => u.Customers).Returns(mockCustomerRepo.Object);
+
+        var mockPolicyRepo = new Mock<IPolicyRepository>();
+        mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(new Policy { Id = policyId, CustomerId = customerEntity.Id });
+        _mockUnitOfWork.Setup(u => u.Policies).Returns(mockPolicyRepo.Object);
+
+        // The row the OTHER (winning) concurrent request actually committed.
+        var winningStripeCustomer = new SpeedClaim.Api.Models.StripeCustomer { UserId = userId, StripeCustomerId = "cus_winner" };
+        var mockStripeCustomerRepo = new Mock<IRepository<SpeedClaim.Api.Models.StripeCustomer>>();
+        mockStripeCustomerRepo.SetupSequence(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<SpeedClaim.Api.Models.StripeCustomer, bool>>>()))
+            .ReturnsAsync((SpeedClaim.Api.Models.StripeCustomer?)null)   // initial check: no row yet
+            .ReturnsAsync(winningStripeCustomer);                        // re-fetch after our own insert loses the race
+        _mockUnitOfWork.Setup(u => u.StripeCustomers).Returns(mockStripeCustomerRepo.Object);
+
+        var user = new User { Id = userId, Email = "u@test.com", FirstName = "U", LastName = "S" };
+        var mockUserRepo = new Mock<IUserRepository>();
+        mockUserRepo.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
+        _mockUnitOfWork.Setup(u => u.Users).Returns(mockUserRepo.Object);
+
+        // Our own (losing) attempt still calls Stripe and builds a local row before the DB
+        // race is discovered — that's unavoidable, since the race can only be detected once
+        // we try to commit it.
+        _mockStripeWrapper.Setup(s => s.CreateCustomerAsync(It.IsAny<Stripe.CustomerCreateOptions>(), It.IsAny<RequestOptions>()))
+            .ReturnsAsync(new Stripe.Customer { Id = "cus_loser" });
+
+        var paymentIntent = new Stripe.PaymentIntent { Id = "pi_after_race", ClientSecret = "secret_after_race" };
+        _mockStripeWrapper.Setup(s => s.CreatePaymentIntentAsync(It.IsAny<Stripe.PaymentIntentCreateOptions>(), It.IsAny<RequestOptions>()))
+            .ReturnsAsync(paymentIntent);
+
+        var uniqueViolation = new PostgresException("duplicate key value violates unique constraint \"IX_stripe_customers_user_id\"", "ERROR", "ERROR", "23505");
+        _mockUnitOfWork.SetupSequence(u => u.CompleteAsync())
+            .ThrowsAsync(new DbUpdateException("update failed", uniqueViolation)) // our own StripeCustomer insert loses the race
+            .ReturnsAsync(1); // the later PremiumPayment save succeeds normally
+
+        var mockPaymentRepo = new Mock<IPremiumPaymentRepository>();
+        _mockUnitOfWork.Setup(u => u.PremiumPayments).Returns(mockPaymentRepo.Object);
+        _mockConfig.Setup(c => c["Stripe:PublishableKey"]).Returns("pk_test");
+
+        var result = await _financeService.PayPremiumAsync(customerId.ToString(), scheduleId.ToString(), request);
+
+        Assert.That(result.PaymentIntentId, Is.EqualTo("pi_after_race"));
+        // The PaymentIntent must be attached to the WINNER's Stripe customer, not our own
+        // never-persisted one — otherwise the payment would be tied to an orphaned local row.
+        _mockStripeWrapper.Verify(s => s.CreatePaymentIntentAsync(
+            It.Is<Stripe.PaymentIntentCreateOptions>(o => o.Customer == "cus_winner"), It.IsAny<RequestOptions>()), Times.Once);
+        mockStripeCustomerRepo.Verify(r => r.Delete(It.Is<SpeedClaim.Api.Models.StripeCustomer>(sc => sc.StripeCustomerId == "cus_loser")), Times.Once);
     }
 
     [Test]

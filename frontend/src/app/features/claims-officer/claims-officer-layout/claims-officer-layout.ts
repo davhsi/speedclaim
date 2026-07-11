@@ -83,6 +83,10 @@ export class ClaimsOfficerLayoutComponent implements OnInit {
     if (!n.isRead) {
       this.notifService.markAsRead(n.id).subscribe();
     }
+    if (n.redirectUrl) {
+      this.notifPanelOpen.set(false);
+      this.router.navigateByUrl(n.redirectUrl);
+    }
   }
 
   userInitials(): string {

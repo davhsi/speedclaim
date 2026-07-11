@@ -26,8 +26,10 @@ export class ClaimListComponent implements OnInit {
   totalPages = signal(1);
   totalRecords = signal(0);
   loading = signal(false);
+  searchQuery = signal('');
+
   filteredClaims = computed(() => {
-    const q = this.searchQuery.trim().toLowerCase();
+    const q = this.searchQuery().trim().toLowerCase();
     if (!q) return this.claims();
     return this.claims().filter(claim =>
       claim.claimNumber.toLowerCase().includes(q) ||
@@ -39,7 +41,6 @@ export class ClaimListComponent implements OnInit {
 
   typeFilter = '';
   statusFilter = '';
-  searchQuery = '';
 
   ngOnInit(): void {
     const params = this.route.snapshot.queryParams;
@@ -53,7 +54,8 @@ export class ClaimListComponent implements OnInit {
     this.loadClaims();
   }
 
-  onSearchChange(): void {
+  onSearchChange(value: string): void {
+    this.searchQuery.set(value);
     this.currentPage.set(1);
   }
 

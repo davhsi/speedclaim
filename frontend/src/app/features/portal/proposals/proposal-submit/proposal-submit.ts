@@ -1,20 +1,23 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { Observable, Subject } from 'rxjs';
 import { ProposalService } from '../services/proposal.service';
 import { ProfileService } from '../../profile/services/profile.service';
 import { FamilyMemberDto, SubmitProposalRequest, DocumentRequirementDto, UserDto } from '../../../../core/models/api.models';
 import { FileUploadComponent } from '../../../../shared/components/file-upload/file-upload';
+import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
+import { CanComponentDeactivate } from '../../../../core/guards/unsaved-changes.guard';
 import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-proposal-submit',
   standalone: true,
-  imports: [ReactiveFormsModule, FileUploadComponent],
+  imports: [ReactiveFormsModule, FileUploadComponent, ConfirmDialogComponent],
   templateUrl: './proposal-submit.html',
 })
-export class ProposalSubmitComponent implements OnInit {
+export class ProposalSubmitComponent implements OnInit, CanComponentDeactivate {
   private readonly fb = inject(FormBuilder);
   private readonly proposalService = inject(ProposalService);
   private readonly profileService = inject(ProfileService);
@@ -31,6 +34,7 @@ export class ProposalSubmitComponent implements OnInit {
   profile = signal<UserDto | null>(null);
   uploadedFiles = new Map<string, File>();
   stepLabels = ['Details', 'Nominees', 'Documents'];
+  domain = signal<string | null>(null);
 
   form = this.fb.group({
     productId: ['', Validators.required],
@@ -42,10 +46,50 @@ export class ProposalSubmitComponent implements OnInit {
 
   nominees = this.fb.array([this.createNomineeGroup()]);
 
+  motorForm = this.fb.group({
+    vehicleNumber: ['', Validators.required],
+    vehicleMake: ['', Validators.required],
+    vehicleModel: ['', Validators.required],
+    manufactureYear: [new Date().getFullYear(), [Validators.required, Validators.min(1980)]],
+    coverType: ['Comprehensive', Validators.required],
+  });
+
+  isMotor(): boolean {
+    return (this.domain() ?? '').toUpperCase() === 'MOTOR';
+  }
+
+  showLeaveConfirm = signal(false);
+  private navigatedAfterSubmit = false;
+  private leaveSubject: Subject<boolean> | null = null;
+
+  canDeactivate(): boolean | Observable<boolean> {
+    const dirty = this.form.dirty || this.nominees.dirty || this.motorForm.dirty || this.uploadedFiles.size > 0;
+    if (this.navigatedAfterSubmit || !dirty) return true;
+
+    this.showLeaveConfirm.set(true);
+    this.leaveSubject = new Subject<boolean>();
+    return this.leaveSubject.asObservable();
+  }
+
+  confirmLeave(): void {
+    this.showLeaveConfirm.set(false);
+    this.leaveSubject?.next(true);
+    this.leaveSubject?.complete();
+    this.leaveSubject = null;
+  }
+
+  cancelLeave(): void {
+    this.showLeaveConfirm.set(false);
+    this.leaveSubject?.next(false);
+    this.leaveSubject?.complete();
+    this.leaveSubject = null;
+  }
+
   ngOnInit(): void {
     const state = history.state;
     if (state?.productId) {
       this.form.patchValue(state);
+      this.domain.set(state.domain ?? null);
       this.form.controls.productId.disable();
       this.form.controls.sumAssured.disable();
       this.form.controls.tenureYears.disable();
@@ -111,6 +155,7 @@ export class ProposalSubmitComponent implements OnInit {
   }
 
   submit(): void {
+    if (this.submitting()) return;
     const customerId = this.profile()?.customerId;
     if (!customerId) {
       this.toast.error('Customer profile is not ready yet');
@@ -118,6 +163,11 @@ export class ProposalSubmitComponent implements OnInit {
     }
     if (this.form.invalid || !this.nomineesValid) {
       this.toast.warning('Please complete all required fields before submitting.');
+      return;
+    }
+    if (this.isMotor() && this.motorForm.invalid) {
+      this.motorForm.markAllAsTouched();
+      this.toast.warning('Please complete the vehicle details before submitting.');
       return;
     }
     if (!this.requiredDocumentsUploaded()) {
@@ -134,6 +184,17 @@ export class ProposalSubmitComponent implements OnInit {
       tenureYears: formValue.tenureYears!,
       premiumAmount: formValue.premiumAmount!,
       paymentFrequency: formValue.paymentFrequency as any,
+      motorDetail: this.isMotor() ? {
+        vehicleNumber: this.motorForm.value.vehicleNumber!.trim(),
+        vehicleMake: this.motorForm.value.vehicleMake!.trim(),
+        vehicleModel: this.motorForm.value.vehicleModel!.trim(),
+        manufactureYear: Number(this.motorForm.value.manufactureYear),
+        vehicleType: 'PrivateCar',
+        idv: formValue.sumAssured!,
+        engineNumber: '',
+        chassisNumber: '',
+        coverType: this.motorForm.value.coverType!,
+      } : undefined,
       customerMemberIds: [],
       nominees: this.nominees.getRawValue().map(n => ({
         fullName: n.name!,
@@ -147,6 +208,7 @@ export class ProposalSubmitComponent implements OnInit {
     this.proposalService.submit(req).subscribe({
       next: proposal => {
         const uploads = Array.from(this.uploadedFiles.entries());
+        this.navigatedAfterSubmit = true;
         if (uploads.length === 0) {
           this.toast.success('Proposal submitted');
           this.router.navigate(['/proposals', proposal.id]);

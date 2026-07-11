@@ -379,6 +379,8 @@ public class AuthServiceTests
         var user = new User
         {
             Id = Guid.NewGuid(),
+            Email = "target@test.com",
+            FirstName = "Target",
             PasswordHash = "old",
             FailedLoginAttempts = 5,
             LockedUntil = DateTime.UtcNow.AddMinutes(10)
@@ -387,15 +389,39 @@ public class AuthServiceTests
         _mockUserRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(user);
         _mockSessionRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Session, bool>>>()))
             .ReturnsAsync(new List<Session> { session });
-        
+
         await _authService.ResetPasswordAsync(user.Id.ToString(), "newpassword", Guid.NewGuid().ToString());
-        
+
         Assert.That(BCrypt.Net.BCrypt.Verify("newpassword", user.PasswordHash), Is.True);
         Assert.That(user.FailedLoginAttempts, Is.EqualTo(0));
         Assert.That(user.LockedUntil, Is.Null);
         Assert.That(session.IsRevoked, Is.True);
         Assert.That(session.UpdatedAt, Is.Not.Null);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+        _mockEmailService.Verify(e => e.SendTemplatedEmailAsync(
+            "PasswordResetByAdmin", It.IsAny<Dictionary<string, string>>(), "target@test.com", null), Times.Once);
+    }
+
+    [Test]
+    public async Task ResetPasswordAsync_AdminReset_EmailSendFails_DoesNotThrow()
+    {
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Email = "target@test.com",
+            FirstName = "Target",
+            PasswordHash = "old"
+        };
+        _mockUserRepository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(user);
+        _mockSessionRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Session, bool>>>()))
+            .ReturnsAsync(new List<Session>());
+        _mockEmailService.Setup(e => e.SendTemplatedEmailAsync(
+                It.IsAny<string>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<string>(), null))
+            .ThrowsAsync(new InvalidOperationException("smtp down"));
+
+        await _authService.ResetPasswordAsync(user.Id.ToString(), "newpassword", Guid.NewGuid().ToString());
+
+        Assert.That(BCrypt.Net.BCrypt.Verify("newpassword", user.PasswordHash), Is.True);
     }
 
     [Test]
@@ -430,6 +456,24 @@ public class AuthServiceTests
         var request = new RegisterAgentRequest("agent@test.com", "Mr", "T", "A", "1", addr, null, false, "L", DateOnly.FromDateTime(DateTime.UtcNow.AddYears(1)), "Agency", "000000000000", "AAAAA0000A", MaritalStatus.Single);
         var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() => _authService.RegisterAgentAsync(request, Guid.NewGuid().ToString()));
         Assert.That(ex.Message, Is.EqualTo("Email already registered"));
+    }
+
+    [Test]
+    public void RegisterAgentAsync_LicenseNumberAlreadyExists_ThrowsConflictException()
+    {
+        _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>())).ReturnsAsync((User?)null);
+        var mockAgentRepo = new Mock<IRepository<Agent>>();
+        // Case-insensitive match: the stored license is lowercase, the incoming request is uppercase.
+        mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>()))
+            .ReturnsAsync(new Agent { LicenseNumber = "lic-001" });
+        _mockUnitOfWork.Setup(u => u.Agents).Returns(mockAgentRepo.Object);
+
+        var addr = new AddressDto("1 St", null, "City", "State", "000001", "India");
+        var request = new RegisterAgentRequest("newagent@test.com", "Mr", "T", "A", "9999999998", addr, null, false, "LIC-001", DateOnly.FromDateTime(DateTime.UtcNow.AddYears(1)), "Agency", "000000000001", "AAAAA0001A", MaritalStatus.Single);
+
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() => _authService.RegisterAgentAsync(request, Guid.NewGuid().ToString()));
+        Assert.That(ex.Message, Is.EqualTo("License number already registered to another agent"));
+        mockAgentRepo.Verify(r => r.AddAsync(It.IsAny<Agent>()), Times.Never);
     }
 
     [Test]

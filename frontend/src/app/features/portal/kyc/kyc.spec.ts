@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
 import { KycComponent } from './kyc';
 import { ProfileService } from '../profile/services/profile.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
@@ -80,6 +80,43 @@ describe('KycComponent', () => {
     });
   });
 
+  describe('canEditKyc', () => {
+    it('is true when there is no KYC record yet', () => {
+      const fixture = create(null);
+      expect(fixture.componentInstance.canEditKyc()).toBe(true);
+    });
+
+    it('is false while Pending review', () => {
+      const fixture = create({ id: 'k1', kycStatus: 'Pending' } as KycRecordDto);
+      expect(fixture.componentInstance.canEditKyc()).toBe(false);
+    });
+
+    it('is false once Approved', () => {
+      const fixture = create({ id: 'k1', kycStatus: 'Approved' } as KycRecordDto);
+      expect(fixture.componentInstance.canEditKyc()).toBe(false);
+    });
+
+    it('is true once Rejected', () => {
+      const fixture = create({ id: 'k1', kycStatus: 'Rejected' } as KycRecordDto);
+      expect(fixture.componentInstance.canEditKyc()).toBe(true);
+    });
+
+    it('blocks uploadAadhaar/uploadPan while Pending, even with valid input', () => {
+      const fixture = create({ id: 'k1', kycStatus: 'Pending' } as KycRecordDto);
+      const c = fixture.componentInstance;
+      c.aadhaarFile.set(new File(['x'], 'a.jpg'));
+      c.aadhaarNum.set('123456789012');
+      c.panFile.set(new File(['x'], 'p.jpg'));
+      c.panNum.set('ABCDE1234F');
+
+      c.uploadAadhaar();
+      c.uploadPan();
+
+      expect(profileService.uploadAadhaar).not.toHaveBeenCalled();
+      expect(profileService.uploadPan).not.toHaveBeenCalled();
+    });
+  });
+
   describe('uploadAadhaar', () => {
     it('does nothing without a file', () => {
       const fixture = create();
@@ -90,7 +127,7 @@ describe('KycComponent', () => {
 
     it('does nothing when the number is invalid, even with a file', () => {
       const fixture = create();
-      fixture.componentInstance.aadhaarFile = new File(['x'], 'a.jpg');
+      fixture.componentInstance.aadhaarFile.set(new File(['x'], 'a.jpg'));
       fixture.componentInstance.aadhaarNum.set('123');
       fixture.componentInstance.uploadAadhaar();
       expect(profileService.uploadAadhaar).not.toHaveBeenCalled();
@@ -99,7 +136,7 @@ describe('KycComponent', () => {
     it('uploads a valid file+number, updates the KYC record, and resets submitting', () => {
       const fixture = create();
       const file = new File(['x'], 'a.jpg');
-      fixture.componentInstance.aadhaarFile = file;
+      fixture.componentInstance.aadhaarFile.set(file);
       fixture.componentInstance.aadhaarNum.set(' 123456789012 ');
       const updated = { id: 'k1', aadhaarUploaded: true } as KycRecordDto;
       profileService.uploadAadhaar.mockReturnValue(of(updated));
@@ -114,7 +151,7 @@ describe('KycComponent', () => {
 
     it('shows an error toast and resets submitting when the upload fails', () => {
       const fixture = create();
-      fixture.componentInstance.aadhaarFile = new File(['x'], 'a.jpg');
+      fixture.componentInstance.aadhaarFile.set(new File(['x'], 'a.jpg'));
       fixture.componentInstance.aadhaarNum.set('123456789012');
       profileService.uploadAadhaar.mockReturnValue(throwError(() => ({ status: 500 })));
 
@@ -123,13 +160,52 @@ describe('KycComponent', () => {
       expect(toast.error).toHaveBeenCalledWith('Upload failed');
       expect(fixture.componentInstance.submitting()).toBe(false);
     });
+
+    it('sets submitting/uploadingAadhaar while in flight, blocks a duplicate call, and clears on success', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.aadhaarFile.set(new File(['x'], 'a.jpg'));
+      c.aadhaarNum.set('123456789012');
+      const subject = new Subject<any>();
+      profileService.uploadAadhaar.mockReturnValue(subject);
+
+      c.uploadAadhaar();
+      expect(c.submitting()).toBe(true);
+      expect(c.uploadingAadhaar()).toBe(true);
+      expect(c.uploadingPan()).toBe(false);
+
+      c.uploadAadhaar();
+      expect(profileService.uploadAadhaar).toHaveBeenCalledTimes(1);
+
+      subject.next({ id: 'k1', aadhaarUploaded: true });
+      subject.complete();
+
+      expect(c.submitting()).toBe(false);
+      expect(c.uploadingAadhaar()).toBe(false);
+    });
+
+    it('blocks uploadPan while an Aadhaar upload is already in flight', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.aadhaarFile.set(new File(['x'], 'a.jpg'));
+      c.aadhaarNum.set('123456789012');
+      c.panFile.set(new File(['x'], 'p.jpg'));
+      c.panNum.set('ABCDE1234F');
+      const subject = new Subject<any>();
+      profileService.uploadAadhaar.mockReturnValue(subject);
+
+      c.uploadAadhaar();
+      c.uploadPan();
+
+      expect(profileService.uploadPan).not.toHaveBeenCalled();
+    });
   });
 
   describe('uploadPan', () => {
     it('uppercases the number before uploading', () => {
       const fixture = create();
       const file = new File(['x'], 'p.jpg');
-      fixture.componentInstance.panFile = file;
+      fixture.componentInstance.panFile.set(file);
       fixture.componentInstance.panNum.set(' abcde1234f ');
       const updated = { id: 'k1', panUploaded: true } as KycRecordDto;
       profileService.uploadPan.mockReturnValue(of(updated));
@@ -145,6 +221,69 @@ describe('KycComponent', () => {
       fixture.componentInstance.panNum.set('ABCDE1234F');
       fixture.componentInstance.uploadPan();
       expect(profileService.uploadPan).not.toHaveBeenCalled();
+    });
+
+    it('sets submitting/uploadingPan while in flight, blocks a duplicate call, and clears on error', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.panFile.set(new File(['x'], 'p.jpg'));
+      c.panNum.set('ABCDE1234F');
+      const subject = new Subject<any>();
+      profileService.uploadPan.mockReturnValue(subject);
+
+      c.uploadPan();
+      expect(c.submitting()).toBe(true);
+      expect(c.uploadingPan()).toBe(true);
+
+      c.uploadPan();
+      expect(profileService.uploadPan).toHaveBeenCalledTimes(1);
+
+      subject.error({ status: 500 });
+
+      expect(c.submitting()).toBe(false);
+      expect(c.uploadingPan()).toBe(false);
+      expect(toast.error).toHaveBeenCalledWith('Upload failed');
+    });
+  });
+
+  describe('canDeactivate', () => {
+    it('allows navigation when nothing has been entered', () => {
+      const fixture = create();
+      expect(fixture.componentInstance.canDeactivate()).toBe(true);
+    });
+
+    it('prompts for confirmation when an id number has been typed but not uploaded', () => {
+      const fixture = create();
+      fixture.componentInstance.aadhaarNum.set('123456789012');
+
+      const result = fixture.componentInstance.canDeactivate();
+
+      expect(fixture.componentInstance.showLeaveConfirm()).toBe(true);
+      expect(result).not.toBe(true);
+    });
+
+    it('resolves true on confirmLeave and false on cancelLeave', async () => {
+      const fixture = create();
+      fixture.componentInstance.panFile.set(new File(['x'], 'p.jpg'));
+
+      const result$ = fixture.componentInstance.canDeactivate();
+      const resultPromise = new Promise(resolve => (result$ as any).subscribe(resolve));
+      fixture.componentInstance.confirmLeave();
+
+      expect(await resultPromise).toBe(true);
+      expect(fixture.componentInstance.showLeaveConfirm()).toBe(false);
+    });
+
+    it('allows navigation without prompting right after a successful Aadhaar upload', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.aadhaarFile.set(new File(['x'], 'a.jpg'));
+      c.aadhaarNum.set('123456789012');
+      profileService.uploadAadhaar.mockReturnValue(of({ id: 'k1', aadhaarUploaded: true } as KycRecordDto));
+
+      c.uploadAadhaar();
+
+      expect(c.canDeactivate()).toBe(true);
     });
   });
 });

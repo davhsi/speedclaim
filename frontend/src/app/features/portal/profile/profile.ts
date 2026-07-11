@@ -33,6 +33,10 @@ export class ProfileComponent implements OnInit {
   showAddressForm = signal(false);
   showMemberForm = signal(false);
   deleteConfirm = signal<{ type: string; id: string } | null>(null);
+  savingProfile = signal(false);
+  savingAddress = signal(false);
+  savingMember = signal(false);
+  deleting = signal(false);
   tabs = ['Personal Info', 'Family Members', 'KYC'];
   maritalStatuses = ['Single', 'Married', 'Divorced', 'Widowed'];
   salutations = ['Mr', 'Mrs', 'Ms', 'Dr', 'Prof'];
@@ -77,6 +81,8 @@ export class ProfileComponent implements OnInit {
     phone: ['', [Validators.required, phoneValidator()]],
     maritalStatus: ['Single'],
     dateOfBirth: [''],
+    occupation: [''],
+    annualIncome: [''],
   });
 
   addressForm = this.fb.group({
@@ -142,7 +148,12 @@ export class ProfileComponent implements OnInit {
   ngOnInit(): void {
     this.profileService.getProfile().subscribe(p => {
       this.profile.set(p);
-      this.profileForm.patchValue({ ...p, dateOfBirth: p.dateOfBirth ?? '' });
+      this.profileForm.patchValue({
+        ...p,
+        dateOfBirth: p.dateOfBirth ?? '',
+        occupation: p.occupation ?? '',
+        annualIncome: p.annualIncome != null ? String(p.annualIncome) : '',
+      });
       if (p.kycApproved) {
         this.profileForm.get('firstName')?.disable();
         this.profileForm.get('lastName')?.disable();
@@ -154,68 +165,99 @@ export class ProfileComponent implements OnInit {
   }
 
   saveProfile(): void {
+    if (this.savingProfile()) return;
     if (this.profileForm.invalid) {
       this.profileForm.markAllAsTouched();
       this.toast.warning('Please correct the highlighted fields before saving.');
       return;
     }
-    this.profileService.updateProfile(this.profileForm.getRawValue() as any).subscribe({
-      next: () => this.toast.success('Profile updated'),
-      error: () => this.toast.error('Update failed'),
+    const raw = this.profileForm.getRawValue();
+    const annualIncome = raw.annualIncome ? Number(raw.annualIncome) : null;
+    this.savingProfile.set(true);
+    this.profileService.updateProfile({ ...raw, annualIncome } as any).subscribe({
+      next: () => { this.savingProfile.set(false); this.toast.success('Profile updated'); },
+      error: () => { this.savingProfile.set(false); this.toast.error('Update failed'); },
     });
   }
 
   saveAddress(): void {
+    if (this.savingAddress()) return;
     if (this.addressForm.invalid) {
       this.addressForm.markAllAsTouched();
       this.toast.warning('Please correct the highlighted fields before saving.');
       return;
     }
+    this.savingAddress.set(true);
     this.profileService.addAddress(this.addressForm.getRawValue() as any).subscribe({
       next: () => {
+        this.savingAddress.set(false);
         this.toast.success('Address added');
         this.showAddressForm.set(false);
         this.profileService.getProfile().subscribe(p => this.profile.set(p));
       },
-      error: () => this.toast.error('Failed to add address'),
+      error: () => { this.savingAddress.set(false); this.toast.error('Failed to add address'); },
     });
+  }
+
+  toggleAddressForm(): void {
+    if (this.savingAddress()) return;
+    this.showAddressForm.update(v => !v);
   }
 
   deleteAddr(addr: AddressDto): void { this.deleteConfirm.set({ type: 'address', id: addr.id }); }
   deleteMember(id: string): void { this.deleteConfirm.set({ type: 'member', id }); }
 
   confirmDelete(): void {
+    if (this.deleting()) return;
     const d = this.deleteConfirm();
     if (!d) return;
+    this.deleting.set(true);
     if (d.type === 'address') {
       this.profileService.deleteAddress(d.id).subscribe({
-        next: () => { this.toast.success('Address deleted'); this.profileService.getProfile().subscribe(p => this.profile.set(p)); },
-        error: () => this.toast.error('Delete failed'),
+        next: () => {
+          this.deleting.set(false);
+          this.deleteConfirm.set(null);
+          this.toast.success('Address deleted');
+          this.profileService.getProfile().subscribe(p => this.profile.set(p));
+        },
+        error: () => { this.deleting.set(false); this.deleteConfirm.set(null); this.toast.error('Delete failed'); },
       });
     } else {
       this.profileService.deleteFamilyMember(d.id).subscribe({
-        next: () => { this.toast.success('Member removed'); this.familyMembers.update(m => m.filter(x => x.id !== d.id)); },
-        error: () => this.toast.error('Delete failed'),
+        next: () => {
+          this.deleting.set(false);
+          this.deleteConfirm.set(null);
+          this.toast.success('Member removed');
+          this.familyMembers.update(m => m.filter(x => x.id !== d.id));
+        },
+        error: () => { this.deleting.set(false); this.deleteConfirm.set(null); this.toast.error('Delete failed'); },
       });
     }
-    this.deleteConfirm.set(null);
   }
 
   saveMember(): void {
+    if (this.savingMember()) return;
     if (this.memberForm.invalid) {
       this.memberForm.markAllAsTouched();
       this.toast.warning('Please correct the highlighted fields before saving.');
       return;
     }
+    this.savingMember.set(true);
     this.profileService.addFamilyMember({ ...this.memberForm.getRawValue(), isDependent: true } as any).subscribe({
       next: member => {
+        this.savingMember.set(false);
         this.familyMembers.update(m => [...m, member]);
         this.toast.success('Family member added');
         this.showMemberForm.set(false);
         this.memberForm.reset({ relationship: 'Spouse', gender: 'Male', salutation: 'Mr' });
       },
-      error: () => this.toast.error('Failed to add member'),
+      error: () => { this.savingMember.set(false); this.toast.error('Failed to add member'); },
     });
+  }
+
+  toggleMemberForm(): void {
+    if (this.savingMember()) return;
+    this.showMemberForm.update(v => !v);
   }
 
   uploadAadhaar(): void {

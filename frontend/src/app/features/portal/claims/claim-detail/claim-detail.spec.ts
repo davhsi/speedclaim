@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
 import { ClaimDetailComponent } from './claim-detail';
 import { ClaimService } from '../services/claim.service';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
@@ -128,6 +128,40 @@ describe('ClaimDetailComponent', () => {
       const fixture = create(null);
       fixture.componentInstance.confirmWithdraw();
       expect(claimService.withdraw).not.toHaveBeenCalled();
+    });
+
+    it('sets withdrawing while in flight, blocks a duplicate call, and clears on success', () => {
+      const fixture = create();
+      const subject = new Subject<{ message: string }>();
+      claimService.withdraw.mockReturnValue(subject);
+      fixture.componentInstance.showWithdrawDialog.set(true);
+
+      fixture.componentInstance.confirmWithdraw();
+      expect(fixture.componentInstance.withdrawing()).toBe(true);
+
+      fixture.componentInstance.confirmWithdraw();
+      expect(claimService.withdraw).toHaveBeenCalledTimes(1);
+
+      subject.next({ message: 'ok' });
+      subject.complete();
+
+      expect(fixture.componentInstance.withdrawing()).toBe(false);
+      expect(fixture.componentInstance.showWithdrawDialog()).toBe(false);
+      expect(fixture.componentInstance.claim()?.status).toBe('Withdrawn');
+    });
+
+    it('clears withdrawing on error too', () => {
+      const fixture = create();
+      const subject = new Subject<{ message: string }>();
+      claimService.withdraw.mockReturnValue(subject);
+
+      fixture.componentInstance.confirmWithdraw();
+      expect(fixture.componentInstance.withdrawing()).toBe(true);
+
+      subject.error({ status: 500 });
+
+      expect(fixture.componentInstance.withdrawing()).toBe(false);
+      expect(toast.error).toHaveBeenCalledWith('Failed to withdraw claim');
     });
   });
 

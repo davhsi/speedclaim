@@ -53,9 +53,44 @@
             <input id="proposal-premium-amount" type="number" formControlName="premiumAmount" class="h-[42px] sc-numeric disabled:opacity-70 disabled:cursor-not-allowed" />
           </div>
         </div>
+
+        @if (isMotor()) {
+          <div class="text-[15px] font-semibold text-ink mt-6 mb-1">Vehicle details</div>
+          <p class="text-[13px] text-muted mb-3">These identify the vehicle being insured and appear on the policy.</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5" [formGroup]="motorForm">
+            <div>
+              <label for="proposal-vehicle-number" class="block text-[13px] font-medium mb-1.5">Registration number</label>
+              <input id="proposal-vehicle-number" type="text" formControlName="vehicleNumber" placeholder="e.g., TN 09 AB 1234" class="h-[42px] sc-numeric"
+                     [class.border-danger]="motorForm.get('vehicleNumber')?.invalid && motorForm.get('vehicleNumber')?.touched" />
+            </div>
+            <div>
+              <label for="proposal-vehicle-make" class="block text-[13px] font-medium mb-1.5">Make</label>
+              <input id="proposal-vehicle-make" type="text" formControlName="vehicleMake" placeholder="e.g., Maruti Suzuki" class="h-[42px]"
+                     [class.border-danger]="motorForm.get('vehicleMake')?.invalid && motorForm.get('vehicleMake')?.touched" />
+            </div>
+            <div>
+              <label for="proposal-vehicle-model" class="block text-[13px] font-medium mb-1.5">Model</label>
+              <input id="proposal-vehicle-model" type="text" formControlName="vehicleModel" placeholder="e.g., Swift VXi" class="h-[42px]"
+                     [class.border-danger]="motorForm.get('vehicleModel')?.invalid && motorForm.get('vehicleModel')?.touched" />
+            </div>
+            <div>
+              <label for="proposal-vehicle-year" class="block text-[13px] font-medium mb-1.5">Manufacture year</label>
+              <input id="proposal-vehicle-year" type="number" formControlName="manufactureYear" class="h-[42px] sc-numeric"
+                     [class.border-danger]="motorForm.get('manufactureYear')?.invalid && motorForm.get('manufactureYear')?.touched" />
+            </div>
+            <div>
+              <label for="proposal-vehicle-cover" class="block text-[13px] font-medium mb-1.5">Cover type</label>
+              <select id="proposal-vehicle-cover" formControlName="coverType" class="h-[42px]">
+                <option value="Comprehensive">Comprehensive</option>
+                <option value="ThirdParty">Third-party only</option>
+              </select>
+            </div>
+          </div>
+        }
+
         <div class="flex justify-end mt-5 pt-5 border-t border-line">
           <button class="h-10 px-5 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover transition-colors disabled:opacity-40"
-                  [disabled]="form.invalid"
+                  [disabled]="form.invalid || (isMotor() && motorForm.invalid)"
                   (click)="step.set(1)">Continue</button>
         </div>
       }
@@ -129,11 +164,26 @@
         }
         <div class="flex justify-between mt-5 pt-5 border-t border-line">
           <button class="h-10 px-5 border border-line bg-white text-[13px] font-semibold text-body rounded-control hover:bg-surface-alt transition-colors" (click)="step.set(1)">Back</button>
-          <button class="h-10 px-5 bg-accent text-white text-[13px] font-semibold rounded-control hover:bg-accent-hover transition-colors disabled:opacity-50" [disabled]="submitting() || !requiredDocumentsUploaded()" (click)="submit()">
-            {{ submitting() ? 'Submitting...' : 'Submit Proposal' }}
+          <button class="h-10 px-5 bg-accent text-white text-[13px] font-semibold rounded-control hover:bg-accent-hover transition-colors disabled:opacity-50 flex items-center gap-2" [disabled]="submitting() || !requiredDocumentsUploaded()" (click)="submit()">
+            @if (submitting()) {
+              <span class="w-3.5 h-3.5 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+            }
+            {{ submitting() ? 'Submitting…' : 'Submit Proposal' }}
           </button>
         </div>
       }
     }
   </div>
 </div>
+
+@if (showLeaveConfirm()) {
+  <app-confirm-dialog
+    title="Leave without submitting?"
+    message="You have unsaved changes to this proposal. If you leave now, the details you've entered will be lost."
+    confirmLabel="Leave"
+    cancelLabel="Stay"
+    variant="danger"
+    (confirmed)="confirmLeave()"
+    (cancelled)="cancelLeave()"
+  />
+}

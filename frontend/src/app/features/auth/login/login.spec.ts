@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
 import { LoginComponent } from './login';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
@@ -170,6 +170,36 @@ describe('LoginComponent', () => {
       fixture.componentInstance.onSubmit();
       expect(fixture.componentInstance.errorMessage()).toBe('Invalid credentials');
     });
+
+    it('shows a loading state while in flight, blocks a duplicate submit, and clears on success', () => {
+      const fixture = create();
+      fillForm(fixture);
+      const request$ = new Subject<AuthResponse>();
+      authService.login.mockReturnValue(request$);
+
+      fixture.componentInstance.onSubmit();
+      expect(fixture.componentInstance.loading()).toBe(true);
+
+      fixture.componentInstance.onSubmit();
+      expect(authService.login).toHaveBeenCalledTimes(1);
+
+      request$.next(authResponse('Customer'));
+      request$.complete();
+
+      expect(fixture.componentInstance.loading()).toBe(false);
+    });
+
+    it('clears the loading state on failure so the form can be retried', () => {
+      const fixture = create();
+      fillForm(fixture);
+      const request$ = new Subject<AuthResponse>();
+      authService.login.mockReturnValue(request$);
+
+      fixture.componentInstance.onSubmit();
+      request$.error({ status: 500, error: {} });
+
+      expect(fixture.componentInstance.loading()).toBe(false);
+    });
   });
 
   describe('resendVerification', () => {
@@ -204,6 +234,26 @@ describe('LoginComponent', () => {
 
       expect(fixture.componentInstance.resendLoading()).toBe(false);
       expect(fixture.componentInstance.resendSuccess()).toBe(false);
+    });
+
+    it('blocks a duplicate resend while one is already in flight', () => {
+      const fixture = create();
+      fixture.componentInstance.form.setValue({ email: 'jane@example.com', password: 'x', rememberMe: false });
+      authService.login.mockReturnValue(throwError(() => ({ status: 422, error: {} })));
+      fixture.componentInstance.onSubmit();
+
+      const request$ = new Subject<{ message: string }>();
+      authService.resendVerificationEmail.mockReturnValue(request$);
+
+      fixture.componentInstance.resendVerification();
+      expect(fixture.componentInstance.resendLoading()).toBe(true);
+
+      fixture.componentInstance.resendVerification();
+      expect(authService.resendVerificationEmail).toHaveBeenCalledTimes(1);
+
+      request$.next({ message: 'sent' });
+      request$.complete();
+      expect(fixture.componentInstance.resendLoading()).toBe(false);
     });
   });
 });

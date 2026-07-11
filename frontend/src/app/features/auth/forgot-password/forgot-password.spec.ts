@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
 import { ForgotPasswordComponent } from './forgot-password';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -76,5 +76,30 @@ describe('ForgotPasswordComponent', () => {
     fixture.componentInstance.onSubmit();
 
     expect(fixture.componentInstance.errorMessage()).toBe('Something went wrong. Please try again.');
+  });
+
+  it('shows a loading state while in flight and blocks a duplicate submit', () => {
+    const fixture = create();
+    fixture.componentInstance.form.setValue({ email: 'jane@example.com' });
+    const request$ = new Subject<{ message: string }>();
+    authService.forgotPassword.mockReturnValue(request$);
+
+    fixture.componentInstance.onSubmit();
+    expect(fixture.componentInstance.loading()).toBe(true);
+
+    fixture.componentInstance.onSubmit();
+    expect(authService.forgotPassword).toHaveBeenCalledTimes(1);
+  });
+
+  it('clears the loading state on failure so the form can be retried', () => {
+    const fixture = create();
+    fixture.componentInstance.form.setValue({ email: 'jane@example.com' });
+    const request$ = new Subject<{ message: string }>();
+    authService.forgotPassword.mockReturnValue(request$);
+
+    fixture.componentInstance.onSubmit();
+    request$.error({ status: 500 });
+
+    expect(fixture.componentInstance.loading()).toBe(false);
   });
 });

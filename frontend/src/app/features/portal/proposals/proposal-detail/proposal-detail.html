@@ -136,6 +136,12 @@
           <div class="text-xs text-body">Additional documents have been requested. Please upload them to proceed.</div>
         </div>
         <app-file-upload label="Select document" hint="PDF, JPG, PNG up to 5MB" [maxSizeMb]="5" (fileSelected)="onDocUpload($event)" />
+        @if (uploadingDoc()) {
+          <div class="flex items-center gap-2 mt-3 text-xs text-muted">
+            <span class="w-3.5 h-3.5 border-[1.5px] border-primary border-t-transparent rounded-full animate-spin"></span>
+            Uploading…
+          </div>
+        }
       </div>
     }
   </div>
@@ -148,6 +154,7 @@
     confirmLabel="Yes, withdraw"
     cancelLabel="Keep proposal"
     variant="danger"
+    [disabled]="withdrawing()"
     (confirmed)="confirmWithdraw()"
     (cancelled)="showWithdrawDialog.set(false)"
   />

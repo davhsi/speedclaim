@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { from, of } from 'rxjs';
+import { from, Observable, of, Subject } from 'rxjs';
 import { catchError, concatMap } from 'rxjs/operators';
 import { ClaimService } from '../services/claim.service';
 import { PolicyService } from '../../policies/services/policy.service';
@@ -11,16 +11,18 @@ import { FileUploadComponent } from '../../../../shared/components/file-upload/f
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
 import { DateFormatPipe } from '../../../../shared/pipes/date-format.pipe';
+import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog';
+import { CanComponentDeactivate } from '../../../../core/guards/unsaved-changes.guard';
 
 type ClaimTypeOption = { value: ClaimType; label: string };
 
 @Component({
   selector: 'app-claim-file',
   standalone: true,
-  imports: [ReactiveFormsModule, FileUploadComponent, MoneyPipe, DateFormatPipe],
+  imports: [ReactiveFormsModule, FileUploadComponent, MoneyPipe, DateFormatPipe, ConfirmDialogComponent],
   templateUrl: './claim-file.html',
 })
-export class ClaimFileComponent implements OnInit {
+export class ClaimFileComponent implements OnInit, CanComponentDeactivate {
   private readonly fb = inject(FormBuilder);
   private readonly claimService = inject(ClaimService);
   private readonly policyService = inject(PolicyService);
@@ -83,6 +85,33 @@ export class ClaimFileComponent implements OnInit {
     incidentDate: ['', [Validators.required, this.notFutureDate, this.withinPolicyPeriod]],
     incidentDescription: ['', [Validators.required, Validators.minLength(10)]],
   });
+
+  showLeaveConfirm = signal(false);
+  private navigatedAfterSubmit = false;
+  private leaveSubject: Subject<boolean> | null = null;
+
+  canDeactivate(): boolean | Observable<boolean> {
+    const dirty = this.claimForm.dirty || this.uploadedFiles.length > 0;
+    if (this.navigatedAfterSubmit || !dirty) return true;
+
+    this.showLeaveConfirm.set(true);
+    this.leaveSubject = new Subject<boolean>();
+    return this.leaveSubject.asObservable();
+  }
+
+  confirmLeave(): void {
+    this.showLeaveConfirm.set(false);
+    this.leaveSubject?.next(true);
+    this.leaveSubject?.complete();
+    this.leaveSubject = null;
+  }
+
+  cancelLeave(): void {
+    this.showLeaveConfirm.set(false);
+    this.leaveSubject?.next(false);
+    this.leaveSubject?.complete();
+    this.leaveSubject = null;
+  }
 
   ngOnInit(): void {
     this.policyService.getMyPolicies('Active').subscribe({
@@ -150,6 +179,7 @@ export class ClaimFileComponent implements OnInit {
     };
     this.claimService.intimate(req).subscribe({
       next: claim => {
+        this.navigatedAfterSubmit = true;
         if (this.uploadedFiles.length === 0) {
           this.toast.success('Claim filed successfully');
           this.router.navigate(['/claims', claim.id]);

@@ -25,6 +25,7 @@ public class UserServiceTests
     private Mock<IRepository<KycRecord>> _mockKycRepository = null!;
     private Mock<IRepository<Address>> _mockAddressRepository = null!;
     private Mock<IEncryptionService> _mockEncryptionService = null!;
+    private Mock<INotificationService> _mockNotificationService = null!;
     private UserService _userService = null!;
 
     [SetUp]
@@ -52,7 +53,8 @@ public class UserServiceTests
         _mockEncryptionService.Setup(e => e.Decrypt(It.IsAny<string>())).Returns<string>(s => s);
         _mockEncryptionService.Setup(e => e.Mask(It.IsAny<string>())).Returns<string>(s => s);
 
-        _userService = new UserService(_mockUnitOfWork.Object, new Mock<IStorageService>().Object, _mockEncryptionService.Object, new Mock<IEmailService>().Object);
+        _mockNotificationService = new Mock<INotificationService>();
+        _userService = new UserService(_mockUnitOfWork.Object, new Mock<IStorageService>().Object, _mockEncryptionService.Object, _mockNotificationService.Object, new Mock<IEmailService>().Object);
     }
 
     [Test]
@@ -214,11 +216,55 @@ public class UserServiceTests
         var kycRecord = new KycRecord { UserId = customerId, KycStatus = KycStatus.Pending, AadhaarNumber = "ENC_AADHAAR", PanNumber = "ENC_PAN" };
 
         _mockKycRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>())).ReturnsAsync(kycRecord);
-        await _userService.ApproveRejectKycAsync(customerId.ToString(), true, "All good", reviewerId.ToString());
+        await _userService.ApproveRejectKycAsync(customerId.ToString(), true, "Approved", reviewerId.ToString());
 
         Assert.That(kycRecord.KycStatus, Is.EqualTo(KycStatus.Approved));
         Assert.That(kycRecord.ReviewedById, Is.EqualTo(reviewerId));
+        // The frontend's approve action passes the literal string "Approved" as the reason
+        // param (mirroring the endorsement/proposal review UIs) — it must not be stored as a
+        // rejection reason, or an approved record shows a nonsensical "Rejected: Approved" label.
+        Assert.That(kycRecord.RejectionReason, Is.Null);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public async Task ApproveRejectKycAsync_ApprovingAfterAPriorRejection_ClearsTheOldRejectionReason()
+    {
+        var customerId = Guid.NewGuid();
+        var reviewerId = Guid.NewGuid();
+        var kycRecord = new KycRecord
+        {
+            UserId = customerId, KycStatus = KycStatus.Pending, AadhaarNumber = "ENC_AADHAAR", PanNumber = "ENC_PAN",
+            RejectionReason = "Aadhaar image is blurry",
+        };
+
+        _mockKycRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>())).ReturnsAsync(kycRecord);
+        await _userService.ApproveRejectKycAsync(customerId.ToString(), true, "Approved", reviewerId.ToString());
+
+        Assert.That(kycRecord.RejectionReason, Is.Null);
+    }
+
+    [Test]
+    public async Task ApproveRejectKycAsync_CustomerHasOnboardingAgent_NotifiesAgentToo()
+    {
+        var customerId = Guid.NewGuid();
+        var reviewerId = Guid.NewGuid();
+        var agentUserId = Guid.NewGuid();
+        var agentId = Guid.NewGuid();
+        var kycRecord = new KycRecord { UserId = customerId, KycStatus = KycStatus.Pending, AadhaarNumber = "ENC_AADHAAR", PanNumber = "ENC_PAN" };
+
+        _mockKycRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>())).ReturnsAsync(kycRecord);
+        _mockUserRepository.Setup(r => r.GetByIdAsync(customerId)).ReturnsAsync(new User { Id = customerId, Email = "cust@test.com", FirstName = "Kishore" });
+        _mockCustomerRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>()))
+            .ReturnsAsync(new Customer { UserId = customerId, OnboardingAgentId = agentId });
+        var mockAgentRepo = new Mock<IRepository<Agent>>();
+        mockAgentRepo.Setup(r => r.GetByIdAsync(agentId)).ReturnsAsync(new Agent { Id = agentId, UserId = agentUserId });
+        _mockUnitOfWork.Setup(u => u.Agents).Returns(mockAgentRepo.Object);
+
+        await _userService.ApproveRejectKycAsync(customerId.ToString(), false, "Aadhaar blurry", reviewerId.ToString());
+
+        _mockNotificationService.Verify(n => n.CreateAsync(customerId, "KYC Rejected", It.IsAny<string>(), "kyc", It.IsAny<string>()), Times.Once);
+        _mockNotificationService.Verify(n => n.CreateAsync(agentUserId, "KYC Rejected", It.Is<string>(m => m.Contains("Kishore")), "kyc", It.IsAny<string>()), Times.Once);
     }
 
     [Test]
@@ -331,6 +377,23 @@ public class UserServiceTests
     }
 
     [Test]
+    public async Task UpdateProfileAsync_CustomerWithRecord_UpdatesOccupationAndAnnualIncome()
+    {
+        var userId = Guid.NewGuid();
+        var user = new User { Id = userId, Email = "x@test.com", FirstName = "X", LastName = "Y", Role = UserRole.Customer, Salutation = Salutation.Mr };
+        var customer = new Customer { Id = Guid.NewGuid(), UserId = userId, MaritalStatus = MaritalStatus.Single, Occupation = "", AnnualIncome = 0m };
+        _mockUserRepository.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
+        _mockCustomerRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>())).ReturnsAsync(customer);
+
+        var request = new UpdateProfileRequest("X", "Y", "9999", "Mr", "Single", Occupation: "Software Engineer", AnnualIncome: 600000m);
+        await _userService.UpdateProfileAsync(userId.ToString(), request);
+
+        Assert.That(customer.Occupation, Is.EqualTo("Software Engineer"));
+        Assert.That(customer.AnnualIncome, Is.EqualTo(600000m));
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
     public async Task GetAllUsersAsync_CustomerWithRecord_IncludesMaritalStatus()
     {
         var userId = Guid.NewGuid();
@@ -428,12 +491,34 @@ public class UserServiceTests
         mockFile.Setup(f => f.FileName).Returns("front.jpg");
         mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
         var mockStorage = new Mock<IStorageService>();
-        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object, new Mock<IEmailService>().Object);
+        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object, new Mock<INotificationService>().Object, new Mock<IEmailService>().Object);
 
         await svc.UploadAadhaarAsync(customerId.ToString(), new AadhaarUploadRequest(null, "123456789012", mockFile.Object));
 
         _mockKycRepository.Verify(r => r.AddAsync(It.IsAny<KycRecord>()), Times.Once);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public async Task UploadAadhaarAsync_StoresReturnedPathFromStorageService()
+    {
+        var customerId = Guid.NewGuid();
+        _mockKycRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>())).ReturnsAsync((KycRecord?)null);
+        _mockUnitOfWork.Setup(u => u.KycRecords).Returns(_mockKycRepository.Object);
+
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.FileName).Returns("front.jpg");
+        mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
+        var mockStorage = new Mock<IStorageService>();
+        mockStorage.Setup(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync("uploads/kyc/x/aadhaar/generated-guid.jpg");
+        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object, new Mock<INotificationService>().Object, new Mock<IEmailService>().Object);
+        KycRecord? added = null;
+        _mockKycRepository.Setup(r => r.AddAsync(It.IsAny<KycRecord>())).Callback<KycRecord>(k => added = k).Returns(Task.CompletedTask);
+
+        await svc.UploadAadhaarAsync(customerId.ToString(), new AadhaarUploadRequest(null, "123456789012", mockFile.Object));
+
+        Assert.That(added!.AadhaarDocumentKey, Is.EqualTo("uploads/kyc/x/aadhaar/generated-guid.jpg"));
     }
 
     [Test]
@@ -448,7 +533,7 @@ public class UserServiceTests
         mockFile.Setup(f => f.FileName).Returns("front.jpg");
         mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
         var mockStorage = new Mock<IStorageService>();
-        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object, new Mock<IEmailService>().Object);
+        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object, new Mock<INotificationService>().Object, new Mock<IEmailService>().Object);
 
         await svc.UploadAadhaarAsync(customerId.ToString(), new AadhaarUploadRequest(null, "123456789012", mockFile.Object));
 
@@ -709,7 +794,7 @@ public class UserServiceTests
         mockFile.Setup(f => f.FileName).Returns("front.jpg");
         mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
         var mockStorage = new Mock<IStorageService>();
-        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object, new Mock<IEmailService>().Object);
+        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object, new Mock<INotificationService>().Object, new Mock<IEmailService>().Object);
 
         await svc.UploadAadhaarAsync(customerId.ToString(), new AadhaarUploadRequest(null, "123456789012", mockFile.Object));
 
@@ -764,7 +849,7 @@ public class UserServiceTests
         mockFile.Setup(f => f.FileName).Returns("front.jpg");
         mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
         var mockStorage = new Mock<IStorageService>();
-        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object, new Mock<IEmailService>().Object);
+        var svc = new UserService(_mockUnitOfWork.Object, mockStorage.Object, _mockEncryptionService.Object, new Mock<INotificationService>().Object, new Mock<IEmailService>().Object);
 
         await svc.UploadPanAsync(customerId.ToString(), new PanUploadRequest(null, "ABCDE1234F", mockFile.Object));
 

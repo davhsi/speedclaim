@@ -141,6 +141,91 @@ public class PolicyServiceTests
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
     }
 
+    [Test]
+    public async Task ApproveRejectEndorsementAsync_SumAssuredChange_AppliesNewSumToPolicy()
+    {
+        var endorsementId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+        var underwriterId = Guid.NewGuid();
+        var policy = new Policy { Id = policyId, CustomerId = Guid.NewGuid(), SumAssured = 500000m };
+        var endorsement = new Endorsement
+        {
+            Id = endorsementId, PolicyId = policyId, Status = EndorsementStatus.Requested,
+            EndorsementType = EndorsementType.SumAssuredChange, NewValue = "₹7,50,000"
+        };
+
+        _mockUnitOfWork.Setup(u => u.Endorsements.GetByIdAsync(endorsementId)).ReturnsAsync(endorsement);
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
+
+        await _policyService.ApproveRejectEndorsementAsync(endorsementId, true, "OK", underwriterId);
+
+        Assert.That(policy.SumAssured, Is.EqualTo(750000m), "approval must apply the new sum assured");
+        Assert.That(endorsement.OldValue, Is.EqualTo("500000"), "old value snapshot taken from the policy, before mutation");
+        Assert.That(endorsement.Status, Is.EqualTo(EndorsementStatus.Approved));
+        _mockUnitOfWork.Verify(u => u.Policies.Update(policy), Times.Once);
+    }
+
+    [Test]
+    public void ApproveRejectEndorsementAsync_SumAssuredChangeWithInvalidValue_ThrowsUnprocessable()
+    {
+        var endorsementId = Guid.NewGuid();
+        var endorsement = new Endorsement
+        {
+            Id = endorsementId, PolicyId = Guid.NewGuid(), Status = EndorsementStatus.Requested,
+            EndorsementType = EndorsementType.SumAssuredChange, NewValue = "double my cover please"
+        };
+        _mockUnitOfWork.Setup(u => u.Endorsements.GetByIdAsync(endorsementId)).ReturnsAsync(endorsement);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.UnprocessableException>(() =>
+            _policyService.ApproveRejectEndorsementAsync(endorsementId, true, "OK", Guid.NewGuid()));
+        Assert.That(endorsement.Status, Is.EqualTo(EndorsementStatus.Requested), "status must not flip when apply fails");
+    }
+
+    [Test]
+    public async Task ApproveRejectEndorsementAsync_ContactUpdate_AppliesNewPhoneToUser()
+    {
+        var endorsementId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var policy = new Policy { Id = policyId, CustomerId = customerId };
+        var customer = new Customer { Id = customerId, UserId = userId };
+        var user = new User { Id = userId, Email = "c@test.com", Phone = "9000000000" };
+        var endorsement = new Endorsement
+        {
+            Id = endorsementId, PolicyId = policyId, Status = EndorsementStatus.Requested,
+            EndorsementType = EndorsementType.ContactUpdate, NewValue = "98765 43210"
+        };
+
+        _mockUnitOfWork.Setup(u => u.Endorsements.GetByIdAsync(endorsementId)).ReturnsAsync(endorsement);
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
+        _mockUnitOfWork.Setup(u => u.Customers.GetByIdAsync(customerId)).ReturnsAsync(customer);
+        _mockUnitOfWork.Setup(u => u.Users.GetByIdAsync(userId)).ReturnsAsync(user);
+
+        await _policyService.ApproveRejectEndorsementAsync(endorsementId, true, "OK", Guid.NewGuid());
+
+        Assert.That(user.Phone, Is.EqualTo("9876543210"), "approval must apply the new phone number");
+        Assert.That(endorsement.OldValue, Is.EqualTo("9000000000"));
+        _mockUnitOfWork.Verify(u => u.Users.Update(user), Times.Once);
+    }
+
+    [Test]
+    public async Task ApproveRejectEndorsementAsync_Rejection_DoesNotTouchPolicy()
+    {
+        var endorsementId = Guid.NewGuid();
+        var endorsement = new Endorsement
+        {
+            Id = endorsementId, PolicyId = Guid.NewGuid(), Status = EndorsementStatus.Requested,
+            EndorsementType = EndorsementType.SumAssuredChange, NewValue = "750000"
+        };
+        _mockUnitOfWork.Setup(u => u.Endorsements.GetByIdAsync(endorsementId)).ReturnsAsync(endorsement);
+
+        await _policyService.ApproveRejectEndorsementAsync(endorsementId, false, "Not eligible", Guid.NewGuid());
+
+        Assert.That(endorsement.Status, Is.EqualTo(EndorsementStatus.Rejected));
+        _mockUnitOfWork.Verify(u => u.Policies.Update(It.IsAny<Policy>()), Times.Never);
+    }
+
     // --- UpdateNomineeAsync tests ---
 
     [Test]

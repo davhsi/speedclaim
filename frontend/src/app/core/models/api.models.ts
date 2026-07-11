@@ -91,6 +91,8 @@ export interface UserDto extends AuthUserDto {
   permanentAddress?: AddressDto;
   currentAddress?: AddressDto;
   kycApproved: boolean;
+  occupation?: string | null;
+  annualIncome?: number | null;
 }
 
 export interface AddressDto {
@@ -217,6 +219,35 @@ export interface GenerateQuoteResponse {
   tenureYears: number;
 }
 
+export interface HealthDetailDto {
+  preExistingConditions: string;
+  networkHospitalCoverage: string;
+  tpaName: string;
+  roomRentLimit: number;
+  maternityCovered: boolean;
+  copayPercentage: number;
+}
+
+export interface LifeDetailDto {
+  policySubtype: string;
+  maturityBenefit: number;
+  deathBenefit: number;
+  surrenderValueApplicable: boolean;
+  loanEligible: boolean;
+}
+
+export interface MotorDetailDto {
+  vehicleNumber: string;
+  vehicleMake: string;
+  vehicleModel: string;
+  manufactureYear: number;
+  vehicleType: string;
+  idv: number;
+  engineNumber: string;
+  chassisNumber: string;
+  coverType: string;
+}
+
 export interface SubmitProposalRequest {
   customerId: string;
   productId: string;
@@ -224,9 +255,9 @@ export interface SubmitProposalRequest {
   tenureYears: number;
   premiumAmount: number;
   paymentFrequency: PaymentFrequency;
-  healthDetail?: object;
-  motorDetail?: object;
-  lifeDetail?: object;
+  healthDetail?: HealthDetailDto;
+  motorDetail?: MotorDetailDto;
+  lifeDetail?: LifeDetailDto;
   customerMemberIds?: string[];
   nominees?: NomineeRequest[];
 }
@@ -259,9 +290,9 @@ export interface ProposalDto {
   paymentFrequency: PaymentFrequency;
   createdAt: string;
   updatedAt?: string;
-  healthDetail?: object;
-  motorDetail?: object;
-  lifeDetail?: object;
+  healthDetail?: HealthDetailDto | null;
+  motorDetail?: MotorDetailDto | null;
+  lifeDetail?: LifeDetailDto | null;
   documents?: SubmittedDocumentDto[];
   members?: ProposalMemberDto[];
   nominees?: NomineeDto[];
@@ -296,7 +327,7 @@ export interface SubmittedDocumentDto {
 export interface PolicyDto {
   id: string;
   policyNumber: string;
-  userId: string;
+  customerId: string;
   productId: string;
   productName: string;
   agentId?: string;
@@ -396,6 +427,9 @@ export interface ClaimDto {
   createdAt: string;
   updatedAt?: string;
   documents?: SubmittedDocumentDto[];
+  surveyEstimatedCost?: number | null;
+  surveyDate?: string | null;
+  surveyorRemarks?: string | null;
 }
 
 export interface ClaimStatusHistoryDto {
@@ -485,6 +519,7 @@ export interface NotificationDto {
   type: NotificationType;
   isRead: boolean;
   createdAt: string;
+  redirectUrl?: string | null;
 }
 
 export interface AgentCommissionDto {

@@ -278,7 +278,12 @@
 
         <div class="flex justify-end gap-2">
           <button (click)="closeModal()" [disabled]="actionInFlight()" class="h-9 px-4 text-[13px] font-medium text-body border border-line rounded-lg bg-white cursor-pointer hover:bg-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Cancel</button>
-          <button (click)="saveRole()" [disabled]="actionInFlight()" class="h-9 px-4 text-[13px] font-semibold text-white bg-primary rounded-lg border-none cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">Save role</button>
+          <button (click)="saveRole()" [disabled]="actionInFlight()" class="h-9 px-4 text-[13px] font-semibold text-white bg-primary rounded-lg border-none cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+            @if (actionInFlight()) {
+              <span class="w-3.5 h-3.5 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+            }
+            {{ actionInFlight() ? 'Saving…' : 'Save role' }}
+          </button>
         </div>
       </div>
     </div>
@@ -334,7 +339,7 @@
           <div class="mb-5">
             <label for="reset-pw-new-password" class="block text-[12px] font-semibold text-body mb-1.5">New password</label>
             <div class="relative">
-              <input id="reset-pw-new-password" [type]="showPassword() ? 'text' : 'password'" [(ngModel)]="resetPwForm.newPassword" placeholder="Min. 8 characters"
+              <input id="reset-pw-new-password" [type]="showPassword() ? 'text' : 'password'" [(ngModel)]="resetPwForm.newPassword" (blur)="resetPwTouched.set(true)" placeholder="Min. 8 characters"
                 class="w-full h-9 pl-3 pr-9 border-[1.5px] border-line rounded-lg text-[13px] text-ink bg-[#F7F9FA] outline-none font-mono" />
               <button type="button" (click)="showPassword.set(!showPassword())" [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-body bg-transparent border-0 cursor-pointer flex">
                 @if (showPassword()) {
@@ -344,11 +349,25 @@
                 }
               </button>
             </div>
+            @if (resetPwTouched() && resetPwErrors(); as pwErrors) {
+              <div class="text-[11px] text-danger mt-1.5 space-y-0.5">
+                @if (pwErrors['minLength']) { <p>At least 8 characters</p> }
+                @if (pwErrors['uppercase']) { <p>At least one uppercase letter</p> }
+                @if (pwErrors['lowercase']) { <p>At least one lowercase letter</p> }
+                @if (pwErrors['digit']) { <p>At least one digit</p> }
+                @if (pwErrors['special']) { <p>At least one special character</p> }
+              </div>
+            } @else {
+              <p class="text-[11px] text-muted mt-1.5">Must be 8+ characters with uppercase, lowercase, a digit, and a special character.</p>
+            }
           </div>
           <div class="flex justify-end gap-2">
             <button (click)="closeModal()" [disabled]="actionInFlight()" class="h-9 px-4 text-[13px] font-medium text-body border border-line rounded-lg bg-white cursor-pointer hover:bg-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Cancel</button>
-            <button (click)="confirmResetPw()" [disabled]="actionInFlight() || !resetPwForm.newPassword" class="h-9 px-4 text-[13px] font-semibold text-white bg-warning rounded-lg border-none cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
-              {{ actionInFlight() ? 'Resetting...' : 'Reset password' }}
+            <button (click)="confirmResetPw()" [disabled]="actionInFlight() || !resetPwForm.newPassword || !!resetPwErrors()" class="h-9 px-4 text-[13px] font-semibold text-white bg-warning rounded-lg border-none cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+              @if (actionInFlight()) {
+                <span class="w-3.5 h-3.5 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+              }
+              {{ actionInFlight() ? 'Resetting…' : 'Reset password' }}
             </button>
           </div>
         } @else {
@@ -382,7 +401,12 @@
           <p class="text-[12.5px] text-body mb-5"><span class="font-semibold text-ink">{{ selectedUser()?.fullName }}</span> will be unable to sign in until reactivated. Any active sessions will be ended.</p>
           <div class="flex justify-end gap-2">
             <button (click)="closeModal()" [disabled]="actionInFlight()" class="h-9 px-4 text-[13px] font-medium text-body border border-line rounded-lg bg-white cursor-pointer hover:bg-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Cancel</button>
-            <button (click)="confirmToggleStatus()" [disabled]="actionInFlight()" class="h-9 px-4 text-[13px] font-semibold text-white bg-danger rounded-lg border-none cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">Deactivate</button>
+            <button (click)="confirmToggleStatus()" [disabled]="actionInFlight()" class="h-9 px-4 text-[13px] font-semibold text-white bg-danger rounded-lg border-none cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+            @if (actionInFlight()) {
+              <span class="w-3.5 h-3.5 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+            }
+            {{ actionInFlight() ? 'Deactivating…' : 'Deactivate' }}
+          </button>
           </div>
         } @else {
           <div class="flex items-center justify-center w-10 h-10 rounded-full bg-success-bg mb-4">
@@ -392,7 +416,12 @@
           <p class="text-[12.5px] text-body mb-5"><span class="font-semibold text-ink">{{ selectedUser()?.fullName }}</span> will regain access and be able to sign in.</p>
           <div class="flex justify-end gap-2">
             <button (click)="closeModal()" [disabled]="actionInFlight()" class="h-9 px-4 text-[13px] font-medium text-body border border-line rounded-lg bg-white cursor-pointer hover:bg-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Cancel</button>
-            <button (click)="confirmToggleStatus()" [disabled]="actionInFlight()" class="h-9 px-4 text-[13px] font-semibold text-white bg-success rounded-lg border-none cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">Activate</button>
+            <button (click)="confirmToggleStatus()" [disabled]="actionInFlight()" class="h-9 px-4 text-[13px] font-semibold text-white bg-success rounded-lg border-none cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+            @if (actionInFlight()) {
+              <span class="w-3.5 h-3.5 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+            }
+            {{ actionInFlight() ? 'Activating…' : 'Activate' }}
+          </button>
           </div>
         }
       </div>
@@ -438,8 +467,11 @@
           <div class="flex justify-end gap-2">
             <button (click)="closeModal()" [disabled]="actionInFlight()" class="h-9 px-4 text-[13px] font-medium text-body border border-line rounded-lg bg-white cursor-pointer hover:bg-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Cancel</button>
             <button (click)="submitInvite()" [disabled]="!inviteForm.name || !inviteForm.email || actionInFlight()"
-              class="h-9 px-4 text-[13px] font-semibold text-white bg-primary rounded-lg border-none cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-default">
-              {{ actionInFlight() ? 'Sending...' : 'Send invite' }}
+              class="h-9 px-4 text-[13px] font-semibold text-white bg-primary rounded-lg border-none cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-default flex items-center gap-2">
+              @if (actionInFlight()) {
+                <span class="w-3.5 h-3.5 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+              }
+              {{ actionInFlight() ? 'Sending…' : 'Send invite' }}
             </button>
           </div>
         } @else {

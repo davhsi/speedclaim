@@ -9,7 +9,8 @@
       <input
         id="uw-policy-search"
         aria-label="Search policies by ID, customer or product"
-        [(ngModel)]="searchTerm"
+        [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event)"
         placeholder="Search ID, customer or product..."
         class="h-10 pl-9 pr-3.5 border border-line rounded-lg text-[13px] bg-white outline-none min-w-[280px] focus:border-primary transition-colors"
       />

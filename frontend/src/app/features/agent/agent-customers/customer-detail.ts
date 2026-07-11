@@ -35,7 +35,7 @@ export class AgentCustomerDetailComponent implements OnInit {
         const c = customers.find(c => c.id === customerId) ?? null;
         this.customer.set(c);
         const entityId = c?.customerId ?? customerId;
-        this.customerPolicies.set(policies.filter(p => p.userId === entityId));
+        this.customerPolicies.set(policies.filter(p => p.customerId === entityId));
         this.customerProposals.set(proposals.filter(p => p.customerId === entityId));
         this.loading.set(false);
       },

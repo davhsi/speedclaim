@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
 import { FamilyComponent } from './family';
 import { ProfileService } from '../profile/services/profile.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
@@ -70,9 +70,63 @@ describe('FamilyComponent', () => {
 
     it('shows an error toast when adding fails', () => {
       const fixture = create([]);
+      fixture.componentInstance.memberForm.setValue({
+        firstName: 'Amy', lastName: 'Doe', dateOfBirth: '2015-01-01', relationship: 'Daughter', gender: 'Female', salutation: 'Ms',
+      });
       profileService.addFamilyMember.mockReturnValue(throwError(() => ({ status: 500 })));
       fixture.componentInstance.addMember();
       expect(toast.error).toHaveBeenCalledWith('Failed to add member');
+    });
+
+    it('sets addingMember while in flight, blocks a duplicate call, and clears on success', () => {
+      const fixture = create([]);
+      const c = fixture.componentInstance;
+      c.memberForm.setValue({
+        firstName: 'Amy', lastName: 'Doe', dateOfBirth: '2015-01-01', relationship: 'Daughter', gender: 'Female', salutation: 'Ms',
+      });
+      const subject = new Subject<any>();
+      profileService.addFamilyMember.mockReturnValue(subject);
+
+      c.addMember();
+      expect(c.addingMember()).toBe(true);
+
+      c.addMember();
+      expect(profileService.addFamilyMember).toHaveBeenCalledTimes(1);
+
+      subject.next({ id: 'm2', firstName: 'Amy' });
+      subject.complete();
+
+      expect(c.addingMember()).toBe(false);
+      expect(c.showForm()).toBe(false);
+    });
+
+    it('clears addingMember on error too', () => {
+      const fixture = create([]);
+      const c = fixture.componentInstance;
+      c.memberForm.setValue({
+        firstName: 'Amy', lastName: 'Doe', dateOfBirth: '2015-01-01', relationship: 'Daughter', gender: 'Female', salutation: 'Ms',
+      });
+      const subject = new Subject<any>();
+      profileService.addFamilyMember.mockReturnValue(subject);
+
+      c.addMember();
+      subject.error({ status: 500 });
+
+      expect(c.addingMember()).toBe(false);
+      expect(toast.error).toHaveBeenCalledWith('Failed to add member');
+    });
+  });
+
+  describe('toggleAddForm', () => {
+    it('toggles showForm, but is a no-op while a submission is in flight', () => {
+      const fixture = create([]);
+      const c = fixture.componentInstance;
+      c.toggleAddForm();
+      expect(c.showForm()).toBe(true);
+
+      c.addingMember.set(true);
+      c.toggleAddForm();
+      expect(c.showForm()).toBe(true);
     });
   });
 
@@ -130,6 +184,49 @@ describe('FamilyComponent', () => {
       fixture.componentInstance.saveEdit();
       expect(toast.error).toHaveBeenCalledWith('Update failed');
     });
+
+    it('sets savingEdit while in flight, blocks a duplicate call, and clears on success', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.startEdit(member);
+      const subject = new Subject<any>();
+      profileService.updateFamilyMember.mockReturnValue(subject);
+
+      c.saveEdit();
+      expect(c.savingEdit()).toBe(true);
+
+      c.saveEdit();
+      expect(profileService.updateFamilyMember).toHaveBeenCalledTimes(1);
+
+      subject.next({ message: 'ok' });
+      subject.complete();
+
+      expect(c.savingEdit()).toBe(false);
+      expect(c.editTarget()).toBeNull();
+    });
+
+    it('clears savingEdit on error too', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.startEdit(member);
+      const subject = new Subject<any>();
+      profileService.updateFamilyMember.mockReturnValue(subject);
+
+      c.saveEdit();
+      subject.error({ status: 500 });
+
+      expect(c.savingEdit()).toBe(false);
+      expect(toast.error).toHaveBeenCalledWith('Update failed');
+    });
+
+    it('cancelEdit is a no-op while saving is in flight', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.startEdit(member);
+      c.savingEdit.set(true);
+      c.cancelEdit();
+      expect(c.editTarget()).toEqual(member);
+    });
   });
 
   describe('confirmDelete', () => {
@@ -157,6 +254,43 @@ describe('FamilyComponent', () => {
       profileService.deleteFamilyMember.mockReturnValue(throwError(() => ({ status: 500 })));
       fixture.componentInstance.deleteTarget.set('m1');
       fixture.componentInstance.confirmDelete();
+      expect(toast.error).toHaveBeenCalledWith('Delete failed');
+    });
+
+    it('sets deleting while in flight, blocks a duplicate call, and clears on success', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      const subject = new Subject<any>();
+      profileService.deleteFamilyMember.mockReturnValue(subject);
+      c.deleteTarget.set('m1');
+
+      c.confirmDelete();
+      expect(c.deleting()).toBe(true);
+      expect(c.deleteTarget()).toBe('m1');
+
+      c.confirmDelete();
+      expect(profileService.deleteFamilyMember).toHaveBeenCalledTimes(1);
+
+      subject.next({ message: 'ok' });
+      subject.complete();
+
+      expect(c.deleting()).toBe(false);
+      expect(c.deleteTarget()).toBeNull();
+      expect(c.members()).toEqual([]);
+    });
+
+    it('clears deleting on error too and closes the dialog', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      const subject = new Subject<any>();
+      profileService.deleteFamilyMember.mockReturnValue(subject);
+      c.deleteTarget.set('m1');
+
+      c.confirmDelete();
+      subject.error({ status: 500 });
+
+      expect(c.deleting()).toBe(false);
+      expect(c.deleteTarget()).toBeNull();
       expect(toast.error).toHaveBeenCalledWith('Delete failed');
     });
   });

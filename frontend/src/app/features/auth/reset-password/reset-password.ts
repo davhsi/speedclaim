@@ -38,6 +38,7 @@ export class ResetPasswordComponent implements OnInit {
   }
 
   onSubmit(): void {
+    if (this.loading()) return;
     if (this.form.invalid || !this.token) {
       this.form.markAllAsTouched();
       return;

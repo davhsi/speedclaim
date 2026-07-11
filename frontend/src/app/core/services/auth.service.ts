@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap, catchError, of } from 'rxjs';
+import { Observable, tap, catchError, of, shareReplay, finalize } from 'rxjs';
 import { TokenService } from './token.service';
 import { NotificationService } from './notification.service';
 import {
@@ -86,10 +86,14 @@ export class AuthService {
     if (u) this.currentUser.set({ ...u, ...patch });
   }
 
+  private initInFlight$: Observable<AuthResponse | null> | null = null;
+
   initFromStorage(): Observable<AuthResponse | null> {
     if (this.initialized()) return of(null);
+    if (this.initInFlight$) return this.initInFlight$;
+
     this.isLoading.set(true);
-    return this.refreshToken().pipe(
+    this.initInFlight$ = this.refreshToken().pipe(
       tap(() => {
         this.initialized.set(true);
         this.isLoading.set(false);
@@ -99,6 +103,9 @@ export class AuthService {
         this.isLoading.set(false);
         return of(null);
       }),
+      shareReplay(1),
+      finalize(() => (this.initInFlight$ = null)),
     );
+    return this.initInFlight$;
   }
 }

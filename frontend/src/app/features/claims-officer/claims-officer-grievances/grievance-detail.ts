@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge';
@@ -23,7 +23,8 @@ export class GrievanceDetailComponent implements OnInit {
   private readonly toast = inject(ToastService);
 
   grievance = signal<GrievanceDto | null>(null);
-  actionInFlight = signal(false);
+  pendingAction = signal<'assign' | 'status' | 'notes' | null>(null);
+  actionInFlight = computed(() => this.pendingAction() !== null);
   notes = '';
   selectedStatus: GrievanceStatus = 'Open';
 
@@ -62,16 +63,16 @@ export class GrievanceDetailComponent implements OnInit {
     const g = this.grievance();
     const user = this.authService.currentUser();
     if (!g || !user || this.isTerminal(g) || this.actionInFlight()) return;
-    this.actionInFlight.set(true);
+    this.pendingAction.set('assign');
     this.claimsService.assignGrievance(g.id, { assignedToId: user.id }).subscribe({
       next: () => {
         this.toast.success('Grievance assigned to you');
         this.loadGrievance(g.id);
-        this.actionInFlight.set(false);
+        this.pendingAction.set(null);
       },
       error: () => {
         this.toast.error('Failed to assign grievance');
-        this.actionInFlight.set(false);
+        this.pendingAction.set(null);
       },
     });
   }
@@ -79,7 +80,7 @@ export class GrievanceDetailComponent implements OnInit {
   onUpdateStatus(): void {
     const g = this.grievance();
     if (!g || this.isTerminal(g) || this.actionInFlight()) return;
-    this.actionInFlight.set(true);
+    this.pendingAction.set('status');
     this.claimsService.updateGrievanceStatus(g.id, {
       status: this.selectedStatus,
       resolutionNotes: this.notes || undefined,
@@ -87,11 +88,11 @@ export class GrievanceDetailComponent implements OnInit {
       next: () => {
         this.toast.success('Grievance status updated');
         this.loadGrievance(g.id);
-        this.actionInFlight.set(false);
+        this.pendingAction.set(null);
       },
       error: () => {
         this.toast.error('Failed to update status');
-        this.actionInFlight.set(false);
+        this.pendingAction.set(null);
       },
     });
   }
@@ -99,7 +100,7 @@ export class GrievanceDetailComponent implements OnInit {
   onSaveNotes(): void {
     const g = this.grievance();
     if (!g || this.isTerminal(g) || !this.notes.trim() || this.actionInFlight()) return;
-    this.actionInFlight.set(true);
+    this.pendingAction.set('notes');
     this.claimsService.updateGrievanceStatus(g.id, {
       status: g.status,
       resolutionNotes: this.notes,
@@ -108,11 +109,11 @@ export class GrievanceDetailComponent implements OnInit {
         this.toast.success('Notes saved');
         this.loadGrievance(g.id);
         this.notes = '';
-        this.actionInFlight.set(false);
+        this.pendingAction.set(null);
       },
       error: () => {
         this.toast.error('Failed to save notes');
-        this.actionInFlight.set(false);
+        this.pendingAction.set(null);
       },
     });
   }

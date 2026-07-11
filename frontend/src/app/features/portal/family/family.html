@@ -5,8 +5,9 @@
       <p class="text-sm text-muted mt-0.5">Dependents you can add to family floater policies.</p>
     </div>
     <button
-      class="h-10 px-4 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover transition-colors"
-      (click)="showForm.set(!showForm())"
+      class="h-10 px-4 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      [disabled]="addingMember()"
+      (click)="toggleAddForm()"
     >{{ showForm() ? 'Cancel' : '+ Add member' }}</button>
   </div>
 
@@ -58,10 +59,15 @@
         </div>
       </div>
       <button
-        class="h-10 px-5 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover disabled:opacity-40"
-        [disabled]="memberForm.invalid"
+        class="h-10 px-5 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover disabled:opacity-40 flex items-center gap-2"
+        [disabled]="memberForm.invalid || addingMember()"
         (click)="addMember()"
-      >Add member</button>
+      >
+        @if (addingMember()) {
+          <span class="w-3.5 h-3.5 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+        }
+        {{ addingMember() ? 'Adding…' : 'Add member' }}
+      </button>
     </div>
   }
 
@@ -115,8 +121,13 @@
             </div>
           </div>
           <div class="flex gap-2">
-            <button class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover disabled:opacity-40" [disabled]="editForm.invalid" (click)="saveEdit()">Save</button>
-            <button class="h-9 px-4 border border-line text-[13px] font-medium text-body rounded-control hover:bg-surface-alt" (click)="cancelEdit()">Cancel</button>
+            <button class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover disabled:opacity-40 flex items-center gap-2" [disabled]="editForm.invalid || savingEdit()" (click)="saveEdit()">
+              @if (savingEdit()) {
+                <span class="w-3.5 h-3.5 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+              }
+              {{ savingEdit() ? 'Saving…' : 'Save' }}
+            </button>
+            <button class="h-9 px-4 border border-line text-[13px] font-medium text-body rounded-control hover:bg-surface-alt disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="savingEdit()" (click)="cancelEdit()">Cancel</button>
           </div>
         </div>
       } @else {
@@ -150,5 +161,5 @@
 </div>
 
 @if (deleteTarget()) {
-  <app-confirm-dialog title="Remove member" message="Are you sure you want to remove this family member?" variant="danger" (confirmed)="confirmDelete()" (cancelled)="deleteTarget.set(null)" />
+  <app-confirm-dialog title="Remove member" message="Are you sure you want to remove this family member?" variant="danger" [disabled]="deleting()" (confirmed)="confirmDelete()" (cancelled)="deleteTarget.set(null)" />
 }

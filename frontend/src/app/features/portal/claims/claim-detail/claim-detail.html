@@ -142,6 +142,7 @@
     confirmLabel="Yes, withdraw"
     cancelLabel="Cancel"
     variant="danger"
+    [disabled]="withdrawing()"
     (confirmed)="confirmWithdraw()"
     (cancelled)="showWithdrawDialog.set(false)"
   />

@@ -13,6 +13,7 @@
             <th class="px-4 py-[11px] text-left text-[11px] font-semibold text-muted uppercase tracking-wide whitespace-nowrap">Policy</th>
             <th class="px-4 py-[11px] text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Type</th>
             <th class="px-4 py-[11px] text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Description</th>
+            <th class="px-4 py-[11px] text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Requested change</th>
             <th class="px-4 py-[11px] text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Status</th>
             <th class="px-4 py-[11px] text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Actions</th>
           </tr>
@@ -31,14 +32,29 @@
               <td class="px-4 py-[13px] text-xs text-body sc-numeric whitespace-nowrap">{{ e.policyId }}</td>
               <td class="px-4 py-[13px] text-body whitespace-nowrap">{{ formatType(e.endorsementType) }}</td>
               <td class="px-4 py-[13px] text-muted text-[13px] max-w-[200px] truncate">{{ e.description }}</td>
+              <td class="px-4 py-[13px] text-[13px] max-w-[220px]">
+                @if (e.newValue) {
+                  <span class="text-muted line-through sc-numeric">{{ e.oldValue || '—' }}</span>
+                  <span class="text-muted mx-1" aria-hidden="true">→</span>
+                  <span class="text-ink font-medium sc-numeric">{{ e.newValue }}</span>
+                  @if (isAutoApplied(e)) {
+                    <div class="text-[11px] text-info mt-0.5">Applied to the policy on approval</div>
+                  }
+                } @else {
+                  <span class="text-muted">—</span>
+                }
+              </td>
               <td class="px-4 py-[13px]"><app-status-badge [status]="e.status" /></td>
               <td class="px-4 py-[13px]">
                 @if (isReviewable(e)) {
                   <div class="flex gap-2">
-                    <button (click)="onApprove(e)" class="h-[32px] px-3 rounded-[7px] border-none text-xs font-semibold text-white cursor-pointer bg-success hover:bg-success-dark transition-colors">
-                      Approve
+                    <button (click)="onApprove(e)" [disabled]="isSubmitting(e)" class="h-[32px] px-3 rounded-[7px] border-none text-xs font-semibold text-white cursor-pointer bg-success hover:bg-success-dark transition-colors disabled:opacity-50 disabled:cursor-wait flex items-center gap-1.5">
+                      @if (isSubmitting(e)) {
+                        <span class="w-3 h-3 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+                      }
+                      {{ isSubmitting(e) ? 'Approving…' : 'Approve' }}
                     </button>
-                    <button (click)="openReject(e)" class="h-[32px] px-3 rounded-[7px] border-none text-xs font-semibold text-white cursor-pointer bg-danger hover:bg-danger-dark transition-colors">
+                    <button (click)="openReject(e)" [disabled]="isSubmitting(e)" class="h-[32px] px-3 rounded-[7px] border-none text-xs font-semibold text-white cursor-pointer bg-danger hover:bg-danger-dark transition-colors disabled:opacity-50 disabled:cursor-wait">
                       Reject
                     </button>
                   </div>
@@ -49,7 +65,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="6" class="px-4 py-12 text-center text-sm text-muted">No endorsements found</td>
+              <td colspan="7" class="px-4 py-12 text-center text-sm text-muted">No endorsements found</td>
             </tr>
           }
         </tbody>
@@ -61,15 +77,20 @@
   </div>
 
   <!-- Reject dialog -->
-  @if (rejectingEndorsement()) {
+  @if (rejectingEndorsement(); as re) {
     <div class="fixed inset-0 z-[400] flex items-center justify-center p-4">
-      <button type="button" aria-label="Close dialog" (click)="rejectingEndorsement.set(null)" class="absolute inset-0 bg-black/40 border-none cursor-default"></button>
+      <button type="button" aria-label="Close dialog" (click)="closeReject()" class="absolute inset-0 bg-black/40 border-none cursor-default"></button>
       <div class="relative bg-white rounded-card shadow-lg max-w-md w-full p-6">
         <h3 class="text-lg font-semibold text-ink mb-2">Reject endorsement</h3>
         <textarea id="uw-endorsement-reject-reason" aria-label="Rejection reason" [(ngModel)]="rejectReason" rows="3" placeholder="Rejection reason *" class="w-full p-3 border border-line rounded-lg text-sm outline-none resize-y mb-4"></textarea>
         <div class="flex justify-end gap-3">
-          <button (click)="rejectingEndorsement.set(null)" class="px-4 py-2 text-sm font-medium text-body bg-white border border-line rounded-lg hover:bg-surface-alt transition-colors">Cancel</button>
-          <button (click)="confirmReject()" [disabled]="!rejectReason.trim()" class="px-4 py-2 text-sm font-medium text-white bg-danger rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Reject</button>
+          <button (click)="closeReject()" [disabled]="isSubmitting(re)" class="px-4 py-2 text-sm font-medium text-body bg-white border border-line rounded-lg hover:bg-surface-alt transition-colors disabled:opacity-50 disabled:cursor-wait">Cancel</button>
+          <button (click)="confirmReject()" [disabled]="!rejectReason.trim() || isSubmitting(re)" class="px-4 py-2 text-sm font-medium text-white bg-danger rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5">
+            @if (isSubmitting(re)) {
+              <span class="w-3 h-3 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+            }
+            {{ isSubmitting(re) ? 'Rejecting…' : 'Reject' }}
+          </button>
         </div>
       </div>
     </div>

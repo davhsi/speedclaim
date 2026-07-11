@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
 import { ResetPasswordComponent } from './reset-password';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
@@ -84,6 +84,25 @@ describe('ResetPasswordComponent', () => {
       expect(fixture.componentInstance.errorMessage()).toBe('Reset link is invalid or has expired. Please request a new one.');
       expect(fixture.componentInstance.loading()).toBe(false);
       expect(fixture.componentInstance.success()).toBe(false);
+    });
+
+    it('shows a loading state while in flight, blocks a duplicate submit, and clears on success', () => {
+      const fixture = create();
+      fillValidForm(fixture);
+      const request$ = new Subject<{ message: string }>();
+      authService.resetPassword.mockReturnValue(request$);
+
+      fixture.componentInstance.onSubmit();
+      expect(fixture.componentInstance.loading()).toBe(true);
+
+      fixture.componentInstance.onSubmit();
+      expect(authService.resetPassword).toHaveBeenCalledTimes(1);
+
+      request$.next({ message: 'ok' });
+      request$.complete();
+
+      expect(fixture.componentInstance.loading()).toBe(false);
+      expect(fixture.componentInstance.success()).toBe(true);
     });
   });
 });

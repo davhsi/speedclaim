@@ -23,12 +23,12 @@ export class PolicyListComponent implements OnInit {
   allPolicies = signal<PolicyDto[]>([]);
   products = signal<ProductDto[]>([]);
   loading = signal(true);
-  searchTerm = '';
+  searchTerm = signal('');
   currentPage = signal(1);
   totalPages = signal(1);
 
   filteredPolicies = computed(() => {
-    const term = this.searchTerm.toLowerCase().trim();
+    const term = this.searchTerm().toLowerCase().trim();
     const policies = this.allPolicies();
     if (!term) return policies;
     return policies.filter(p =>

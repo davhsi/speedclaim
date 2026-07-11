@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
 import { AdminAgentsComponent } from './admin-agents';
 import { AdminService } from '../services/admin.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
@@ -141,11 +141,16 @@ describe('AdminAgentsComponent', () => {
   });
 
   describe('registerAgent', () => {
+    function validAddress() {
+      return { line1: '12 MG Road', line2: '', city: 'Bengaluru', state: 'Karnataka', postalCode: '560001', country: 'India' };
+    }
+
     function validForm() {
       return {
         firstName: 'Priya', lastName: 'Sharma', email: 'priya@example.com', phone: '9876543210',
         licenseNumber: 'LIC001', licenseExpiry: '2030-01-01',
         agencyName: 'Agency Co', aadhaarNumber: '123456789012', panNumber: 'ABCDE1234F',
+        permanentAddress: validAddress(), currentAddress: validAddress(), sameAsPermanent: true,
       };
     }
 
@@ -153,6 +158,37 @@ describe('AdminAgentsComponent', () => {
       const fixture = create();
       const c = fixture.componentInstance;
       c.regForm = { ...validForm(), agencyName: '' };
+      c.registerAgent();
+      expect(adminService.registerAgent).not.toHaveBeenCalled();
+    });
+
+    it('warns when the permanent address is incomplete — the server requires a real address, not a placeholder', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.regForm = { ...validForm(), permanentAddress: { ...validAddress(), city: '' } };
+      c.registerAgent();
+      expect(adminService.registerAgent).not.toHaveBeenCalled();
+    });
+
+    it('warns on an invalid permanent postal code', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.regForm = { ...validForm(), permanentAddress: { ...validAddress(), postalCode: '123' } };
+      c.registerAgent();
+      expect(adminService.registerAgent).not.toHaveBeenCalled();
+    });
+
+    it('does not require the current address fields when "same as permanent" is checked', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.regForm = { ...validForm(), currentAddress: { line1: '', line2: '', city: '', state: '', postalCode: '', country: 'India' }, sameAsPermanent: true };
+      expect(c.registerFormInvalid()).toBe(false);
+    });
+
+    it('requires the current address fields when "same as permanent" is unchecked', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.regForm = { ...validForm(), currentAddress: { line1: '', line2: '', city: '', state: '', postalCode: '', country: 'India' }, sameAsPermanent: false };
       c.registerAgent();
       expect(adminService.registerAgent).not.toHaveBeenCalled();
     });
@@ -170,13 +206,119 @@ describe('AdminAgentsComponent', () => {
       expect(adminService.getAllUsers).toHaveBeenCalledTimes(2);
     });
 
-    it('shows an error toast on failure', () => {
+    it('sends the permanent address as the current address when "same as permanent" is checked, rather than the placeholder address that used to be hardcoded', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.regForm = { ...validForm(), sameAsPermanent: true };
+      adminService.registerAgent.mockReturnValue(of({ message: 'ok' }));
+
+      c.registerAgent();
+
+      expect(adminService.registerAgent).toHaveBeenCalledWith(expect.objectContaining({
+        permanentAddress: validAddress(),
+        currentAddress: validAddress(),
+        isSameAsPermanent: true,
+      }));
+    });
+
+    it('sends the distinct current address when "same as permanent" is unchecked', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      const otherAddress = { line1: '9 Residency Rd', line2: '', city: 'Mumbai', state: 'Maharashtra', postalCode: '400001', country: 'India' };
+      c.regForm = { ...validForm(), currentAddress: otherAddress, sameAsPermanent: false };
+      adminService.registerAgent.mockReturnValue(of({ message: 'ok' }));
+
+      c.registerAgent();
+
+      expect(adminService.registerAgent).toHaveBeenCalledWith(expect.objectContaining({
+        permanentAddress: validAddress(),
+        currentAddress: otherAddress,
+        isSameAsPermanent: false,
+      }));
+    });
+
+    it('does not show its own toast on failure — the global error interceptor already surfaces the server message', () => {
       const fixture = create();
       const c = fixture.componentInstance;
       c.regForm = validForm();
       adminService.registerAgent.mockReturnValue(throwError(() => ({ status: 500 })));
       c.registerAgent();
-      expect(toast.error).toHaveBeenCalledWith('Failed to register agent');
+      expect(toast.error).not.toHaveBeenCalled();
+    });
+
+    it('trims padded values before submitting, so a value that only looks valid because inline validation trims does not get rejected by the server', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.regForm = { ...validForm(), aadhaarNumber: ' 123456789012', agencyName: 'Agency Co ', permanentAddress: { ...validAddress(), city: ' Bengaluru' } };
+      adminService.registerAgent.mockReturnValue(of({ message: 'ok' }));
+
+      c.registerAgent();
+
+      expect(adminService.registerAgent).toHaveBeenCalledWith(expect.objectContaining({
+        aadhaarNumber: '123456789012',
+        agencyName: 'Agency Co',
+        permanentAddress: validAddress(),
+      }));
+    });
+
+    it('shows a submitting state while the request is in flight, blocks a second submit, and clears it on success', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.openRegisterModal();
+      c.regForm = validForm();
+      const request$ = new Subject<{ message: string }>();
+      adminService.registerAgent.mockReturnValue(request$);
+
+      c.registerAgent();
+      expect(c.submitting()).toBe(true);
+
+      // A second click while the request is still pending must not fire another request.
+      c.registerAgent();
+      expect(adminService.registerAgent).toHaveBeenCalledTimes(1);
+
+      // Closing the modal (Cancel, the X button, or the backdrop all route through closeModal())
+      // must not be possible while a request is in flight.
+      c.closeModal();
+      expect(c.activeModal()).toBe('register');
+
+      request$.next({ message: 'ok' });
+      request$.complete();
+
+      expect(c.submitting()).toBe(false);
+      expect(c.activeModal()).toBeNull();
+    });
+
+    it('clears the submitting state on failure so the form can be retried', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.openRegisterModal();
+      c.regForm = validForm();
+      const request$ = new Subject<{ message: string }>();
+      adminService.registerAgent.mockReturnValue(request$);
+
+      c.registerAgent();
+      expect(c.submitting()).toBe(true);
+
+      request$.error({ status: 500 });
+
+      expect(c.submitting()).toBe(false);
+      expect(c.activeModal()).toBe('register');
+    });
+  });
+
+  describe('trimField', () => {
+    it('strips leading/trailing whitespace in place', () => {
+      const c = create().componentInstance;
+      c.regForm.aadhaarNumber = ' 123456789012 ';
+      c.trimField(c.regForm, 'aadhaarNumber');
+      expect(c.regForm.aadhaarNumber).toBe('123456789012');
+    });
+
+    it('leaves an already-clean value untouched', () => {
+      const c = create().componentInstance;
+      c.regForm.firstName = 'Priya';
+      c.trimField(c.regForm, 'firstName');
+      expect(c.regForm.firstName).toBe('Priya');
     });
   });
 
@@ -332,14 +474,14 @@ describe('AdminAgentsComponent', () => {
       expect(toast.success).toHaveBeenCalledWith('Branch created');
     });
 
-    it('shows an error toast on failure', () => {
+    it('does not show its own toast on failure — the global error interceptor already surfaces the server message', () => {
       const fixture = create();
       const c = fixture.componentInstance;
       c.openCreateBranchModal();
       c.branchForm = { name: 'New Branch', city: 'Pune', state: 'Maharashtra', address: '2 Side St', phone: '9876543211', email: 'new@x.com' };
       adminService.createBranch.mockReturnValue(throwError(() => ({ status: 500 })));
       c.submitCreateBranch();
-      expect(toast.error).toHaveBeenCalledWith('Failed to create branch');
+      expect(toast.error).not.toHaveBeenCalled();
     });
   });
 
@@ -353,6 +495,36 @@ describe('AdminAgentsComponent', () => {
 
       expect(adminService.toggleAgentStatus).toHaveBeenCalledWith('u1', false);
       expect(c.agents().find(a => a.id === 'u1')?.isActive).toBe(false);
+    });
+
+    it('marks the row as toggling while in flight, blocks a duplicate click, and clears on success', () => {
+      const fixture = create([agentUser({ id: 'u1', isActive: true })]);
+      const c = fixture.componentInstance;
+      const request$ = new Subject<{ message: string }>();
+      adminService.toggleAgentStatus.mockReturnValue(request$);
+
+      c.toggleAgentStatus(agentUser({ id: 'u1', isActive: true }));
+      expect(c.isTogglingStatus('u1')).toBe(true);
+
+      c.toggleAgentStatus(agentUser({ id: 'u1', isActive: true }));
+      expect(adminService.toggleAgentStatus).toHaveBeenCalledTimes(1);
+
+      request$.next({ message: 'ok' });
+      request$.complete();
+
+      expect(c.isTogglingStatus('u1')).toBe(false);
+    });
+
+    it('clears the toggling state on failure', () => {
+      const fixture = create([agentUser({ id: 'u1', isActive: true })]);
+      const c = fixture.componentInstance;
+      const request$ = new Subject<{ message: string }>();
+      adminService.toggleAgentStatus.mockReturnValue(request$);
+
+      c.toggleAgentStatus(agentUser({ id: 'u1', isActive: true }));
+      request$.error({ status: 500 });
+
+      expect(c.isTogglingStatus('u1')).toBe(false);
     });
   });
 

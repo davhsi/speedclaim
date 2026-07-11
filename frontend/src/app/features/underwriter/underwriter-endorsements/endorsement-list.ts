@@ -22,6 +22,7 @@ export class EndorsementListComponent implements OnInit {
   loading = signal(true);
   rejectingEndorsement = signal<EndorsementDto | null>(null);
   rejectReason = '';
+  submittingIds = signal<Set<string>>(new Set());
   currentPage = signal(1);
   readonly pageSize = 10;
 
@@ -52,6 +53,12 @@ export class EndorsementListComponent implements OnInit {
     return e.status === 'Requested';
   }
 
+  // Mirrors PolicyService.ApplyEndorsementChangeAsync — these two types are structurally
+  // applied to the policy/user on approval; the free-text types are authorization-only.
+  isAutoApplied(e: EndorsementDto): boolean {
+    return e.endorsementType === 'SumAssuredChange' || e.endorsementType === 'ContactUpdate';
+  }
+
   formatType(type: string): string {
     const map: Record<string, string> = {
       NomineeChange: 'Nominee change',
@@ -63,12 +70,29 @@ export class EndorsementListComponent implements OnInit {
     return map[type] ?? type;
   }
 
+  isSubmitting(e: EndorsementDto): boolean {
+    return this.submittingIds().has(e.id.toString());
+  }
+
+  private markSubmitting(id: string, active: boolean): void {
+    this.submittingIds.update(ids => {
+      const next = new Set(ids);
+      if (active) next.add(id); else next.delete(id);
+      return next;
+    });
+  }
+
   onApprove(e: EndorsementDto): void {
-    this.uwService.reviewEndorsement(e.id.toString(), { isApproved: true, reason: 'Approved' }).subscribe({
+    if (this.isSubmitting(e)) return;
+    const id = e.id.toString();
+    this.markSubmitting(id, true);
+    this.uwService.reviewEndorsement(id, { isApproved: true, reason: 'Approved' }).subscribe({
       next: () => {
+        this.markSubmitting(id, false);
         this.toast.success('Endorsement approved.');
         this.loadData();
       },
+      error: () => { this.markSubmitting(id, false); },
     });
   }
 
@@ -77,15 +101,25 @@ export class EndorsementListComponent implements OnInit {
     this.rejectReason = '';
   }
 
+  closeReject(): void {
+    const e = this.rejectingEndorsement();
+    if (e && this.isSubmitting(e)) return;
+    this.rejectingEndorsement.set(null);
+  }
+
   confirmReject(): void {
-    if (!this.rejectReason.trim()) return;
-    const e = this.rejectingEndorsement()!;
-    this.uwService.reviewEndorsement(e.id.toString(), { isApproved: false, reason: this.rejectReason }).subscribe({
+    const e = this.rejectingEndorsement();
+    if (!e || this.isSubmitting(e) || !this.rejectReason.trim()) return;
+    const id = e.id.toString();
+    this.markSubmitting(id, true);
+    this.uwService.reviewEndorsement(id, { isApproved: false, reason: this.rejectReason }).subscribe({
       next: () => {
+        this.markSubmitting(id, false);
         this.toast.error('Endorsement rejected.');
         this.rejectingEndorsement.set(null);
         this.loadData();
       },
+      error: () => { this.markSubmitting(id, false); },
     });
   }
 }

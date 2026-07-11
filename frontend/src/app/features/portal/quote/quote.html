@@ -129,9 +129,12 @@
         <button
           type="submit"
           [disabled]="form.invalid || submitting()"
-          class="w-full h-11 bg-primary text-white rounded-control text-[14px] font-semibold hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-full h-11 bg-primary text-white rounded-control text-[14px] font-semibold hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          {{ submitting() ? 'Calculating...' : 'Calculate Premium' }}
+          @if (submitting()) {
+            <span class="w-3.5 h-3.5 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
+          }
+          {{ submitting() ? 'Calculating…' : 'Calculate Premium' }}
         </button>
       </form>
     </div>

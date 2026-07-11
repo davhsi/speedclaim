@@ -23,6 +23,7 @@ export class FinanceOfficerPayoutsComponent implements OnInit {
   loading = signal(true);
   statusFilter = signal('All');
   processing = signal(new Set<string>());
+  processingAction = signal<Map<string, 'payout' | 'settle'>>(new Map());
   currentPage = signal(1);
   readonly pageSize = 10;
 
@@ -87,18 +88,27 @@ export class FinanceOfficerPayoutsComponent implements OnInit {
     return `${count} ${noun} — process Stripe payouts or mark approved claims settled manually.`;
   }
 
+  isPayoutProcessing(claimId: string): boolean {
+    return this.processingAction().get(claimId) === 'payout';
+  }
+
+  isSettling(claimId: string): boolean {
+    return this.processingAction().get(claimId) === 'settle';
+  }
+
   processPayout(claim: ClaimDto): void {
     if (this.processing().has(claim.id)) return;
     this.processing.update(s => new Set(s).add(claim.id));
+    this.processingAction.update(m => new Map(m).set(claim.id, 'payout'));
     this.financeService.processClaimPayout(claim.id).subscribe({
       next: () => {
         this.allClaims.update(list => list.map(c => c.id === claim.id ? { ...c, status: 'Settled' as any } : c));
         this.toast.success(`Stripe payout of ${this.moneyPipe.transform(claim.claimAmountApproved ?? claim.claimAmountRequested)} initiated and claim settled`);
-        this.processing.update(s => { const n = new Set(s); n.delete(claim.id); return n; });
+        this.clearProcessing(claim.id);
       },
       error: () => {
         this.toast.error('Failed to process payout');
-        this.processing.update(s => { const n = new Set(s); n.delete(claim.id); return n; });
+        this.clearProcessing(claim.id);
       },
     });
   }
@@ -106,16 +116,22 @@ export class FinanceOfficerPayoutsComponent implements OnInit {
   markSettled(claim: ClaimDto): void {
     if (this.processing().has(claim.id)) return;
     this.processing.update(s => new Set(s).add(claim.id));
+    this.processingAction.update(m => new Map(m).set(claim.id, 'settle'));
     this.financeService.markClaimSettled(claim.id).subscribe({
       next: () => {
         this.allClaims.update(list => list.map(c => c.id === claim.id ? { ...c, status: 'Settled' as any } : c));
         this.toast.success(`Claim ${claim.claimNumber} marked as financially settled`);
-        this.processing.update(s => { const n = new Set(s); n.delete(claim.id); return n; });
+        this.clearProcessing(claim.id);
       },
       error: () => {
         this.toast.error('Failed to mark claim as settled');
-        this.processing.update(s => { const n = new Set(s); n.delete(claim.id); return n; });
+        this.clearProcessing(claim.id);
       },
     });
+  }
+
+  private clearProcessing(claimId: string): void {
+    this.processing.update(s => { const n = new Set(s); n.delete(claimId); return n; });
+    this.processingAction.update(m => { const n = new Map(m); n.delete(claimId); return n; });
   }
 }

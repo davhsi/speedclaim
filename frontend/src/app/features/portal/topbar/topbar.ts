@@ -30,10 +30,14 @@ export class TopbarComponent implements OnInit {
   toggleNotif(): void { this.notifOpen.update(v => !v); }
   closeNotif(): void { this.notifOpen.set(false); }
 
-  markReadAndNavigate(id: string): void {
-    this.notifService.markAsRead(id).subscribe();
+  markReadAndNavigate(n: { id: string; redirectUrl?: string | null }): void {
+    this.notifService.markAsRead(n.id).subscribe();
     this.notifOpen.set(false);
-    this.router.navigate(['/notifications']);
+    if (n.redirectUrl) {
+      this.router.navigateByUrl(n.redirectUrl);
+    } else {
+      this.router.navigate(['/notifications']);
+    }
   }
 
   private readonly routeTitleMap: Record<string, string> = {
