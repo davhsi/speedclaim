@@ -73,6 +73,10 @@ public class ProposalServiceTests
             .ReturnsAsync(new List<SubmittedDocument>());
         _mockUnitOfWork.Setup(u => u.SubmittedDocuments).Returns(mockSubmittedDocRepo.Object);
 
+        _mockUnitOfWork.Setup(u => u.HealthDetails).Returns(new Mock<IRepository<HealthDetail>>().Object);
+        _mockUnitOfWork.Setup(u => u.LifeDetails).Returns(new Mock<IRepository<LifeDetail>>().Object);
+        _mockUnitOfWork.Setup(u => u.MotorDetails).Returns(new Mock<IRepository<MotorDetail>>().Object);
+
         _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
 
         _proposalService = new ProposalService(_mockUnitOfWork.Object, new Mock<INotificationService>().Object, new Mock<IStorageService>().Object, Mock.Of<Microsoft.Extensions.Logging.ILogger<ProposalService>>(), new Mock<IEmailService>().Object);
@@ -664,6 +668,27 @@ public class ProposalServiceTests
         mockDocRepo.Verify(r => r.AddAsync(It.IsAny<SubmittedDocument>()), Times.Once);
     }
 
+    [TestCase(ProposalStatus.Approved)]
+    [TestCase(ProposalStatus.Rejected)]
+    [TestCase(ProposalStatus.Withdrawn)]
+    public void UploadDocumentAsync_ProposalAlreadyInTerminalStatus_ThrowsConflict(ProposalStatus status)
+    {
+        // Regression test: the frontend only ever shows the upload widget while a proposal is
+        // DocumentsPending, but the backend endpoint itself had no status check at all — hitting
+        // it directly (Postman, devtools, a stale tab) let anyone replace documents on a
+        // proposal that was already decided or withdrawn.
+        var proposalId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var proposal = new Proposal { Id = proposalId, CustomerId = customerId, Status = status, CreatedAt = DateTimeOffset.UtcNow };
+        _mockProposalRepo.Setup(r => r.GetByIdAsync(proposalId)).ReturnsAsync(proposal);
+
+        var mockFile = new Mock<Microsoft.AspNetCore.Http.IFormFile>();
+
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _proposalService.UploadDocumentAsync(proposalId.ToString(), customerId.ToString(), "ID_PROOF", mockFile.Object));
+        Assert.That(ex.Message, Does.Contain("terminal status"));
+    }
+
     [Test]
     public void UploadDocumentAsync_NotOwner_ThrowsUnauthorized()
     {
@@ -759,7 +784,7 @@ public class ProposalServiceTests
 
         await svc.ApproveOrRejectProposalAsync(proposalId.ToString(), Guid.NewGuid().ToString(), true, "Looks good");
 
-        mockNotif.Verify(n => n.CreateAsync(userId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        mockNotif.Verify(n => n.CreateAsync(userId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()), Times.Once);
     }
 
     [Test]
@@ -789,8 +814,8 @@ public class ProposalServiceTests
         await svc.ApproveOrRejectProposalAsync(proposalId.ToString(), Guid.NewGuid().ToString(), true, "All checks passed");
 
         // Customer notification + agent notification = 2 calls
-        mockNotif.Verify(n => n.CreateAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(2));
-        mockNotif.Verify(n => n.CreateAsync(agentUserId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        mockNotif.Verify(n => n.CreateAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()), Times.Exactly(2));
+        mockNotif.Verify(n => n.CreateAsync(agentUserId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()), Times.Once);
     }
 
     [Test]
@@ -812,12 +837,49 @@ public class ProposalServiceTests
         var request = new SubmitProposalRequest(customerId, productId, 1000000, 20, 50000, "Annual",
             null, lifeDetail, null,
             new List<string>(),
-            new List<NomineeDto>());
+            new List<NomineeDto> { new("Priya S", "Spouse", new DateOnly(1995, 4, 12), 100, false, null) });
 
         var result = await _proposalService.SubmitProposalAsync(userId, request, false);
 
         Assert.That(result.Status, Is.EqualTo("Submitted"));
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public void SubmitProposalAsync_LifeProposalWithoutNominee_ThrowsValidationException()
+    {
+        var userId = Guid.NewGuid().ToString();
+        var customerGuid = Guid.NewGuid();
+        var product = ActiveProduct("Life");
+        _mockProductRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(product);
+        SetupCustomer(customerGuid, Guid.Parse(userId));
+        SetupRate(50000);
+
+        var request = new SubmitProposalRequest(customerGuid.ToString(), Guid.NewGuid().ToString(), 1000000, 20, 50000, "Annual",
+            null, null, null, new List<string>(), new List<NomineeDto>());
+
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() =>
+            _proposalService.SubmitProposalAsync(userId, request, false));
+        Assert.That(ex!.Message, Does.Contain("nominee"));
+    }
+
+    [Test]
+    public void SubmitProposalAsync_NomineeSharesNot100_ThrowsValidationException()
+    {
+        var userId = Guid.NewGuid().ToString();
+        var customerGuid = Guid.NewGuid();
+        var product = ActiveProduct("Health");
+        _mockProductRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(product);
+        SetupCustomer(customerGuid, Guid.Parse(userId));
+        SetupRate(50000);
+
+        var request = new SubmitProposalRequest(customerGuid.ToString(), Guid.NewGuid().ToString(), 500000, 1, 50000, "Annual",
+            null, null, null, new List<string>(),
+            new List<NomineeDto> { new("A", "Spouse", new DateOnly(1990, 1, 1), 60, false, null) });
+
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() =>
+            _proposalService.SubmitProposalAsync(userId, request, false));
+        Assert.That(ex!.Message, Does.Contain("100"));
     }
 
     [Test]

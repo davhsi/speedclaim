@@ -190,6 +190,24 @@ public class AgentServiceTests
     }
 
     [Test]
+    public async Task EnsureCustomerAssignedAsync_OnboardedByAgentWithNoProposal_Succeeds()
+    {
+        var agentUserId = Guid.NewGuid();
+        var agentId = Guid.NewGuid();
+        var customerUserId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+
+        _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>()))
+            .ReturnsAsync(new Agent { Id = agentId, UserId = agentUserId });
+        _mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>()))
+            .ReturnsAsync(new Customer { Id = customerId, UserId = customerUserId, OnboardingAgentId = agentId });
+        _mockProposalRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Proposal, bool>>>()))
+            .ReturnsAsync((Proposal?)null);
+
+        await _agentService.EnsureCustomerAssignedAsync(agentUserId.ToString(), customerUserId.ToString());
+    }
+
+    [Test]
     public void EnsureCustomerAssignedAsync_UnassignedCustomer_ThrowsForbiddenException()
     {
         var agentUserId = Guid.NewGuid();
@@ -310,13 +328,34 @@ public class AgentServiceTests
         var expiry = DateOnly.FromDateTime(DateTime.UtcNow.AddYears(1));
         var request = new UpdateAgentLicenseRequest("LIC-123", expiry);
 
-        _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync(agent);
+        // First call resolves the agent being updated; second call is the duplicate-license check.
+        _mockAgentRepo.SetupSequence(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>()))
+            .ReturnsAsync(agent)
+            .ReturnsAsync((Agent?)null);
 
         await _agentService.UpdateAgentLicenseAsync(agentId.ToString(), request, Guid.NewGuid().ToString());
 
         Assert.That(agent.LicenseNumber, Is.EqualTo("LIC-123"));
         Assert.That(agent.LicenseExpiry, Is.EqualTo(expiry));
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public void UpdateAgentLicenseAsync_LicenseNumberAlreadyUsedByAnotherAgent_ThrowsConflictException()
+    {
+        var agentId = Guid.NewGuid();
+        var agent = new Agent { Id = Guid.NewGuid(), LicenseNumber = "LIC-OLD" };
+        var otherAgent = new Agent { Id = Guid.NewGuid(), LicenseNumber = "lic-123" };
+        var request = new UpdateAgentLicenseRequest("LIC-123", DateOnly.FromDateTime(DateTime.UtcNow.AddYears(1)));
+
+        _mockAgentRepo.SetupSequence(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>()))
+            .ReturnsAsync(agent)
+            .ReturnsAsync(otherAgent);
+
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() => _agentService.UpdateAgentLicenseAsync(agentId.ToString(), request, Guid.NewGuid().ToString()));
+        Assert.That(ex.Message, Is.EqualTo("License number already registered to another agent"));
+        Assert.That(agent.LicenseNumber, Is.EqualTo("LIC-OLD"), "must not mutate the agent before the duplicate check passes");
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Never);
     }
 
     [Test]
@@ -332,14 +371,32 @@ public class AgentServiceTests
     public async Task ActivateDeactivateAgentAsync_Success()
     {
         var agentId = Guid.NewGuid();
-        var agent = new Agent { IsActive = true };
+        var userId = Guid.NewGuid();
+        var agent = new Agent { IsActive = true, UserId = userId };
+        var user = new User { Id = userId, IsActive = true };
 
         _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync(agent);
+        _mockUserRepo.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
 
         await _agentService.ActivateDeactivateAgentAsync(agentId.ToString(), false, Guid.NewGuid().ToString());
 
         Assert.That(agent.IsActive, Is.False);
+        Assert.That(user.IsActive, Is.False, "must also flip User.IsActive — it's what the agent list and JWT validation actually read");
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public void ActivateDeactivateAgentAsync_UserRecordMissing_ThrowsException()
+    {
+        var agentId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var agent = new Agent { IsActive = true, UserId = userId };
+
+        _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>())).ReturnsAsync(agent);
+        _mockUserRepo.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync((User?)null);
+
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _agentService.ActivateDeactivateAgentAsync(agentId.ToString(), false, Guid.NewGuid().ToString()));
+        Assert.That(ex.Message, Is.EqualTo("Agent not found"));
     }
 
     // --- GetAgentProfileAsync tests ---
