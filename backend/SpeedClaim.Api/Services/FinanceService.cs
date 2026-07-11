@@ -9,7 +9,9 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using ClosedXML.Excel;
 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Npgsql;
 using SpeedClaim.Api.Exceptions;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Models;
@@ -113,6 +115,24 @@ public class FinanceService : IFinanceService
                 CreatedAt = DateTimeOffset.UtcNow
             };
             await _unitOfWork.StripeCustomers.AddAsync(stripeCustomerRecord);
+
+            // Commit this row on its own, before creating a real Stripe PaymentIntent against
+            // it below: stripe_customers.user_id is uniquely constrained, and two concurrent
+            // first-time payments for the same customer (e.g. two browser tabs, two due
+            // installments paid nearly simultaneously) both see "no row" above and race to
+            // insert one — the same shape of race as the KYC-record bug fixed earlier. Catching
+            // it here, before Stripe is involved any further, lets us fall back to whichever
+            // row actually won instead of surfacing a raw 500 mid-payment.
+            try
+            {
+                await _unitOfWork.CompleteAsync();
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: "23505" })
+            {
+                _unitOfWork.StripeCustomers.Delete(stripeCustomerRecord); // undo the failed Add — never persisted, so this just detaches it
+                stripeCustomerRecord = await _unitOfWork.StripeCustomers.FirstOrDefaultAsync(sc => sc.UserId == customerRecord.UserId)
+                    ?? throw new ConflictException("Could not resolve a payment profile for this customer. Please try again.");
+            }
         }
 
         // Create PaymentIntent attached to the customer so cards are saved for renewals.
@@ -501,7 +521,8 @@ public class FinanceService : IFinanceService
                             user.Id,
                             "Policy Activated",
                             $"Your policy {paidPolicy.PolicyNumber} is now active.",
-                            "policy"
+                            "policy",
+                            $"/policies/{paidPolicy.Id}"
                         ), "PolicyActivated notification");
                     }
 

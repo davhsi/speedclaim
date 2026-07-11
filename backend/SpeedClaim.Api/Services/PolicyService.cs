@@ -214,6 +214,51 @@ public class PolicyService : IPolicyService
         ));
     }
 
+    // Approval must actually apply the requested change where the plain-text NewValue maps to a
+    // structured field: SumAssuredChange → Policy.SumAssured, ContactUpdate → User.Phone. The
+    // free-text types (NomineeChange, AddressChange, VehicleCorrection, Other) cannot be parsed
+    // reliably, so their approval is an authorization record only — the customer applies those
+    // through their own profile/nominee edit endpoints, which are not KYC-locked.
+    private async Task ApplyEndorsementChangeAsync(Endorsement endorsement)
+    {
+        switch (endorsement.EndorsementType)
+        {
+            case EndorsementType.SumAssuredChange:
+            {
+                var raw = (endorsement.NewValue ?? string.Empty).Replace("₹", "").Replace(",", "").Trim();
+                if (!decimal.TryParse(raw, out var newSum) || newSum <= 0)
+                    throw new UnprocessableException("The requested sum assured is not a valid amount — reject this endorsement instead.");
+
+                var policy = await _unitOfWork.Policies.GetByIdAsync(endorsement.PolicyId);
+                if (policy == null) throw new NotFoundException("Policy not found.");
+
+                endorsement.OldValue = policy.SumAssured.ToString("0.##");
+                policy.SumAssured = newSum;
+                policy.UpdatedAt = DateTimeOffset.UtcNow;
+                _unitOfWork.Policies.Update(policy);
+                break;
+            }
+            case EndorsementType.ContactUpdate:
+            {
+                var newPhone = (endorsement.NewValue ?? string.Empty).Replace(" ", "").Trim();
+                if (!System.Text.RegularExpressions.Regex.IsMatch(newPhone, @"^\+?\d{10,14}$"))
+                    throw new UnprocessableException("The requested contact number is not a valid phone number — reject this endorsement instead.");
+
+                var policy = await _unitOfWork.Policies.GetByIdAsync(endorsement.PolicyId);
+                if (policy == null) throw new NotFoundException("Policy not found.");
+                var customer = await _unitOfWork.Customers.GetByIdAsync(policy.CustomerId);
+                var user = customer != null ? await _unitOfWork.Users.GetByIdAsync(customer.UserId) : null;
+                if (user == null) throw new NotFoundException("Customer account not found for this policy.");
+
+                endorsement.OldValue = user.Phone;
+                user.Phone = newPhone;
+                user.UpdatedAt = DateTimeOffset.UtcNow;
+                _unitOfWork.Users.Update(user);
+                break;
+            }
+        }
+    }
+
     public async Task ApproveRejectEndorsementAsync(Guid endorsementId, bool isApproved, string reason, Guid underwriterId)
     {
         var endorsement = await _unitOfWork.Endorsements.GetByIdAsync(endorsementId);
@@ -222,6 +267,9 @@ public class PolicyService : IPolicyService
 
         if (endorsement.Status != EndorsementStatus.Requested)
             throw new UnprocessableException("Endorsement is not in Requested status.");
+
+        if (isApproved)
+            await ApplyEndorsementChangeAsync(endorsement);
 
         endorsement.Status = isApproved ? EndorsementStatus.Approved : EndorsementStatus.Rejected;
         endorsement.ReviewedById = underwriterId;

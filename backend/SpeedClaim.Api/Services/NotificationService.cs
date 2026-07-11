@@ -39,7 +39,7 @@ public class NotificationService : INotificationService
         await _unitOfWork.CompleteAsync();
 
         var dto = new NotificationDto(notification.Id, notification.UserId, notification.Title,
-            notification.Message, notification.Type, notification.IsRead, notification.CreatedAt);
+            notification.Message, notification.Type, notification.IsRead, notification.CreatedAt, notification.RedirectUrl);
         await _hubContext.Clients.Group(NotificationHub.GroupForUser(userId)).ReceiveNotification(dto);
     }
 
@@ -48,7 +48,7 @@ public class NotificationService : INotificationService
         var notifications = await _unitOfWork.Notifications.FindAsync(n => n.UserId == userId);
         return notifications
             .OrderByDescending(n => n.CreatedAt)
-            .Select(n => new NotificationDto(n.Id, n.UserId, n.Title, n.Message, n.Type, n.IsRead, n.CreatedAt));
+            .Select(n => new NotificationDto(n.Id, n.UserId, n.Title, n.Message, n.Type, n.IsRead, n.CreatedAt, n.RedirectUrl));
     }
 
     public async Task MarkAsReadAsync(Guid notificationId, Guid userId)

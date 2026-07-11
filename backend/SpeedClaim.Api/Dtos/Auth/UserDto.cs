@@ -22,5 +22,7 @@ public record UserDto(
     DateOnly? DateOfBirth = null,
     bool KycApproved = false,
     string? KycStatus = null,
-    string? KycRejectionReason = null
+    string? KycRejectionReason = null,
+    string? Occupation = null,
+    decimal? AnnualIncome = null
 );

@@ -87,7 +87,10 @@ public record ProposalDto(
     string? UnderwriterNotes = null,
     List<ProposalMemberDto>? Members = null,
     List<ProposalNomineeDto>? Nominees = null,
-    List<SpeedClaim.Api.Dtos.Claims.SubmittedDocumentDto>? Documents = null
+    List<SpeedClaim.Api.Dtos.Claims.SubmittedDocumentDto>? Documents = null,
+    HealthDetailDto? HealthDetail = null,
+    LifeDetailDto? LifeDetail = null,
+    MotorDetailDto? MotorDetail = null
 );
 
 public record ProposalMemberDto(

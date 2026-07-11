@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -266,7 +267,9 @@ public class AuthService : IAuthService
             Id = Guid.NewGuid(),
             UserId = user.Id,
             RefreshTokenHash = BCrypt.Net.BCrypt.HashPassword(newRawRefreshToken),
-            ExpiresAt = DateTime.UtcNow.AddDays(7)
+            ExpiresAt = DateTime.UtcNow.AddDays(7),
+            IpAddress = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? session.IpAddress,
+            UserAgent = _httpContextAccessor.HttpContext?.Request.Headers.UserAgent.ToString() ?? session.UserAgent
         };
         var newAccessToken = _jwtService.GenerateAccessToken(user, newSession.Id);
 
@@ -443,6 +446,19 @@ public class AuthService : IAuthService
             CreatedAt = DateTime.UtcNow
         });
         await _unitOfWork.CompleteAsync();
+
+        try
+        {
+            await _emailService.SendTemplatedEmailAsync("PasswordResetByAdmin", new Dictionary<string, string>
+            {
+                ["firstName"] = System.Net.WebUtility.HtmlEncode(user.FirstName),
+                ["email"] = System.Net.WebUtility.HtmlEncode(user.Email)
+            }, user.Email);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Best-effort send failed after commit: password-reset-by-admin notice to {UserId}", user.Id);
+        }
     }
 
     private async Task RevokeActiveSessionsAsync(Guid userId)
@@ -464,6 +480,10 @@ public class AuthService : IAuthService
         var existingPhone = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Phone == request.Phone);
         if (existingPhone != null)
             throw new ConflictException("Phone number already registered");
+
+        var existingLicense = await _unitOfWork.Agents.FirstOrDefaultAsync(a => a.LicenseNumber.ToUpper() == request.LicenseNumber.ToUpper());
+        if (existingLicense != null)
+            throw new ConflictException("License number already registered to another agent");
 
         var salutation = Enum.TryParse<Salutation>(request.Salutation, ignoreCase: true, out var sal) ? sal : Salutation.Mr;
 

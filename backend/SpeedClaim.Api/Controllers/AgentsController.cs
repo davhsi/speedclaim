@@ -103,23 +103,20 @@ public class AgentsController : BaseApiController
         return Ok(result);
     }
 
-    /// <summary>Get a customer's KYC record. The customer must be assigned to the authenticated agent.</summary>
+    /// <summary>Get a customer's KYC record, or null if they haven't submitted one yet. The customer must be assigned to the authenticated agent.</summary>
     /// <param name="customerId">Customer user ID</param>
     [Authorize(Roles = "Agent")]
     [HttpGet("customers/{customerId}/kyc")]
     [ProducesResponseType(typeof(KycRecordDto), 200)]
-    [ProducesResponseType(404)]
+    [ProducesResponseType(403)]
     public async Task<IActionResult> GetCustomerKyc(string customerId)
     {
         var agentId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         if (agentId == null) return Unauthorized();
 
-        var customers = await _agentService.GetAssignedCustomersAsync(agentId);
-        var isAssigned = customers.Any(c => c.Id.ToString() == customerId);
-        if (!isAssigned) return NotFound("Customer not found or not assigned to this agent.");
+        await _agentService.EnsureCustomerAssignedAsync(agentId, customerId);
 
         var kyc = await _userService.GetMyKycAsync(customerId);
-        if (kyc == null) return NotFound("No KYC record found for this customer.");
         return Ok(kyc);
     }
 

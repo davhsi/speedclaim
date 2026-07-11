@@ -19,13 +19,15 @@ public class UserService : IUserService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IStorageService _storageService;
     private readonly IEncryptionService _encryptionService;
+    private readonly INotificationService _notifications;
     private readonly IEmailService _emailService;
 
-    public UserService(IUnitOfWork unitOfWork, IStorageService storageService, IEncryptionService encryptionService, IEmailService emailService)
+    public UserService(IUnitOfWork unitOfWork, IStorageService storageService, IEncryptionService encryptionService, INotificationService notifications, IEmailService emailService)
     {
         _unitOfWork = unitOfWork;
         _storageService = storageService;
         _encryptionService = encryptionService;
+        _notifications = notifications;
         _emailService = emailService;
     }
 
@@ -46,6 +48,8 @@ public class UserService : IUserService
         Guid? customerId = null;
         DateOnly? dateOfBirth = null;
         bool kycApproved = false;
+        string? occupation = null;
+        decimal? annualIncome = null;
         if (user.Role == UserRole.Customer)
         {
             var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == uid);
@@ -54,6 +58,8 @@ public class UserService : IUserService
                 customerId = customer.Id;
                 maritalStatus = customer.MaritalStatus.ToString();
                 dateOfBirth = customer.DateOfBirth;
+                occupation = customer.Occupation;
+                annualIncome = customer.AnnualIncome;
             }
             var kycRecord = await _unitOfWork.KycRecords.FirstOrDefaultAsync(k => k.UserId == uid);
             kycApproved = kycRecord?.KycStatus == KycStatus.Approved;
@@ -77,7 +83,11 @@ public class UserService : IUserService
             currentAddressDto,
             user.AvatarUrl,
             dateOfBirth,
-            kycApproved
+            kycApproved,
+            null,
+            null,
+            occupation,
+            annualIncome
         );
     }
 
@@ -117,14 +127,22 @@ public class UserService : IUserService
             {
                 oldSnapshot["dateOfBirth"] = $"{customer.DateOfBirth:O}";
                 oldSnapshot["maritalStatus"] = customer.MaritalStatus.ToString();
+                oldSnapshot["occupation"] = customer.Occupation;
+                oldSnapshot["annualIncome"] = customer.AnnualIncome;
 
                 if (!kycApproved && request.DateOfBirth.HasValue)
                     customer.DateOfBirth = request.DateOfBirth.Value;
                 if (Enum.TryParse<MaritalStatus>(request.MaritalStatus, out var maritalStatus))
                     customer.MaritalStatus = maritalStatus;
+                if (request.Occupation != null)
+                    customer.Occupation = request.Occupation;
+                if (request.AnnualIncome.HasValue)
+                    customer.AnnualIncome = request.AnnualIncome.Value;
 
                 newSnapshot["dateOfBirth"] = $"{customer.DateOfBirth:O}";
                 newSnapshot["maritalStatus"] = customer.MaritalStatus.ToString();
+                newSnapshot["occupation"] = customer.Occupation;
+                newSnapshot["annualIncome"] = customer.AnnualIncome;
             }
         }
 
@@ -263,10 +281,9 @@ public class UserService : IUserService
         record.KycStatus = KycStatus.Pending;
         record.UpdatedAt = DateTimeOffset.UtcNow;
 
-        var key = $"kyc/{uid}/aadhaar";
+        var folder = $"kyc/{uid}/aadhaar";
         using var stream = request.Document.OpenReadStream();
-        await _storageService.UploadFileAsync(stream, request.Document.FileName, key);
-        record.AadhaarDocumentKey = key;
+        record.AadhaarDocumentKey = await _storageService.UploadFileAsync(stream, request.Document.FileName, folder);
 
         await _unitOfWork.AuditLogs.AddAsync(new AuditLog
         {
@@ -304,10 +321,9 @@ public class UserService : IUserService
         record.KycStatus = KycStatus.Pending;
         record.UpdatedAt = DateTimeOffset.UtcNow;
 
-        var key = $"kyc/{uid}/pan";
+        var folder = $"kyc/{uid}/pan";
         using var stream = request.Document.OpenReadStream();
-        await _storageService.UploadFileAsync(stream, request.Document.FileName, key);
-        record.PanDocumentKey = key;
+        record.PanDocumentKey = await _storageService.UploadFileAsync(stream, request.Document.FileName, folder);
 
         await _unitOfWork.AuditLogs.AddAsync(new AuditLog
         {
@@ -542,7 +558,7 @@ public class UserService : IUserService
         kycRecord.KycStatus = isApproved ? KycStatus.Approved : KycStatus.Rejected;
         kycRecord.ReviewedAt = DateTimeOffset.UtcNow;
         kycRecord.ReviewedById = Guid.Parse(reviewerId);
-        kycRecord.RejectionReason = reason;
+        kycRecord.RejectionReason = isApproved ? null : reason;
 
         await _unitOfWork.AuditLogs.AddAsync(new AuditLog
         {
@@ -554,6 +570,11 @@ public class UserService : IUserService
         var user = await _unitOfWork.Users.GetByIdAsync(kycRecord.UserId);
         if (user != null)
         {
+            var customerMsg = isApproved
+                ? "Your KYC verification has been approved."
+                : $"Your KYC verification has been rejected. Reason: {reason}";
+            await _notifications.CreateAsync(user.Id, isApproved ? "KYC Approved" : "KYC Rejected", customerMsg, "kyc", "/kyc");
+
             var templateKey = isApproved ? "KycApproved" : "KycRejected";
             var vars = new Dictionary<string, string>
             {
@@ -562,6 +583,21 @@ public class UserService : IUserService
             if (!isApproved && !string.IsNullOrWhiteSpace(reason))
                 vars["rejectionReason"] = WebUtility.HtmlEncode(reason);
             await _emailService.SendTemplatedEmailAsync(templateKey, vars, user.Email);
+        }
+
+        // Notify the onboarding agent, if this customer was onboarded by one
+        var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == kycRecord.UserId);
+        if (customer?.OnboardingAgentId != null)
+        {
+            var agent = await _unitOfWork.Agents.GetByIdAsync(customer.OnboardingAgentId.Value);
+            if (agent != null)
+            {
+                var customerName = user?.FullName ?? "your customer";
+                var agentMsg = isApproved
+                    ? $"KYC for {customerName} has been approved."
+                    : $"KYC for {customerName} has been rejected. Reason: {reason}";
+                await _notifications.CreateAsync(agent.UserId, isApproved ? "KYC Approved" : "KYC Rejected", agentMsg, "kyc", $"/agent/customer-kyc?customerId={kycRecord.UserId}");
+            }
         }
     }
 

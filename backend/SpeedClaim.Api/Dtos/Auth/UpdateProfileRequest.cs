@@ -6,5 +6,7 @@ public record UpdateProfileRequest(
     string Phone,
     string? Salutation,
     string MaritalStatus,
-    DateOnly? DateOfBirth = null
+    DateOnly? DateOfBirth = null,
+    string? Occupation = null,
+    decimal? AnnualIncome = null
 );

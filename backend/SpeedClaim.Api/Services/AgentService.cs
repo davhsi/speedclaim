@@ -30,15 +30,21 @@ public class AgentService : IAgentService
         return agent;
     }
 
+    /// <summary>A customer is assigned to an agent via a proposal the agent submitted for them, or by having been directly onboarded by them.</summary>
+    private async Task<List<Guid>> GetAssignedCustomerIdsAsync(Guid agentId)
+    {
+        var proposals = await _unitOfWork.Proposals.FindAsync(p => p.AgentId == agentId);
+        var onboardedCustomers = await _unitOfWork.Customers.FindAsync(c => c.OnboardingAgentId == agentId);
+        return proposals.Select(p => p.CustomerId)
+            .Concat(onboardedCustomers.Select(c => c.Id))
+            .Distinct().ToList();
+    }
+
     public async Task<IEnumerable<UserDto>> GetAssignedCustomersAsync(string agentId)
     {
         var aId = Guid.Parse(agentId);
         var agent = await ResolveAgentAsync(aId);
-        var proposals = await _unitOfWork.Proposals.FindAsync(p => p.AgentId == agent.Id);
-        var onboardedCustomers = await _unitOfWork.Customers.FindAsync(c => c.OnboardingAgentId == agent.Id);
-        var customerIds = proposals.Select(p => p.CustomerId)
-            .Concat(onboardedCustomers.Select(c => c.Id))
-            .Distinct().ToList();
+        var customerIds = await GetAssignedCustomerIdsAsync(agent.Id);
 
         var customers = new List<UserDto>();
         foreach (var cid in customerIds)
@@ -67,10 +73,12 @@ public class AgentService : IAgentService
                         null,
                         null,
                         null,
-                        null,
+                        customer.DateOfBirth,
                         kycInfo.IsApproved,
                         kycInfo.Status,
-                        kycInfo.RejectionReason
+                        kycInfo.RejectionReason,
+                        customer.Occupation,
+                        customer.AnnualIncome
                     ));
                 }
             }
@@ -124,10 +132,12 @@ public class AgentService : IAgentService
                 null,
                 null,
                 null,
-                null,
+                customer.DateOfBirth,
                 kycInfo.IsApproved,
                 kycInfo.Status,
-                kycInfo.RejectionReason
+                kycInfo.RejectionReason,
+                customer.Occupation,
+                customer.AnnualIncome
             ));
         }
         return dtos;
@@ -143,7 +153,8 @@ public class AgentService : IAgentService
 
         var proposal = await _unitOfWork.Proposals.FirstOrDefaultAsync(p =>
             p.AgentId == agent.Id && p.CustomerId == customer.Id);
-        if (proposal == null)
+        var isOnboardedByAgent = customer.OnboardingAgentId == agent.Id;
+        if (proposal == null && !isOnboardedByAgent)
             throw new ForbiddenException("Customer is not assigned to this agent.");
     }
 
@@ -151,8 +162,8 @@ public class AgentService : IAgentService
     {
         var aId = Guid.Parse(agentId);
         var agent = await ResolveAgentAsync(aId);
-        var proposals = await _unitOfWork.Proposals.FindAsync(p => p.AgentId == agent.Id);
-        var totalCustomers = proposals.Select(p => p.CustomerId).Distinct().Count();
+        var customerIds = await GetAssignedCustomerIdsAsync(agent.Id);
+        var totalCustomers = customerIds.Count;
 
         var policies = await _unitOfWork.Policies.FindAsync(p => p.Proposal != null && p.Proposal.AgentId == agent.Id);
         var totalPolicies = policies.Count();
@@ -160,7 +171,6 @@ public class AgentService : IAgentService
         var commissions = await _unitOfWork.AgentCommissions.FindAsync(c => c.AgentId == agent.Id);
         var totalCommission = commissions.Sum(c => c.CommissionAmount);
 
-        var customerIds = proposals.Select(p => p.CustomerId).Distinct().ToList();
         var allClaims = await _unitOfWork.Claims.FindAsync(c => customerIds.Contains(c.CustomerId));
         var pendingClaims = allClaims.Count(c => c.Status != SpeedClaim.Api.Models.Enums.ClaimStatus.Settled && c.Status != SpeedClaim.Api.Models.Enums.ClaimStatus.Rejected);
 
@@ -339,6 +349,10 @@ public class AgentService : IAgentService
         var agent = await _unitOfWork.Agents.FirstOrDefaultAsync(a => a.UserId == aId);
         if (agent == null) throw new NotFoundException("Agent not found");
 
+        var existingLicense = await _unitOfWork.Agents.FirstOrDefaultAsync(a => a.Id != agent.Id && a.LicenseNumber.ToUpper() == request.LicenseNumber.ToUpper());
+        if (existingLicense != null)
+            throw new ConflictException("License number already registered to another agent");
+
         agent.LicenseNumber = request.LicenseNumber;
         agent.LicenseExpiry = request.LicenseExpiry;
         agent.UpdatedAt = DateTimeOffset.UtcNow;
@@ -359,8 +373,16 @@ public class AgentService : IAgentService
         var agent = await _unitOfWork.Agents.FirstOrDefaultAsync(a => a.UserId == aId);
         if (agent == null) throw new NotFoundException("Agent not found");
 
+        // The admin agent-management list, and JWT validation on every request (Program.cs
+        // OnTokenValidated), both key off User.IsActive — not Agent.IsActive. Flipping only
+        // Agent.IsActive left the list reverting to "Active" on refresh and, more importantly,
+        // never actually revoked the agent's access.
+        var user = await _unitOfWork.Users.GetByIdAsync(agent.UserId);
+        if (user == null) throw new NotFoundException("Agent not found");
+
         agent.IsActive = isActive;
         agent.UpdatedAt = DateTimeOffset.UtcNow;
+        user.IsActive = isActive;
         await _unitOfWork.AuditLogs.AddAsync(new AuditLog
         {
             Id = Guid.NewGuid(), UserId = Guid.Parse(adminId), EntityType = "Agent", EntityId = agent.Id,

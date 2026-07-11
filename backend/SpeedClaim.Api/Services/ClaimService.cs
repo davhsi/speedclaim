@@ -160,7 +160,7 @@ public class ClaimService : IClaimService
         );
     }
 
-    private ClaimDto MapToDto(Claim claim, IEnumerable<SubmittedDocument>? documents = null)
+    private ClaimDto MapToDto(Claim claim, IEnumerable<SubmittedDocument>? documents = null, MotorClaimDetail? surveyDetail = null)
     {
         var user = claim.Customer?.User;
         var customerName = user != null ? $"{user.FirstName} {user.LastName}".Trim() : null;
@@ -186,7 +186,10 @@ public class ClaimService : IClaimService
             claim.UpdatedAt,
             customerName,
             claim.Policy?.PolicyNumber,
-            documents?.OrderByDescending(d => d.UploadedAt).Select(MapDocumentToDto).ToList()
+            documents?.OrderByDescending(d => d.UploadedAt).Select(MapDocumentToDto).ToList(),
+            surveyDetail != null ? surveyDetail.EstimatedRepairCost : null,
+            surveyDetail?.SurveyDate,
+            surveyDetail?.SurveyorRemarks
         );
     }
 
@@ -349,7 +352,8 @@ public class ClaimService : IClaimService
 
         var documents = await _unitOfWork.SubmittedDocuments.FindAsync(d =>
             d.EntityType == EntityType.Claim && d.EntityId == claimId);
-        return MapToDto(claim, documents);
+        var surveyDetail = await _unitOfWork.MotorClaimDetails.FirstOrDefaultAsync(m => m.ClaimId == claimId);
+        return MapToDto(claim, documents, surveyDetail);
     }
 
     public async Task<IEnumerable<ClaimStatusHistoryDto>> GetClaimHistoryAsync(Guid claimId, Guid? customerId = null)
@@ -556,16 +560,19 @@ public class ClaimService : IClaimService
             }
         }
         
-        // Update MotorClaimDetail if present
+        // MotorClaimDetail is the persistent home for the survey assessment — no other flow
+        // creates this row, so upsert it here or the assessed cost is lost entirely.
         var motorDetail = await _unitOfWork.MotorClaimDetails.FirstOrDefaultAsync(m => m.ClaimId == claimId);
-        if (motorDetail != null)
+        if (motorDetail == null)
         {
-            motorDetail.EstimatedRepairCost = request.EstimatedRepairCost;
-            motorDetail.SurveyDate = request.SurveyDate.ToUniversalTime();
-            motorDetail.SurveyorRemarks = request.Remarks;
+            motorDetail = new MotorClaimDetail { Id = Guid.NewGuid(), ClaimId = claimId };
+            await _unitOfWork.MotorClaimDetails.AddAsync(motorDetail);
         }
+        motorDetail.EstimatedRepairCost = request.EstimatedRepairCost;
+        motorDetail.SurveyDate = request.SurveyDate.ToUniversalTime();
+        motorDetail.SurveyorRemarks = request.Remarks;
 
-        await UpdateClaimStatusInternalAsync(claim, ClaimStatus.UnderReview, surveyorId, $"Surveyor report uploaded. Remarks: {request.Remarks}");
+        await UpdateClaimStatusInternalAsync(claim, ClaimStatus.UnderReview, surveyorId, $"Surveyor report uploaded. Estimated repair cost: INR {request.EstimatedRepairCost:N0}. Remarks: {request.Remarks}");
         return doc.FilePath;
     }
 
@@ -606,7 +613,8 @@ public class ClaimService : IClaimService
                 customer.UserId,
                 "Claim Status Updated",
                 $"Your claim {claim.ClaimNumber} status has changed to: {newStatus}.",
-                "claim");
+                "claim",
+                $"/claims/{claim.Id}");
 
             var emailTemplateKey = newStatus switch
             {

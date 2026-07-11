@@ -7,7 +7,7 @@ namespace SpeedClaim.Api.Dtos.Policies;
 public record PolicyDto(
     Guid Id,
     string PolicyNumber,
-    Guid UserId,
+    Guid CustomerId,
     Guid ProductId,
     string ProductName,
     Guid? AgentId,

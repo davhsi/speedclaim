@@ -114,6 +114,14 @@ public class ProposalService : IProposalService
         if (kyc == null || kyc.KycStatus != KycStatus.Approved)
             throw new ForbiddenException("KYC must be approved before submitting a proposal.");
 
+        // Life cover pays out to a nominee by definition — enforce server-side so agent-submitted
+        // proposals can't arrive nominee-less (the customer wizard already enforces this client-side).
+        if (string.Equals(product.Domain, "Life", StringComparison.OrdinalIgnoreCase)
+            && (request.Nominees == null || request.Nominees.Count == 0))
+            throw new ValidationException("At least one nominee is required for a Life proposal.");
+        if (request.Nominees is { Count: > 0 } && request.Nominees.Sum(n => n.SharePercentage) != 100)
+            throw new ValidationException("Nominee share percentages must total 100.");
+
         var premiumAmount = await CalculatePremiumAsync(product, customerAge, request.SumAssured);
 
         var proposal = new Proposal
@@ -338,6 +346,10 @@ public class ProposalService : IProposalService
                 d.UploadedAt))
             .ToList();
 
+        var healthDetail = await _unitOfWork.HealthDetails.FirstOrDefaultAsync(d => d.ProposalId == pId);
+        var lifeDetail = await _unitOfWork.LifeDetails.FirstOrDefaultAsync(d => d.ProposalId == pId);
+        var motorDetail = await _unitOfWork.MotorDetails.FirstOrDefaultAsync(d => d.ProposalId == pId);
+
         return new ProposalDto(
             proposal.Id,
             proposal.ProposalNumber,
@@ -355,7 +367,10 @@ public class ProposalService : IProposalService
             proposal.UnderwriterNotes,
             memberDtos,
             nominees,
-            documents
+            documents,
+            healthDetail == null ? null : new HealthDetailDto(healthDetail.PreExistingConditions, healthDetail.NetworkHospitalCoverage, healthDetail.TpaName, healthDetail.RoomRentLimit, healthDetail.MaternityCovered, healthDetail.CopayPercentage),
+            lifeDetail == null ? null : new LifeDetailDto(lifeDetail.PolicySubtype, lifeDetail.MaturityBenefit, lifeDetail.DeathBenefit, lifeDetail.SurrenderValueApplicable, lifeDetail.LoanEligible),
+            motorDetail == null ? null : new MotorDetailDto(motorDetail.VehicleNumber, motorDetail.VehicleMake, motorDetail.VehicleModel, motorDetail.ManufactureYear, motorDetail.VehicleType, motorDetail.Idv, motorDetail.EngineNumber, motorDetail.ChassisNumber, motorDetail.CoverType)
         );
     }
 
@@ -366,6 +381,8 @@ public class ProposalService : IProposalService
 
         var proposal = await _unitOfWork.Proposals.GetByIdAsync(pId);
         if (proposal == null) throw new NotFoundException("Proposal not found.");
+        if (proposal.Status is ProposalStatus.Approved or ProposalStatus.Rejected or ProposalStatus.Withdrawn)
+            throw new ConflictException($"Proposal is already in a terminal status: {proposal.Status}.");
 
         var agent = await _unitOfWork.Agents.FirstOrDefaultAsync(a => a.UserId == uId);
         var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == uId);
@@ -489,7 +506,7 @@ public class ProposalService : IProposalService
             var (title, message) = isApproved
                 ? ("Proposal Approved", $"Your proposal {proposal.ProposalNumber} has been approved. Please make your first payment to activate the policy.")
                 : ("Proposal Rejected", $"Your proposal {proposal.ProposalNumber} has been rejected. Reason: {notes}");
-            await _notifications.CreateAsync(customer.UserId, title, message, "policy");
+            await _notifications.CreateAsync(customer.UserId, title, message, "policy", $"/proposals/{proposal.Id}");
         }
 
         // Notify agent if one was assigned
@@ -498,10 +515,12 @@ public class ProposalService : IProposalService
             var agent = await _unitOfWork.Agents.GetByIdAsync(proposal.AgentId.Value);
             if (agent != null)
             {
+                var customerUser = customer != null ? await _unitOfWork.Users.GetByIdAsync(customer.UserId) : null;
+                var customerName = customerUser?.FullName ?? "your customer";
                 var agentMsg = isApproved
-                    ? $"Proposal {proposal.ProposalNumber} for your customer has been approved."
-                    : $"Proposal {proposal.ProposalNumber} for your customer has been rejected.";
-                await _notifications.CreateAsync(agent.UserId, isApproved ? "Proposal Approved" : "Proposal Rejected", agentMsg, "policy");
+                    ? $"Proposal {proposal.ProposalNumber} for {customerName} has been approved."
+                    : $"Proposal {proposal.ProposalNumber} for {customerName} has been rejected.";
+                await _notifications.CreateAsync(agent.UserId, isApproved ? "Proposal Approved" : "Proposal Rejected", agentMsg, "policy", $"/agent/proposals/{proposal.Id}");
             }
         }
 
@@ -675,7 +694,8 @@ public class ProposalService : IProposalService
             notifyUserId,
             "Proposal Withdrawn",
             $"Your proposal {proposal.ProposalNumber} has been withdrawn.",
-            "policy");
+            "policy",
+            $"/proposals/{proposal.Id}");
 
         var ownerUser = await _unitOfWork.Users.GetByIdAsync(notifyUserId);
         if (ownerUser != null)

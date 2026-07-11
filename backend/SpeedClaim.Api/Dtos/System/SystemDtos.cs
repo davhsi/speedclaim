@@ -29,7 +29,8 @@ public record NotificationDto(
     string Message,
     string Type,
     bool IsRead,
-    DateTimeOffset CreatedAt
+    DateTimeOffset CreatedAt,
+    string? RedirectUrl = null
 );
 
 public record UpdateSystemConfigRequest(

@@ -111,7 +111,8 @@ public class SystemService : ISystemService
             n.Message,
             n.Type,
             n.IsRead,
-            n.CreatedAt
+            n.CreatedAt,
+            n.RedirectUrl
         ));
     }
 

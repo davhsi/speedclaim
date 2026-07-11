@@ -37,7 +37,10 @@ public record ClaimDto(
     DateTimeOffset? UpdatedAt,
     string? CustomerName,
     string? PolicyNumber,
-    List<SubmittedDocumentDto>? Documents = null
+    List<SubmittedDocumentDto>? Documents = null,
+    decimal? SurveyEstimatedCost = null,
+    DateTime? SurveyDate = null,
+    string? SurveyorRemarks = null
 );
 
 public record SubmittedDocumentDto(
