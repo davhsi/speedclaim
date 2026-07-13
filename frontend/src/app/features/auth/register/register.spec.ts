@@ -28,7 +28,7 @@ describe('RegisterComponent', () => {
       email: 'jane@example.com',
       phone: '9876543210',
       dateOfBirth: '1990-01-01',
-      gender: 'Female',
+      gender: 'Male',
       maritalStatus: 'Single',
     });
   }
@@ -85,6 +85,28 @@ describe('RegisterComponent', () => {
       fillStep1(fixture);
       fixture.componentInstance.nextStep();
       expect(fixture.componentInstance.currentStep()).toBe(2);
+    });
+
+    it('does not advance when Mrs is selected with a non-married marital status', () => {
+      const fixture = create();
+      fillStep1(fixture);
+      fixture.componentInstance.form.patchValue({ salutationTitle: 'Mrs', maritalStatus: 'Single' });
+
+      fixture.componentInstance.nextStep();
+
+      expect(fixture.componentInstance.currentStep()).toBe(1);
+      expect(fixture.componentInstance.salutationMatchesPersonalDetails()).toBe(false);
+    });
+
+    it('does not advance when salutation does not match gender', () => {
+      const fixture = create();
+      fillStep1(fixture);
+      fixture.componentInstance.form.patchValue({ salutationTitle: 'Mr', gender: 'Female' });
+
+      fixture.componentInstance.nextStep();
+
+      expect(fixture.componentInstance.currentStep()).toBe(1);
+      expect(fixture.componentInstance.salutationMatchesPersonalDetails()).toBe(false);
     });
 
     it('clears any error message when navigating back', () => {

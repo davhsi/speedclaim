@@ -19,5 +19,6 @@ public record AdminInviteUserRequest(
     string FirstName,
     string LastName,
     string Email,
+    string Phone,
     string Role
 );

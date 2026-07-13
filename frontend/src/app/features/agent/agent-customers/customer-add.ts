@@ -46,6 +46,8 @@ export class AgentCustomerAddComponent {
     dateOfBirth: ['', [Validators.required, minAgeValidator(18)]],
     gender: ['', Validators.required],
     maritalStatus: ['', Validators.required],
+    occupation: ['', [Validators.required, Validators.maxLength(100)]],
+    annualIncome: [null as number | null, [Validators.required, Validators.min(0)]],
     permanentAddress: this.fb.nonNullable.group({
       line1: ['', Validators.required],
       line2: [''],
@@ -113,6 +115,8 @@ export class AgentCustomerAddComponent {
       dateOfBirth: formData.dateOfBirth,
       gender: formData.gender,
       maritalStatus: formData.maritalStatus,
+      occupation: formData.occupation.trim(),
+      annualIncome: Number(formData.annualIncome),
       permanentAddress: formData.permanentAddress,
       currentAddress: this.sameAsPermanent() ? formData.permanentAddress : formData.currentAddress,
       isSameAsPermanent: this.sameAsPermanent(),

@@ -90,7 +90,7 @@ describe('AuthService', () => {
   describe('register', () => {
     it('posts the registration payload', () => {
       const req: RegisterUserRequest = {
-        salutationTitle: 'Ms' as RegisterUserRequest['salutationTitle'],
+        salutation: 'Ms' as RegisterUserRequest['salutation'],
         firstName: 'Jane',
         lastName: 'Doe',
         email: user.email,
@@ -101,8 +101,7 @@ describe('AuthService', () => {
         maritalStatus: 'Single' as RegisterUserRequest['maritalStatus'],
         permanentAddress: { line1: 'x', city: 'y', state: 'z', postalCode: '000000', country: 'IN' },
         currentAddress: { line1: 'x', city: 'y', state: 'z', postalCode: '000000', country: 'IN' },
-        consentDataProcessing: true,
-        consentKycCollection: true,
+        isSameAsPermanent: false,
       };
 
       service.register(req).subscribe(res => {
@@ -111,6 +110,7 @@ describe('AuthService', () => {
 
       const call = httpMock.expectOne('/api/v1/auth/register');
       expect(call.request.method).toBe('POST');
+      expect(call.request.body).toEqual(req);
       call.flush({ message: 'Registered' });
     });
   });

@@ -328,7 +328,7 @@ describe('AdminUsersComponent', () => {
       const fixture = create();
       const c = fixture.componentInstance;
       c.openInviteModal();
-      c.inviteForm = { name: 'Priya', email: 'priya@example.com', role: 'Surveyor' };
+      c.inviteForm = { name: 'Priya', email: 'priya@example.com', phone: '9876543210', role: 'Surveyor' };
       c.submitInvite();
       expect(adminService.inviteUser).not.toHaveBeenCalled();
       expect(toast.warning).toHaveBeenCalledWith(expect.stringContaining('first and last name'));
@@ -337,20 +337,42 @@ describe('AdminUsersComponent', () => {
     it('warns on an invalid email', () => {
       const fixture = create();
       const c = fixture.componentInstance;
-      c.inviteForm = { name: 'Priya Sharma', email: 'not-an-email', role: 'Surveyor' };
+      c.inviteForm = { name: 'Priya Sharma', email: 'not-an-email', phone: '9876543210', role: 'Surveyor' };
       c.submitInvite();
       expect(adminService.inviteUser).not.toHaveBeenCalled();
+    });
+
+    it('warns on an invalid phone number', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.inviteForm = { name: 'Priya Sharma', email: 'priya@example.com', phone: '12345', role: 'Surveyor' };
+      c.submitInvite();
+      expect(adminService.inviteUser).not.toHaveBeenCalled();
+      expect(toast.warning).toHaveBeenCalledWith('Phone number must be exactly 10 digits.');
+    });
+
+    it('keeps invite phone numeric and capped at 10 digits', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+
+      c.onInvitePhoneChange('9944812424924');
+      expect(c.inviteForm.phone).toBe('9944812424');
+      expect(c.invitePhoneError()).toBe('');
+
+      c.onInvitePhoneChange('99a44-812');
+      expect(c.inviteForm.phone).toBe('9944812');
+      expect(c.invitePhoneError()).toBe('Phone number must be exactly 10 digits.');
     });
 
     it('invites successfully and reloads data', () => {
       const fixture = create();
       const c = fixture.componentInstance;
-      c.inviteForm = { name: 'Priya Sharma', email: 'priya@example.com', role: 'Surveyor' };
+      c.inviteForm = { name: 'Priya Sharma', email: 'priya@example.com', phone: '9876543210', role: 'Surveyor' };
       adminService.inviteUser.mockReturnValue(of({ message: 'ok' }));
 
       c.submitInvite();
 
-      expect(adminService.inviteUser).toHaveBeenCalledWith({ firstName: 'Priya', lastName: 'Sharma', email: 'priya@example.com', role: 'Surveyor' });
+      expect(adminService.inviteUser).toHaveBeenCalledWith({ firstName: 'Priya', lastName: 'Sharma', email: 'priya@example.com', phone: '9876543210', role: 'Surveyor' });
       expect(c.inviteSuccess()).toBe(true);
       expect(adminService.getAllUsers).toHaveBeenCalledTimes(2); // init + reload
     });
@@ -358,7 +380,7 @@ describe('AdminUsersComponent', () => {
     it('sets inviteError from the server response on failure', () => {
       const fixture = create();
       const c = fixture.componentInstance;
-      c.inviteForm = { name: 'Priya Sharma', email: 'priya@example.com', role: 'Surveyor' };
+      c.inviteForm = { name: 'Priya Sharma', email: 'priya@example.com', phone: '9876543210', role: 'Surveyor' };
       adminService.inviteUser.mockReturnValue(throwError(() => ({ error: { detail: 'Email already registered' } })));
 
       c.submitInvite();
@@ -366,11 +388,27 @@ describe('AdminUsersComponent', () => {
       expect(c.inviteError()).toBe('Email already registered');
     });
 
+    it('does not show raw database constraint details on invite failure', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.inviteForm = { name: 'Priya Sharma', email: 'priya@example.com', phone: '9876543210', role: 'Surveyor' };
+      adminService.inviteUser.mockReturnValue(throwError(() => ({
+        error: {
+          title: 'DbUpdateException',
+          detail: '23505: duplicate key value violates unique constraint "uq_users_phone"',
+        },
+      })));
+
+      c.submitInvite();
+
+      expect(c.inviteError()).toBe('Failed to send invite. Check whether this email is already registered and try again.');
+    });
+
     it('shows a submitting state while the request is in flight, blocks a second submit, blocks closing, and clears it on success', () => {
       const fixture = create();
       const c = fixture.componentInstance;
       c.openInviteModal();
-      c.inviteForm = { name: 'Priya Sharma', email: 'priya@example.com', role: 'Surveyor' };
+      c.inviteForm = { name: 'Priya Sharma', email: 'priya@example.com', phone: '9876543210', role: 'Surveyor' };
       const request$ = new Subject<{ message: string }>();
       adminService.inviteUser.mockReturnValue(request$);
 
@@ -394,7 +432,7 @@ describe('AdminUsersComponent', () => {
       const fixture = create();
       const c = fixture.componentInstance;
       c.openInviteModal();
-      c.inviteForm = { name: 'Priya Sharma', email: 'priya@example.com', role: 'Surveyor' };
+      c.inviteForm = { name: 'Priya Sharma', email: 'priya@example.com', phone: '9876543210', role: 'Surveyor' };
       const request$ = new Subject<{ message: string }>();
       adminService.inviteUser.mockReturnValue(request$);
 

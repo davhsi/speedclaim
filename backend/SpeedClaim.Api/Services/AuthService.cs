@@ -561,6 +561,8 @@ public class AuthService : IAuthService
             DateOfBirth = request.DateOfBirth,
             Gender = request.Gender,
             MaritalStatus = request.MaritalStatus,
+            Occupation = request.Occupation.Trim(),
+            AnnualIncome = request.AnnualIncome,
             OnboardingAgentId = agent.Id
         };
 
@@ -654,6 +656,10 @@ public class AuthService : IAuthService
         if (existing != null)
             throw new ConflictException("Email already registered");
 
+        var existingPhone = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Phone == request.Phone);
+        if (existingPhone != null)
+            throw new ConflictException("Phone number already registered");
+
         if (!Enum.TryParse<UserRole>(request.Role, ignoreCase: true, out var role)
             || role == UserRole.Customer || role == UserRole.Agent)
             throw new ValidationException("Only staff roles can be invited: Underwriter, ClaimsOfficer, FinanceOfficer, Surveyor, or Admin.");
@@ -667,7 +673,7 @@ public class AuthService : IAuthService
             IsActive = true,
             FirstName = request.FirstName,
             LastName = request.LastName,
-            Phone = "0000000000",
+            Phone = request.Phone,
             Salutation = Salutation.Mr
         };
 

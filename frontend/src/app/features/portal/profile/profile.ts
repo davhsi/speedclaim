@@ -3,7 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ProfileService } from './services/profile.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { UserDto, FamilyMemberDto, KycRecordDto, AddressDto } from '../../../core/models/api.models';
+import { UserDto, FamilyMemberDto, KycRecordDto, AddressDto, SingleAddressRequest } from '../../../core/models/api.models';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { ToastService } from '../../../shared/components/toast/toast.service';
@@ -188,7 +188,18 @@ export class ProfileComponent implements OnInit {
       return;
     }
     this.savingAddress.set(true);
-    this.profileService.addAddress(this.addressForm.getRawValue() as any).subscribe({
+    const raw = this.addressForm.getRawValue();
+    const request: SingleAddressRequest = {
+      addressType: raw.type as SingleAddressRequest['addressType'],
+      addressLine1: raw.line1 ?? '',
+      addressLine2: raw.line2 || undefined,
+      city: raw.city ?? '',
+      state: raw.state ?? '',
+      postalCode: raw.postalCode ?? '',
+      country: raw.country ?? '',
+      isSameAsPermanent: raw.type === 'Permanent',
+    };
+    this.profileService.addAddress(request).subscribe({
       next: () => {
         this.savingAddress.set(false);
         this.toast.success('Address added');

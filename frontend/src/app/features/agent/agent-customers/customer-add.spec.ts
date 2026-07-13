@@ -30,6 +30,8 @@ describe('AgentCustomerAddComponent', () => {
       dateOfBirth: '1990-01-01',
       gender: 'Male',
       maritalStatus: 'Single',
+      occupation: 'Software Engineer',
+      annualIncome: 600000,
       permanentAddress: address,
       currentAddress: otherAddress,
     });
@@ -74,12 +76,26 @@ describe('AgentCustomerAddComponent', () => {
         dateOfBirth: '1990-01-01',
         gender: 'Male',
         maritalStatus: 'Single',
+        occupation: 'Software Engineer',
+        annualIncome: 600000,
         permanentAddress: address,
         currentAddress: otherAddress,
         isSameAsPermanent: false,
       }));
       expect(toast.success).toHaveBeenCalledWith(expect.stringContaining('Customer added'));
       expect(router.navigate).toHaveBeenCalledWith(['/agent/customers']);
+    });
+
+    it('requires occupation and annual income before submitting', () => {
+      const fixture = create();
+      fillForm(fixture);
+      fixture.componentInstance.form.patchValue({ occupation: '', annualIncome: null });
+
+      fixture.componentInstance.onSubmit();
+
+      expect(agentService.addCustomer).not.toHaveBeenCalled();
+      expect(fixture.componentInstance.form.controls.occupation.errors?.['required']).toBeTruthy();
+      expect(fixture.componentInstance.form.controls.annualIncome.errors?.['required']).toBeTruthy();
     });
 
     it('uses the permanent address as current when same-as-permanent is checked', () => {

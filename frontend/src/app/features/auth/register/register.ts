@@ -137,10 +137,21 @@ export class RegisterComponent implements CanComponentDeactivate {
   }
 
   isStepValid(step: number): boolean {
-    return this.stepControls[step - 1].every(name => {
+    const controlsValid = this.stepControls[step - 1].every(name => {
       const control = this.form.get(name);
       return control ? control.valid || control.disabled : true;
     });
+    return controlsValid && (step !== 1 || this.salutationMatchesPersonalDetails());
+  }
+
+  salutationMatchesPersonalDetails(): boolean {
+    const salutation = this.form.controls.salutationTitle.value;
+    const maritalStatus = this.form.controls.maritalStatus.value;
+    const gender = this.form.controls.gender.value;
+    if (salutation === 'Mrs' && maritalStatus !== 'Married') return false;
+    if (gender === 'Male' && (salutation === 'Mrs' || salutation === 'Ms')) return false;
+    if (gender === 'Female' && salutation === 'Mr') return false;
+    return true;
   }
 
   private getErrorMessage(err: any): string {

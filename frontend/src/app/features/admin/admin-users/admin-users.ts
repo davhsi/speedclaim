@@ -37,7 +37,7 @@ export class AdminUsersComponent implements OnInit {
   resetPwTouched = signal(false);
   showPassword = signal(false);
   actionInFlight = signal(false);
-  inviteForm = { name: '', email: '', role: 'Surveyor' };
+  inviteForm = { name: '', email: '', phone: '', role: 'Surveyor' };
   inviteSuccess = signal(false);
   inviteError = signal<string | null>(null);
 
@@ -188,7 +188,7 @@ export class AdminUsersComponent implements OnInit {
   }
 
   openInviteModal(): void {
-    this.inviteForm = { name: '', email: '', role: 'Surveyor' };
+    this.inviteForm = { name: '', email: '', phone: '', role: 'Surveyor' };
     this.inviteSuccess.set(false);
     this.inviteError.set(null);
     this.activeModal.set('invite');
@@ -292,12 +292,17 @@ export class AdminUsersComponent implements OnInit {
     if (this.actionInFlight()) return;
     const name = this.inviteForm.name.trim();
     const email = this.inviteForm.email.trim();
-    if (!name || !email) {
-      this.toastService.warning('Please enter a name and email.');
+    const phone = this.inviteForm.phone.trim();
+    if (!name || !email || !phone) {
+      this.toastService.warning('Please enter name, email, and phone number.');
       return;
     }
     if (!/^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{1,24}$/.test(email)) {
       this.toastService.warning('Please enter a valid email address.');
+      return;
+    }
+    if (!/^\d{10}$/.test(phone)) {
+      this.toastService.warning('Phone number must be exactly 10 digits.');
       return;
     }
     const parts = name.trim().split(/\s+/);
@@ -310,17 +315,37 @@ export class AdminUsersComponent implements OnInit {
 
     this.actionInFlight.set(true);
     this.inviteError.set(null);
-    this.adminService.inviteUser({ firstName, lastName, email, role: this.inviteForm.role }).subscribe({
+    this.adminService.inviteUser({ firstName, lastName, email, phone, role: this.inviteForm.role }).subscribe({
       next: () => {
         this.inviteSuccess.set(true);
         this.actionInFlight.set(false);
         this.loadData();
       },
       error: (err) => {
-        this.inviteError.set(err?.error?.detail ?? err?.error?.message ?? 'Failed to send invite. The email may already be registered.');
+        this.inviteError.set(this.getInviteErrorMessage(err));
         this.actionInFlight.set(false);
       },
     });
+  }
+
+  onInvitePhoneChange(value: string): void {
+    this.inviteForm.phone = value.replace(/\D/g, '').slice(0, 10);
+  }
+
+  invitePhoneError(): string {
+    const phone = this.inviteForm.phone.trim();
+    if (!phone) return '';
+    return /^\d{10}$/.test(phone) ? '' : 'Phone number must be exactly 10 digits.';
+  }
+
+  private getInviteErrorMessage(err: unknown): string {
+    const body = (err as { error?: { title?: unknown; message?: unknown; detail?: unknown } })?.error;
+    const raw = body?.message ?? body?.detail ?? body?.title;
+    const fallback = 'Failed to send invite. Check whether this email is already registered and try again.';
+
+    if (typeof raw !== 'string' || !raw.trim()) return fallback;
+    if (/DbUpdateException|duplicate key|unique constraint|constraint|uq_/i.test(raw)) return fallback;
+    return raw;
   }
 
   prevPage(): void { this.currentPage.update(p => Math.max(1, p - 1)); }

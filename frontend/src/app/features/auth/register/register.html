@@ -97,6 +97,8 @@
           </app-select>
           @if (form.controls.maritalStatus.touched && form.controls.maritalStatus.errors?.['required']) {
             <p class="text-xs text-danger mt-0.5">Select a marital status.</p>
+          } @else if (form.controls.maritalStatus.touched && !salutationMatchesPersonalDetails()) {
+            <p class="text-xs text-danger mt-0.5">Salutation must match gender and marital status.</p>
           }
       </div>
     </div>

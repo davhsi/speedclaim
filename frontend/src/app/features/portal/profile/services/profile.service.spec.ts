@@ -51,7 +51,15 @@ describe('ProfileService', () => {
   });
 
   it('addAddress issues a POST to /api/v1/users/addresses with the given body', () => {
-    const req = { line1: 'x' } as SingleAddressRequest;
+    const req = {
+      addressType: 'Permanent',
+      addressLine1: 'x',
+      city: 'Mumbai',
+      state: 'Maharashtra',
+      postalCode: '400001',
+      country: 'India',
+      isSameAsPermanent: true,
+    } as SingleAddressRequest;
 
     service.addAddress(req).subscribe();
 
@@ -62,7 +70,15 @@ describe('ProfileService', () => {
   });
 
   it('updateAddress issues a PATCH to /api/v1/users/addresses/:id with the given body', () => {
-    const req = { line1: 'y' } as SingleAddressRequest;
+    const req = {
+      addressType: 'Current',
+      addressLine1: 'y',
+      city: 'Mumbai',
+      state: 'Maharashtra',
+      postalCode: '400001',
+      country: 'India',
+      isSameAsPermanent: false,
+    } as SingleAddressRequest;
 
     service.updateAddress('a1', req).subscribe();
 

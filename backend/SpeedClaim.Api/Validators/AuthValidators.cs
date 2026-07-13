@@ -163,6 +163,35 @@ public class RegisterAgentRequestValidator : AbstractValidator<RegisterAgentRequ
     }
 }
 
+public class AdminInviteUserRequestValidator : AbstractValidator<AdminInviteUserRequest>
+{
+    private static readonly string[] StaffRoles = ["Underwriter", "ClaimsOfficer", "FinanceOfficer", "Surveyor", "Admin"];
+
+    public AdminInviteUserRequestValidator()
+    {
+        RuleFor(x => x.Email)
+            .NotEmpty().WithMessage("Email is required.")
+            .EmailAddress().WithMessage("A valid email address is required.");
+
+        RuleFor(x => x.FirstName)
+            .NotEmpty().WithMessage("First name is required.")
+            .MaximumLength(100).WithMessage("First name cannot exceed 100 characters.");
+
+        RuleFor(x => x.LastName)
+            .NotEmpty().WithMessage("Last name is required.")
+            .MaximumLength(100).WithMessage("Last name cannot exceed 100 characters.");
+
+        RuleFor(x => x.Phone)
+            .NotEmpty().WithMessage("Phone number is required.")
+            .Matches(@"^\d{10}$").WithMessage("Phone number must be exactly 10 digits.");
+
+        RuleFor(x => x.Role)
+            .NotEmpty().WithMessage("Role is required.")
+            .Must(role => StaffRoles.Contains(role, StringComparer.OrdinalIgnoreCase))
+            .WithMessage("Only staff roles can be invited: Underwriter, ClaimsOfficer, FinanceOfficer, Surveyor, or Admin.");
+    }
+}
+
 public class AgentAddCustomerRequestValidator : AbstractValidator<AgentAddCustomerRequest>
 {
     public AgentAddCustomerRequestValidator()
@@ -196,6 +225,13 @@ public class AgentAddCustomerRequestValidator : AbstractValidator<AgentAddCustom
 
         RuleFor(x => x.MaritalStatus)
             .IsInEnum().WithMessage("Invalid marital status.");
+
+        RuleFor(x => x.Occupation)
+            .NotEmpty().WithMessage("Occupation is required.")
+            .MaximumLength(100).WithMessage("Occupation cannot exceed 100 characters.");
+
+        RuleFor(x => x.AnnualIncome)
+            .GreaterThanOrEqualTo(0).WithMessage("Annual income cannot be negative.");
 
         RuleFor(x => x.PermanentAddress)
             .NotNull().WithMessage("Permanent address is required.");

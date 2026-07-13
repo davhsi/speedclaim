@@ -448,6 +448,16 @@
                 class="w-full h-9 px-3 border-[1.5px] border-line rounded-lg text-[13px] text-ink bg-[#F7F9FA] outline-none" />
             </div>
             <div>
+              <label for="invite-user-phone" class="block text-[12px] font-semibold text-body mb-1.5">Phone number</label>
+              <input id="invite-user-phone" type="tel" inputmode="numeric" maxlength="10" pattern="[0-9]*"
+                [ngModel]="inviteForm.phone" (ngModelChange)="onInvitePhoneChange($event)" placeholder="e.g. 9876543210"
+                [class.border-danger]="invitePhoneError()"
+                class="w-full h-9 px-3 border-[1.5px] border-line rounded-lg text-[13px] text-ink bg-[#F7F9FA] outline-none" />
+              @if (invitePhoneError()) {
+                <p class="mt-1 text-[11px] text-danger">{{ invitePhoneError() }}</p>
+              }
+            </div>
+            <div>
               <label for="invite-user-role" class="block text-[12px] font-semibold text-body mb-1.5">Role</label>
               <select id="invite-user-role" [(ngModel)]="inviteForm.role"
                 class="w-full h-9 px-3 border-[1.5px] border-line rounded-lg text-[13px] text-body bg-[#F7F9FA] outline-none cursor-pointer">
@@ -466,7 +476,7 @@
 
           <div class="flex justify-end gap-2">
             <button (click)="closeModal()" [disabled]="actionInFlight()" class="h-9 px-4 text-[13px] font-medium text-body border border-line rounded-lg bg-white cursor-pointer hover:bg-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Cancel</button>
-            <button (click)="submitInvite()" [disabled]="!inviteForm.name || !inviteForm.email || actionInFlight()"
+            <button (click)="submitInvite()" [disabled]="!inviteForm.name || !inviteForm.email || !inviteForm.phone || !!invitePhoneError() || actionInFlight()"
               class="h-9 px-4 text-[13px] font-semibold text-white bg-primary rounded-lg border-none cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-default flex items-center gap-2">
               @if (actionInFlight()) {
                 <span class="w-3.5 h-3.5 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>

@@ -15,5 +15,7 @@ public record AgentAddCustomerRequest(
     bool IsSameAsPermanent,
     DateOnly DateOfBirth,
     Gender Gender,
-    MaritalStatus MaritalStatus
+    MaritalStatus MaritalStatus,
+    string Occupation,
+    decimal AnnualIncome
 );

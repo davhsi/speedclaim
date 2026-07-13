@@ -477,6 +477,54 @@ public class AuthServiceTests
     }
 
     [Test]
+    public async Task InviteStaffUserAsync_NewStaff_CreatesUserWithSubmittedPhone()
+    {
+        var users = new List<User>();
+        User? invitedUser = null;
+
+        _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
+            .ReturnsAsync((Expression<Func<User, bool>> predicate) => users.FirstOrDefault(predicate.Compile()));
+        _mockUserRepository.Setup(r => r.AddAsync(It.IsAny<User>()))
+            .Callback<User>(u =>
+            {
+                invitedUser = u;
+                users.Add(u);
+            })
+            .Returns(Task.CompletedTask);
+        _mockUserTokenRepository.Setup(r => r.FindAsync(It.IsAny<Expression<Func<UserToken, bool>>>()))
+            .ReturnsAsync(Array.Empty<UserToken>());
+        _mockJwtService.Setup(j => j.GenerateRefreshToken()).Returns("staff_reset_token");
+
+        var request = new AdminInviteUserRequest("Pradeep", "R", "pradeep.claims@example.com", "9876543210", "ClaimsOfficer");
+
+        var result = await _authService.InviteStaffUserAsync(request, Guid.NewGuid().ToString());
+
+        Assert.That(result.Email, Is.EqualTo("pradeep.claims@example.com"));
+        Assert.That(result.Role, Is.EqualTo("ClaimsOfficer"));
+        Assert.That(invitedUser, Is.Not.Null);
+        Assert.That(invitedUser!.Phone, Is.EqualTo("9876543210"));
+        _mockEmailService.Verify(e => e.SendPasswordResetAsync("pradeep.claims@example.com", It.IsAny<string>()), Times.Once);
+    }
+
+    [Test]
+    public void InviteStaffUserAsync_PhoneAlreadyExists_ThrowsConflictException()
+    {
+        _mockUserRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<User, bool>>>()))
+            .ReturnsAsync((Expression<Func<User, bool>> predicate) =>
+            {
+                var existing = new User { Email = "other@example.com", Phone = "9876543210" };
+                return predicate.Compile()(existing) ? existing : null;
+            });
+
+        var request = new AdminInviteUserRequest("Pradeep", "R", "pradeep.claims@example.com", "9876543210", "ClaimsOfficer");
+
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() => _authService.InviteStaffUserAsync(request, Guid.NewGuid().ToString()));
+
+        Assert.That(ex.Message, Is.EqualTo("Phone number already registered"));
+        _mockUserRepository.Verify(r => r.AddAsync(It.IsAny<User>()), Times.Never);
+    }
+
+    [Test]
     public async Task AddCustomerAsync_NewEmail_CreatesCustomerTaggedToAgent()
     {
         var agentUserId = Guid.NewGuid();
@@ -496,7 +544,7 @@ public class AuthServiceTests
         var request = new AgentAddCustomerRequest(
             "cust@test.com", "Mr", "Rahul", "Verma", "9999999999",
             addr, null, true, DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-25)),
-            Gender.Male, MaritalStatus.Single);
+            Gender.Male, MaritalStatus.Single, "Software Engineer", 600000m);
 
         var result = await _authService.AddCustomerAsync(request, agentUserId.ToString());
 
@@ -504,6 +552,8 @@ public class AuthServiceTests
         Assert.That(result.Role, Is.EqualTo("Customer"));
         Assert.That(savedCustomer, Is.Not.Null);
         Assert.That(savedCustomer!.OnboardingAgentId, Is.EqualTo(agent.Id));
+        Assert.That(savedCustomer.Occupation, Is.EqualTo("Software Engineer"));
+        Assert.That(savedCustomer.AnnualIncome, Is.EqualTo(600000m));
         _mockUserTokenRepository.Verify(r => r.AddAsync(It.IsAny<UserToken>()), Times.Once);
         _mockEmailService.Verify(e => e.SendCustomerWelcomeAsync("cust@test.com", "Rahul", It.IsAny<string>()), Times.Once);
     }
@@ -522,7 +572,7 @@ public class AuthServiceTests
         var request = new AgentAddCustomerRequest(
             "cust@test.com", "Mr", "Rahul", "Verma", "9999999999",
             addr, null, true, DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-25)),
-            Gender.Male, MaritalStatus.Single);
+            Gender.Male, MaritalStatus.Single, "Software Engineer", 600000m);
 
         var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() => _authService.AddCustomerAsync(request, agentUserId.ToString()));
         Assert.That(ex.Message, Is.EqualTo("Email already registered"));
@@ -539,7 +589,7 @@ public class AuthServiceTests
         var request = new AgentAddCustomerRequest(
             "cust@test.com", "Mr", "Rahul", "Verma", "9999999999",
             addr, null, true, DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-25)),
-            Gender.Male, MaritalStatus.Single);
+            Gender.Male, MaritalStatus.Single, "Software Engineer", 600000m);
 
         Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _authService.AddCustomerAsync(request, Guid.NewGuid().ToString()));
     }

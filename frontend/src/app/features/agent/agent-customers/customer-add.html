@@ -90,6 +90,27 @@
         }
       </div>
 
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label for="add-cust-occupation" class="block text-[13px] font-medium text-body mb-1.5">Occupation</label>
+          <input id="add-cust-occupation" type="text" formControlName="occupation" placeholder="e.g., Software Engineer">
+          @if (form.controls.occupation.touched && form.controls.occupation.errors?.['required']) {
+            <p class="text-xs text-danger mt-0.5">Occupation is required.</p>
+          } @else if (form.controls.occupation.touched && form.controls.occupation.errors?.['maxlength']) {
+            <p class="text-xs text-danger mt-0.5">Occupation cannot exceed 100 characters.</p>
+          }
+        </div>
+        <div>
+          <label for="add-cust-annual-income" class="block text-[13px] font-medium text-body mb-1.5">Annual income</label>
+          <input id="add-cust-annual-income" type="number" min="0" formControlName="annualIncome" placeholder="e.g., 600000" class="sc-numeric">
+          @if (form.controls.annualIncome.touched && form.controls.annualIncome.errors?.['required']) {
+            <p class="text-xs text-danger mt-0.5">Annual income is required.</p>
+          } @else if (form.controls.annualIncome.touched && form.controls.annualIncome.errors?.['min']) {
+            <p class="text-xs text-danger mt-0.5">Annual income cannot be negative.</p>
+          }
+        </div>
+      </div>
+
       <hr class="border-line !my-4">
 
       <p class="text-xs font-semibold text-muted uppercase tracking-wide">Permanent address</p>

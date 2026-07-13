@@ -257,7 +257,16 @@ describe('ProfileComponent', () => {
 
       fixture.componentInstance.saveAddress();
 
-      expect(profileService.addAddress).toHaveBeenCalled();
+      expect(profileService.addAddress).toHaveBeenCalledWith({
+        addressType: 'Permanent',
+        addressLine1: '123 St',
+        addressLine2: undefined,
+        city: 'Mumbai',
+        state: 'Maharashtra',
+        postalCode: '400001',
+        country: 'India',
+        isSameAsPermanent: true,
+      });
       expect(toast.success).toHaveBeenCalledWith('Address added');
       expect(fixture.componentInstance.showAddressForm()).toBe(false);
       expect(profileService.getProfile).toHaveBeenCalledTimes(2); // once on init, once on refetch
