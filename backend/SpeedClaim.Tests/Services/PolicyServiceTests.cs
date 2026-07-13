@@ -19,6 +19,9 @@ public class PolicyServiceTests
 {
     private Mock<IUnitOfWork> _mockUnitOfWork;
     private Mock<IStorageService> _mockStorageService;
+    private Mock<INotificationService> _mockNotifications;
+    private Mock<IEmailService> _mockEmailService;
+    private Mock<IRepository<AuditLog>> _mockAuditRepo;
     private PolicyService _policyService;
 
     [SetUp]
@@ -26,8 +29,14 @@ public class PolicyServiceTests
     {
         _mockUnitOfWork = new Mock<IUnitOfWork>() { DefaultValue = DefaultValue.Mock };
         _mockStorageService = new Mock<IStorageService>();
+        _mockNotifications = new Mock<INotificationService>();
+        _mockEmailService = new Mock<IEmailService>();
+        _mockAuditRepo = new Mock<IRepository<AuditLog>>();
+        _mockAuditRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<AuditLog, bool>>>()))
+            .ReturnsAsync(Array.Empty<AuditLog>());
+        _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(_mockAuditRepo.Object);
 
-        _policyService = new PolicyService(_mockUnitOfWork.Object, _mockStorageService.Object, new Mock<IEmailService>().Object);
+        _policyService = new PolicyService(_mockUnitOfWork.Object, _mockStorageService.Object, _mockEmailService.Object, _mockNotifications.Object);
     }
 
     [Test]
@@ -93,6 +102,113 @@ public class PolicyServiceTests
 
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Length, Is.GreaterThan(0));
+    }
+
+    [Test]
+    public async Task RemindCustomerToPayAsync_PendingAssignedPolicy_CreatesCustomerNotificationAndAudit()
+    {
+        var policyId = Guid.NewGuid();
+        var agentUserId = Guid.NewGuid();
+        var agentId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var customerUserId = Guid.NewGuid();
+        var policy = new Policy
+        {
+            Id = policyId,
+            AgentId = agentId,
+            CustomerId = customerId,
+            PolicyNumber = "POL-1",
+            Status = PolicyStatus.Pending,
+            PremiumAmount = 22000m
+        };
+        var schedule = new PremiumSchedule
+        {
+            Id = Guid.NewGuid(),
+            PolicyId = policyId,
+            InstallmentNumber = 1,
+            Amount = 22000m,
+            Status = PremiumScheduleStatus.Upcoming
+        };
+
+        _mockUnitOfWork.Setup(u => u.Agents.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>()))
+            .ReturnsAsync(new Agent { Id = agentId, UserId = agentUserId });
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId)).ReturnsAsync(policy);
+        _mockUnitOfWork.Setup(u => u.Customers.GetByIdAsync(customerId)).ReturnsAsync(new Customer { Id = customerId, UserId = customerUserId });
+        _mockUnitOfWork.Setup(u => u.Users.GetByIdAsync(customerUserId)).ReturnsAsync(new User { Id = customerUserId, Email = "customer@test.com" });
+        _mockUnitOfWork.Setup(u => u.PremiumSchedules.FindAsync(It.IsAny<Expression<Func<PremiumSchedule, bool>>>()))
+            .ReturnsAsync(new[] { schedule });
+
+        await _policyService.RemindCustomerToPayAsync(policyId, agentUserId);
+
+        _mockNotifications.Verify(n => n.CreateAsync(
+            customerUserId,
+            "First premium due",
+            It.Is<string>(m => m.Contains("POL-1") && m.Contains("22000.00")),
+            "payment",
+            $"/pay/{policyId}"), Times.Once);
+        _mockEmailService.Verify(e => e.SendEmailAsync(
+            "customer@test.com",
+            It.Is<string>(s => s.Contains("POL-1")),
+            It.Is<string>(b => b.Contains("22000.00") && b.Contains($"/pay/{policyId}"))), Times.Once);
+        _mockUnitOfWork.Verify(u => u.AuditLogs.AddAsync(It.Is<AuditLog>(a =>
+            a.UserId == agentUserId &&
+            a.EntityId == policyId &&
+            a.Action == "FirstPremiumReminderSent")), Times.Once);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public void RemindCustomerToPayAsync_UnassignedPolicy_ThrowsForbidden()
+    {
+        var policyId = Guid.NewGuid();
+        var agentUserId = Guid.NewGuid();
+        _mockUnitOfWork.Setup(u => u.Agents.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>()))
+            .ReturnsAsync(new Agent { Id = Guid.NewGuid(), UserId = agentUserId });
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId))
+            .ReturnsAsync(new Policy { Id = policyId, AgentId = Guid.NewGuid(), Status = PolicyStatus.Pending });
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() =>
+            _policyService.RemindCustomerToPayAsync(policyId, agentUserId));
+    }
+
+    [Test]
+    public void RemindCustomerToPayAsync_ActivePolicy_ThrowsUnprocessable()
+    {
+        var policyId = Guid.NewGuid();
+        var agentUserId = Guid.NewGuid();
+        var agentId = Guid.NewGuid();
+        _mockUnitOfWork.Setup(u => u.Agents.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>()))
+            .ReturnsAsync(new Agent { Id = agentId, UserId = agentUserId });
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId))
+            .ReturnsAsync(new Policy { Id = policyId, AgentId = agentId, Status = PolicyStatus.Active });
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.UnprocessableException>(() =>
+            _policyService.RemindCustomerToPayAsync(policyId, agentUserId));
+    }
+
+    [Test]
+    public void RemindCustomerToPayAsync_RecentlySentReminder_ThrowsConflict()
+    {
+        var policyId = Guid.NewGuid();
+        var agentUserId = Guid.NewGuid();
+        var agentId = Guid.NewGuid();
+        _mockUnitOfWork.Setup(u => u.Agents.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>()))
+            .ReturnsAsync(new Agent { Id = agentId, UserId = agentUserId });
+        _mockUnitOfWork.Setup(u => u.Policies.GetByIdAsync(policyId))
+            .ReturnsAsync(new Policy { Id = policyId, AgentId = agentId, Status = PolicyStatus.Pending });
+        _mockAuditRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<AuditLog, bool>>>()))
+            .ReturnsAsync(new[] { new AuditLog { Action = "FirstPremiumReminderSent", EntityId = policyId, UserId = agentUserId, CreatedAt = DateTime.UtcNow } });
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _policyService.RemindCustomerToPayAsync(policyId, agentUserId));
+
+        _mockNotifications.Verify(n => n.CreateAsync(
+            It.IsAny<Guid>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>()), Times.Never);
+        _mockEmailService.Verify(e => e.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
     [Test]

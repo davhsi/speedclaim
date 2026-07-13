@@ -26,6 +26,10 @@ public class AgentServiceTests
     private Mock<IRepository<AgentCommission>> _mockCommissionRepo = null!;
     private Mock<IClaimRepository> _mockClaimRepo = null!;
     private Mock<IRepository<KycRecord>> _mockKycRepo = null!;
+    private Mock<IRepository<PremiumSchedule>> _mockPremiumScheduleRepo = null!;
+    private Mock<IRepository<AuditLog>> _mockAuditRepo = null!;
+    private Mock<INotificationService> _mockNotifications = null!;
+    private Mock<IEmailService> _mockEmailService = null!;
     private AgentService _agentService = null!;
 
     [SetUp]
@@ -41,6 +45,10 @@ public class AgentServiceTests
         _mockCommissionRepo = new Mock<IRepository<AgentCommission>>();
         _mockClaimRepo = new Mock<IClaimRepository>();
         _mockKycRepo = new Mock<IRepository<KycRecord>>();
+        _mockPremiumScheduleRepo = new Mock<IRepository<PremiumSchedule>>();
+        _mockAuditRepo = new Mock<IRepository<AuditLog>>();
+        _mockNotifications = new Mock<INotificationService>();
+        _mockEmailService = new Mock<IEmailService>();
 
         _mockUnitOfWork.Setup(u => u.KycRecords).Returns(_mockKycRepo.Object);
         _mockUnitOfWork.Setup(u => u.Agents).Returns(_mockAgentRepo.Object);
@@ -51,10 +59,13 @@ public class AgentServiceTests
         _mockUnitOfWork.Setup(u => u.Policies).Returns(_mockPolicyRepo.Object);
         _mockUnitOfWork.Setup(u => u.AgentCommissions).Returns(_mockCommissionRepo.Object);
         _mockUnitOfWork.Setup(u => u.Claims).Returns(_mockClaimRepo.Object);
-        _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
+        _mockUnitOfWork.Setup(u => u.PremiumSchedules).Returns(_mockPremiumScheduleRepo.Object);
+        _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(_mockAuditRepo.Object);
+        _mockAuditRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<AuditLog, bool>>>()))
+            .ReturnsAsync(Array.Empty<AuditLog>());
         _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
 
-        _agentService = new AgentService(_mockUnitOfWork.Object);
+        _agentService = new AgentService(_mockUnitOfWork.Object, _mockNotifications.Object, _mockEmailService.Object);
     }
 
     [Test]
@@ -614,5 +625,144 @@ public class AgentServiceTests
         Assert.That(result[0].PolicyNumber, Is.EqualTo("POL-100"));
         Assert.That(result[0].AmountDue, Is.EqualTo(300));
         Assert.That(result[0].DaysUntilDue, Is.InRange(9, 10)); // account for small timing differences
+        Assert.That(result[0].ReminderSentRecently, Is.False);
+    }
+
+    [Test]
+    public async Task GetRenewalRemindersAsync_WithRecentReminder_MarksReminderSentRecently()
+    {
+        var agentUserId = Guid.NewGuid();
+        var agentId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+
+        _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>()))
+            .ReturnsAsync(new Agent { Id = agentId, UserId = agentUserId });
+        _mockPolicyRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Policy, bool>>>()))
+            .ReturnsAsync(new[] { new Policy { Id = policyId, AgentId = agentId, CustomerId = customerId, PolicyNumber = "POL-100" } });
+        _mockPremiumScheduleRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<PremiumSchedule, bool>>>()))
+            .ReturnsAsync(new[]
+            {
+                new PremiumSchedule
+                {
+                    Id = Guid.NewGuid(),
+                    PolicyId = policyId,
+                    Amount = 300,
+                    Status = PremiumScheduleStatus.Upcoming,
+                    DueDate = DateTime.UtcNow.AddDays(10)
+                }
+            });
+        _mockAuditRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<AuditLog, bool>>>()))
+            .ReturnsAsync(new[] { new AuditLog { EntityId = policyId, UserId = agentUserId, Action = "PremiumRenewalReminderSent", CreatedAt = DateTime.UtcNow } });
+        _mockCustomerRepo.Setup(r => r.GetByIdAsync(customerId)).ReturnsAsync(new Customer { Id = customerId, UserId = userId });
+        _mockUserRepo.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(new User { Id = userId, FirstName = "Bob", LastName = "Jones", Email = "b@j.com", Role = UserRole.Customer, Salutation = Salutation.Mr });
+
+        var result = (await _agentService.GetRenewalRemindersAsync(agentUserId.ToString())).ToList();
+
+        Assert.That(result.Count, Is.EqualTo(1));
+        Assert.That(result[0].ReminderSentRecently, Is.True);
+    }
+
+    [Test]
+    public async Task SendRenewalReminderAsync_AssignedPolicy_CreatesCustomerNotificationAndAudit()
+    {
+        var agentUserId = Guid.NewGuid();
+        var agentId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var customerUserId = Guid.NewGuid();
+        var scheduleId = Guid.NewGuid();
+
+        _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>()))
+            .ReturnsAsync(new Agent { Id = agentId, UserId = agentUserId });
+        _mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId))
+            .ReturnsAsync(new Policy { Id = policyId, AgentId = agentId, CustomerId = customerId, PolicyNumber = "POL-100" });
+        _mockPremiumScheduleRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<PremiumSchedule, bool>>>()))
+            .ReturnsAsync(new[]
+            {
+                new PremiumSchedule
+                {
+                    Id = scheduleId,
+                    PolicyId = policyId,
+                    Amount = 22000m,
+                    Status = PremiumScheduleStatus.Upcoming,
+                    DueDate = DateTime.UtcNow.AddDays(6)
+                }
+            });
+        _mockCustomerRepo.Setup(r => r.GetByIdAsync(customerId))
+            .ReturnsAsync(new Customer { Id = customerId, UserId = customerUserId });
+        _mockUserRepo.Setup(r => r.GetByIdAsync(customerUserId))
+            .ReturnsAsync(new User { Id = customerUserId, Email = "customer@test.com" });
+
+        await _agentService.SendRenewalReminderAsync(agentUserId.ToString(), policyId.ToString());
+
+        _mockNotifications.Verify(n => n.CreateAsync(
+            customerUserId,
+            "Premium due soon",
+            It.Is<string>(m => m.Contains("POL-100") && m.Contains("22000.00")),
+            "payment",
+            $"/pay/{policyId}"), Times.Once);
+        _mockEmailService.Verify(e => e.SendEmailAsync(
+            "customer@test.com",
+            It.Is<string>(s => s.Contains("POL-100")),
+            It.Is<string>(b => b.Contains("22000.00") && b.Contains($"/pay/{policyId}"))), Times.Once);
+        _mockUnitOfWork.Verify(u => u.AuditLogs.AddAsync(It.Is<AuditLog>(a =>
+            a.UserId == agentUserId &&
+            a.EntityId == policyId &&
+            a.Action == "PremiumRenewalReminderSent")), Times.Once);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public void SendRenewalReminderAsync_UnassignedPolicy_ThrowsForbidden()
+    {
+        var agentUserId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+        _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>()))
+            .ReturnsAsync(new Agent { Id = Guid.NewGuid(), UserId = agentUserId });
+        _mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId))
+            .ReturnsAsync(new Policy { Id = policyId, AgentId = Guid.NewGuid() });
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ForbiddenException>(() =>
+            _agentService.SendRenewalReminderAsync(agentUserId.ToString(), policyId.ToString()));
+    }
+
+    [Test]
+    public void SendRenewalReminderAsync_RecentlySentReminder_ThrowsConflict()
+    {
+        var agentUserId = Guid.NewGuid();
+        var agentId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+
+        _mockAgentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Agent, bool>>>()))
+            .ReturnsAsync(new Agent { Id = agentId, UserId = agentUserId });
+        _mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId))
+            .ReturnsAsync(new Policy { Id = policyId, AgentId = agentId });
+        _mockPremiumScheduleRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<PremiumSchedule, bool>>>()))
+            .ReturnsAsync(new[]
+            {
+                new PremiumSchedule
+                {
+                    Id = Guid.NewGuid(),
+                    PolicyId = policyId,
+                    Amount = 22000m,
+                    Status = PremiumScheduleStatus.Upcoming,
+                    DueDate = DateTime.UtcNow.AddDays(6)
+                }
+            });
+        _mockAuditRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<AuditLog, bool>>>()))
+            .ReturnsAsync(new[] { new AuditLog { Action = "PremiumRenewalReminderSent", EntityId = policyId, UserId = agentUserId, CreatedAt = DateTime.UtcNow } });
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _agentService.SendRenewalReminderAsync(agentUserId.ToString(), policyId.ToString()));
+
+        _mockNotifications.Verify(n => n.CreateAsync(
+            It.IsAny<Guid>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>()), Times.Never);
+        _mockEmailService.Verify(e => e.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 }

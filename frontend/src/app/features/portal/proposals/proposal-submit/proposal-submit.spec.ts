@@ -17,6 +17,13 @@ describe('ProposalSubmitComponent', () => {
   let router: { navigate: ReturnType<typeof vi.fn> };
 
   const quoteState = { productId: 'prod1', sumAssured: 100000, tenureYears: 10, premiumAmount: 500, paymentFrequency: 'Monthly' };
+  const lifeQuoteState = { ...quoteState, domain: 'Life' };
+  const motorQuoteState = {
+    ...quoteState,
+    domain: 'Motor',
+    motorVehicleType: 'TwoWheeler',
+    motorDetail: { vehicleMake: 'TVS', vehicleModel: 'Jupiter', manufactureYear: 2023, insuredDeclaredValue: 75000 },
+  };
   const docRequirements: DocumentRequirementDto[] = [
     { id: 'd1', documentKey: 'ID_PROOF', label: 'ID Proof', description: '', isMandatory: true },
     { id: 'd2', documentKey: 'OPTIONAL_DOC', label: 'Optional', description: '', isMandatory: false },
@@ -96,6 +103,23 @@ describe('ProposalSubmitComponent', () => {
       expect(c.docRequirementsLoaded()).toBe(true);
     });
 
+    it('prefills and locks quote-derived motor details', () => {
+      withHistoryState(motorQuoteState);
+      const fixture = create({ requirements: [] });
+      const c = fixture.componentInstance;
+
+      expect(c.quoteMotorDetail()).toEqual(motorQuoteState.motorDetail);
+      expect(c.motorForm.getRawValue()).toEqual(expect.objectContaining({
+        vehicleMake: 'TVS',
+        vehicleModel: 'Jupiter',
+        manufactureYear: 2023,
+      }));
+      expect(c.motorForm.controls.vehicleMake.disabled).toBe(true);
+      expect(c.motorForm.controls.vehicleModel.disabled).toBe(true);
+      expect(c.motorForm.controls.manufactureYear.disabled).toBe(true);
+      expect(c.motorForm.controls.motorVehicleType.disabled).toBe(true);
+    });
+
     it('marks doc requirements loaded and warns when they fail to load', () => {
       withHistoryState(quoteState);
       const fixture = create({ requirementsError: true });
@@ -106,20 +130,20 @@ describe('ProposalSubmitComponent', () => {
 
   describe('nominees', () => {
     it('starts with exactly one nominee group', () => {
-      withHistoryState(quoteState);
+      withHistoryState(lifeQuoteState);
       const fixture = create();
       expect(fixture.componentInstance.nominees).toHaveLength(1);
     });
 
     it('addNominee appends another group', () => {
-      withHistoryState(quoteState);
+      withHistoryState(lifeQuoteState);
       const fixture = create();
       fixture.componentInstance.addNominee();
       expect(fixture.componentInstance.nominees).toHaveLength(2);
     });
 
     it('totalShares sums sharePercentage across all nominee groups', () => {
-      withHistoryState(quoteState);
+      withHistoryState(lifeQuoteState);
       const fixture = create();
       const c = fixture.componentInstance;
       c.nominees.at(0).patchValue({ sharePercentage: 60 });
@@ -129,14 +153,14 @@ describe('ProposalSubmitComponent', () => {
     });
 
     it('isMinorNominee is true for a nominee under 18 as of today', () => {
-      withHistoryState(quoteState);
+      withHistoryState(lifeQuoteState);
       const fixture = create();
       fixture.componentInstance.nominees.at(0).patchValue({ dateOfBirth: '2015-01-01' });
       expect(fixture.componentInstance.isMinorNominee(0)).toBe(true);
     });
 
     it('isMinorNominee is false for a nominee 18 or older', () => {
-      withHistoryState(quoteState);
+      withHistoryState(lifeQuoteState);
       const fixture = create();
       fixture.componentInstance.nominees.at(0).patchValue({ dateOfBirth: '1990-01-01' });
       expect(fixture.componentInstance.isMinorNominee(0)).toBe(false);
@@ -150,7 +174,7 @@ describe('ProposalSubmitComponent', () => {
       }
 
       it('is false when totalShares is not exactly 100', () => {
-        withHistoryState(quoteState);
+        withHistoryState(lifeQuoteState);
         const fixture = create();
         validNominee(fixture);
         fixture.componentInstance.nominees.at(0).patchValue({ sharePercentage: 50 });
@@ -158,14 +182,14 @@ describe('ProposalSubmitComponent', () => {
       });
 
       it('is false when there are no nominees', () => {
-        withHistoryState(quoteState);
+        withHistoryState(lifeQuoteState);
         const fixture = create();
         fixture.componentInstance.nominees.clear();
         expect(fixture.componentInstance.nomineesValid).toBe(false);
       });
 
       it('is false when a minor nominee has no appointeeName', () => {
-        withHistoryState(quoteState);
+        withHistoryState(lifeQuoteState);
         const fixture = create();
         validNominee(fixture);
         fixture.componentInstance.nominees.at(0).patchValue({ dateOfBirth: '2015-01-01', appointeeName: '' });
@@ -173,7 +197,7 @@ describe('ProposalSubmitComponent', () => {
       });
 
       it('is true when a minor nominee has an appointeeName', () => {
-        withHistoryState(quoteState);
+        withHistoryState(lifeQuoteState);
         const fixture = create();
         validNominee(fixture);
         fixture.componentInstance.nominees.at(0).patchValue({ dateOfBirth: '2015-01-01', appointeeName: 'Guardian Name' });
@@ -181,9 +205,16 @@ describe('ProposalSubmitComponent', () => {
       });
 
       it('is true for a complete adult nominee summing to 100%', () => {
-        withHistoryState(quoteState);
+        withHistoryState(lifeQuoteState);
         const fixture = create();
         validNominee(fixture);
+        expect(fixture.componentInstance.nomineesValid).toBe(true);
+      });
+
+      it('is true without nominees for non-Life products', () => {
+        withHistoryState(motorQuoteState);
+        const fixture = create({ requirements: [] });
+        fixture.componentInstance.nominees.clear();
         expect(fixture.componentInstance.nomineesValid).toBe(true);
       });
     });
@@ -224,7 +255,7 @@ describe('ProposalSubmitComponent', () => {
     });
 
     it('warns and does not submit when nominees are invalid', () => {
-      withHistoryState(quoteState);
+      withHistoryState(lifeQuoteState);
       const fixture = create();
       fixture.componentInstance.onDocSelected('ID_PROOF', new File(['x'], 'id.pdf'));
       // leave nominee invalid (missing required fields)
@@ -249,7 +280,7 @@ describe('ProposalSubmitComponent', () => {
     });
 
     it('submits the mapped payload and navigates without uploads when there are no extra files', () => {
-      withHistoryState(quoteState);
+      withHistoryState(lifeQuoteState);
       const fixture = create({ requirements: [] });
       fixture.componentInstance.nominees.at(0).setValue({
         name: 'Jane Doe', relationship: 'Spouse', sharePercentage: 100, dateOfBirth: '1990-01-01', appointeeName: '',
@@ -265,6 +296,47 @@ describe('ProposalSubmitComponent', () => {
       }));
       expect(toast.success).toHaveBeenCalledWith('Proposal submitted');
       expect(router.navigate).toHaveBeenCalledWith(['/proposals', 'proposal1']);
+    });
+
+    it('requires Motor engine and chassis numbers before submitting', () => {
+      withHistoryState(motorQuoteState);
+      const fixture = create({ requirements: [] });
+      fixture.componentInstance.motorForm.patchValue({
+        vehicleNumber: 'TN 09 AB 1234',
+        engineNumber: '',
+        chassisNumber: '',
+      });
+
+      fixture.componentInstance.submit();
+
+      expect(toast.warning).toHaveBeenCalledWith('Please complete the vehicle details before submitting.');
+      expect(proposalService.submit).not.toHaveBeenCalled();
+    });
+
+    it('submits Motor engine and chassis numbers in motorDetail', () => {
+      withHistoryState(motorQuoteState);
+      const fixture = create({ requirements: [] });
+      fixture.componentInstance.motorForm.patchValue({
+        vehicleNumber: 'TN 09 AB 1234',
+        engineNumber: 'K12MN1234567',
+        chassisNumber: 'MA3FHEB1S00A12345',
+      });
+      proposalService.submit.mockReturnValue(of({ id: 'proposal1' } as ProposalDto));
+
+      fixture.componentInstance.submit();
+
+      expect(proposalService.submit).toHaveBeenCalledWith(expect.objectContaining({
+        nominees: [],
+        motorDetail: expect.objectContaining({
+          vehicleMake: 'TVS',
+          vehicleModel: 'Jupiter',
+          manufactureYear: 2023,
+          vehicleType: 'TwoWheeler',
+          idv: 75000,
+          engineNumber: 'K12MN1234567',
+          chassisNumber: 'MA3FHEB1S00A12345',
+        }),
+      }));
     });
 
     it('uploads the required document after submit succeeds', () => {

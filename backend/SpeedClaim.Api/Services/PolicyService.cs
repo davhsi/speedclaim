@@ -18,12 +18,14 @@ public class PolicyService : IPolicyService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IStorageService _storageService;
     private readonly IEmailService _emailService;
+    private readonly INotificationService _notifications;
 
-    public PolicyService(IUnitOfWork unitOfWork, IStorageService storageService, IEmailService emailService)
+    public PolicyService(IUnitOfWork unitOfWork, IStorageService storageService, IEmailService emailService, INotificationService notifications)
     {
         _unitOfWork = unitOfWork;
         _storageService = storageService;
         _emailService = emailService;
+        _notifications = notifications;
     }
 
     // Controllers pass the authenticated User.Id (JWT sub), but Policy.CustomerId / Proposal.CustomerId
@@ -186,6 +188,72 @@ public class PolicyService : IPolicyService
         return policies.Select(MapToDto);
     }
 
+    public async Task RemindCustomerToPayAsync(Guid policyId, Guid agentUserId)
+    {
+        var agent = await _unitOfWork.Agents.FirstOrDefaultAsync(a => a.UserId == agentUserId)
+            ?? throw new NotFoundException("Agent not found.");
+
+        var policy = await _unitOfWork.Policies.GetByIdAsync(policyId)
+            ?? throw new NotFoundException("Policy not found.");
+
+        if (policy.AgentId != agent.Id)
+            throw new ForbiddenException("Access denied to this policy.");
+
+        if (policy.Status != PolicyStatus.Pending)
+            throw new UnprocessableException("Payment reminders can only be sent for pending policies.");
+
+        var reminderCutoff = DateTime.UtcNow.AddHours(-24);
+        var recentReminders = await _unitOfWork.AuditLogs.FindAsync(a =>
+            a.EntityType == "Policy" &&
+            a.EntityId == policy.Id &&
+            a.UserId == agentUserId &&
+            a.Action == "FirstPremiumReminderSent" &&
+            a.CreatedAt >= reminderCutoff);
+        if (recentReminders.Any())
+            throw new ConflictException("A first premium reminder was already sent for this policy in the last 24 hours.");
+
+        var customer = await _unitOfWork.Customers.GetByIdAsync(policy.CustomerId)
+            ?? throw new NotFoundException("Customer not found.");
+        var user = await _unitOfWork.Users.GetByIdAsync(customer.UserId)
+            ?? throw new NotFoundException("Customer account not found.");
+
+        var unpaidSchedules = await _unitOfWork.PremiumSchedules.FindAsync(s =>
+            s.PolicyId == policy.Id &&
+            (s.Status == PremiumScheduleStatus.Upcoming ||
+             s.Status == PremiumScheduleStatus.Due ||
+             s.Status == PremiumScheduleStatus.Overdue));
+        var firstDue = unpaidSchedules.OrderBy(s => s.InstallmentNumber).FirstOrDefault();
+        var amount = firstDue?.Amount ?? policy.PremiumAmount;
+
+        await _notifications.CreateAsync(
+            user.Id,
+            "First premium due",
+            $"Your policy {policy.PolicyNumber} is approved and waiting for the first premium of INR {amount:0.00}. Pay now to activate your cover.",
+            "payment",
+            $"/pay/{policy.Id}");
+
+        var payUrl = $"/pay/{policy.Id}";
+        await _emailService.SendEmailAsync(
+            user.Email,
+            $"First premium due for policy {policy.PolicyNumber}",
+            $@"<p>Dear {WebUtility.HtmlEncode(user.FirstName)},</p>
+<p>Your SpeedClaim policy <strong>{WebUtility.HtmlEncode(policy.PolicyNumber)}</strong> is approved and waiting for the first premium of <strong>INR {amount:0.00}</strong>.</p>
+<p>Please log in to SpeedClaim and pay from <strong>{WebUtility.HtmlEncode(payUrl)}</strong> to activate your cover.</p>
+<p>Regards,<br/>SpeedClaim</p>");
+
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = agentUserId,
+            EntityType = "Policy",
+            EntityId = policy.Id,
+            Action = "FirstPremiumReminderSent",
+            NewValue = JsonSerializer.Serialize(new { policy.PolicyNumber, customerUserId = user.Id, amount }),
+            CreatedAt = DateTime.UtcNow
+        });
+        await _unitOfWork.CompleteAsync();
+    }
+
     public async Task<PagedResponse<PolicyDto>> GetAllPoliciesAsync(int page, int pageSize, PolicyStatus? status = null, PolicyType? policyType = null)
     {
         var (items, total) = await _unitOfWork.Policies.GetPagedAsync(page, pageSize, p =>
@@ -327,6 +395,7 @@ public class PolicyService : IPolicyService
             p.EndDate,
             p.Product?.Domain?.ToString() ?? "",
             p.PolicyType.ToString(),
+            p.Product?.WaitingPeriodDays ?? 0,
             null,
             null,
             null

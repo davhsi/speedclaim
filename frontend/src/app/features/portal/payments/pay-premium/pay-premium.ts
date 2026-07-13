@@ -60,7 +60,7 @@ export class PayPremiumComponent implements OnInit {
     this.paymentService.getSchedule(policyId).subscribe({
       next: data => {
         this.schedule.set(data);
-        this.nextDue.set(data.find(s => this.isPayable(s)) ?? null);
+        this.nextDue.set(this.nextPayableSchedule(data));
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
@@ -101,7 +101,7 @@ export class PayPremiumComponent implements OnInit {
           // already explains why, so just refresh to reflect the new status.
           const policyId = this.route.snapshot.paramMap.get('policyId') ?? '';
           this.paymentService.getSchedule(policyId).subscribe({
-            next: data => { this.schedule.set(data); this.nextDue.set(data.find(s => this.isPayable(s)) ?? null); },
+            next: data => { this.schedule.set(data); this.nextDue.set(this.nextPayableSchedule(data)); },
           });
           return;
         }
@@ -153,7 +153,7 @@ export class PayPremiumComponent implements OnInit {
       for (let attempt = 0; attempt < 10; attempt++) {
         const data = await firstValueFrom(this.paymentService.getSchedule(policyId));
         this.schedule.set(data);
-        this.nextDue.set(data.find(s => this.isPayable(s)) ?? null);
+        this.nextDue.set(this.nextPayableSchedule(data));
         if (data.find(s => s.id === scheduleId)?.status === 'Paid') {
           return;
         }
@@ -199,6 +199,20 @@ export class PayPremiumComponent implements OnInit {
   }
 
   isPayable(item: PremiumScheduleDto): boolean {
+    return this.isUnpaid(item) && this.nextPayableSchedule()?.id === item.id;
+  }
+
+  isBlockedByEarlierInstallment(item: PremiumScheduleDto): boolean {
+    return this.isUnpaid(item) && !this.isPayable(item);
+  }
+
+  private nextPayableSchedule(data = this.schedule()): PremiumScheduleDto | null {
+    return [...data]
+      .filter(s => this.isUnpaid(s))
+      .sort((a, b) => a.installmentNumber - b.installmentNumber || new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0] ?? null;
+  }
+
+  private isUnpaid(item: PremiumScheduleDto): boolean {
     return item.status === 'Upcoming' || item.status === 'Due' || item.status === 'Overdue';
   }
 }

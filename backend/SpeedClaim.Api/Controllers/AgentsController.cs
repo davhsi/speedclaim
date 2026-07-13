@@ -94,6 +94,22 @@ public class AgentsController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>Send an in-app premium reminder to the customer for an assigned policy</summary>
+    /// <param name="policyId">Policy ID</param>
+    [Authorize(Roles = "Agent")]
+    [HttpPost("renewals/{policyId}/reminder")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(409)]
+    public async Task<IActionResult> SendRenewalReminder(string policyId)
+    {
+        var agentId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        if (agentId == null) return Unauthorized();
+        await _agentService.SendRenewalReminderAsync(agentId, policyId);
+        return Ok(new { message = "Premium reminder sent to the customer." });
+    }
+
     [Authorize(Roles = "Agent")]
     [HttpGet("commissions")]
     public async Task<IActionResult> GetMyCommissions()

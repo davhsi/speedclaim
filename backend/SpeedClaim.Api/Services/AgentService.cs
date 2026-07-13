@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
 using SpeedClaim.Api.Dtos.Auth;
@@ -17,10 +18,14 @@ namespace SpeedClaim.Api.Services;
 public class AgentService : IAgentService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly INotificationService _notifications;
+    private readonly IEmailService _emailService;
 
-    public AgentService(IUnitOfWork unitOfWork)
+    public AgentService(IUnitOfWork unitOfWork, INotificationService notifications, IEmailService emailService)
     {
         _unitOfWork = unitOfWork;
+        _notifications = notifications;
+        _emailService = emailService;
     }
 
     private async Task<Models.Agent> ResolveAgentAsync(Guid userId)
@@ -222,6 +227,15 @@ public class AgentService : IAgentService
 
         // Find upcoming or overdue premium schedules for those policies
         var thirtyDaysFromNow = DateTime.UtcNow.AddDays(30);
+        var reminderCutoff = DateTime.UtcNow.AddHours(-24);
+        var recentReminderPolicyIds = (await _unitOfWork.AuditLogs.FindAsync(a =>
+                a.EntityType == "Policy" &&
+                a.UserId == aId &&
+                a.Action == "PremiumRenewalReminderSent" &&
+                a.CreatedAt >= reminderCutoff &&
+                policyIds.Contains(a.EntityId)))
+            .Select(a => a.EntityId)
+            .ToHashSet();
         var reminders = new List<RenewalReminderDto>();
 
         foreach (var policy in policies)
@@ -246,12 +260,77 @@ public class AgentService : IAgentService
                     user?.Phone ?? string.Empty,
                     schedule.DueDate,
                     schedule.Amount,
-                    (int)(schedule.DueDate - DateTime.UtcNow).TotalDays
+                    (int)(schedule.DueDate - DateTime.UtcNow).TotalDays,
+                    recentReminderPolicyIds.Contains(policy.Id)
                 ));
             }
         }
 
         return reminders.OrderBy(r => r.DaysUntilDue);
+    }
+
+    public async Task SendRenewalReminderAsync(string agentId, string policyId)
+    {
+        var aId = Guid.Parse(agentId);
+        var pId = Guid.Parse(policyId);
+        var agent = await ResolveAgentAsync(aId);
+
+        var policy = await _unitOfWork.Policies.GetByIdAsync(pId)
+            ?? throw new NotFoundException("Policy not found.");
+        if (policy.AgentId != agent.Id)
+            throw new ForbiddenException("Access denied to this policy.");
+
+        var schedules = await _unitOfWork.PremiumSchedules.FindAsync(s =>
+            s.PolicyId == policy.Id &&
+            (s.Status == PremiumScheduleStatus.Upcoming ||
+             s.Status == PremiumScheduleStatus.Due ||
+             s.Status == PremiumScheduleStatus.Overdue));
+        var schedule = schedules.OrderBy(s => s.DueDate).FirstOrDefault()
+            ?? throw new NotFoundException("No unpaid premium schedule found for this policy.");
+
+        var reminderCutoff = DateTime.UtcNow.AddHours(-24);
+        var recentReminders = await _unitOfWork.AuditLogs.FindAsync(a =>
+            a.EntityType == "Policy" &&
+            a.EntityId == policy.Id &&
+            a.UserId == aId &&
+            a.Action == "PremiumRenewalReminderSent" &&
+            a.CreatedAt >= reminderCutoff);
+        if (recentReminders.Any())
+            throw new ConflictException("A premium reminder was already sent for this policy in the last 24 hours.");
+
+        var customer = await _unitOfWork.Customers.GetByIdAsync(policy.CustomerId)
+            ?? throw new NotFoundException("Customer not found.");
+        var user = await _unitOfWork.Users.GetByIdAsync(customer.UserId)
+            ?? throw new NotFoundException("Customer account not found.");
+
+        var isOverdue = schedule.Status == PremiumScheduleStatus.Overdue || schedule.DueDate.Date < DateTime.UtcNow.Date;
+        await _notifications.CreateAsync(
+            user.Id,
+            isOverdue ? "Premium overdue" : "Premium due soon",
+            $"Your policy {policy.PolicyNumber} has a premium of INR {schedule.Amount:0.00} due on {schedule.DueDate:dd MMM yyyy}. Pay now to keep your cover active.",
+            "payment",
+            $"/pay/{policy.Id}");
+
+        var payUrl = $"/pay/{policy.Id}";
+        await _emailService.SendEmailAsync(
+            user.Email,
+            $"Premium reminder for policy {policy.PolicyNumber}",
+            $@"<p>Dear {WebUtility.HtmlEncode(user.FirstName)},</p>
+<p>Your SpeedClaim policy <strong>{WebUtility.HtmlEncode(policy.PolicyNumber)}</strong> has a premium of <strong>INR {schedule.Amount:0.00}</strong> due on <strong>{schedule.DueDate:dd MMM yyyy}</strong>.</p>
+<p>Please log in to SpeedClaim and pay from <strong>{WebUtility.HtmlEncode(payUrl)}</strong> to keep your cover active.</p>
+<p>Regards,<br/>SpeedClaim</p>");
+
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = aId,
+            EntityType = "Policy",
+            EntityId = policy.Id,
+            Action = "PremiumRenewalReminderSent",
+            NewValue = JsonSerializer.Serialize(new { policy.PolicyNumber, customerUserId = user.Id, scheduleId = schedule.Id, amount = schedule.Amount }),
+            CreatedAt = DateTime.UtcNow
+        });
+        await _unitOfWork.CompleteAsync();
     }
 
     public async Task<IEnumerable<AgentCommissionDto>> GetMyCommissionsAsync(string agentId)

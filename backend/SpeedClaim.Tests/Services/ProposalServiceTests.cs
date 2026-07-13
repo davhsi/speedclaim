@@ -114,7 +114,7 @@ public class ProposalServiceTests
     {
         _mockProductRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((InsuranceProduct?)null);
 
-        var request = new GenerateQuoteRequest(Guid.NewGuid().ToString(), 30, "Male", 100000, 10);
+        var request = new GenerateQuoteRequest(Guid.NewGuid().ToString(), 30, 100000, 10);
         var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _proposalService.GenerateQuoteAsync(request));
         Assert.That(ex.Message, Is.EqualTo("Product not found"));
     }
@@ -126,7 +126,7 @@ public class ProposalServiceTests
         _mockProductRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(product);
         _mockRateRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<PremiumRateTable, bool>>>())).ReturnsAsync(new List<PremiumRateTable>());
 
-        var request = new GenerateQuoteRequest(Guid.NewGuid().ToString(), 30, "Male", 100000, 10);
+        var request = new GenerateQuoteRequest(Guid.NewGuid().ToString(), 30, 100000, 10);
         var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.NotFoundException>(() => _proposalService.GenerateQuoteAsync(request));
         Assert.That(ex.Message, Is.EqualTo("No applicable rate found for the given criteria"));
     }
@@ -141,7 +141,7 @@ public class ProposalServiceTests
         _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
         _mockRateRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<PremiumRateTable, bool>>>())).ReturnsAsync(new List<PremiumRateTable> { rateTable });
 
-        var request = new GenerateQuoteRequest(productId.ToString(), 30, "Male", 100000, 10);
+        var request = new GenerateQuoteRequest(productId.ToString(), 30, 100000, 10);
         var result = await _proposalService.GenerateQuoteAsync(request);
 
         // 500 + (100000 * 0.02) = 500 + 2000 = 2500
@@ -158,7 +158,7 @@ public class ProposalServiceTests
         product.IsActive = false;
         _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
 
-        var request = new GenerateQuoteRequest(productId.ToString(), 30, "Male", 100000, 10);
+        var request = new GenerateQuoteRequest(productId.ToString(), 30, 100000, 10);
 
         var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
             _proposalService.GenerateQuoteAsync(request));
@@ -172,7 +172,7 @@ public class ProposalServiceTests
         var productId = Guid.NewGuid();
         _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(ActiveProduct());
 
-        var request = new GenerateQuoteRequest(productId.ToString(), 30, "Male", 99999, 10);
+        var request = new GenerateQuoteRequest(productId.ToString(), 30, 99999, 10);
 
         Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() =>
             _proposalService.GenerateQuoteAsync(request));
@@ -189,7 +189,7 @@ public class ProposalServiceTests
         _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
         _mockRateRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<PremiumRateTable, bool>>>())).ReturnsAsync(new List<PremiumRateTable> { rateTable });
 
-        var request = new GenerateQuoteRequest(productId.ToString(), null, null, 900000, 1);
+        var request = new GenerateQuoteRequest(productId.ToString(), null, 900000, 1);
         var result = await _proposalService.GenerateQuoteAsync(request);
 
         Assert.That(result.PremiumAmount, Is.EqualTo(18000));
@@ -201,7 +201,7 @@ public class ProposalServiceTests
         var productId = Guid.NewGuid();
         _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(ActiveProduct("Health"));
 
-        var request = new GenerateQuoteRequest(productId.ToString(), null, "Male", 100000, 10);
+        var request = new GenerateQuoteRequest(productId.ToString(), null, 100000, 10);
 
         var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(() =>
             _proposalService.GenerateQuoteAsync(request));

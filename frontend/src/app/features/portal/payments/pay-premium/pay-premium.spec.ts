@@ -21,6 +21,7 @@ describe('PayPremiumComponent', () => {
   let router: { navigate: ReturnType<typeof vi.fn> };
 
   const upcoming: PremiumScheduleDto = { id: 's1', policyId: 'p1', installmentNumber: 1, amountDue: 1000, dueDate: '2026-08-01', status: 'Upcoming' };
+  const laterUpcoming: PremiumScheduleDto = { id: 's2', policyId: 'p1', installmentNumber: 2, amountDue: 1000, dueDate: '2026-09-01', status: 'Upcoming' };
   const paid: PremiumScheduleDto = { id: 's0', policyId: 'p1', installmentNumber: 0, amountDue: 500, dueDate: '2026-01-01', status: 'Paid' };
 
   function create(policyId = 'p1') {
@@ -74,12 +75,30 @@ describe('PayPremiumComponent', () => {
       const fixture = create();
       expect(fixture.componentInstance.isPayable(paid)).toBe(false);
     });
+
+    it('is false for a later unpaid installment until the earlier unpaid one is paid', () => {
+      paymentService.getSchedule.mockReturnValue(of([paid, upcoming, laterUpcoming]));
+      const fixture = create();
+
+      expect(fixture.componentInstance.isPayable(upcoming)).toBe(true);
+      expect(fixture.componentInstance.isPayable(laterUpcoming)).toBe(false);
+      expect(fixture.componentInstance.isBlockedByEarlierInstallment(laterUpcoming)).toBe(true);
+    });
   });
 
   describe('pay', () => {
     it('does nothing for a non-payable item', () => {
       const fixture = create();
       fixture.componentInstance.pay(paid);
+      expect(paymentService.createPaymentIntent).not.toHaveBeenCalled();
+    });
+
+    it('does nothing for a later unpaid installment while an earlier one is unpaid', () => {
+      paymentService.getSchedule.mockReturnValue(of([upcoming, laterUpcoming]));
+      const fixture = create();
+
+      fixture.componentInstance.pay(laterUpcoming);
+
       expect(paymentService.createPaymentIntent).not.toHaveBeenCalled();
     });
 

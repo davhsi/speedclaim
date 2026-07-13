@@ -218,7 +218,7 @@
                   </div>
                   <div class="flex items-center gap-2">
                     <app-status-badge [status]="next.status" />
-                    @if (next.status === 'Due' || next.status === 'Overdue') {
+                    @if (next.status === 'Upcoming' || next.status === 'Due' || next.status === 'Overdue') {
                       <button class="h-8 px-3 text-[12px] font-semibold text-white bg-primary border-none rounded-control cursor-pointer hover:bg-primary-hover"
                               (click)="router.navigate(['/pay', policy()!.id])">Pay now</button>
                     }
@@ -263,7 +263,7 @@
                         <td class="py-3">
                           <div class="flex items-center gap-2">
                             <app-status-badge [status]="s.status" />
-                            @if (s.status === 'Overdue') {
+                            @if (s.status === 'Upcoming' || s.status === 'Due' || s.status === 'Overdue') {
                               <button class="text-[11px] font-semibold text-white bg-danger border-none rounded px-2 py-0.5 cursor-pointer hover:opacity-90"
                                       (click)="router.navigate(['/pay', policy()!.id])">Pay now</button>
                             }

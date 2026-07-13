@@ -36,7 +36,7 @@ public class ProposalService : IProposalService
         var productId = Guid.Parse(request.ProductId);
         var product = await _unitOfWork.InsuranceProducts.GetByIdAsync(productId);
         if (product == null) throw new NotFoundException("Product not found");
-        if (!product.IsActive) throw new ConflictException("Product is not available for new quotes.");
+        if (!product.IsActive || !product.IsAvailableForSale) throw new ConflictException("Product is not available for new quotes.");
         ValidateProductEligibility(product, request.Age, request.SumAssured, request.TenureYears);
 
         var premiumAmount = await CalculatePremiumAsync(product, request.Age, request.SumAssured);
@@ -89,7 +89,7 @@ public class ProposalService : IProposalService
 
         var product = await _unitOfWork.InsuranceProducts.GetByIdAsync(productId);
         if (product == null) throw new NotFoundException("Product not found");
-        if (!product.IsActive) throw new ConflictException("Product is not available for new proposals.");
+        if (!product.IsActive || !product.IsAvailableForSale) throw new ConflictException("Product is not available for new proposals.");
 
         var customerRecord = await _unitOfWork.Customers.GetByIdAsync(customerId);
         if (customerRecord == null) throw new NotFoundException("Customer not found");
@@ -460,7 +460,7 @@ public class ProposalService : IProposalService
         {
             proposal.UnderwriterNotes = notes;
 
-            var activationDate = DateTime.UtcNow.AddDays(7);
+            var activationDate = DateTime.UtcNow.Date;
             issuedPolicy = new Policy
             {
                 Id = Guid.NewGuid(),

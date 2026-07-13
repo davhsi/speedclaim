@@ -2,7 +2,12 @@
   <div class="flex flex-wrap gap-3 items-end justify-between mb-5">
     <div>
       <h1 class="text-xl font-semibold text-ink">Submit a proposal</h1>
-      <p class="text-sm text-muted mt-0.5">On behalf of a customer · {{ selectedType ?? 'Select product' }}</p>
+      <p class="text-sm text-muted mt-0.5">
+        On behalf of a customer · {{ selectedType ?? 'Select product' }}
+        @if (selectedProduct()) {
+          · {{ selectedProduct()!.productName }}
+        }
+      </p>
     </div>
     <a routerLink="/agent/proposals"
        class="h-9 px-3.5 border border-line bg-white rounded-control text-[13px] font-medium text-body inline-flex items-center hover:bg-surface-alt transition-colors">
@@ -102,7 +107,7 @@
       <div class="text-[13px] font-medium text-body mb-2.5">Product type</div>
       <div class="grid grid-cols-3 gap-2.5">
         @for (type of productTypes; track type) {
-          <button type="button" (click)="selectedType = type" [disabled]="!hasActiveProduct(type)"
+          <button type="button" (click)="onProductTypeSelected(type)" [disabled]="!hasActiveProduct(type)"
                class="border-[1.5px] rounded-[10px] p-4 text-center transition-colors w-full"
                [class]="!hasActiveProduct(type) ? 'border-line bg-surface-alt opacity-50 cursor-not-allowed' : selectedType === type ? 'border-primary bg-primary-light cursor-pointer' : 'border-line bg-white hover:border-primary-muted cursor-pointer'">
             <div class="w-9 h-9 rounded-[9px] flex items-center justify-center mx-auto mb-2"
@@ -116,11 +121,41 @@
           </button>
         }
       </div>
+      @if (selectedType) {
+        <div class="mt-5">
+          <label for="proposal-product-select" class="block text-[13px] font-medium mb-1.5">Product</label>
+          <select
+            id="proposal-product-select"
+            [ngModel]="selectedProductId"
+            (ngModelChange)="onProductSelected($event)"
+            class="h-[42px]">
+            <option [ngValue]="null" disabled>Select a {{ selectedType }} product...</option>
+            @for (product of productsForSelectedType(); track product.id) {
+              <option [ngValue]="product.id">{{ product.productName }} · {{ product.uin }}</option>
+            }
+          </select>
+          @if (selectedProduct()) {
+            <div class="mt-2.5 grid grid-cols-2 gap-2 text-[12px] text-body">
+              <div class="rounded-[8px] border border-line bg-surface px-3 py-2">
+                <span class="text-muted">Sum assured</span>
+                <div class="font-semibold sc-numeric">{{ selectedProduct()!.minSumAssured | money }} - {{ selectedProduct()!.maxSumAssured | money }}</div>
+              </div>
+              <div class="rounded-[8px] border border-line bg-surface px-3 py-2">
+                <span class="text-muted">Tenure</span>
+                <div class="font-semibold sc-numeric">{{ selectedProduct()!.minTenureYears }}-{{ selectedProduct()!.maxTenureYears }} yrs</div>
+              </div>
+            </div>
+          }
+        </div>
+      }
     }
 
     <!-- Step 2: Quote Details -->
     @if (currentStep === 1) {
-      <div class="text-[15px] font-semibold text-ink mb-4">Quote details · {{ selectedType }}</div>
+      <div class="text-[15px] font-semibold text-ink mb-1">Quote details · {{ selectedType }}</div>
+      @if (selectedProduct()) {
+        <div class="text-[12px] text-muted mb-4">Product: <span class="font-semibold text-body">{{ selectedProduct()!.productName }}</span> · {{ selectedProduct()!.uin }}</div>
+      }
 
       @if (selectedType === 'Health') {
         <div class="grid grid-cols-2 gap-3.5 mb-4">
@@ -138,6 +173,8 @@
           <div><label for="ps-motor-model" class="block text-[13px] font-medium mb-1.5">Vehicle model</label><input id="ps-motor-model" type="text" [(ngModel)]="motorForm.vehicleModel" placeholder="e.g., Swift VXi" /></div>
           <div><label for="ps-motor-reg-year" class="block text-[13px] font-medium mb-1.5">Manufacture year</label><input id="ps-motor-reg-year" type="number" [(ngModel)]="motorForm.regYear" class="sc-numeric" /></div>
           <div><label for="ps-motor-idv" class="block text-[13px] font-medium mb-1.5">Insured declared value (IDV)</label><input id="ps-motor-idv" type="text" [(ngModel)]="motorForm.idv" class="sc-numeric" /></div>
+          <div><label for="ps-motor-engine-no" class="block text-[13px] font-medium mb-1.5">Engine number</label><input id="ps-motor-engine-no" type="text" [(ngModel)]="motorForm.engineNumber" placeholder="e.g., K12MN1234567" class="sc-numeric" /></div>
+          <div><label for="ps-motor-chassis-no" class="block text-[13px] font-medium mb-1.5">Chassis number</label><input id="ps-motor-chassis-no" type="text" [(ngModel)]="motorForm.chassisNumber" placeholder="e.g., MA3FHEB1S00A12345" class="sc-numeric" /></div>
           <div><label for="ps-motor-cover" class="block text-[13px] font-medium mb-1.5">Cover type</label><select id="ps-motor-cover" [(ngModel)]="motorForm.coverType" class="h-[42px]"><option value="Comprehensive">Comprehensive</option><option value="ThirdParty">Third-party only</option></select></div>
         </div>
       }

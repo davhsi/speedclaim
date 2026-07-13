@@ -160,6 +160,51 @@ public class FinanceServiceTests
     }
 
     [Test]
+    public void PayPremiumAsync_LaterInstallmentWithEarlierUnpaidSchedule_ThrowsConflictException()
+    {
+        var customerUserId = Guid.NewGuid();
+        var customerRecordId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+        var firstSchedule = new PremiumSchedule
+        {
+            Id = Guid.NewGuid(),
+            PolicyId = policyId,
+            Amount = 150m,
+            Status = PremiumScheduleStatus.Upcoming,
+            InstallmentNumber = 1
+        };
+        var secondSchedule = new PremiumSchedule
+        {
+            Id = Guid.NewGuid(),
+            PolicyId = policyId,
+            Amount = 150m,
+            Status = PremiumScheduleStatus.Upcoming,
+            InstallmentNumber = 2
+        };
+
+        var mockScheduleRepo = new Mock<IRepository<PremiumSchedule>>();
+        mockScheduleRepo.Setup(r => r.GetByIdAsync(secondSchedule.Id)).ReturnsAsync(secondSchedule);
+        mockScheduleRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<PremiumSchedule, bool>>>()))
+            .ReturnsAsync(new List<PremiumSchedule> { firstSchedule, secondSchedule });
+        _mockUnitOfWork.Setup(u => u.PremiumSchedules).Returns(mockScheduleRepo.Object);
+
+        var mockCustomerRepo = new Mock<IRepository<SpeedClaim.Api.Models.Customer>>();
+        mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<SpeedClaim.Api.Models.Customer, bool>>>()))
+            .ReturnsAsync(new SpeedClaim.Api.Models.Customer { Id = customerRecordId, UserId = customerUserId });
+        _mockUnitOfWork.Setup(u => u.Customers).Returns(mockCustomerRepo.Object);
+
+        var mockPolicyRepo = new Mock<IPolicyRepository>();
+        mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(new Policy { Id = policyId, CustomerId = customerRecordId });
+        _mockUnitOfWork.Setup(u => u.Policies).Returns(mockPolicyRepo.Object);
+
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ConflictException>(() =>
+            _financeService.PayPremiumAsync(customerUserId.ToString(), secondSchedule.Id.ToString(), new CreatePaymentIntentRequest { PolicyId = policyId }));
+
+        Assert.That(ex!.Message, Is.EqualTo("Installment #1 must be paid before installment #2."));
+        _mockStripeWrapper.Verify(s => s.CreatePaymentIntentAsync(It.IsAny<PaymentIntentCreateOptions>(), It.IsAny<RequestOptions>()), Times.Never);
+    }
+
+    [Test]
     public async Task GetPremiumScheduleAsync_ValidPolicy_ReturnsSchedules()
     {
         var customerUserId = Guid.NewGuid();

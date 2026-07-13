@@ -25,7 +25,7 @@ describe('QuoteComponent', () => {
     id: 'prod-motor', productName: 'SpeedDrive Motor', uin: 'U2', description: '', domain: 'Motor',
     minAge: 18, maxAge: 70, minSumAssured: 100000, maxSumAssured: 2000000,
     minTenureYears: 1, maxTenureYears: 3, waitingPeriodDays: 0,
-    allowsFamilyFloater: false, maxFamilyMembers: 1, isActive: true,
+    allowsFamilyFloater: false, maxFamilyMembers: 1, isActive: true, motorVehicleType: 'TwoWheeler',
   } as ProductDto;
 
   function create(productId: string | null = null) {
@@ -98,7 +98,7 @@ describe('QuoteComponent', () => {
     function fillValidForm(fixture: ReturnType<typeof create>) {
       fixture.componentInstance.form.setValue({
         productId: 'prod1', sumAssured: 500000, tenureYears: 5, paymentFrequency: 'Monthly',
-        age: 36, gender: 'Male', vehicleMake: '', vehicleModel: '',
+        age: 36, vehicleMake: '', vehicleModel: '',
         manufactureYear: null, insuredDeclaredValue: null, preExistingConditions: '', isSmoker: false,
       });
     }
@@ -126,7 +126,7 @@ describe('QuoteComponent', () => {
       fixture.componentInstance.onSubmit();
 
       expect(quoteService.generateQuote).toHaveBeenCalledWith({
-        productId: 'prod1', age: 36, sumAssured: 500000, tenureYears: 5, gender: 'Male',
+        productId: 'prod1', age: 36, sumAssured: 500000, tenureYears: 5,
       });
       expect(fixture.componentInstance.quoteResult()).toEqual({ premiumAmount: 2000 });
       expect(fixture.componentInstance.submitting()).toBe(false);
@@ -200,6 +200,34 @@ describe('QuoteComponent', () => {
       expect(router.navigate).toHaveBeenCalledWith(['/proposals/new'], {
         state: expect.objectContaining({
           productId: 'prod1', sumAssured: 500000, tenureYears: 5, premiumAmount: 2000, paymentFrequency: 'Monthly',
+        }),
+      });
+    });
+
+    it('carries motor vehicle details into the proposal state', () => {
+      productService.getAll.mockReturnValue(of([product, motorProduct]));
+      const fixture = create('prod-motor');
+      fixture.componentInstance.form.patchValue({
+        vehicleMake: 'TVS',
+        vehicleModel: 'Jupiter',
+        manufactureYear: 2023,
+        insuredDeclaredValue: 75000,
+      });
+      fixture.componentInstance.quoteResult.set({
+        premiumAmount: 1800, paymentFrequency: 'Monthly', sumAssured: 75000, tenureYears: 1,
+      });
+
+      fixture.componentInstance.applyNow();
+
+      expect(router.navigate).toHaveBeenCalledWith(['/proposals/new'], {
+        state: expect.objectContaining({
+          motorDetail: {
+            vehicleMake: 'TVS',
+            vehicleModel: 'Jupiter',
+            manufactureYear: 2023,
+            insuredDeclaredValue: 75000,
+          },
+          motorVehicleType: 'TwoWheeler',
         }),
       });
     });

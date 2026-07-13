@@ -23,14 +23,18 @@ describe('AgentProposalSubmitComponent', () => {
 
   const customers: AgentCustomerDto[] = [{ id: 'c1', customerId: 'cust1', fullName: 'Jane Doe', kycApproved: true } as AgentCustomerDto];
   const healthProduct = {
-    id: 'prod-health', domain: 'Health', minSumAssured: 100000, maxSumAssured: 2000000,
+    id: 'prod-health', productName: 'Health Basic', uin: 'UIN-HC-BASIC', domain: 'Health', minSumAssured: 100000, maxSumAssured: 2000000,
     minTenureYears: 1, maxTenureYears: 5,
   } as ProductDto;
   const motorProduct = {
-    id: 'prod-motor', domain: 'Motor', minSumAssured: 100000, maxSumAssured: 2000000,
+    id: 'prod-motor', productName: 'Motor Basic', uin: 'UIN-MO-BASIC', domain: 'Motor', minSumAssured: 100000, maxSumAssured: 2000000,
     minTenureYears: 1, maxTenureYears: 3,
   } as ProductDto;
-  const products: ProductDto[] = [healthProduct, motorProduct];
+  const comprehensiveMotorProduct = {
+    id: 'prod-motor-comprehensive', productName: 'Motor Comprehensive', uin: 'UIN-MO-COMP', domain: 'Motor', minSumAssured: 200000, maxSumAssured: 3000000,
+    minTenureYears: 1, maxTenureYears: 5,
+  } as ProductDto;
+  const products: ProductDto[] = [healthProduct, motorProduct, comprehensiveMotorProduct];
 
   function create() {
     agentService = {
@@ -83,6 +87,47 @@ describe('AgentProposalSubmitComponent', () => {
     });
   });
 
+  describe('product selection', () => {
+    it('filters products to the selected type', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.selectedType = 'Motor';
+
+      expect(c.productsForSelectedType().map(p => p.id)).toEqual(['prod-motor', 'prod-motor-comprehensive']);
+    });
+
+    it('clears quote, document, upload, and confirmation state when the selected product changes', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.selectedType = 'Motor';
+      c.selectedProductId = 'prod-motor';
+      c.quoteResult.set({ premiumAmount: 1000 });
+      c.docRequirements.set([{ id: 'd1', documentKey: 'rc', label: 'RC', description: '', isMandatory: true }]);
+      c.docRequirementsLoaded.set(true);
+      c.uploadedFiles.set('rc', new File(['x'], 'rc.pdf'));
+      c.confirmReady = true;
+
+      c.onProductSelected('prod-motor-comprehensive');
+
+      expect(c.selectedProduct()?.id).toBe('prod-motor-comprehensive');
+      expect(c.quoteResult()).toBeNull();
+      expect(c.docRequirements()).toEqual([]);
+      expect(c.docRequirementsLoaded()).toBe(false);
+      expect(c.uploadedFiles.size).toBe(0);
+      expect(c.confirmReady).toBe(false);
+    });
+
+    it('does not auto-select a product when a type has multiple active products', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+
+      c.onProductTypeSelected('Motor');
+
+      expect(c.selectedType).toBe('Motor');
+      expect(c.selectedProductId).toBeNull();
+    });
+  });
+
   describe('nextStep (step 0: customer + type)', () => {
     it('warns and blocks when no customer is selected', () => {
       const fixture = create();
@@ -101,9 +146,18 @@ describe('AgentProposalSubmitComponent', () => {
       expect(fixture.componentInstance.currentStep).toBe(0);
     });
 
-    it('advances when both are selected', () => {
+    it('warns and blocks when a product type is selected but no specific product is selected', () => {
       const fixture = create();
       fixture.componentInstance.selectedType = 'Health';
+      fixture.componentInstance.nextStep();
+      expect(toast.warning).toHaveBeenCalledWith('Please select a product before continuing.');
+      expect(fixture.componentInstance.currentStep).toBe(0);
+    });
+
+    it('advances when customer, type, and product are selected', () => {
+      const fixture = create();
+      fixture.componentInstance.selectedType = 'Health';
+      fixture.componentInstance.selectedProductId = 'prod-health';
       fixture.componentInstance.nextStep();
       expect(fixture.componentInstance.currentStep).toBe(1);
     });
@@ -127,6 +181,7 @@ describe('AgentProposalSubmitComponent', () => {
       const c = fixture.componentInstance;
       c.selectedCustomerKycApproved = false;
       c.selectedType = 'Health';
+      c.selectedProductId = 'prod-health';
 
       c.nextStep();
 
@@ -164,6 +219,7 @@ describe('AgentProposalSubmitComponent', () => {
     it('warns and blocks when no quote has been calculated', () => {
       const fixture = create();
       fixture.componentInstance.selectedType = 'Health';
+      fixture.componentInstance.selectedProductId = 'prod-health';
       fixture.componentInstance.currentStep = 1;
       fixture.componentInstance.nextStep();
       expect(toast.warning).toHaveBeenCalledWith('Please calculate the premium before continuing.');
@@ -176,6 +232,23 @@ describe('AgentProposalSubmitComponent', () => {
       fixture.componentInstance.quoteResult.set({ premiumAmount: 500 });
       fixture.componentInstance.nextStep();
       expect(fixture.componentInstance.currentStep).toBe(2);
+    });
+
+    it('blocks a Motor proposal from advancing when engine and chassis numbers are missing', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.selectedType = 'Motor';
+      c.selectedProductId = 'prod-motor';
+      c.currentStep = 1;
+      c.motorForm.vehicleNumber = 'TN 09 AB 1234';
+      c.motorForm.vehicleMake = 'Maruti Suzuki';
+      c.motorForm.vehicleModel = 'Swift VXi';
+      c.quoteResult.set({ premiumAmount: 22000 });
+
+      c.nextStep();
+
+      expect(toast.warning).toHaveBeenCalledWith('Engine number is required.');
+      expect(c.currentStep).toBe(1);
     });
   });
 
@@ -196,12 +269,13 @@ describe('AgentProposalSubmitComponent', () => {
       fixture.componentInstance.selectedType = 'Life';
       fixture.componentInstance.calculateQuote();
       expect(agentService.generateQuote).not.toHaveBeenCalled();
-      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('No active Life product'));
+      expect(toast.error).toHaveBeenCalledWith('Please select a product before calculating the premium.');
     });
 
     it('does not send an age for Motor quotes (Motor is not age-rated)', () => {
       const fixture = create();
       fixture.componentInstance.selectedType = 'Motor';
+      fixture.componentInstance.selectedProductId = 'prod-motor';
       fixture.componentInstance.motorForm.idv = '9,00,000';
       agentService.generateQuote.mockReturnValue(of({ premiumAmount: 18000 }));
 
@@ -212,9 +286,24 @@ describe('AgentProposalSubmitComponent', () => {
       });
     });
 
+    it('uses the explicitly selected Motor product when multiple Motor products exist', () => {
+      const fixture = create();
+      fixture.componentInstance.selectedType = 'Motor';
+      fixture.componentInstance.selectedProductId = 'prod-motor-comprehensive';
+      fixture.componentInstance.motorForm.idv = '12,00,000';
+      agentService.generateQuote.mockReturnValue(of({ premiumAmount: 24000 }));
+
+      fixture.componentInstance.calculateQuote();
+
+      expect(agentService.generateQuote).toHaveBeenCalledWith({
+        productId: 'prod-motor-comprehensive', age: undefined, sumAssured: 1200000, tenureYears: 1,
+      });
+    });
+
     it('computes age/sumAssured/tenure for Health and calls generateQuote', () => {
       const fixture = create();
       fixture.componentInstance.selectedType = 'Health';
+      fixture.componentInstance.selectedProductId = 'prod-health';
       fixture.componentInstance.healthForm.eldestAge = 45;
       fixture.componentInstance.healthForm.sumAssured = '₹5,00,000';
       agentService.generateQuote.mockReturnValue(of({ premiumAmount: 4000 }));
@@ -230,6 +319,7 @@ describe('AgentProposalSubmitComponent', () => {
     it('clamps sumAssured to the product limits', () => {
       const fixture = create();
       fixture.componentInstance.selectedType = 'Health';
+      fixture.componentInstance.selectedProductId = 'prod-health';
       fixture.componentInstance.healthForm.sumAssured = '₹50,00,00,000'; // way above max
       agentService.generateQuote.mockReturnValue(of({ premiumAmount: 1 }));
 
@@ -241,6 +331,7 @@ describe('AgentProposalSubmitComponent', () => {
     it('shows an error toast when the quote call fails', () => {
       const fixture = create();
       fixture.componentInstance.selectedType = 'Health';
+      fixture.componentInstance.selectedProductId = 'prod-health';
       agentService.generateQuote.mockReturnValue(throwError(() => ({ status: 500 })));
 
       fixture.componentInstance.calculateQuote();
@@ -252,6 +343,7 @@ describe('AgentProposalSubmitComponent', () => {
       const fixture = create();
       const c = fixture.componentInstance;
       c.selectedType = 'Health';
+      c.selectedProductId = 'prod-health';
       const subject = new Subject<any>();
       agentService.generateQuote.mockReturnValue(subject);
 
@@ -272,6 +364,7 @@ describe('AgentProposalSubmitComponent', () => {
       const fixture = create();
       const c = fixture.componentInstance;
       c.selectedType = 'Health';
+      c.selectedProductId = 'prod-health';
       const subject = new Subject<any>();
       agentService.generateQuote.mockReturnValue(subject);
 
@@ -287,6 +380,7 @@ describe('AgentProposalSubmitComponent', () => {
   describe('nextStep (step 3: confirm + submit)', () => {
     function setupReadyToSubmit(fixture: ReturnType<typeof create>) {
       fixture.componentInstance.selectedType = 'Health';
+      fixture.componentInstance.selectedProductId = 'prod-health';
       fixture.componentInstance.currentStep = 3;
       fixture.componentInstance.selectedCustomerId = 'cust1';
       fixture.componentInstance.quoteResult.set({ sumAssured: 500000, tenureYears: 1, premiumAmount: 4000 });
@@ -317,6 +411,37 @@ describe('AgentProposalSubmitComponent', () => {
         paymentFrequency: 'Annually', customerMemberIds: [], nominees: [],
       }));
       expect(router.navigate).toHaveBeenCalledWith(['/agent/proposals']);
+    });
+
+    it('submits the explicitly selected product when multiple products share a domain', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.selectedType = 'Motor';
+      c.selectedProductId = 'prod-motor-comprehensive';
+      c.currentStep = 3;
+      c.selectedCustomerId = 'cust1';
+      c.quoteResult.set({ sumAssured: 1200000, tenureYears: 1, premiumAmount: 24000 });
+      c.motorForm.vehicleNumber = 'TN 09 AB 1234';
+      c.motorForm.vehicleMake = 'Maruti Suzuki';
+      c.motorForm.vehicleModel = 'Swift VXi';
+      c.motorForm.engineNumber = 'K12MN1234567';
+      c.motorForm.chassisNumber = 'MA3FHEB1S00A12345';
+      c.docRequirementsLoaded.set(true);
+      c.confirmReady = true;
+      agentService.submitProposal.mockReturnValue(of({ id: 'p-new' }));
+
+      c.nextStep();
+
+      expect(agentService.submitProposal).toHaveBeenCalledWith(expect.objectContaining({
+        productId: 'prod-motor-comprehensive',
+        customerId: 'cust1',
+        sumAssured: 1200000,
+        premiumAmount: 24000,
+        motorDetail: expect.objectContaining({
+          engineNumber: 'K12MN1234567',
+          chassisNumber: 'MA3FHEB1S00A12345',
+        }),
+      }));
     });
 
     it('shows an error toast when submission fails', () => {
@@ -390,6 +515,23 @@ describe('AgentProposalSubmitComponent', () => {
     });
   });
 
+  describe('document requirements', () => {
+    it('loads requirements for the explicitly selected product', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.selectedType = 'Motor';
+      c.selectedProductId = 'prod-motor-comprehensive';
+      c.currentStep = 2;
+      c.quoteResult.set({ premiumAmount: 24000 });
+      agentService.getProductDocuments.mockReturnValue(of([]));
+
+      c.nextStep();
+
+      expect(agentService.getProductDocuments).toHaveBeenCalledWith('prod-motor-comprehensive');
+      expect(c.currentStep).toBe(3);
+    });
+  });
+
   describe('customer search', () => {
     beforeEach(() => {
       vi.useFakeTimers();
@@ -448,6 +590,7 @@ describe('AgentProposalSubmitComponent', () => {
     it('allows navigation while still on step 0 (customer/type selection)', () => {
       const fixture = create();
       fixture.componentInstance.selectedType = 'Health';
+      fixture.componentInstance.selectedProductId = 'prod-health';
       expect(fixture.componentInstance.canDeactivate()).toBe(true);
     });
 
@@ -477,6 +620,7 @@ describe('AgentProposalSubmitComponent', () => {
       const fixture = create();
       const c = fixture.componentInstance;
       c.selectedType = 'Health';
+      c.selectedProductId = 'prod-health';
       c.currentStep = 3;
       c.selectedCustomerId = 'cust1';
       c.quoteResult.set({ sumAssured: 500000, tenureYears: 1, premiumAmount: 4000 });

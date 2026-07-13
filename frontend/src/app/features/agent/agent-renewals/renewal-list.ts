@@ -20,6 +20,8 @@ export class AgentRenewalListComponent implements OnInit {
   loading = signal(true);
   renewals = signal<RenewalReminderDto[]>([]);
   filterDays = signal(30);
+  sendingReminderId = signal<string | null>(null);
+  sentReminderIds = signal<Set<string>>(new Set());
   currentPage = signal(1);
   readonly pageSize = 10;
 
@@ -41,6 +43,7 @@ export class AgentRenewalListComponent implements OnInit {
     this.agentService.getRenewals().subscribe({
       next: renewals => {
         this.renewals.set(renewals);
+        this.sentReminderIds.set(new Set(renewals.filter(r => r.reminderSentRecently).map(r => r.policyId)));
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
@@ -52,16 +55,25 @@ export class AgentRenewalListComponent implements OnInit {
   }
 
   sendReminder(renewal: RenewalReminderDto): void {
-    if (!renewal.customerEmail) {
-      this.toast.warning('Customer email is not available for this renewal.');
-      return;
-    }
+    if (this.sendingReminderId() || this.sentReminderIds().has(renewal.policyId)) return;
 
-    const subject = encodeURIComponent(`Renewal reminder for ${renewal.policyNumber}`);
-    const body = encodeURIComponent(
-      `Dear ${renewal.customerName},\n\nYour SpeedClaim policy ${renewal.policyNumber} is due for renewal on ${this.formatDate(renewal.dueDate)}. The premium due is INR ${renewal.amountDue}.\n\nPlease log in to SpeedClaim to complete the renewal.\n\nRegards,\nSpeedClaim`
-    );
-    globalThis.location.href = `mailto:${renewal.customerEmail}?subject=${subject}&body=${body}`;
+    this.sendingReminderId.set(renewal.policyId);
+    this.agentService.sendRenewalReminder(renewal.policyId).subscribe({
+      next: () => {
+        this.toast.success('Premium reminder sent to the customer.');
+        this.sentReminderIds.update(ids => new Set(ids).add(renewal.policyId));
+        this.sendingReminderId.set(null);
+      },
+      error: err => {
+        if (err?.status === 409) {
+          this.toast.warning('A reminder was already sent for this policy in the last 24 hours.');
+          this.sentReminderIds.update(ids => new Set(ids).add(renewal.policyId));
+        } else {
+          this.toast.error('Could not send premium reminder.');
+        }
+        this.sendingReminderId.set(null);
+      },
+    });
   }
 
   viewDetails(renewal: RenewalReminderDto): void {

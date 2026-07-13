@@ -34,7 +34,10 @@ export class ProposalSubmitComponent implements OnInit, CanComponentDeactivate {
   profile = signal<UserDto | null>(null);
   uploadedFiles = new Map<string, File>();
   stepLabels = ['Details', 'Nominees', 'Documents'];
+  readonly relationshipOptions = ['Spouse', 'Husband', 'Wife', 'Son', 'Daughter', 'Father', 'Mother', 'Brother', 'Sister', 'Guardian', 'Other'];
   domain = signal<string | null>(null);
+  quoteMotorDetail = signal<{ vehicleMake?: string; vehicleModel?: string; manufactureYear?: number; insuredDeclaredValue?: number } | null>(null);
+  productMotorVehicleType = signal<string | null>(null);
 
   form = this.fb.group({
     productId: ['', Validators.required],
@@ -51,11 +54,18 @@ export class ProposalSubmitComponent implements OnInit, CanComponentDeactivate {
     vehicleMake: ['', Validators.required],
     vehicleModel: ['', Validators.required],
     manufactureYear: [new Date().getFullYear(), [Validators.required, Validators.min(1980)]],
+    engineNumber: ['', Validators.required],
+    chassisNumber: ['', Validators.required],
+    motorVehicleType: ['', Validators.required],
     coverType: ['Comprehensive', Validators.required],
   });
 
   isMotor(): boolean {
     return (this.domain() ?? '').toUpperCase() === 'MOTOR';
+  }
+
+  isLife(): boolean {
+    return (this.domain() ?? '').toUpperCase() === 'LIFE';
   }
 
   showLeaveConfirm = signal(false);
@@ -90,6 +100,22 @@ export class ProposalSubmitComponent implements OnInit, CanComponentDeactivate {
     if (state?.productId) {
       this.form.patchValue(state);
       this.domain.set(state.domain ?? null);
+      this.productMotorVehicleType.set(state.motorVehicleType ?? null);
+      if (state.motorDetail) {
+        this.quoteMotorDetail.set(state.motorDetail);
+        this.motorForm.patchValue({
+          vehicleMake: state.motorDetail.vehicleMake ?? '',
+          vehicleModel: state.motorDetail.vehicleModel ?? '',
+          manufactureYear: state.motorDetail.manufactureYear ?? new Date().getFullYear(),
+          motorVehicleType: state.motorVehicleType ?? '',
+        });
+        this.motorForm.controls.vehicleMake.disable();
+        this.motorForm.controls.vehicleModel.disable();
+        this.motorForm.controls.manufactureYear.disable();
+      }
+      if (state.motorVehicleType) {
+        this.motorForm.controls.motorVehicleType.disable();
+      }
       this.form.controls.productId.disable();
       this.form.controls.sumAssured.disable();
       this.form.controls.tenureYears.disable();
@@ -126,10 +152,19 @@ export class ProposalSubmitComponent implements OnInit, CanComponentDeactivate {
   }
 
   get nomineesValid(): boolean {
+    if (!this.isLife()) return true;
     if (!this.nominees.valid || this.nominees.length === 0 || this.totalShares !== 100) return false;
     return this.nominees.controls.every((_, i) =>
       !this.isMinorNominee(i) || !!this.nominees.at(i).get('appointeeName')?.value?.trim()
     );
+  }
+
+  continueFromDetails(): void {
+    this.step.set(this.isLife() ? 1 : 2);
+  }
+
+  backFromDocuments(): void {
+    this.step.set(this.isLife() ? 1 : 0);
   }
 
   onDocSelected(key: string, file: File): void { this.uploadedFiles.set(key, file); }
@@ -177,6 +212,7 @@ export class ProposalSubmitComponent implements OnInit, CanComponentDeactivate {
 
     this.submitting.set(true);
     const formValue = this.form.getRawValue();
+    const motorValue = this.motorForm.getRawValue();
     const req: SubmitProposalRequest = {
       customerId,
       productId: formValue.productId!,
@@ -185,25 +221,25 @@ export class ProposalSubmitComponent implements OnInit, CanComponentDeactivate {
       premiumAmount: formValue.premiumAmount!,
       paymentFrequency: formValue.paymentFrequency as any,
       motorDetail: this.isMotor() ? {
-        vehicleNumber: this.motorForm.value.vehicleNumber!.trim(),
-        vehicleMake: this.motorForm.value.vehicleMake!.trim(),
-        vehicleModel: this.motorForm.value.vehicleModel!.trim(),
-        manufactureYear: Number(this.motorForm.value.manufactureYear),
-        vehicleType: 'PrivateCar',
-        idv: formValue.sumAssured!,
-        engineNumber: '',
-        chassisNumber: '',
-        coverType: this.motorForm.value.coverType!,
+        vehicleNumber: motorValue.vehicleNumber!.trim(),
+        vehicleMake: motorValue.vehicleMake!.trim(),
+        vehicleModel: motorValue.vehicleModel!.trim(),
+        manufactureYear: Number(motorValue.manufactureYear),
+        vehicleType: motorValue.motorVehicleType!,
+        idv: this.quoteMotorDetail()?.insuredDeclaredValue ?? formValue.sumAssured!,
+        engineNumber: motorValue.engineNumber!.trim(),
+        chassisNumber: motorValue.chassisNumber!.trim(),
+        coverType: motorValue.coverType!,
       } : undefined,
       customerMemberIds: [],
-      nominees: this.nominees.getRawValue().map(n => ({
+      nominees: this.isLife() ? this.nominees.getRawValue().map(n => ({
         fullName: n.name!,
         relationship: n.relationship as any,
         sharePercentage: n.sharePercentage!,
         dateOfBirth: n.dateOfBirth!,
         isMinor: this.isMinor(n.dateOfBirth!),
         appointeeName: n.appointeeName?.trim() || undefined,
-      })),
+      })) : [],
     };
     this.proposalService.submit(req).subscribe({
       next: proposal => {

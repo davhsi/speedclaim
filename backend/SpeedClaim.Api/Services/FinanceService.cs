@@ -66,6 +66,16 @@ public class FinanceService : IFinanceService
         if (policy == null || policy.CustomerId != customerRecord.Id || policy.Id != request.PolicyId)
             throw new ForbiddenException("Access denied to this premium schedule.");
 
+        var policySchedules = await _unitOfWork.PremiumSchedules.FindAsync(s => s.PolicyId == policy.Id) ?? Enumerable.Empty<PremiumSchedule>();
+        var earlierUnpaidSchedule = policySchedules
+            .Where(s => s.InstallmentNumber < schedule.InstallmentNumber && IsPremiumSchedulePayable(s.Status))
+            .OrderBy(s => s.InstallmentNumber)
+            .FirstOrDefault();
+        if (earlierUnpaidSchedule != null)
+        {
+            throw new ConflictException($"Installment #{earlierUnpaidSchedule.InstallmentNumber} must be paid before installment #{schedule.InstallmentNumber}.");
+        }
+
         // A pending payment row may already exist for this schedule from a prior attempt
         // (e.g. the user cancelled the checkout modal and clicked Pay again, or confirmed
         // successfully but the frontend never saw it). Check its LIVE Stripe status before
@@ -201,6 +211,9 @@ public class FinanceService : IFinanceService
             PublishableKey = _config["Stripe:PublishableKey"] ?? string.Empty
         };
     }
+
+    private static bool IsPremiumSchedulePayable(PremiumScheduleStatus status) =>
+        status is PremiumScheduleStatus.Upcoming or PremiumScheduleStatus.Due or PremiumScheduleStatus.Overdue;
 
     public async Task<IEnumerable<PremiumScheduleDto>> GetPremiumScheduleAsync(string policyId, string customerId)
     {

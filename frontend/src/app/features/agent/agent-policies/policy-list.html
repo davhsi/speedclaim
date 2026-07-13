@@ -16,13 +16,14 @@
             <th class="px-4 py-3 text-left font-semibold text-ink text-xs">Premium</th>
             <th class="px-4 py-3 text-left font-semibold text-ink text-xs">Status</th>
             <th class="px-4 py-3 text-left font-semibold text-ink text-xs">End Date</th>
+            <th class="px-4 py-3 text-right font-semibold text-ink text-xs">Actions</th>
           </tr>
         </thead>
         <tbody>
           @if (loading()) {
             @for (i of [1,2,3,4,5]; track i) {
               <tr class="border-b border-line">
-                <td colspan="7" class="px-4 py-3"><app-skeleton variant="table-row" /></td>
+                <td colspan="8" class="px-4 py-3"><app-skeleton variant="table-row" /></td>
               </tr>
             }
           } @else {
@@ -42,11 +43,34 @@
                   <app-status-badge [status]="pol.status" />
                 </td>
                 <td class="px-4 py-3.5 text-muted text-xs">{{ formatDate(pol.endDate) }}</td>
+                <td class="px-4 py-3.5">
+                  @if (canRequestPayment(pol)) {
+                    <div class="flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        (click)="notifyCustomer(pol)"
+                        [disabled]="remindingPolicyId() === pol.id || remindedPolicyIds().has(pol.id)"
+                        class="h-8 px-3 rounded-control border-none bg-primary text-white text-xs font-semibold cursor-pointer whitespace-nowrap hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-wait"
+                      >
+                        {{ remindedPolicyIds().has(pol.id) ? 'Reminder sent' : (remindingPolicyId() === pol.id ? 'Sending...' : 'Notify customer') }}
+                      </button>
+                      <button
+                        type="button"
+                        (click)="copyPaymentInstructions(pol)"
+                        class="h-8 px-3 rounded-control border border-line bg-white text-body text-xs font-semibold cursor-pointer whitespace-nowrap hover:bg-surface-alt transition-colors"
+                      >
+                        Copy instructions
+                      </button>
+                    </div>
+                  } @else {
+                    <span class="block text-right text-xs text-muted">—</span>
+                  }
+                </td>
               </tr>
             }
             @if (policies().length === 0) {
               <tr>
-                <td colspan="7" class="px-4 py-10 text-center text-sm text-muted">
+                <td colspan="8" class="px-4 py-10 text-center text-sm text-muted">
                   No policies found for your customers.
                 </td>
               </tr>

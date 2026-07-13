@@ -20,6 +20,7 @@ public interface IPolicyService
 
     // Agent
     Task<IEnumerable<PolicyDto>> GetAssignedCustomerPoliciesAsync(Guid agentId);
+    Task RemindCustomerToPayAsync(Guid policyId, Guid agentId);
 
     // Underwriter / Admin
     Task<PagedResponse<PolicyDto>> GetAllPoliciesAsync(int page, int pageSize, PolicyStatus? status = null, PolicyType? policyType = null);

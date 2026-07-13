@@ -20,6 +20,7 @@ public record PolicyDto(
     DateTime EndDate,
     string Domain,
     string Type,
+    int WaitingPeriodDays,
 
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     PolicyHealthDetailDto? HealthDetail,

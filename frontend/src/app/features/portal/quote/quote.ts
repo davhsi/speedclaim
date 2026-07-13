@@ -34,7 +34,6 @@ export class QuoteComponent implements OnInit {
     tenureYears: [null as number | null, Validators.required],
     paymentFrequency: ['Monthly', Validators.required],
     age: [null as number | null, Validators.required],
-    gender: [''],
     vehicleMake: [''],
     vehicleModel: [''],
     manufactureYear: [null as number | null],
@@ -82,7 +81,6 @@ export class QuoteComponent implements OnInit {
       age: v.age ?? undefined,
       sumAssured: v.sumAssured!,
       tenureYears: v.tenureYears!,
-      gender: v.gender as any || undefined,
     };
 
     this.submitting.set(true);
@@ -107,6 +105,13 @@ export class QuoteComponent implements OnInit {
         premiumAmount: quote.premiumAmount,
         paymentFrequency: quote.paymentFrequency,
         domain: this.selectedProduct()?.domain,
+        motorVehicleType: this.selectedProduct()?.motorVehicleType,
+        motorDetail: this.selectedProduct()?.domain.toUpperCase() === 'MOTOR' ? {
+          vehicleMake: this.form.value.vehicleMake,
+          vehicleModel: this.form.value.vehicleModel,
+          manufactureYear: this.form.value.manufactureYear,
+          insuredDeclaredValue: this.form.value.insuredDeclaredValue,
+        } : undefined,
       },
     });
   }

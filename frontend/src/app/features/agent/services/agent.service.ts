@@ -45,6 +45,7 @@ export interface RenewalReminderDto {
   dueDate: string;
   amountDue: number;
   daysUntilDue: number;
+  reminderSentRecently: boolean;
 }
 
 export interface AgentCommissionDto {
@@ -124,8 +125,20 @@ export class AgentService {
     return this.http.get<RenewalReminderDto[]>('/api/v1/agents/renewals');
   }
 
+  sendRenewalReminder(policyId: string): Observable<ApiMessage> {
+    return this.http.post<ApiMessage>(`/api/v1/agents/renewals/${policyId}/reminder`, {}, {
+      context: new HttpContext().set(SKIP_ERROR_TOAST, true),
+    });
+  }
+
   getAssignedPolicies(): Observable<PolicyDto[]> {
     return this.http.get<PolicyDto[]>('/api/v1/policies/assigned');
+  }
+
+  remindCustomerToPay(policyId: string): Observable<ApiMessage> {
+    return this.http.post<ApiMessage>(`/api/v1/policies/${policyId}/payment-reminder`, {}, {
+      context: new HttpContext().set(SKIP_ERROR_TOAST, true),
+    });
   }
 
   getMyProposals(): Observable<ProposalDto[]> {

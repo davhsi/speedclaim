@@ -42,6 +42,14 @@
                 >
                   {{ paying() && payingId() === s.id ? 'Opening...' : 'Pay' }}
                 </button>
+              } @else if (isBlockedByEarlierInstallment(s)) {
+                <button
+                  class="h-8 px-3.5 bg-surface-alt border border-line text-muted text-xs font-semibold rounded-control cursor-not-allowed"
+                  disabled
+                  title="Pay earlier installments first"
+                >
+                  Locked
+                </button>
               } @else {
                 <app-status-badge [status]="s.status" />
               }

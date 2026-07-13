@@ -7,7 +7,7 @@ import { PolicyService } from '../services/policy.service';
 import { PaymentService } from '../../payments/services/payment.service';
 import { ProductService } from '../../products/services/product.service';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
-import { ApiMessage, PolicyDto, ProductDto } from '../../../../core/models/api.models';
+import { ApiMessage, PolicyDto, PremiumScheduleDto, ProductDto } from '../../../../core/models/api.models';
 
 describe('PolicyDetailComponent', () => {
   let policyService: {
@@ -32,12 +32,12 @@ describe('PolicyDetailComponent', () => {
 
   const product: ProductDto = { id: 'prod1', productName: 'Health Plus', domain: 'Health' } as ProductDto;
 
-  function create(policy: PolicyDto | null = basePolicy) {
+  function create(policy: PolicyDto | null = basePolicy, schedules: PremiumScheduleDto[] = []) {
     policyService.getById.mockReturnValue(policy ? of(policy) : throwError(() => ({ status: 404 })));
     productService.getById.mockReturnValue(of(product));
     policyService.getNominees.mockReturnValue(of([]));
     policyService.getEndorsements.mockReturnValue(of([]));
-    policyService.getSchedule.mockReturnValue(of([]));
+    policyService.getSchedule.mockReturnValue(of(schedules));
     policyService.getHistory.mockReturnValue(of([]));
     paymentService.getHistory.mockReturnValue(of([]));
 
@@ -171,6 +171,23 @@ describe('PolicyDetailComponent', () => {
 
       expect(fixture.componentInstance.cancelling()).toBe(false);
       expect(toast.error).toHaveBeenCalledWith('Cancellation failed');
+    });
+  });
+
+  describe('schedule payments', () => {
+    it('shows Pay now for an upcoming installment and navigates to payment', () => {
+      const fixture = create({ ...basePolicy, status: 'Pending' }, [
+        { id: 'sch1', policyId: 'pol1', installmentNumber: 1, amountDue: 22000, dueDate: '2026-07-20', status: 'Upcoming' },
+      ] as PremiumScheduleDto[]);
+      fixture.componentInstance.activeTab.set(3);
+      fixture.detectChanges();
+
+      const buttons = Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[];
+      const payButton = buttons.find(button => button.textContent?.trim() === 'Pay now');
+      expect(payButton).toBeTruthy();
+
+      payButton!.click();
+      expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/pay', 'pol1']);
     });
   });
 });

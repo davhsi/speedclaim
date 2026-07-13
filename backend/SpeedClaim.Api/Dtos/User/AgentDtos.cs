@@ -70,5 +70,6 @@ public record RenewalReminderDto(
     string CustomerPhone,
     DateTime DueDate,
     decimal AmountDue,
-    int DaysUntilDue
+    int DaysUntilDue,
+    bool ReminderSentRecently
 );

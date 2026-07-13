@@ -56,27 +56,72 @@
 
         @if (isMotor()) {
           <div class="text-[15px] font-semibold text-ink mt-6 mb-1">Vehicle details</div>
-          <p class="text-[13px] text-muted mb-3">These identify the vehicle being insured and appear on the policy.</p>
+          <p class="text-[13px] text-muted mb-3">Add registration identifiers. Vehicle make, model, year, and IDV come from your quote.</p>
+          @if (quoteMotorDetail()) {
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 rounded-[10px] border border-line bg-surface-alt p-3 mb-3">
+              <div>
+                <div class="text-[11px] font-semibold uppercase text-muted">Make</div>
+                <div class="text-sm font-semibold text-ink">{{ quoteMotorDetail()!.vehicleMake }}</div>
+              </div>
+              <div>
+                <div class="text-[11px] font-semibold uppercase text-muted">Model</div>
+                <div class="text-sm font-semibold text-ink">{{ quoteMotorDetail()!.vehicleModel }}</div>
+              </div>
+              <div>
+                <div class="text-[11px] font-semibold uppercase text-muted">Year</div>
+                <div class="text-sm font-semibold text-ink sc-numeric">{{ quoteMotorDetail()!.manufactureYear }}</div>
+              </div>
+              <div>
+                <div class="text-[11px] font-semibold uppercase text-muted">IDV</div>
+                <div class="text-sm font-semibold text-ink sc-numeric">₹ {{ quoteMotorDetail()!.insuredDeclaredValue }}</div>
+              </div>
+            </div>
+          } @else {
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-3" [formGroup]="motorForm">
+              <div>
+                <label for="proposal-vehicle-make" class="block text-[13px] font-medium mb-1.5">Make</label>
+                <input id="proposal-vehicle-make" type="text" formControlName="vehicleMake" placeholder="e.g., TVS" class="h-[42px]"
+                       [class.border-danger]="motorForm.get('vehicleMake')?.invalid && motorForm.get('vehicleMake')?.touched" />
+              </div>
+              <div>
+                <label for="proposal-vehicle-model" class="block text-[13px] font-medium mb-1.5">Model</label>
+                <input id="proposal-vehicle-model" type="text" formControlName="vehicleModel" placeholder="e.g., Jupiter" class="h-[42px]"
+                       [class.border-danger]="motorForm.get('vehicleModel')?.invalid && motorForm.get('vehicleModel')?.touched" />
+              </div>
+              <div>
+                <label for="proposal-vehicle-year" class="block text-[13px] font-medium mb-1.5">Manufacture year</label>
+                <input id="proposal-vehicle-year" type="number" formControlName="manufactureYear" class="h-[42px] sc-numeric"
+                       [class.border-danger]="motorForm.get('manufactureYear')?.invalid && motorForm.get('manufactureYear')?.touched" />
+              </div>
+            </div>
+          }
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5" [formGroup]="motorForm">
+            @if (!productMotorVehicleType()) {
+              <div>
+                <label for="proposal-motor-vehicle-type" class="block text-[13px] font-medium mb-1.5">Vehicle type</label>
+                <select id="proposal-motor-vehicle-type" formControlName="motorVehicleType" class="h-[42px]"
+                        [class.border-danger]="motorForm.get('motorVehicleType')?.invalid && motorForm.get('motorVehicleType')?.touched">
+                  <option value="">Select...</option>
+                  <option value="TwoWheeler">Two wheeler</option>
+                  <option value="PrivateCar">Private car</option>
+                  <option value="CommercialVehicle">Commercial vehicle</option>
+                </select>
+              </div>
+            }
             <div>
               <label for="proposal-vehicle-number" class="block text-[13px] font-medium mb-1.5">Registration number</label>
               <input id="proposal-vehicle-number" type="text" formControlName="vehicleNumber" placeholder="e.g., TN 09 AB 1234" class="h-[42px] sc-numeric"
                      [class.border-danger]="motorForm.get('vehicleNumber')?.invalid && motorForm.get('vehicleNumber')?.touched" />
             </div>
             <div>
-              <label for="proposal-vehicle-make" class="block text-[13px] font-medium mb-1.5">Make</label>
-              <input id="proposal-vehicle-make" type="text" formControlName="vehicleMake" placeholder="e.g., Maruti Suzuki" class="h-[42px]"
-                     [class.border-danger]="motorForm.get('vehicleMake')?.invalid && motorForm.get('vehicleMake')?.touched" />
+              <label for="proposal-engine-number" class="block text-[13px] font-medium mb-1.5">Engine number</label>
+              <input id="proposal-engine-number" type="text" formControlName="engineNumber" placeholder="e.g., K12MN1234567" class="h-[42px] sc-numeric"
+                     [class.border-danger]="motorForm.get('engineNumber')?.invalid && motorForm.get('engineNumber')?.touched" />
             </div>
             <div>
-              <label for="proposal-vehicle-model" class="block text-[13px] font-medium mb-1.5">Model</label>
-              <input id="proposal-vehicle-model" type="text" formControlName="vehicleModel" placeholder="e.g., Swift VXi" class="h-[42px]"
-                     [class.border-danger]="motorForm.get('vehicleModel')?.invalid && motorForm.get('vehicleModel')?.touched" />
-            </div>
-            <div>
-              <label for="proposal-vehicle-year" class="block text-[13px] font-medium mb-1.5">Manufacture year</label>
-              <input id="proposal-vehicle-year" type="number" formControlName="manufactureYear" class="h-[42px] sc-numeric"
-                     [class.border-danger]="motorForm.get('manufactureYear')?.invalid && motorForm.get('manufactureYear')?.touched" />
+              <label for="proposal-chassis-number" class="block text-[13px] font-medium mb-1.5">Chassis number</label>
+              <input id="proposal-chassis-number" type="text" formControlName="chassisNumber" placeholder="e.g., MA3FHEB1S00A12345" class="h-[42px] sc-numeric"
+                     [class.border-danger]="motorForm.get('chassisNumber')?.invalid && motorForm.get('chassisNumber')?.touched" />
             </div>
             <div>
               <label for="proposal-vehicle-cover" class="block text-[13px] font-medium mb-1.5">Cover type</label>
@@ -91,7 +136,7 @@
         <div class="flex justify-end mt-5 pt-5 border-t border-line">
           <button class="h-10 px-5 bg-primary text-white text-[13px] font-semibold rounded-control hover:bg-primary-hover transition-colors disabled:opacity-40"
                   [disabled]="form.invalid || (isMotor() && motorForm.invalid)"
-                  (click)="step.set(1)">Continue</button>
+                  (click)="continueFromDetails()">Continue</button>
         </div>
       }
       @case (1) {
@@ -107,8 +152,9 @@
               <div>
                 <label [for]="'nominee-relationship-' + i" class="block text-xs text-muted mb-1">Relationship</label>
                 <select [id]="'nominee-relationship-' + i" formControlName="relationship" class="h-[42px]">
-                  <option value="Spouse">Spouse</option><option value="Son">Son</option><option value="Daughter">Daughter</option>
-                  <option value="Father">Father</option><option value="Mother">Mother</option><option value="Other">Other</option>
+                  @for (relationship of relationshipOptions; track relationship) {
+                    <option [value]="relationship">{{ relationship }}</option>
+                  }
                 </select>
               </div>
               <div>
@@ -163,7 +209,7 @@
           <p class="text-sm text-muted py-4">No specific documents required. You can upload after submission if needed.</p>
         }
         <div class="flex justify-between mt-5 pt-5 border-t border-line">
-          <button class="h-10 px-5 border border-line bg-white text-[13px] font-semibold text-body rounded-control hover:bg-surface-alt transition-colors" (click)="step.set(1)">Back</button>
+          <button class="h-10 px-5 border border-line bg-white text-[13px] font-semibold text-body rounded-control hover:bg-surface-alt transition-colors" (click)="backFromDocuments()">Back</button>
           <button class="h-10 px-5 bg-accent text-white text-[13px] font-semibold rounded-control hover:bg-accent-hover transition-colors disabled:opacity-50 flex items-center gap-2" [disabled]="submitting() || !requiredDocumentsUploaded()" (click)="submit()">
             @if (submitting()) {
               <span class="w-3.5 h-3.5 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>

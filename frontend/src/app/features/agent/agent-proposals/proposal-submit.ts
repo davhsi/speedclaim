@@ -45,6 +45,7 @@ export class AgentProposalSubmitComponent implements OnInit, CanComponentDeactiv
   selectedCustomerKycStatus: string | null = null;
   selectedCustomerKycRejectionReason: string | null = null;
   selectedType: ProductType | null = null;
+  selectedProductId: string | null = null;
   confirmReady = false;
 
   customerSearchQuery = signal('');
@@ -57,12 +58,12 @@ export class AgentProposalSubmitComponent implements OnInit, CanComponentDeactiv
   // Defaults sit inside the seeded Health product's limits (age ≤ 65, rate bands up to ₹5,00,000)
   // so the happy path works on a fresh database without tripping eligibility/rate errors.
   healthForm = { coverType: 'Family floater', members: 4, sumAssured: '₹5,00,000', eldestAge: 35 };
-  motorForm = { vehicleNumber: '', vehicleMake: '', vehicleModel: '', regYear: 2022, idv: '', coverType: 'Comprehensive' };
+  motorForm = { vehicleNumber: '', vehicleMake: '', vehicleModel: '', regYear: 2022, idv: '', engineNumber: '', chassisNumber: '', coverType: 'Comprehensive' };
   lifeForm = { sumAssured: '', term: '30 years', age: 38, tobaccoUser: 'No' };
   proposerForm = { fullName: '', dob: '', annualIncome: '', occupation: '', pan: '', aadhaarLast4: '' };
 
   nominees: { fullName: string; relationship: string; dateOfBirth: string; sharePercentage: number; appointeeName: string }[] = [];
-  relationships = ['Spouse', 'Son', 'Daughter', 'Father', 'Mother', 'Other'];
+  relationships = ['Spouse', 'Husband', 'Wife', 'Son', 'Daughter', 'Father', 'Mother', 'Brother', 'Sister', 'Guardian', 'Other'];
 
   docRequirements = signal<DocumentRequirementDto[]>([]);
   docRequirementsLoaded = signal(false);
@@ -206,6 +207,16 @@ export class AgentProposalSubmitComponent implements OnInit, CanComponentDeactiv
     return null;
   }
 
+  private motorDetailsError(): string | null {
+    if (this.selectedType !== 'Motor') return null;
+    if (!this.motorForm.vehicleNumber.trim()) return 'Vehicle registration number is required.';
+    if (!this.motorForm.vehicleMake.trim()) return 'Vehicle make is required.';
+    if (!this.motorForm.vehicleModel.trim()) return 'Vehicle model is required.';
+    if (!this.motorForm.engineNumber.trim()) return 'Engine number is required.';
+    if (!this.motorForm.chassisNumber.trim()) return 'Chassis number is required.';
+    return null;
+  }
+
   private calculateAge(dateOfBirth: string): number {
     const dob = new Date(dateOfBirth);
     const today = new Date();
@@ -219,6 +230,42 @@ export class AgentProposalSubmitComponent implements OnInit, CanComponentDeactiv
 
   hasActiveProduct(type: ProductType): boolean {
     return this.products().some(p => p.domain.toUpperCase() === type.toUpperCase());
+  }
+
+  productsForSelectedType(): ProductDto[] {
+    if (!this.selectedType) return [];
+    return this.products().filter(p => p.domain.toUpperCase() === this.selectedType?.toUpperCase());
+  }
+
+  selectedProduct(): ProductDto | null {
+    if (!this.selectedType) return null;
+    return this.products().find(p => p.id === this.selectedProductId && p.domain.toUpperCase() === this.selectedType?.toUpperCase()) ?? null;
+  }
+
+  onProductTypeSelected(type: ProductType): void {
+    if (this.selectedType === type) return;
+    this.selectedType = type;
+    this.selectedProductId = null;
+    this.clearProductDependentState();
+
+    const products = this.productsForSelectedType();
+    if (products.length === 1) {
+      this.selectedProductId = products[0].id;
+    }
+  }
+
+  onProductSelected(productId: string | null): void {
+    if (this.selectedProductId === productId) return;
+    this.selectedProductId = productId;
+    this.clearProductDependentState();
+  }
+
+  private clearProductDependentState(): void {
+    this.quoteResult.set(null);
+    this.docRequirements.set([]);
+    this.docRequirementsLoaded.set(false);
+    this.uploadedFiles.clear();
+    this.confirmReady = false;
   }
 
   nextStep(): void {
@@ -239,11 +286,20 @@ export class AgentProposalSubmitComponent implements OnInit, CanComponentDeactiv
         this.toast.warning(`No active ${this.selectedType} product is available right now. Please choose a different type or contact an admin.`);
         return;
       }
+      if (!this.selectedProduct()) {
+        this.toast.warning('Please select a product before continuing.');
+        return;
+      }
     }
 
     if (this.currentStep === 1) {
       if (!this.quoteResult()) {
         this.toast.warning('Please calculate the premium before continuing.');
+        return;
+      }
+      const motorError = this.motorDetailsError();
+      if (motorError) {
+        this.toast.warning(motorError);
         return;
       }
       // Life requires a nominee — seed one row so the Details step isn't empty.
@@ -263,6 +319,11 @@ export class AgentProposalSubmitComponent implements OnInit, CanComponentDeactiv
 
     if (this.currentStep === 3) {
       if (this.submitting()) return;
+      const motorError = this.motorDetailsError();
+      if (motorError) {
+        this.toast.warning(motorError);
+        return;
+      }
       if (!this.requiredDocumentsUploaded()) {
         this.toast.warning('Please upload all required documents before submitting.');
         return;
@@ -288,9 +349,9 @@ export class AgentProposalSubmitComponent implements OnInit, CanComponentDeactiv
 
   calculateQuote(): void {
     if (this.calculatingQuote()) return;
-    const product = this.products().find(p => p.domain.toUpperCase() === this.selectedType?.toUpperCase());
+    const product = this.selectedProduct();
     if (!product) {
-      this.toast.error(`No active ${this.selectedType} product is available right now. Please choose a different type or contact an admin.`);
+      this.toast.error('Please select a product before calculating the premium.');
       return;
     }
 
@@ -341,7 +402,7 @@ export class AgentProposalSubmitComponent implements OnInit, CanComponentDeactiv
   }
 
   private loadDocRequirements(): void {
-    const product = this.products().find(p => p.domain.toUpperCase() === this.selectedType?.toUpperCase());
+    const product = this.selectedProduct();
     if (!product || this.docRequirementsLoaded()) return;
     this.agentService.getProductDocuments(product.id).subscribe({
       next: docs => {
@@ -366,7 +427,7 @@ export class AgentProposalSubmitComponent implements OnInit, CanComponentDeactiv
   }
 
   private submitProposal(): void {
-    const product = this.products().find(p => p.domain.toUpperCase() === this.selectedType?.toUpperCase());
+    const product = this.selectedProduct();
     const quote = this.quoteResult();
     if (!product || !this.selectedCustomerId || !quote) return;
 
@@ -385,8 +446,8 @@ export class AgentProposalSubmitComponent implements OnInit, CanComponentDeactiv
         manufactureYear: Number(this.motorForm.regYear) || 0,
         vehicleType: 'PrivateCar',
         idv: quote.sumAssured,
-        engineNumber: '',
-        chassisNumber: '',
+        engineNumber: this.motorForm.engineNumber.trim(),
+        chassisNumber: this.motorForm.chassisNumber.trim(),
         coverType: this.motorForm.coverType,
       } : undefined,
       customerMemberIds: [],

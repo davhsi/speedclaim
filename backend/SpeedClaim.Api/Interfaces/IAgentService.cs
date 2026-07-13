@@ -16,6 +16,7 @@ public interface IAgentService
     Task<AgentProfileDto> GetAgentProfileAsync(string agentId);
     Task UpdateAgentProfileAsync(string agentId, UpdateAgentProfileRequest request);
     Task<IEnumerable<RenewalReminderDto>> GetRenewalRemindersAsync(string agentId);
+    Task SendRenewalReminderAsync(string agentId, string policyId);
     Task<IEnumerable<AgentCommissionDto>> GetMyCommissionsAsync(string agentId);
 
     // Admin - Branch & Agent Management

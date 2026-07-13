@@ -16,28 +16,28 @@ public class GenerateQuoteRequestValidatorTests
     [Test]
     public void Valid_Request_Passes()
     {
-        var req = new GenerateQuoteRequest("prod-001", 35, "Male", 500000m, 10);
+        var req = new GenerateQuoteRequest("prod-001", 35, 500000m, 10);
         _validator.TestValidate(req).ShouldNotHaveAnyValidationErrors();
     }
 
     [Test]
     public void Empty_ProductId_Fails()
     {
-        var req = new GenerateQuoteRequest("", 35, null, 500000m, 10);
+        var req = new GenerateQuoteRequest("", 35, 500000m, 10);
         _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.ProductId);
     }
 
     [Test]
     public void Age_Zero_Fails()
     {
-        var req = new GenerateQuoteRequest("prod-001", 0, null, 500000m, 10);
+        var req = new GenerateQuoteRequest("prod-001", 0, 500000m, 10);
         _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.Age);
     }
 
     [Test]
     public void Age_Over_100_Fails()
     {
-        var req = new GenerateQuoteRequest("prod-001", 101, null, 500000m, 10);
+        var req = new GenerateQuoteRequest("prod-001", 101, 500000m, 10);
         _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.Age);
     }
 
@@ -46,21 +46,21 @@ public class GenerateQuoteRequestValidatorTests
     {
         // Motor quotes never send an age — the DTO-level validator allows null; whether an
         // age is actually required is a product/domain concern enforced in ProposalService.
-        var req = new GenerateQuoteRequest("prod-001", null, null, 500000m, 10);
+        var req = new GenerateQuoteRequest("prod-001", null, 500000m, 10);
         _validator.TestValidate(req).ShouldNotHaveValidationErrorFor(x => x.Age);
     }
 
     [Test]
     public void Zero_SumAssured_Fails()
     {
-        var req = new GenerateQuoteRequest("prod-001", 35, null, 0m, 10);
+        var req = new GenerateQuoteRequest("prod-001", 35, 0m, 10);
         _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.SumAssured);
     }
 
     [Test]
     public void Zero_Tenure_Fails()
     {
-        var req = new GenerateQuoteRequest("prod-001", 35, null, 500000m, 0);
+        var req = new GenerateQuoteRequest("prod-001", 35, 500000m, 0);
         _validator.TestValidate(req).ShouldHaveValidationErrorFor(x => x.TenureYears);
     }
 }

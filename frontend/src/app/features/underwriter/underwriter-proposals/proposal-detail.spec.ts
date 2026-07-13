@@ -74,6 +74,28 @@ describe('ProposalDetailComponent', () => {
       const fixture = create(proposal(), null);
       expect(fixture.componentInstance.product()).toBeNull();
     });
+
+    it('renders motor engine and chassis numbers for underwriter review', () => {
+      const fixture = create(proposal({
+        motorDetail: {
+          vehicleNumber: 'TN 09 AB 1234',
+          vehicleMake: 'Maruti Suzuki',
+          vehicleModel: 'Swift VXi',
+          manufactureYear: 2022,
+          vehicleType: 'Hatchback',
+          idv: 800000,
+          engineNumber: 'K12MN1234567',
+          chassisNumber: 'MA3FHEB1S00A12345',
+          coverType: 'Comprehensive',
+        },
+      }));
+
+      const text = fixture.nativeElement.textContent;
+      expect(text).toContain('Engine number');
+      expect(text).toContain('K12MN1234567');
+      expect(text).toContain('Chassis number');
+      expect(text).toContain('MA3FHEB1S00A12345');
+    });
   });
 
   describe('riskFlags', () => {

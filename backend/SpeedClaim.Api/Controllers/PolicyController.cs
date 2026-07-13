@@ -136,6 +136,21 @@ public class PoliciesController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>Agent — notify the assigned customer to pay the first premium for a pending policy</summary>
+    /// <param name="id">Policy ID</param>
+    [Authorize(Roles = "Agent")]
+    [HttpPost("{id}/payment-reminder")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(422)]
+    public async Task<IActionResult> RemindCustomerToPay(Guid id)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var agentId)) return Unauthorized();
+        await _policyService.RemindCustomerToPayAsync(id, agentId);
+        return Ok(new { message = "Payment reminder sent to the customer." });
+    }
+
     #endregion
 
     #region Shared Endpoints

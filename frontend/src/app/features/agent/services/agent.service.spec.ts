@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { SKIP_ERROR_TOAST } from '../../../core/interceptors/error.interceptor';
 import { AgentService } from './agent.service';
 
 describe('AgentService', () => {
@@ -61,11 +62,31 @@ describe('AgentService', () => {
     call.flush(response);
   });
 
+  it('sendRenewalReminder POSTs an empty body to the renewal reminder endpoint', () => {
+    const response = { message: 'sent' };
+    service.sendRenewalReminder('pol1').subscribe(res => expect(res).toEqual(response));
+    const call = httpMock.expectOne('/api/v1/agents/renewals/pol1/reminder');
+    expect(call.request.method).toBe('POST');
+    expect(call.request.body).toEqual({});
+    expect(call.request.context.get(SKIP_ERROR_TOAST)).toBe(true);
+    call.flush(response);
+  });
+
   it('getAssignedPolicies GETs the assigned policy list', () => {
     const response = [{ id: 'pol1' }];
     service.getAssignedPolicies().subscribe(res => expect(res).toEqual(response));
     const call = httpMock.expectOne('/api/v1/policies/assigned');
     expect(call.request.method).toBe('GET');
+    call.flush(response);
+  });
+
+  it('remindCustomerToPay POSTs an empty body to the policy payment reminder endpoint', () => {
+    const response = { message: 'sent' };
+    service.remindCustomerToPay('pol1').subscribe(res => expect(res).toEqual(response));
+    const call = httpMock.expectOne('/api/v1/policies/pol1/payment-reminder');
+    expect(call.request.method).toBe('POST');
+    expect(call.request.body).toEqual({});
+    expect(call.request.context.get(SKIP_ERROR_TOAST)).toBe(true);
     call.flush(response);
   });
 
