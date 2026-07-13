@@ -3,7 +3,7 @@
   <!-- Stat Cards -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
     <app-stat-card title="Total products" [value]="totalProducts().toString()" iconBgClass="bg-primary-light text-primary" [icon]="iconPackage" />
-    <app-stat-card title="Active" [value]="activeProducts().toString()" iconBgClass="bg-success-bg text-success" [icon]="iconCheck" />
+    <app-stat-card title="On sale" [value]="onSaleProducts().toString()" iconBgClass="bg-success-bg text-success" [icon]="iconCheck" />
     <app-stat-card title="Motor products" [value]="motorCount().toString()" iconBgClass="bg-info-bg text-info" [icon]="iconCar" />
     <app-stat-card title="Inactive" [value]="inactiveCount().toString()" iconBgClass="bg-danger-bg text-danger" [icon]="iconX" />
   </div>
@@ -31,6 +31,7 @@
             <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider">Sum Range</th>
             <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider">Tenure</th>
             <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider">Status</th>
+            <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider">Market</th>
             <th class="px-5 py-2.5 text-[11px] font-semibold text-muted uppercase tracking-wider text-right">Actions</th>
           </tr>
         </thead>
@@ -48,12 +49,21 @@
               <td class="px-5 py-3 text-[12.5px] text-body whitespace-nowrap">{{ p.minTenureYears }}–{{ p.maxTenureYears }} yrs</td>
               <td class="px-5 py-3"><app-status-badge [status]="p.isActive ? 'Active' : 'Inactive'" /></td>
               <td class="px-5 py-3">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border"
+                      [class]="p.isActive && p.isAvailableForSale ? 'bg-success-bg text-success border-success/30' : 'bg-warning-bg text-warning border-warning/30'">
+                  {{ p.isActive && p.isAvailableForSale ? 'ON SALE' : 'WITHDRAWN' }}
+                </span>
+              </td>
+              <td class="px-5 py-3">
                 <div class="flex items-center justify-end gap-1">
                   <button (click)="openEditRatesModal(p)" title="Edit rates" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
                   </button>
                   <button (click)="openEditDocsModal(p)" title="Document requirements" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                  </button>
+                  <button (click)="toggleProductSaleAvailability(p)" [disabled]="saleUpdatingId() !== null || !p.isActive" [title]="p.isAvailableForSale ? 'Withdraw from sale' : 'Restore to sale'" class="w-7 h-7 rounded-md border bg-white flex items-center justify-center cursor-pointer hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white" [style.border-color]="p.isAvailableForSale ? '#FAD88A' : '#B2E4CE'">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" [attr.stroke]="p.isAvailableForSale ? '#D9920A' : '#1F9D6B'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M7 7V5a2 2 0 012-2h6a2 2 0 012 2v2"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
                   </button>
                   <button (click)="toggleProductStatus(p)" [disabled]="statusUpdatingId() !== null" [title]="p.isActive ? 'Deactivate' : 'Activate'" class="w-7 h-7 rounded-md border bg-white flex items-center justify-center cursor-pointer hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white" [style.border-color]="p.isActive ? '#F5B4B4' : '#B2E4CE'">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" [attr.stroke]="p.isActive ? '#D14343' : '#1F9D6B'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 11-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
@@ -62,7 +72,7 @@
               </td>
             </tr>
           } @empty {
-            <tr><td colspan="6" class="px-5 py-12 text-center text-sm text-muted">No products found</td></tr>
+            <tr><td colspan="7" class="px-5 py-12 text-center text-sm text-muted">No products found</td></tr>
           }
         </tbody>
       </table>
@@ -136,6 +146,16 @@
               <label for="create-product-waiting-period" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Waiting Period (days)</label>
               <input type="number" id="create-product-waiting-period" [(ngModel)]="createForm.waitingPeriodDays" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
             </div>
+            @if (createForm.domain === 'Motor') {
+              <div>
+                <label for="create-product-motor-vehicle-type" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Vehicle Type</label>
+                <select id="create-product-motor-vehicle-type" [(ngModel)]="createForm.motorVehicleType" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary">
+                  <option value="TwoWheeler">Two wheeler</option>
+                  <option value="PrivateCar">Private car</option>
+                  <option value="CommercialVehicle">Commercial vehicle</option>
+                </select>
+              </div>
+            }
             @if (createForm.domain === 'Health') {
               <div class="flex items-end pb-1.5 gap-2">
                 <label class="flex items-center gap-2 cursor-pointer text-[13px] text-ink">
@@ -211,6 +231,11 @@
               </tbody>
             </table>
           </div>
+          @if (rateValidationMessage()) {
+            <div class="mb-3 rounded border border-danger/30 bg-danger/5 px-3 py-2 text-xs font-medium text-danger">
+              {{ rateValidationMessage() }}
+            </div>
+          }
           <button (click)="addRateBand()" [disabled]="ratesLoading() || ratesSubmitting()" class="text-xs text-primary font-semibold bg-transparent border-none cursor-pointer mb-4 disabled:opacity-50 disabled:cursor-not-allowed">+ Add rate band</button>
         </div>
         <div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-line">

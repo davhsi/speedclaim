@@ -30,6 +30,7 @@ export class AdminProductsComponent implements OnInit {
   ratesSubmitting = signal(false);
   docsSubmitting = signal(false);
   statusUpdatingId = signal<string | null>(null);
+  saleUpdatingId = signal<string | null>(null);
 
   // Sensible per-domain starting points for a new product's underwriting envelope — Motor cover
   // is typically 1-3 years with no waiting period, Health is annually renewable with a 30-day
@@ -40,7 +41,7 @@ export class AdminProductsComponent implements OnInit {
     Life: { minAge: 18, maxAge: 60, minSumAssured: 100000, maxSumAssured: 5000000, minTenureYears: 5, maxTenureYears: 30, waitingPeriodDays: 0 },
   };
 
-  createForm = { productName: '', domain: 'Motor', description: '', ...this.domainDefaults['Motor'], allowsFamilyFloater: false, maxFamilyMembers: 1 };
+  createForm = { productName: '', domain: 'Motor', description: '', ...this.domainDefaults['Motor'], allowsFamilyFloater: false, maxFamilyMembers: 1, motorVehicleType: 'TwoWheeler' as string | null };
 
   currentPage = signal(1);
   readonly pageSize = 10;
@@ -61,6 +62,7 @@ export class AdminProductsComponent implements OnInit {
 
   totalProducts = computed(() => this.products().length);
   activeProducts = computed(() => this.products().filter(p => p.isActive).length);
+  onSaleProducts = computed(() => this.products().filter(p => p.isActive && p.isAvailableForSale).length);
   motorCount = computed(() => this.products().filter(p => p.domain === 'Motor').length);
   inactiveCount = computed(() => this.products().filter(p => !p.isActive).length);
 
@@ -95,6 +97,7 @@ export class AdminProductsComponent implements OnInit {
 
   onDomainChange(domain: string): void {
     Object.assign(this.createForm, this.domainDefaults[domain] ?? this.domainDefaults['Motor']);
+    this.createForm.motorVehicleType = domain === 'Motor' ? 'TwoWheeler' : null;
     if (domain !== 'Health') {
       this.createForm.allowsFamilyFloater = false;
       this.createForm.maxFamilyMembers = 1;
@@ -102,7 +105,7 @@ export class AdminProductsComponent implements OnInit {
   }
 
   openCreateModal(): void {
-    this.createForm = { productName: '', domain: 'Motor', description: '', ...this.domainDefaults['Motor'], allowsFamilyFloater: false, maxFamilyMembers: 1 };
+    this.createForm = { productName: '', domain: 'Motor', description: '', ...this.domainDefaults['Motor'], allowsFamilyFloater: false, maxFamilyMembers: 1, motorVehicleType: 'TwoWheeler' };
     this.activeModal.set('create');
   }
 
@@ -142,13 +145,14 @@ export class AdminProductsComponent implements OnInit {
     const f = this.createForm;
     return !f.productName.trim()
       || !f.description.trim()
-      || f.minAge < 0
+      || f.minAge < 1
       || f.maxAge < f.minAge
       || f.minSumAssured <= 0
       || f.maxSumAssured < f.minSumAssured
       || f.minTenureYears <= 0
       || f.maxTenureYears < f.minTenureYears
       || f.waitingPeriodDays < 0
+      || (f.domain === 'Motor' && !f.motorVehicleType)
       || (f.allowsFamilyFloater && f.maxFamilyMembers < 2);
   }
 
@@ -179,9 +183,26 @@ export class AdminProductsComponent implements OnInit {
         this.toastService.success(product.productName + (next ? ' activated' : ' deactivated'));
         this.statusUpdatingId.set(null);
       },
-      error: () => {
+      error: err => {
         this.statusUpdatingId.set(null);
-        this.toastService.error('Failed to update product status');
+        this.toastService.error(err?.error?.title ?? err?.error?.message ?? 'Failed to update product status');
+      },
+    });
+  }
+
+  toggleProductSaleAvailability(product: ProductDto): void {
+    if (this.saleUpdatingId()) return;
+    const next = !product.isAvailableForSale;
+    this.saleUpdatingId.set(product.id);
+    this.adminService.toggleProductSaleAvailability(product.id, next).subscribe({
+      next: () => {
+        this.products.update(list => list.map(p => p.id === product.id ? { ...p, isAvailableForSale: next } : p));
+        this.toastService.success(product.productName + (next ? ' restored to sale' : ' withdrawn from sale'));
+        this.saleUpdatingId.set(null);
+      },
+      error: err => {
+        this.saleUpdatingId.set(null);
+        this.toastService.error(err?.error?.title ?? err?.error?.message ?? 'Failed to update sale availability');
       },
     });
   }
@@ -195,7 +216,10 @@ export class AdminProductsComponent implements OnInit {
     // Motor products matches on sum assured alone, so age bands are hidden in the UI and
     // auto-filled with a full-range placeholder rather than asking the admin to fill them in.
     const ageDefaults = this.isMotorProduct() ? { ageMin: 0, ageMax: 150 } : { ageMin: 0, ageMax: 0 };
-    this.rateBands.update(bands => [...bands, { ...ageDefaults, sumAssuredMin: 0, sumAssuredMax: 0, annualPremium: 0 }]);
+    this.rateBands.update(bands => {
+      const previousMax = this.highestValidPreviousSumMax(bands.length, bands);
+      return [...bands, { ...ageDefaults, sumAssuredMin: previousMax === null ? 0 : previousMax + 1, sumAssuredMax: 0, annualPremium: 0 }];
+    });
   }
 
   removeRateBand(index: number): void {
@@ -214,7 +238,77 @@ export class AdminProductsComponent implements OnInit {
       || b.ageMax < b.ageMin
       || b.sumAssuredMin <= 0
       || b.sumAssuredMax < b.sumAssuredMin
-      || b.annualPremium <= 0);
+      || b.annualPremium <= 0)
+      || this.rateBandCollisionMessage() !== null;
+  }
+
+  rateValidationMessage(): string | null {
+    const bands = this.rateBands();
+    if (bands.length === 0) return 'Add at least one rate band.';
+    if (bands.some(b => b.ageMin < 0 || b.ageMax < b.ageMin))
+      return 'Age ranges must be valid.';
+    const sumRangeMessage = this.sumRangeValidationMessage(bands);
+    if (sumRangeMessage) return sumRangeMessage;
+    if (bands.some(b => b.annualPremium <= 0))
+      return 'Annual premium must be greater than 0.';
+    return this.rateBandCollisionMessage();
+  }
+
+  private sumRangeValidationMessage(bands: PremiumRateDto[]): string | null {
+    for (let index = 0; index < bands.length; index++) {
+      const band = bands[index];
+      const previousMax = this.highestValidPreviousSumMax(index, bands);
+      const suggestedMin = previousMax === null ? 1 : previousMax + 1;
+      const bandLabel = `Rate band ${index + 1}`;
+
+      if (band.sumAssuredMin <= 0) {
+        return `${bandLabel} needs a Sum Min of ${suggestedMin} or higher.`;
+      }
+
+      if (band.sumAssuredMax < band.sumAssuredMin) {
+        if (band.sumAssuredMin < suggestedMin) {
+          return `${bandLabel} has an invalid sum range. Set Sum Min to ${suggestedMin} or higher, and Sum Max to at least the Sum Min.`;
+        }
+
+        if (previousMax !== null) {
+          return `${bandLabel} has an invalid sum range. Sum Max must be ${band.sumAssuredMin} or higher. The next non-overlapping Sum Min is ${suggestedMin} or higher.`;
+        }
+
+        return `${bandLabel} has an invalid sum range. Sum Max must be ${band.sumAssuredMin} or higher.`;
+      }
+    }
+    return null;
+  }
+
+  private rateBandCollisionMessage(): string | null {
+    const bands = this.rateBands();
+    const isMotor = this.isMotorProduct();
+    for (let currentIndex = 1; currentIndex < bands.length; currentIndex++) {
+      const current = bands[currentIndex];
+      const previousBands = bands.slice(0, currentIndex)
+        .filter(previous => isMotor || this.rangesOverlap(previous.ageMin, previous.ageMax, current.ageMin, current.ageMax));
+      if (previousBands.length === 0) continue;
+
+      const previousMax = Math.max(...previousBands.map(previous => previous.sumAssuredMax));
+      const previousOverlapsCurrent = previousBands.some(previous =>
+        this.rangesOverlap(previous.sumAssuredMin, previous.sumAssuredMax, current.sumAssuredMin, current.sumAssuredMax));
+      if (previousOverlapsCurrent) {
+        return `Rate band ${currentIndex + 1} overlaps with an earlier band. Set its Sum Min to ${previousMax + 1} or higher.`;
+      }
+    }
+    return null;
+  }
+
+  private highestValidPreviousSumMax(index: number, bands = this.rateBands()): number | null {
+    const previousMaxes = bands
+      .slice(0, index)
+      .filter(band => band.sumAssuredMin > 0 && band.sumAssuredMax >= band.sumAssuredMin)
+      .map(band => band.sumAssuredMax);
+    return previousMaxes.length === 0 ? null : Math.max(...previousMaxes);
+  }
+
+  private rangesOverlap(leftMin: number, leftMax: number, rightMin: number, rightMax: number): boolean {
+    return leftMin <= rightMax && rightMin <= leftMax;
   }
 
   saveRates(): void {

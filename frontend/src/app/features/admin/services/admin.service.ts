@@ -40,7 +40,7 @@ export class AdminService {
     return this.http.post<ApiMessage>(`/api/v1/auth/admin/reset-password/${userId}`, req);
   }
 
-  inviteUser(req: { firstName: string; lastName: string; email: string; role: string }): Observable<ApiMessage> {
+  inviteUser(req: { firstName: string; lastName: string; email: string; phone: string; role: string }): Observable<ApiMessage> {
     return this.http.post<ApiMessage>('/api/v1/auth/admin/invite-user', req);
   }
 
@@ -111,6 +111,10 @@ export class AdminService {
 
   toggleProductStatus(productId: string, isActive: boolean): Observable<ApiMessage> {
     return this.http.put<ApiMessage>(`/api/v1/products/${productId}/status`, isActive);
+  }
+
+  toggleProductSaleAvailability(productId: string, isAvailableForSale: boolean): Observable<ApiMessage> {
+    return this.http.put<ApiMessage>(`/api/v1/products/${productId}/sale-availability`, isAvailableForSale);
   }
 
   // ── System ──

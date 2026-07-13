@@ -17,11 +17,13 @@ public class InsuranceProduct
     public int MinTenureYears { get; set; }
     public int MaxTenureYears { get; set; }
     public int WaitingPeriodDays { get; set; }
+    public string? MotorVehicleType { get; set; }
     
     public bool AllowsFamilyFloater { get; set; }
     public int MaxFamilyMembers { get; set; }
     
     public bool IsActive { get; set; } = true;
+    public bool IsAvailableForSale { get; set; } = true;
     
     public Guid? CreatedById { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;

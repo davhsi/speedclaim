@@ -6,6 +6,7 @@ namespace SpeedClaim.Api.Validators;
 public class CreateProductRequestValidator : AbstractValidator<CreateProductRequest>
 {
     private static readonly string[] ValidDomains = { "Health", "Life", "Motor" };
+    private static readonly string[] ValidMotorVehicleTypes = { "TwoWheeler", "PrivateCar", "CommercialVehicle" };
 
     public CreateProductRequestValidator()
     {
@@ -43,6 +44,16 @@ public class CreateProductRequestValidator : AbstractValidator<CreateProductRequ
 
         RuleFor(x => x.WaitingPeriodDays)
             .GreaterThanOrEqualTo(0).WithMessage("Waiting period cannot be negative.");
+
+        RuleFor(x => x.MotorVehicleType)
+            .NotEmpty().WithMessage("Motor vehicle type is required for Motor products.")
+            .Must(t => t != null && ValidMotorVehicleTypes.Contains(t, StringComparer.OrdinalIgnoreCase))
+            .WithMessage("Motor vehicle type must be one of: TwoWheeler, PrivateCar, CommercialVehicle.")
+            .When(x => string.Equals(x.Domain, "Motor", StringComparison.OrdinalIgnoreCase));
+
+        RuleFor(x => x.MotorVehicleType)
+            .Empty().WithMessage("Motor vehicle type is only available for Motor products.")
+            .When(x => !string.Equals(x.Domain, "Motor", StringComparison.OrdinalIgnoreCase));
 
         RuleFor(x => x.AllowsFamilyFloater)
             .Equal(false)

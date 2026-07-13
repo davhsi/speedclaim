@@ -36,13 +36,15 @@ public class ProductService : IProductService
             product.WaitingPeriodDays,
             product.AllowsFamilyFloater,
             product.MaxFamilyMembers,
-            product.IsActive
+            product.IsActive,
+            product.IsAvailableForSale,
+            product.MotorVehicleType
         );
     }
 
     public async Task<IEnumerable<ProductDto>> GetAvailableProductsAsync()
     {
-        var products = await _unitOfWork.InsuranceProducts.FindAsync(p => p.IsActive);
+        var products = await _unitOfWork.InsuranceProducts.FindAsync(p => p.IsActive && p.IsAvailableForSale);
         return products.Select(MapProduct);
     }
 
@@ -86,9 +88,11 @@ public class ProductService : IProductService
             MinTenureYears = request.MinTenureYears,
             MaxTenureYears = request.MaxTenureYears,
             WaitingPeriodDays = request.WaitingPeriodDays,
+            MotorVehicleType = string.Equals(request.Domain, "Motor", StringComparison.OrdinalIgnoreCase) ? request.MotorVehicleType : null,
             AllowsFamilyFloater = request.AllowsFamilyFloater,
             MaxFamilyMembers = request.MaxFamilyMembers,
             IsActive = true,
+            IsAvailableForSale = true,
             CreatedById = Guid.Parse(adminId),
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -129,6 +133,7 @@ public class ProductService : IProductService
         var pId = Guid.Parse(productId);
         var product = await _unitOfWork.InsuranceProducts.GetByIdAsync(pId);
         if (product == null) throw new NotFoundException("Product not found");
+        ValidatePremiumRates(product, request.Rates);
 
         // Remove old rates
         var existingRates = await _unitOfWork.PremiumRateTables.FindAsync(r => r.ProductId == pId);
@@ -162,6 +167,43 @@ public class ProductService : IProductService
 
         await _unitOfWork.CompleteAsync();
     }
+
+    private static void ValidatePremiumRates(InsuranceProduct product, IReadOnlyList<PremiumRateDto> rates)
+    {
+        if (rates.Count == 0)
+            throw new ValidationException("At least one premium rate band is required.");
+
+        for (var i = 0; i < rates.Count; i++)
+        {
+            var rate = rates[i];
+            if (rate.AgeMin < 0 || rate.AgeMax < rate.AgeMin)
+                throw new ValidationException("Each premium rate band must have a valid age range.");
+            if (rate.SumAssuredMin <= 0 || rate.SumAssuredMax < rate.SumAssuredMin)
+                throw new ValidationException("Each premium rate band must have a valid sum assured range.");
+            if (rate.AnnualPremium <= 0)
+                throw new ValidationException("Each premium rate band must have a positive annual premium.");
+        }
+
+        var isMotor = string.Equals(product.Domain, "Motor", StringComparison.OrdinalIgnoreCase);
+        for (var i = 0; i < rates.Count; i++)
+        {
+            for (var j = i + 1; j < rates.Count; j++)
+            {
+                var left = rates[i];
+                var right = rates[j];
+                var sumsOverlap = RangesOverlap(left.SumAssuredMin, left.SumAssuredMax, right.SumAssuredMin, right.SumAssuredMax);
+                var agesOverlap = isMotor || RangesOverlap(left.AgeMin, left.AgeMax, right.AgeMin, right.AgeMax);
+                if (sumsOverlap && agesOverlap)
+                    throw new ValidationException("Premium rate bands cannot overlap.");
+            }
+        }
+    }
+
+    private static bool RangesOverlap(decimal leftMin, decimal leftMax, decimal rightMin, decimal rightMax)
+        => leftMin <= rightMax && rightMin <= leftMax;
+
+    private static bool RangesOverlap(int leftMin, int leftMax, int rightMin, int rightMax)
+        => leftMin <= rightMax && rightMin <= leftMax;
 
     public async Task ConfigureDocumentRequirementsAsync(string productId, UpdateDocumentRequirementsRequest request, string adminId)
     {
@@ -219,6 +261,9 @@ public class ProductService : IProductService
         var product = await _unitOfWork.InsuranceProducts.GetByIdAsync(pId);
         if (product == null) throw new NotFoundException("Product not found");
 
+        if (!isActive)
+            await EnsureProductCanBeDeactivatedAsync(pId);
+
         product.IsActive = isActive;
         product.UpdatedAt = DateTimeOffset.UtcNow;
         await _unitOfWork.AuditLogs.AddAsync(new AuditLog
@@ -230,5 +275,62 @@ public class ProductService : IProductService
         });
 
         await _unitOfWork.CompleteAsync();
+    }
+
+    public async Task ToggleProductSaleAvailabilityAsync(string productId, bool isAvailableForSale, string adminId)
+    {
+        var pId = Guid.Parse(productId);
+        var product = await _unitOfWork.InsuranceProducts.GetByIdAsync(pId);
+        if (product == null) throw new NotFoundException("Product not found");
+
+        if (isAvailableForSale && !product.IsActive)
+            throw new ConflictException("Archived products must be activated before they can be restored to sale.");
+
+        product.IsAvailableForSale = isAvailableForSale;
+        product.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = Guid.Parse(adminId),
+            EntityType = "InsuranceProduct",
+            EntityId = pId,
+            Action = isAvailableForSale ? "ProductRestoredToSale" : "ProductWithdrawnFromSale",
+            NewValue = JsonSerializer.Serialize(new { productName = product.ProductName }),
+            CreatedAt = DateTime.UtcNow
+        });
+
+        await _unitOfWork.CompleteAsync();
+    }
+
+    private async Task EnsureProductCanBeDeactivatedAsync(Guid productId)
+    {
+        var activeProposalStatuses = new[]
+        {
+            Models.Enums.ProposalStatus.Submitted,
+            Models.Enums.ProposalStatus.UnderReview,
+            Models.Enums.ProposalStatus.DocumentsPending,
+            Models.Enums.ProposalStatus.Approved
+        };
+        var activeProposals = await _unitOfWork.Proposals.FindAsync(p =>
+            p.ProductId == productId && activeProposalStatuses.Contains(p.Status));
+
+        var livePolicyStatuses = new[]
+        {
+            Models.Enums.PolicyStatus.Pending,
+            Models.Enums.PolicyStatus.Active,
+            Models.Enums.PolicyStatus.Lapsed,
+            Models.Enums.PolicyStatus.Claimed
+        };
+        var livePolicies = await _unitOfWork.Policies.FindAsync(p =>
+            p.ProductId == productId && livePolicyStatuses.Contains(p.Status));
+
+        var proposalCount = activeProposals.Count();
+        var policyCount = livePolicies.Count();
+        if (proposalCount > 0 || policyCount > 0)
+        {
+            throw new ConflictException(
+                $"Cannot deactivate this product because it has {proposalCount} active proposal(s) and {policyCount} live policy record(s). Resolve or migrate them before deactivation.");
+        }
     }
 }

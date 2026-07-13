@@ -12,5 +12,6 @@ public record CreateProductRequest(
     int MaxTenureYears,
     int WaitingPeriodDays,
     bool AllowsFamilyFloater,
-    int MaxFamilyMembers
+    int MaxFamilyMembers,
+    string? MotorVehicleType = null
 );

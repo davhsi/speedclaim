@@ -18,4 +18,5 @@ public interface IProductService
     Task ConfigureDocumentRequirementsAsync(string productId, UpdateDocumentRequirementsRequest request, string adminId);
     Task<IEnumerable<DocumentRequirementResponseDto>> GetDocumentRequirementsAsync(string productId);
     Task ToggleProductStatusAsync(string productId, bool isActive, string adminId);
+    Task ToggleProductSaleAvailabilityAsync(string productId, bool isAvailableForSale, string adminId);
 }

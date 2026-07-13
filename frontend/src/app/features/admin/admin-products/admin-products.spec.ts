@@ -15,6 +15,7 @@ describe('AdminProductsComponent', () => {
     getProductDocuments: ReturnType<typeof vi.fn>;
     updateProductDocuments: ReturnType<typeof vi.fn>;
     toggleProductStatus: ReturnType<typeof vi.fn>;
+    toggleProductSaleAvailability: ReturnType<typeof vi.fn>;
   };
   let toast: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn>; warning: ReturnType<typeof vi.fn> };
 
@@ -22,7 +23,7 @@ describe('AdminProductsComponent', () => {
     return {
       id: 'p1', productName: 'SpeedCare Motor', uin: 'UIN001', description: 'Motor cover', domain: 'Motor',
       minAge: 18, maxAge: 65, minSumAssured: 100000, maxSumAssured: 500000, minTenureYears: 1, maxTenureYears: 10,
-      waitingPeriodDays: 30, allowsFamilyFloater: false, maxFamilyMembers: 1, isActive: true,
+      waitingPeriodDays: 30, allowsFamilyFloater: false, maxFamilyMembers: 1, isActive: true, isAvailableForSale: true,
       ...overrides,
     };
   }
@@ -38,7 +39,7 @@ describe('AdminProductsComponent', () => {
     adminService = {
       getAdminProducts: vi.fn(), createProduct: vi.fn(), getProductRates: vi.fn(),
       updateProductRates: vi.fn(), getProductDocuments: vi.fn(), updateProductDocuments: vi.fn(),
-      toggleProductStatus: vi.fn(),
+      toggleProductStatus: vi.fn(), toggleProductSaleAvailability: vi.fn(),
     };
     toast = { success: vi.fn(), error: vi.fn(), warning: vi.fn() };
 
@@ -114,10 +115,12 @@ describe('AdminProductsComponent', () => {
       c.onDomainChange('Motor');
       expect(c.createForm.maxTenureYears).toBe(3);
       expect(c.createForm.waitingPeriodDays).toBe(0);
+      expect(c.createForm.motorVehicleType).toBe('TwoWheeler');
 
       c.onDomainChange('Health');
       expect(c.createForm.maxTenureYears).toBe(10);
       expect(c.createForm.waitingPeriodDays).toBe(30);
+      expect(c.createForm.motorVehicleType).toBeNull();
 
       c.onDomainChange('Life');
       expect(c.createForm.minTenureYears).toBe(5);
@@ -128,12 +131,18 @@ describe('AdminProductsComponent', () => {
 
   describe('createProductInvalid / createProduct', () => {
     function validForm() {
-      return { productName: 'New Plan', domain: 'Motor', description: 'desc', minAge: 18, maxAge: 65, minSumAssured: 100000, maxSumAssured: 500000, minTenureYears: 1, maxTenureYears: 10, waitingPeriodDays: 30, allowsFamilyFloater: false, maxFamilyMembers: 1 };
+      return { productName: 'New Plan', domain: 'Motor', description: 'desc', minAge: 18, maxAge: 65, minSumAssured: 100000, maxSumAssured: 500000, minTenureYears: 1, maxTenureYears: 10, waitingPeriodDays: 30, allowsFamilyFloater: false, maxFamilyMembers: 1, motorVehicleType: 'TwoWheeler' };
     }
 
     it('is invalid when maxAge is below minAge', () => {
       const fixture = create();
       fixture.componentInstance.createForm = { ...validForm(), minAge: 50, maxAge: 30 };
+      expect(fixture.componentInstance.createProductInvalid()).toBe(true);
+    });
+
+    it('is invalid when minAge is below the backend minimum', () => {
+      const fixture = create();
+      fixture.componentInstance.createForm = { ...validForm(), minAge: 0 };
       expect(fixture.componentInstance.createProductInvalid()).toBe(true);
     });
 
@@ -199,6 +208,32 @@ describe('AdminProductsComponent', () => {
       c.toggleProductStatus(product({ id: 'p1' }));
       expect(adminService.toggleProductStatus).not.toHaveBeenCalled();
     });
+
+    it('shows the server reason when product deactivation is blocked', () => {
+      const fixture = create([product({ id: 'p1', isActive: true })]);
+      const c = fixture.componentInstance;
+      adminService.toggleProductStatus.mockReturnValue(throwError(() => ({ error: { title: 'Cannot deactivate this product because it has live policies.' } })));
+
+      c.toggleProductStatus(product({ id: 'p1', isActive: true }));
+
+      expect(toast.error).toHaveBeenCalledWith('Cannot deactivate this product because it has live policies.');
+      expect(c.statusUpdatingId()).toBeNull();
+    });
+  });
+
+  describe('toggleProductSaleAvailability', () => {
+    it('withdraws a product from sale without deactivating it', () => {
+      const fixture = create([product({ id: 'p1', isActive: true, isAvailableForSale: true, productName: 'Motor Plan' })]);
+      const c = fixture.componentInstance;
+      adminService.toggleProductSaleAvailability.mockReturnValue(of({ message: 'ok' }));
+
+      c.toggleProductSaleAvailability(product({ id: 'p1', isActive: true, isAvailableForSale: true, productName: 'Motor Plan' }));
+
+      expect(adminService.toggleProductSaleAvailability).toHaveBeenCalledWith('p1', false);
+      expect(c.products().find(p => p.id === 'p1')?.isActive).toBe(true);
+      expect(c.products().find(p => p.id === 'p1')?.isAvailableForSale).toBe(false);
+      expect(toast.success).toHaveBeenCalledWith('Motor Plan withdrawn from sale');
+    });
   });
 
   describe('rate bands', () => {
@@ -241,6 +276,17 @@ describe('AdminProductsComponent', () => {
       expect(c.rateBands()).toEqual([{ ageMin: 0, ageMax: 150, sumAssuredMin: 0, sumAssuredMax: 0, annualPremium: 0 }]);
     });
 
+    it('addRateBand starts the next band after the previous valid sum max', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.selectedProduct.set(product({ domain: 'Motor' }));
+      c.rateBands.set([{ ageMin: 0, ageMax: 150, sumAssuredMin: 30000, sumAssuredMax: 50000, annualPremium: 1200 }]);
+
+      c.addRateBand();
+
+      expect(c.rateBands()[1]).toEqual({ ageMin: 0, ageMax: 150, sumAssuredMin: 50001, sumAssuredMax: 0, annualPremium: 0 });
+    });
+
     it('addRateBand leaves a zeroed age range for age-rated products', () => {
       const fixture = create();
       const c = fixture.componentInstance;
@@ -258,6 +304,54 @@ describe('AdminProductsComponent', () => {
       expect(c.ratesInvalid()).toBe(true); // empty
       c.rateBands.set([{ ageMin: 30, ageMax: 20, sumAssuredMin: 100, sumAssuredMax: 200, annualPremium: 10 }]);
       expect(c.ratesInvalid()).toBe(true); // ageMax < ageMin
+    });
+
+    it('ratesInvalid rejects overlapping motor sum bands but accepts adjacent bands', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.selectedProduct.set(product({ domain: 'Motor' }));
+
+      c.rateBands.set([
+        { ageMin: 0, ageMax: 150, sumAssuredMin: 30000, sumAssuredMax: 50000, annualPremium: 1200 },
+        { ageMin: 0, ageMax: 150, sumAssuredMin: 50000, sumAssuredMax: 75000, annualPremium: 1800 },
+      ]);
+      expect(c.ratesInvalid()).toBe(true);
+      expect(c.rateValidationMessage()).toContain('Set its Sum Min to 50001 or higher.');
+
+      c.rateBands.set([
+        { ageMin: 0, ageMax: 150, sumAssuredMin: 30000, sumAssuredMax: 50000, annualPremium: 1200 },
+        { ageMin: 0, ageMax: 150, sumAssuredMin: 50001, sumAssuredMax: 75000, annualPremium: 1800 },
+      ]);
+      expect(c.ratesInvalid()).toBe(false);
+      expect(c.rateValidationMessage()).toBeNull();
+    });
+
+    it('rateValidationMessage suggests fixing the later displayed band when its min is lowered', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.selectedProduct.set(product({ domain: 'Motor' }));
+
+      c.rateBands.set([
+        { ageMin: 0, ageMax: 150, sumAssuredMin: 30000, sumAssuredMax: 50000, annualPremium: 1200 },
+        { ageMin: 0, ageMax: 150, sumAssuredMin: 50001, sumAssuredMax: 75000, annualPremium: 1800 },
+        { ageMin: 0, ageMax: 150, sumAssuredMin: 75001, sumAssuredMax: 100000, annualPremium: 2400 },
+        { ageMin: 0, ageMax: 150, sumAssuredMin: 1000, sumAssuredMax: 150000, annualPremium: 3200 },
+      ]);
+
+      expect(c.rateValidationMessage()).toBe('Rate band 4 overlaps with an earlier band. Set its Sum Min to 100001 or higher.');
+    });
+
+    it('rateValidationMessage explains the next valid start for an incomplete later band', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      c.selectedProduct.set(product({ domain: 'Motor' }));
+
+      c.rateBands.set([
+        { ageMin: 0, ageMax: 150, sumAssuredMin: 30000, sumAssuredMax: 50000, annualPremium: 1200 },
+        { ageMin: 0, ageMax: 150, sumAssuredMin: 500001, sumAssuredMax: 0, annualPremium: 0 },
+      ]);
+
+      expect(c.rateValidationMessage()).toBe('Rate band 2 has an invalid sum range. Sum Max must be 500001 or higher. The next non-overlapping Sum Min is 50001 or higher.');
     });
 
     it('saveRates saves valid bands and closes the modal', () => {

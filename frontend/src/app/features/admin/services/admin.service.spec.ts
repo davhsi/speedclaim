@@ -78,7 +78,7 @@ describe('AdminService', () => {
 
     it('inviteUser POSTs the invite payload', () => {
       const response = { message: 'invited' };
-      const req = { firstName: 'Jane', lastName: 'Doe', email: 'jane@example.com', role: 'Agent' };
+      const req = { firstName: 'Jane', lastName: 'Doe', email: 'jane@example.com', phone: '9876543210', role: 'Agent' };
       service.inviteUser(req).subscribe(res => expect(res).toEqual(response));
       const call = httpMock.expectOne('/api/v1/auth/admin/invite-user');
       expect(call.request.method).toBe('POST');
@@ -233,6 +233,15 @@ describe('AdminService', () => {
       const call = httpMock.expectOne('/api/v1/products/p1/status');
       expect(call.request.method).toBe('PUT');
       expect(call.request.body).toBe(true);
+      call.flush(response);
+    });
+
+    it('toggleProductSaleAvailability PUTs the raw boolean as the body', () => {
+      const response = { message: 'ok' };
+      service.toggleProductSaleAvailability('p1', false).subscribe(res => expect(res).toEqual(response));
+      const call = httpMock.expectOne('/api/v1/products/p1/sale-availability');
+      expect(call.request.method).toBe('PUT');
+      expect(call.request.body).toBe(false);
       call.flush(response);
     });
   });

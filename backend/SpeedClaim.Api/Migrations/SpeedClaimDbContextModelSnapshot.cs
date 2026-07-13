@@ -1271,6 +1271,10 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_active");
 
+                    b.Property<bool>("IsAvailableForSale")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_available_for_sale");
+
                     b.Property<int>("MaxAge")
                         .HasColumnType("integer")
                         .HasColumnName("max_age");
@@ -1298,6 +1302,10 @@ namespace SpeedClaim.Api.Migrations
                     b.Property<int>("MinTenureYears")
                         .HasColumnType("integer")
                         .HasColumnName("min_tenure_years");
+
+                    b.Property<string>("MotorVehicleType")
+                        .HasColumnType("text")
+                        .HasColumnName("motor_vehicle_type");
 
                     b.Property<string>("ProductName")
                         .IsRequired()
@@ -1339,6 +1347,7 @@ namespace SpeedClaim.Api.Migrations
                             Description = "Basic term life insurance",
                             Domain = "LIFE",
                             IsActive = true,
+                            IsAvailableForSale = true,
                             MaxAge = 60,
                             MaxFamilyMembers = 1,
                             MaxSumAssured = 5000000m,
@@ -1358,6 +1367,7 @@ namespace SpeedClaim.Api.Migrations
                             Description = "Comprehensive health insurance with cashless hospitalisation across 5000+ network hospitals",
                             Domain = "HEALTH",
                             IsActive = true,
+                            IsAvailableForSale = true,
                             MaxAge = 65,
                             MaxFamilyMembers = 6,
                             MaxSumAssured = 5000000m,

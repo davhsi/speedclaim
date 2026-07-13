@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Moq;
 using NUnit.Framework;
 using SpeedClaim.Api.Dtos.Catalog;
+using SpeedClaim.Api.Exceptions;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Models;
 using SpeedClaim.Api.Models.Enums;
@@ -20,6 +21,8 @@ public class ProductServiceTests
     private Mock<IRepository<InsuranceProduct>> _mockProductRepo = null!;
     private Mock<IRepository<PremiumRateTable>> _mockRateRepo = null!;
     private Mock<IRepository<DocumentRequirement>> _mockDocReqRepo = null!;
+    private Mock<IRepository<Proposal>> _mockProposalRepo = null!;
+    private Mock<IPolicyRepository> _mockPolicyRepo = null!;
     private ProductService _productService = null!;
 
     [SetUp]
@@ -29,26 +32,34 @@ public class ProductServiceTests
         _mockProductRepo = new Mock<IRepository<InsuranceProduct>>();
         _mockRateRepo = new Mock<IRepository<PremiumRateTable>>();
         _mockDocReqRepo = new Mock<IRepository<DocumentRequirement>>();
+        _mockProposalRepo = new Mock<IRepository<Proposal>>();
+        _mockPolicyRepo = new Mock<IPolicyRepository>();
 
         _mockUnitOfWork.Setup(u => u.InsuranceProducts).Returns(_mockProductRepo.Object);
         _mockUnitOfWork.Setup(u => u.PremiumRateTables).Returns(_mockRateRepo.Object);
         _mockUnitOfWork.Setup(u => u.DocumentRequirements).Returns(_mockDocReqRepo.Object);
+        _mockUnitOfWork.Setup(u => u.Proposals).Returns(_mockProposalRepo.Object);
+        _mockUnitOfWork.Setup(u => u.Policies).Returns(_mockPolicyRepo.Object);
         _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
         _mockUnitOfWork.Setup(u => u.CompleteAsync()).ReturnsAsync(1);
 
         _mockProductRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<InsuranceProduct, bool>>>()))
             .ReturnsAsync(new List<InsuranceProduct>());
+        _mockProposalRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Proposal, bool>>>()))
+            .ReturnsAsync(new List<Proposal>());
+        _mockPolicyRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Policy, bool>>>()))
+            .ReturnsAsync(new List<Policy>());
 
         _productService = new ProductService(_mockUnitOfWork.Object);
     }
 
     [Test]
-    public async Task GetAvailableProductsAsync_ReturnsOnlyActiveProducts()
+    public async Task GetAvailableProductsAsync_ReturnsOnlyActiveProductsAvailableForSale()
     {
         var products = new List<InsuranceProduct>
         {
-            new InsuranceProduct { Id = Guid.NewGuid(), ProductName = "P1", IsActive = true },
-            new InsuranceProduct { Id = Guid.NewGuid(), ProductName = "P2", IsActive = true }
+            new InsuranceProduct { Id = Guid.NewGuid(), ProductName = "P1", IsActive = true, IsAvailableForSale = true },
+            new InsuranceProduct { Id = Guid.NewGuid(), ProductName = "P2", IsActive = true, IsAvailableForSale = true }
         };
         
         _mockProductRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<InsuranceProduct, bool>>>()))
@@ -175,6 +186,46 @@ public class ProductServiceTests
     }
 
     [Test]
+    public void UpdatePremiumRateTableAsync_MotorOverlappingSumBands_ThrowsValidationException()
+    {
+        var productId = Guid.NewGuid();
+        var product = new InsuranceProduct { Id = productId, Domain = "Motor" };
+        _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
+
+        var request = new UpdatePremiumRatesRequest(new List<PremiumRateDto>
+        {
+            new PremiumRateDto(0, 150, 30000, 50000, 1200),
+            new PremiumRateDto(0, 150, 50000, 75000, 1800)
+        });
+
+        var ex = Assert.ThrowsAsync<ValidationException>(() =>
+            _productService.UpdatePremiumRateTableAsync(productId.ToString(), request, Guid.NewGuid().ToString()));
+
+        Assert.That(ex!.Message, Is.EqualTo("Premium rate bands cannot overlap."));
+        _mockRateRepo.Verify(r => r.AddAsync(It.IsAny<PremiumRateTable>()), Times.Never);
+    }
+
+    [Test]
+    public async Task UpdatePremiumRateTableAsync_NonOverlappingAdjacentMotorBands_Saves()
+    {
+        var productId = Guid.NewGuid();
+        var product = new InsuranceProduct { Id = productId, Domain = "Motor" };
+        _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
+        _mockRateRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<PremiumRateTable, bool>>>()))
+            .ReturnsAsync(new List<PremiumRateTable>());
+
+        var request = new UpdatePremiumRatesRequest(new List<PremiumRateDto>
+        {
+            new PremiumRateDto(0, 150, 30000, 50000, 1200),
+            new PremiumRateDto(0, 150, 50001, 75000, 1800)
+        });
+
+        await _productService.UpdatePremiumRateTableAsync(productId.ToString(), request, Guid.NewGuid().ToString());
+
+        _mockRateRepo.Verify(r => r.AddAsync(It.IsAny<PremiumRateTable>()), Times.Exactly(2));
+    }
+
+    [Test]
     public async Task ConfigureDocumentRequirementsAsync_AddsRequirements()
     {
         var productId = Guid.NewGuid();
@@ -240,6 +291,71 @@ public class ProductServiceTests
 
         Assert.That(product.IsActive, Is.False);
         _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public void ToggleProductStatusAsync_DeactivateWithActiveProposal_ThrowsConflict()
+    {
+        var productId = Guid.NewGuid();
+        var product = new InsuranceProduct { Id = productId, IsActive = true };
+        _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
+        _mockProposalRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Proposal, bool>>>()))
+            .ReturnsAsync(new List<Proposal> { new() { ProductId = productId, Status = ProposalStatus.Submitted } });
+
+        var ex = Assert.ThrowsAsync<ConflictException>(() =>
+            _productService.ToggleProductStatusAsync(productId.ToString(), false, Guid.NewGuid().ToString()));
+
+        Assert.That(ex!.Message, Does.Contain("active proposal"));
+        Assert.That(product.IsActive, Is.True);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Never);
+    }
+
+    [Test]
+    public void ToggleProductStatusAsync_DeactivateWithLivePolicy_ThrowsConflict()
+    {
+        var productId = Guid.NewGuid();
+        var product = new InsuranceProduct { Id = productId, IsActive = true };
+        _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
+        _mockPolicyRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Policy, bool>>>()))
+            .ReturnsAsync(new List<Policy> { new() { ProductId = productId, Status = PolicyStatus.Active } });
+
+        var ex = Assert.ThrowsAsync<ConflictException>(() =>
+            _productService.ToggleProductStatusAsync(productId.ToString(), false, Guid.NewGuid().ToString()));
+
+        Assert.That(ex!.Message, Does.Contain("live policy"));
+        Assert.That(product.IsActive, Is.True);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Never);
+    }
+
+    [Test]
+    public async Task ToggleProductSaleAvailabilityAsync_WithLivePolicy_WithdrawsWithoutDeactivating()
+    {
+        var productId = Guid.NewGuid();
+        var product = new InsuranceProduct { Id = productId, IsActive = true, IsAvailableForSale = true };
+        _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
+        _mockPolicyRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Policy, bool>>>()))
+            .ReturnsAsync(new List<Policy> { new() { ProductId = productId, Status = PolicyStatus.Active } });
+
+        await _productService.ToggleProductSaleAvailabilityAsync(productId.ToString(), false, Guid.NewGuid().ToString());
+
+        Assert.That(product.IsActive, Is.True);
+        Assert.That(product.IsAvailableForSale, Is.False);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public void ToggleProductSaleAvailabilityAsync_RestoreArchivedProduct_ThrowsConflict()
+    {
+        var productId = Guid.NewGuid();
+        var product = new InsuranceProduct { Id = productId, IsActive = false, IsAvailableForSale = false };
+        _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
+
+        var ex = Assert.ThrowsAsync<ConflictException>(() =>
+            _productService.ToggleProductSaleAvailabilityAsync(productId.ToString(), true, Guid.NewGuid().ToString()));
+
+        Assert.That(ex!.Message, Does.Contain("Archived products"));
+        Assert.That(product.IsAvailableForSale, Is.False);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Never);
     }
 
     [Test]

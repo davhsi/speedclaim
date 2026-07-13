@@ -135,5 +135,19 @@ public class ProductsController : BaseApiController
         return Ok(new { message = isActive ? "Product activated." : "Product deactivated." });
     }
 
+    /// <summary>Admin — withdraw or restore a product from new sales without affecting existing policies</summary>
+    /// <param name="id">Product ID</param>
+    [Authorize(Roles = "Admin")]
+    [HttpPut("{id}/sale-availability")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> ToggleSaleAvailability(string id, [FromBody] bool isAvailableForSale)
+    {
+        var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        if (adminId == null) return Unauthorized();
+        await _productService.ToggleProductSaleAvailabilityAsync(id, isAvailableForSale, adminId);
+        return Ok(new { message = isAvailableForSale ? "Product restored to sale." : "Product withdrawn from sale." });
+    }
+
     #endregion
 }

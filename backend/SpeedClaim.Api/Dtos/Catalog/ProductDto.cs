@@ -17,5 +17,7 @@ public record ProductDto(
     int WaitingPeriodDays,
     bool AllowsFamilyFloater,
     int MaxFamilyMembers,
-    bool IsActive
+    bool IsActive,
+    bool IsAvailableForSale,
+    string? MotorVehicleType = null
 );

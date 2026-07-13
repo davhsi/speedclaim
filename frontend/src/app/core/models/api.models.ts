@@ -11,7 +11,7 @@ export interface LoginRequest {
 }
 
 export interface RegisterUserRequest {
-  salutationTitle: Salutation;
+  salutation: Salutation;
   firstName: string;
   lastName: string;
   email: string;
@@ -23,9 +23,8 @@ export interface RegisterUserRequest {
   aadhaarNumber?: string;
   panNumber?: string;
   permanentAddress: AddressRequest;
-  currentAddress: AddressRequest;
-  consentDataProcessing: boolean;
-  consentKycCollection: boolean;
+  currentAddress?: AddressRequest | null;
+  isSameAsPermanent: boolean;
 }
 
 export interface AddressRequest {
@@ -107,13 +106,14 @@ export interface AddressDto {
 }
 
 export interface SingleAddressRequest {
-  line1: string;
-  line2?: string;
+  addressType: AddressType;
+  addressLine1: string;
+  addressLine2?: string;
   city: string;
   state: string;
   postalCode: string;
   country: string;
-  type: AddressType;
+  isSameAsPermanent: boolean;
 }
 
 export interface FamilyMemberDto {
@@ -179,6 +179,8 @@ export interface ProductDto {
   allowsFamilyFloater: boolean;
   maxFamilyMembers: number;
   isActive: boolean;
+  isAvailableForSale: boolean;
+  motorVehicleType?: string | null;
 }
 
 export interface DocumentRequirementDto {
@@ -194,7 +196,6 @@ export interface GenerateQuoteRequest {
   age?: number;
   sumAssured: number;
   tenureYears: number;
-  gender?: Gender;
 }
 
 export interface HealthQuoteDetail {
@@ -340,6 +341,7 @@ export interface PolicyDto {
   endDate: string;
   domain: InsuranceDomain;
   type: string;
+  waitingPeriodDays?: number;
   healthDetail?: object;
   vehicleDetail?: object;
   lifeDetail?: object;
@@ -677,6 +679,7 @@ export interface CreateProductRequest {
   waitingPeriodDays: number;
   allowsFamilyFloater: boolean;
   maxFamilyMembers: number;
+  motorVehicleType?: string | null;
 }
 
 export interface PremiumRateDto {
@@ -763,4 +766,6 @@ export interface AgentAddCustomerRequest {
   dateOfBirth: string;
   gender: Gender;
   maritalStatus: MaritalStatus;
+  occupation: string;
+  annualIncome: number;
 }
