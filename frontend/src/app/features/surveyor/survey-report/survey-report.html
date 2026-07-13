@@ -1,281 +1,343 @@
-<div class="flex-1 flex flex-col overflow-hidden animate-sc-fade">
+<div class="animate-sc-fade">
   <!-- Header -->
-  <div class="bg-primary px-4 pt-3 pb-4 shrink-0 flex items-center gap-2.5">
-    <button class="w-[34px] h-[34px] rounded-full bg-white/[.14] border-none cursor-pointer flex items-center justify-center shrink-0"
+  <div class="mb-4">
+    <button class="inline-flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-primary text-[13px] font-medium p-0 mb-4"
             aria-label="Go back to claims list"
             (click)="goBack()">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="15 18 9 12 15 6"/>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
       </svg>
+      Back to my claims
     </button>
-    <div class="flex-1 min-w-0">
-      <div class="text-[16px] font-bold text-white">Survey report</div>
-      <div class="text-[11px] text-white/65 sc-numeric mt-px">{{ claim()?.claimNumber }}</div>
+    <div class="bg-white border border-line rounded-card shadow-sm px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
+      <div>
+        <h1 class="text-xl font-semibold text-ink">Survey report</h1>
+        <div class="text-[13px] text-muted sc-numeric mt-1">{{ claim()?.claimNumber }}</div>
+      </div>
+      @if (claim()) {
+        <span class="shrink-0 inline-flex text-[10px] font-bold tracking-wide uppercase px-2.5 py-1 rounded-full border bg-warning-bg text-warning border-warning-border">
+          {{ claim()!.status }}
+        </span>
+      }
     </div>
-    @if (claim()) {
-      <span class="shrink-0 inline-flex text-[10px] font-bold tracking-wide uppercase px-2.5 py-1 rounded-full border"
-            [class]="'bg-warning-bg text-warning border-warning-border'">
-        {{ claim()!.status }}
-      </span>
-    }
   </div>
 
   <!-- Scrollable body -->
-  <div class="flex-1 overflow-y-auto pb-6">
+  <div>
     @if (claim(); as c) {
-      <!-- Claim context -->
-      <div class="bg-white border-b border-line px-4 py-[15px]">
-        <div class="text-[10px] font-bold text-primary uppercase tracking-wider mb-[11px]">Claim details</div>
-        <div class="grid grid-cols-2 gap-2.5">
-          <div>
-            <div class="text-[10px] text-muted uppercase tracking-wide mb-0.5">Incident date</div>
-            <div class="text-[13px] font-semibold text-ink">{{ c.incidentDate | date:'dd MMM yyyy' }}</div>
-          </div>
-          <div>
-            <div class="text-[10px] text-muted uppercase tracking-wide mb-0.5">Claim type</div>
-            <div class="text-[13px] font-semibold text-ink">{{ c.claimType }}</div>
-          </div>
-          <div>
-            <div class="text-[10px] text-muted uppercase tracking-wide mb-0.5">Amount requested</div>
-            <div class="text-[13px] font-semibold text-primary sc-numeric">{{ formatINR(c.claimAmountRequested) }}</div>
-          </div>
-          <div>
-            <div class="text-[10px] text-muted uppercase tracking-wide mb-0.5">Policy</div>
-            <div class="text-[12px] font-semibold text-primary sc-numeric">{{ c.policyNumber }}</div>
-          </div>
-          <div class="col-span-2">
-            <div class="text-[10px] text-muted uppercase tracking-wide mb-0.5">Description</div>
-            <div class="text-[13px] font-semibold text-ink leading-snug">{{ c.incidentDescription }}</div>
-          </div>
-        </div>
-      </div>
+      <div>
+        <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-4 lg:gap-6 items-start">
+          <main class="min-w-0 space-y-4 lg:space-y-5">
+            <!-- Claim context on mobile/tablet -->
+            <section class="xl:hidden bg-white border border-line rounded-card shadow-sm p-4">
+              <div class="text-[10px] font-bold text-primary uppercase tracking-wider mb-3.5">Claim details</div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <div class="text-[10px] text-muted uppercase tracking-wide mb-0.5">Incident date</div>
+                  <div class="text-[13px] font-semibold text-ink">{{ c.incidentDate | date:'dd MMM yyyy' }}</div>
+                </div>
+                <div>
+                  <div class="text-[10px] text-muted uppercase tracking-wide mb-0.5">Claim type</div>
+                  <div class="text-[13px] font-semibold text-ink">{{ c.claimType }}</div>
+                </div>
+                <div>
+                  <div class="text-[10px] text-muted uppercase tracking-wide mb-0.5">Amount requested</div>
+                  <div class="text-[13px] font-semibold text-primary sc-numeric">{{ formatINR(c.claimAmountRequested) }}</div>
+                </div>
+                <div>
+                  <div class="text-[10px] text-muted uppercase tracking-wide mb-0.5">Policy</div>
+                  <div class="text-[12px] font-semibold text-primary sc-numeric">{{ c.policyNumber }}</div>
+                </div>
+                <div class="col-span-2">
+                  <div class="text-[10px] text-muted uppercase tracking-wide mb-0.5">Description</div>
+                  <div class="text-[13px] font-semibold text-ink leading-snug">{{ c.incidentDescription }}</div>
+                </div>
+              </div>
+            </section>
 
-      <!-- Damage assessment -->
-      <div class="px-4 pt-4">
-        <div class="text-[10px] font-bold text-primary uppercase tracking-wider mb-3.5">Damage assessment</div>
+            <!-- Damage assessment -->
+            <section class="bg-white border border-line rounded-card shadow-sm p-4 lg:p-5">
+              <div class="flex items-center justify-between gap-3 mb-4">
+                <div>
+                  <div class="text-[10px] font-bold text-primary uppercase tracking-wider">Damage assessment</div>
+                  <div class="hidden lg:block text-xs text-muted mt-1">Record the physical inspection findings and repair estimate.</div>
+                </div>
+              </div>
 
-        <!-- Damage type picker -->
-        <div class="mb-4">
-          <div class="text-[13px] font-semibold text-ink mb-2">Damage type <span class="text-danger">*</span></div>
-          <div class="grid grid-cols-2 gap-2">
-            @for (dt of damageTypes; track dt) {
-              <button class="py-2.5 px-1.5 rounded-[10px] text-[12px] font-semibold cursor-pointer transition-all border-2"
-                      [class]="dmgType() === dt
-                        ? 'border-primary bg-primary-light text-primary'
-                        : 'border-line bg-white text-muted'"
-                      (click)="selectDamageType(dt)">
-                {{ dt }}
-              </button>
-            }
-          </div>
-          @if (dmgTypeErr()) {
-            <div class="text-[11px] text-danger mt-[5px]">{{ dmgTypeErr() }}</div>
-          }
-        </div>
+              <div class="mb-5">
+                <div class="text-[13px] font-semibold text-ink mb-2">Damage type <span class="text-danger">*</span></div>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                  @for (dt of damageTypes; track dt) {
+                    <button class="min-h-[46px] py-2.5 px-2 rounded-[10px] text-[12px] lg:text-[13px] font-semibold cursor-pointer transition-all border-2"
+                            [class]="dmgType() === dt
+                              ? 'border-primary bg-primary-light text-primary'
+                              : 'border-line bg-white text-muted hover:border-primary-muted'"
+                            (click)="selectDamageType(dt)">
+                      {{ dt }}
+                    </button>
+                  }
+                </div>
+                @if (dmgTypeErr()) {
+                  <div class="text-[11px] text-danger mt-[5px]">{{ dmgTypeErr() }}</div>
+                }
+              </div>
 
-        <!-- Damage description -->
-        <div class="mb-3.5">
-          <label for="survey-damage-description" class="text-[13px] font-semibold text-ink mb-[7px] block">Damage description <span class="text-danger">*</span></label>
-          <textarea id="survey-damage-description" [(ngModel)]="desc" (ngModelChange)="saveDraft()" placeholder="Describe visible damage — panels, components, frame, fluids…"
-                    rows="4"
-                    class="w-full px-3 py-[11px] rounded-[10px] text-sm text-ink bg-white resize-none outline-none leading-relaxed transition-colors"
-                    [class]="descErr() ? 'border-[1.5px] border-danger' : 'border-[1.5px] border-line focus:border-primary'"></textarea>
-          @if (descErr()) {
-            <div class="text-[11px] text-danger mt-[3px]">{{ descErr() }}</div>
-          }
-        </div>
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div class="lg:col-span-2">
+                  <label for="survey-damage-description" class="text-[13px] font-semibold text-ink mb-[7px] block">Damage description <span class="text-danger">*</span></label>
+                  <textarea id="survey-damage-description" [(ngModel)]="desc" (ngModelChange)="saveDraft()" placeholder="Describe visible damage — panels, components, frame, fluids…"
+                            rows="4"
+                            class="w-full min-h-[138px] px-3 py-[11px] rounded-[10px] text-sm text-ink bg-white resize-y outline-none leading-relaxed transition-colors"
+                            [class]="descErr() ? 'border-[1.5px] border-danger' : 'border-[1.5px] border-line focus:border-primary'"></textarea>
+                  @if (descErr()) {
+                    <div class="text-[11px] text-danger mt-[3px]">{{ descErr() }}</div>
+                  }
+                </div>
 
-        <!-- Estimated repair cost -->
-        <div class="mb-3.5">
-          <label for="survey-repair-cost" class="text-[13px] font-semibold text-ink mb-[7px] block">Estimated repair cost <span class="text-danger">*</span></label>
-          <div class="relative">
-            <span class="absolute left-[13px] top-1/2 -translate-y-1/2 text-[15px] font-semibold text-muted pointer-events-none">₹</span>
-            <input id="survey-repair-cost" type="number" [(ngModel)]="cost" (ngModelChange)="saveDraft()" placeholder="0.00"
-                   class="w-full h-12 pl-[30px] pr-3 rounded-[10px] text-[15px] font-semibold text-ink bg-white outline-none sc-numeric transition-colors"
-                   [class]="costErr() ? 'border-[1.5px] border-danger' : 'border-[1.5px] border-line focus:border-primary'" />
-          </div>
-          @if (costErr()) {
-            <div class="text-[11px] text-danger mt-[3px]">{{ costErr() }}</div>
-          }
-        </div>
+                <div>
+                  <label for="survey-repair-cost" class="text-[13px] font-semibold text-ink mb-[7px] block">Estimated repair cost <span class="text-danger">*</span></label>
+                  <div class="relative">
+                    <span class="absolute left-[13px] top-1/2 -translate-y-1/2 text-[15px] font-semibold text-muted pointer-events-none">₹</span>
+                    <input id="survey-repair-cost" type="number" [(ngModel)]="cost" (ngModelChange)="saveDraft()" placeholder="0.00"
+                           class="w-full h-12 pl-[30px] pr-3 rounded-[10px] text-[15px] font-semibold text-ink bg-white outline-none sc-numeric transition-colors"
+                           [class]="costErr() ? 'border-[1.5px] border-danger' : 'border-[1.5px] border-line focus:border-primary'" />
+                  </div>
+                  @if (costErr()) {
+                    <div class="text-[11px] text-danger mt-[3px]">{{ costErr() }}</div>
+                  }
+                </div>
 
-        <!-- Pre-accident value -->
-        <div class="mb-3.5">
-          <label for="survey-pre-accident-value" class="text-[13px] font-semibold text-ink mb-[7px] block">Pre-accident market value <span class="text-[11px] font-normal text-muted">(IDV)</span></label>
-          <div class="relative">
-            <span class="absolute left-[13px] top-1/2 -translate-y-1/2 text-[15px] font-semibold text-muted pointer-events-none">₹</span>
-            <input id="survey-pre-accident-value" type="number" [(ngModel)]="pav" (ngModelChange)="saveDraft()" placeholder="0.00"
-                   class="w-full h-12 pl-[30px] pr-3 border-[1.5px] border-line rounded-[10px] text-[15px] font-semibold text-ink bg-white outline-none sc-numeric" />
-          </div>
-        </div>
+                <div>
+                  <label for="survey-pre-accident-value" class="text-[13px] font-semibold text-ink mb-[7px] block">Pre-accident market value <span class="text-[11px] font-normal text-muted">(IDV)</span></label>
+                  <div class="relative">
+                    <span class="absolute left-[13px] top-1/2 -translate-y-1/2 text-[15px] font-semibold text-muted pointer-events-none">₹</span>
+                    <input id="survey-pre-accident-value" type="number" [(ngModel)]="pav" (ngModelChange)="saveDraft()" placeholder="0.00"
+                           class="w-full h-12 pl-[30px] pr-3 border-[1.5px] border-line rounded-[10px] text-[15px] font-semibold text-ink bg-white outline-none sc-numeric focus:border-primary transition-colors" />
+                  </div>
+                </div>
 
-        <!-- Is driveable -->
-        <div class="mb-3.5">
-          <div class="text-[13px] font-semibold text-ink mb-[7px]">Is vehicle driveable? <span class="text-danger">*</span></div>
-          <div class="flex gap-2.5">
-            <button class="flex-1 h-[46px] rounded-[10px] text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-[7px] transition-all border-2"
-                    [class]="driveable() === true
-                      ? 'border-success bg-success-bg text-success'
-                      : 'border-line bg-white text-muted'"
-                    (click)="setDriveable(true)">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
-              Yes
-            </button>
-            <button class="flex-1 h-[46px] rounded-[10px] text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-[7px] transition-all border-2"
-                    [class]="driveable() === false
-                      ? 'border-danger bg-danger-bg text-danger'
-                      : 'border-line bg-white text-muted'"
-                    (click)="setDriveable(false)">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-              No
-            </button>
-          </div>
-          @if (driveableErr()) {
-            <div class="text-[11px] text-danger mt-[5px]">{{ driveableErr() }}</div>
-          }
-        </div>
+                <div>
+                  <div class="text-[13px] font-semibold text-ink mb-[7px]">Is vehicle driveable? <span class="text-danger">*</span></div>
+                  <div class="flex gap-2.5">
+                    <button class="flex-1 h-[46px] rounded-[10px] text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-[7px] transition-all border-2"
+                            [class]="driveable() === true
+                              ? 'border-success bg-success-bg text-success'
+                              : 'border-line bg-white text-muted hover:border-success'"
+                            (click)="setDriveable(true)">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                      Yes
+                    </button>
+                    <button class="flex-1 h-[46px] rounded-[10px] text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-[7px] transition-all border-2"
+                            [class]="driveable() === false
+                              ? 'border-danger bg-danger-bg text-danger'
+                              : 'border-line bg-white text-muted hover:border-danger'"
+                            (click)="setDriveable(false)">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                      </svg>
+                      No
+                    </button>
+                  </div>
+                  @if (driveableErr()) {
+                    <div class="text-[11px] text-danger mt-[5px]">{{ driveableErr() }}</div>
+                  }
+                </div>
 
-        <!-- Recommended workshop -->
-        <div class="mb-3.5">
-          <label for="survey-workshop" class="text-[13px] font-semibold text-ink mb-[7px] block">Recommended workshop</label>
-          <input id="survey-workshop" type="text" [(ngModel)]="workshop" (ngModelChange)="saveDraft()" placeholder="e.g. Mahindra First Choice, Koramangala"
-                 class="w-full h-[46px] px-[13px] border-[1.5px] border-line rounded-[10px] text-sm text-ink bg-white outline-none" />
-        </div>
+                <div>
+                  <label for="survey-workshop" class="text-[13px] font-semibold text-ink mb-[7px] block">Recommended workshop</label>
+                  <input id="survey-workshop" type="text" [(ngModel)]="workshop" (ngModelChange)="saveDraft()" placeholder="e.g. Mahindra First Choice, Koramangala"
+                         class="w-full h-[46px] px-[13px] border-[1.5px] border-line rounded-[10px] text-sm text-ink bg-white outline-none focus:border-primary transition-colors" />
+                </div>
 
-        <!-- Surveyor notes -->
-        <div class="mb-1.5">
-          <label for="survey-notes" class="text-[13px] font-semibold text-ink mb-[7px] block">Surveyor observations</label>
-          <textarea id="survey-notes" [(ngModel)]="notes" (ngModelChange)="saveDraft()" placeholder="Additional notes, discrepancies, or context for the claims officer…"
-                    rows="3"
-                    class="w-full px-3 py-[11px] border-[1.5px] border-line rounded-[10px] text-sm text-ink bg-white resize-none outline-none leading-relaxed"></textarea>
-        </div>
-      </div>
+                <div class="lg:col-span-2">
+                  <label for="survey-notes" class="text-[13px] font-semibold text-ink mb-[7px] block">Surveyor observations</label>
+                  <textarea id="survey-notes" [(ngModel)]="notes" (ngModelChange)="saveDraft()" placeholder="Additional notes, discrepancies, or context for the claims officer…"
+                            rows="3"
+                            class="w-full px-3 py-[11px] border-[1.5px] border-line rounded-[10px] text-sm text-ink bg-white resize-y outline-none leading-relaxed focus:border-primary transition-colors"></textarea>
+                </div>
+              </div>
+            </section>
 
-      <!-- Divider -->
-      <div class="h-px bg-line my-3.5"></div>
+            <!-- Photos & Documents -->
+            <section class="bg-white border border-line rounded-card shadow-sm p-4 lg:p-5">
+              <div class="flex items-center justify-between gap-3 mb-4">
+                <div>
+                  <div class="text-[10px] font-bold text-primary uppercase tracking-wider">Photos & documents</div>
+                  <div class="hidden lg:block text-xs text-muted mt-1">Attach evidence and the official survey report file.</div>
+                </div>
+              </div>
 
-      <!-- Photos & Documents -->
-      <div class="px-4 pb-4">
-        <div class="text-[10px] font-bold text-primary uppercase tracking-wider mb-3.5">Photos & documents</div>
-
-        <!-- Photo upload -->
-        <div class="mb-3.5">
-          <div class="text-[13px] font-semibold text-ink mb-1.5">
-            Damage photos <span class="text-danger">*</span>
-            <span class="text-[11px] font-normal text-muted ml-1">JPG / PNG · max 5 MB</span>
-          </div>
-          <button type="button" class="w-full block border-2 border-dashed rounded-[12px] py-[18px] px-3.5 text-center cursor-pointer transition-all"
-               [class]="photos().length
-                 ? 'border-success bg-success-bg'
-                 : photoErr() ? 'border-danger bg-danger-bg' : 'border-[#C5CBD3] bg-[#FAFBFC]'"
-               (click)="photoInput.click()">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
-                 [attr.stroke]="photos().length ? '#1F9D6B' : '#6B7685'"
-                 stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-1.5">
-              <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>
-            </svg>
-            <div class="text-[13px] font-semibold" [class]="photos().length ? 'text-success' : 'text-ink'">
-              {{ photos().length ? photos().length + ' photo' + (photos().length > 1 ? 's' : '') + ' added' : 'Add damage photos' }}
-            </div>
-            <div class="text-[11px] text-muted mt-[3px]">Tap to take photo or choose from gallery</div>
-          </button>
-          <input #photoInput type="file" accept="image/*" multiple class="hidden" aria-label="Add damage photos" (change)="onPhotoChange($event)" />
-          @if (photos().length) {
-            <div class="flex gap-2 flex-wrap mt-[9px]">
-              @for (p of photos(); track p.name; let i = $index) {
-                <div class="relative">
-                  <div class="w-[60px] h-[60px] rounded-lg bg-primary-light border border-primary-muted flex items-center justify-center">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F6E8C" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div>
+                  <div class="text-[13px] font-semibold text-ink mb-1.5">
+                    Damage photos <span class="text-danger">*</span>
+                    <span class="text-[11px] font-normal text-muted ml-1">JPG / PNG · max 5 MB</span>
+                  </div>
+                  <button type="button" class="w-full min-h-[154px] block border-2 border-dashed rounded-[12px] py-[18px] px-3.5 text-center cursor-pointer transition-all"
+                       [class]="photos().length
+                         ? 'border-success bg-success-bg'
+                         : photoErr() ? 'border-danger bg-danger-bg' : 'border-[#C5CBD3] bg-[#FAFBFC] hover:bg-surface-alt'"
+                       (click)="photoInput.click()">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+                         [attr.stroke]="photos().length ? '#1F9D6B' : '#6B7685'"
+                         stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-1.5">
                       <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>
                     </svg>
-                  </div>
-                  <button class="absolute -top-1 -right-1 w-[17px] h-[17px] rounded-full bg-danger border-none cursor-pointer flex items-center justify-center p-0"
-                          [attr.aria-label]="'Remove photo ' + (i + 1)"
-                          (click)="removePhoto(i); $event.stopPropagation()">
-                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round">
-                      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
+                    <div class="text-[13px] font-semibold" [class]="photos().length ? 'text-success' : 'text-ink'">
+                      {{ photos().length ? photos().length + ' photo' + (photos().length > 1 ? 's' : '') + ' added' : 'Add damage photos' }}
+                    </div>
+                    <div class="text-[11px] text-muted mt-[3px]">Take photo or choose from gallery</div>
                   </button>
-                  <div class="text-[9px] text-muted text-center mt-0.5 w-[60px] truncate">{{ p.name }}</div>
+                  <input #photoInput type="file" accept="image/*" multiple class="hidden" aria-label="Add damage photos" (change)="onPhotoChange($event)" />
+                  @if (photos().length) {
+                    <div class="flex gap-2 flex-wrap mt-[9px]">
+                      @for (p of photos(); track p.name; let i = $index) {
+                        <div class="relative">
+                          <div class="w-[60px] h-[60px] rounded-lg bg-primary-light border border-primary-muted flex items-center justify-center">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F6E8C" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>
+                            </svg>
+                          </div>
+                          <button class="absolute -top-1 -right-1 w-[17px] h-[17px] rounded-full bg-danger border-none cursor-pointer flex items-center justify-center p-0"
+                                  [attr.aria-label]="'Remove photo ' + (i + 1)"
+                                  (click)="removePhoto(i); $event.stopPropagation()">
+                            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round">
+                              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                          </button>
+                          <div class="text-[9px] text-muted text-center mt-0.5 w-[60px] truncate">{{ p.name }}</div>
+                        </div>
+                      }
+                    </div>
+                  }
+                  @if (photoErr()) {
+                    <div class="text-[11px] text-danger mt-[5px]">{{ photoErr() }}</div>
+                  }
                 </div>
-              }
-            </div>
-          }
-          @if (photoErr()) {
-            <div class="text-[11px] text-danger mt-[5px]">{{ photoErr() }}</div>
-          }
-        </div>
 
-        <!-- Report document upload -->
-        <div class="mb-5">
-          <div class="text-[13px] font-semibold text-ink mb-1.5">
-            Survey report document <span class="text-danger">*</span>
-            <span class="text-[11px] font-normal text-muted ml-1">PDF / JPG / PNG · max 5 MB</span>
-          </div>
-          <button type="button" class="w-full border-[1.5px] border-dashed border-[#C5CBD3] rounded-[12px] py-[13px] px-3.5 flex items-center gap-3 cursor-pointer bg-[#FAFBFC] hover:bg-surface-alt transition-colors text-left"
-               [class]="reportDocumentErr() ? 'border-danger bg-danger-bg' : ''"
-               (click)="docInput.click()">
-            <div class="w-[38px] h-[38px] rounded-[10px] bg-primary-light flex items-center justify-center shrink-0">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F6E8C" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
-                <line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>
-              </svg>
-            </div>
-            <div>
-              <div class="text-[13px] font-semibold text-ink">
-                {{ reportDocument() ? 'Report document selected' : 'Add survey report document' }}
+                <div>
+                  <div class="text-[13px] font-semibold text-ink mb-1.5">
+                    Survey report document <span class="text-danger">*</span>
+                    <span class="text-[11px] font-normal text-muted ml-1">PDF / JPG / PNG · max 5 MB</span>
+                  </div>
+                  <button type="button" class="w-full min-h-[154px] border-[1.5px] border-dashed border-[#C5CBD3] rounded-[12px] py-[13px] px-3.5 flex items-center justify-center gap-3 cursor-pointer bg-[#FAFBFC] hover:bg-surface-alt transition-colors text-left"
+                       [class]="reportDocumentErr() ? 'border-danger bg-danger-bg' : ''"
+                       (click)="docInput.click()">
+                    <div class="w-[42px] h-[42px] rounded-[10px] bg-primary-light flex items-center justify-center shrink-0">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F6E8C" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                        <line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <div class="text-[13px] font-semibold text-ink">
+                        {{ reportDocument() ? 'Report document selected' : 'Add survey report document' }}
+                      </div>
+                      <div class="text-[11px] text-muted mt-0.5">Stored as the official survey report</div>
+                    </div>
+                  </button>
+                  <input #docInput type="file" accept=".pdf,.jpg,.jpeg,.png" class="hidden" aria-label="Add survey report document" (change)="onDocChange($event)" />
+                  @if (reportDocument(); as d) {
+                    <div class="mt-2 flex flex-col gap-[5px]">
+                      <div class="flex items-center gap-[9px] bg-surface border border-line rounded-lg px-[11px] py-2">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0F6E8C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                        <span class="text-xs font-medium text-ink flex-1 min-w-0 truncate">{{ d.name }}</span>
+                        <button class="bg-transparent border-none cursor-pointer text-muted flex p-0 shrink-0"
+                                aria-label="Remove document"
+                                (click)="removeDoc()">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  }
+                  @if (reportDocumentErr()) {
+                    <div class="text-[11px] text-danger mt-[5px]">{{ reportDocumentErr() }}</div>
+                  }
+                </div>
               </div>
-              <div class="text-[11px] text-muted mt-0.5">This file is stored as the official survey report</div>
-            </div>
-          </button>
-          <input #docInput type="file" accept=".pdf,.jpg,.jpeg,.png" class="hidden" aria-label="Add survey report document" (change)="onDocChange($event)" />
-          @if (reportDocument(); as d) {
-            <div class="mt-2 flex flex-col gap-[5px]">
-              <div class="flex items-center gap-[9px] bg-surface border border-line rounded-lg px-[11px] py-2">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0F6E8C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+            </section>
+          </main>
+
+          <!-- Desktop claim context / submit rail -->
+          <aside class="hidden xl:block sticky top-6 space-y-4">
+            <section class="bg-white border border-line rounded-card shadow-sm p-5">
+              <div class="text-[10px] font-bold text-primary uppercase tracking-wider mb-4">Claim details</div>
+              <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <div class="text-[10px] text-muted uppercase tracking-wide mb-0.5">Incident date</div>
+                    <div class="text-[13px] font-semibold text-ink">{{ c.incidentDate | date:'dd MMM yyyy' }}</div>
+                  </div>
+                  <div>
+                    <div class="text-[10px] text-muted uppercase tracking-wide mb-0.5">Claim type</div>
+                    <div class="text-[13px] font-semibold text-ink">{{ c.claimType }}</div>
+                  </div>
+                </div>
+                <div>
+                  <div class="text-[10px] text-muted uppercase tracking-wide mb-0.5">Amount requested</div>
+                  <div class="text-[22px] font-bold text-primary sc-numeric leading-tight">{{ formatINR(c.claimAmountRequested) }}</div>
+                </div>
+                <div>
+                  <div class="text-[10px] text-muted uppercase tracking-wide mb-0.5">Policy</div>
+                  <div class="text-[13px] font-semibold text-primary sc-numeric">{{ c.policyNumber }}</div>
+                </div>
+                <div>
+                  <div class="text-[10px] text-muted uppercase tracking-wide mb-1">Description</div>
+                  <div class="text-[13px] font-semibold text-ink leading-relaxed">{{ c.incidentDescription }}</div>
+                </div>
+              </div>
+            </section>
+
+            <section class="bg-white border border-line rounded-card shadow-sm p-5">
+              <div class="bg-surface border border-line rounded-[10px] px-[13px] py-2.5 mb-4 flex items-start gap-2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5 shrink-0">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
                 </svg>
-                <span class="text-xs font-medium text-ink flex-1 min-w-0 truncate">{{ d.name }}</span>
-                <button class="bg-transparent border-none cursor-pointer text-muted flex p-0 shrink-0"
-                        aria-label="Remove document"
-                        (click)="removeDoc()">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                  </svg>
-                </button>
+                <span class="text-[11px] text-muted leading-relaxed">Your report and photos will be shared with the claims officer for review.</span>
               </div>
-            </div>
-          }
-          @if (reportDocumentErr()) {
-            <div class="text-[11px] text-danger mt-[5px]">{{ reportDocumentErr() }}</div>
-          }
+              <button class="w-full h-[52px] border-none text-white rounded-card text-[15px] font-bold cursor-pointer flex items-center justify-center gap-[9px] transition-colors"
+                      [class]="submitting() ? 'bg-muted cursor-wait' : 'bg-accent hover:bg-accent-dark'"
+                      [style.box-shadow]="submitting() ? 'none' : '0 4px 14px rgba(242,120,75,.32)'"
+                      [disabled]="submitting()"
+                      (click)="submit()">
+                @if (submitting()) {
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" class="animate-spin">
+                    <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" opacity=".25"/><path d="M12 3a9 9 0 019 9"/>
+                  </svg>
+                }
+                {{ submitting() ? 'Submitting…' : 'Submit survey report' }}
+              </button>
+            </section>
+          </aside>
         </div>
 
-        <!-- Review note -->
-        <div class="bg-surface border border-line rounded-[10px] px-[13px] py-2.5 mb-4 flex items-center gap-2">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-          <span class="text-[11px] text-muted">Your report and photos will be shared with the claims officer for review.</span>
-        </div>
-
-        <!-- Submit button -->
-        <button class="w-full h-[52px] border-none text-white rounded-card text-[15px] font-bold cursor-pointer flex items-center justify-center gap-[9px] transition-colors"
-                [class]="submitting() ? 'bg-muted cursor-wait' : 'bg-accent hover:bg-accent-dark'"
-                [style.box-shadow]="submitting() ? 'none' : '0 4px 14px rgba(242,120,75,.32)'"
-                [disabled]="submitting()"
-                (click)="submit()">
-          @if (submitting()) {
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" class="animate-spin">
-              <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" opacity=".25"/><path d="M12 3a9 9 0 019 9"/>
+        <!-- Mobile/tablet submit action -->
+        <div class="xl:hidden mt-4">
+          <div class="bg-surface border border-line rounded-[10px] px-[13px] py-2.5 mb-4 flex items-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
             </svg>
-          }
-          {{ submitting() ? 'Submitting…' : 'Submit survey report' }}
-        </button>
+            <span class="text-[11px] text-muted">Your report and photos will be shared with the claims officer for review.</span>
+          </div>
+          <button class="w-full h-[52px] border-none text-white rounded-card text-[15px] font-bold cursor-pointer flex items-center justify-center gap-[9px] transition-colors"
+                  [class]="submitting() ? 'bg-muted cursor-wait' : 'bg-accent hover:bg-accent-dark'"
+                  [style.box-shadow]="submitting() ? 'none' : '0 4px 14px rgba(242,120,75,.32)'"
+                  [disabled]="submitting()"
+                  (click)="submit()">
+            @if (submitting()) {
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" class="animate-spin">
+                <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" opacity=".25"/><path d="M12 3a9 9 0 019 9"/>
+              </svg>
+            }
+            {{ submitting() ? 'Submitting…' : 'Submit survey report' }}
+          </button>
+        </div>
       </div>
     }
   </div>

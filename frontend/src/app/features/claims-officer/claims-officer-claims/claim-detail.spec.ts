@@ -238,7 +238,7 @@ describe('ClaimDetailComponent', () => {
       const fixture = create();
       claimsService.approveReject.mockReturnValue(of({ message: 'ok' }));
       fixture.componentInstance.openModal('reject');
-      fixture.componentInstance.modalReason = 'incomplete documents';
+      fixture.componentInstance.modalReason = ' incomplete documents ';
 
       fixture.componentInstance.onModalConfirm();
 
@@ -246,17 +246,38 @@ describe('ClaimDetailComponent', () => {
       expect(toast.success).toHaveBeenCalledWith('Claim rejected');
     });
 
+    it('blocks claim rejection when the backend minimum reason length is not met', () => {
+      const fixture = create();
+      fixture.componentInstance.openModal('reject');
+      fixture.componentInstance.modalReason = 'short';
+
+      fixture.componentInstance.onModalConfirm();
+
+      expect(claimsService.approveReject).not.toHaveBeenCalled();
+    });
+
     it('assigns a surveyor with notes', () => {
       const fixture = create();
       claimsService.assignSurveyor.mockReturnValue(of({ message: 'ok' }));
       fixture.componentInstance.openModal('assignSurveyor');
-      fixture.componentInstance.modalSurveyorId = 's1';
-      fixture.componentInstance.modalNotes = 'urgent';
+      fixture.componentInstance.modalSurveyorId = ' s1 ';
+      fixture.componentInstance.modalNotes = ' urgent ';
 
       fixture.componentInstance.onModalConfirm();
 
       expect(claimsService.assignSurveyor).toHaveBeenCalledWith('claim1', { surveyorId: 's1', notes: 'urgent' });
       expect(toast.success).toHaveBeenCalledWith('Surveyor assigned');
+    });
+
+    it('blocks surveyor assignment without required notes', () => {
+      const fixture = create();
+      fixture.componentInstance.openModal('assignSurveyor');
+      fixture.componentInstance.modalSurveyorId = 's1';
+      fixture.componentInstance.modalNotes = ' ';
+
+      fixture.componentInstance.onModalConfirm();
+
+      expect(claimsService.assignSurveyor).not.toHaveBeenCalled();
     });
 
     it('sends a document request', () => {

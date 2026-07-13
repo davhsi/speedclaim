@@ -3,7 +3,6 @@ import { Router } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
 import { SurveyorService } from '../services/surveyor.service';
-import { SurveyorLayoutComponent } from '../surveyor-layout/surveyor-layout';
 import { ClaimDto } from '../../../core/models/api.models';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination';
 import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader';
@@ -18,7 +17,6 @@ type Tab = 'all' | 'pending' | 'overdue' | 'submitted';
   host: { class: 'flex-1 min-h-0 flex flex-col' },
 })
 export class SurveyorClaimsComponent implements OnInit {
-  layout = inject(SurveyorLayoutComponent);
   router = inject(Router);
   private readonly authService = inject(AuthService);
   private readonly surveyorService = inject(SurveyorService);
@@ -73,6 +71,7 @@ export class SurveyorClaimsComponent implements OnInit {
   }
 
   mapSurveyStatus(claim: ClaimDto): string {
+    if (this.hasSubmittedSurveyReport(claim)) return 'Submitted';
     if (claim.status === 'Settled' || claim.status === 'Approved' || claim.status === 'Withdrawn') return 'Submitted';
     if (claim.status === 'Rejected') return 'Submitted';
     const intimated = new Date(claim.intimationDate);
@@ -83,19 +82,26 @@ export class SurveyorClaimsComponent implements OnInit {
   }
 
   openClaim(claim: ClaimDto): void {
-    const status = this.mapSurveyStatus(claim);
-    if (status === 'Submitted') return;
+    if (!this.isSurveyActionable(claim)) return;
     this.router.navigate(['/surveyor/claims', claim.id, 'report']);
   }
 
-  barColor(status: string): string {
-    const s = this.mapSurveyStatus({ status } as ClaimDto);
+  isSurveyActionable(claim: ClaimDto): boolean {
+    return this.mapSurveyStatus(claim) !== 'Submitted';
+  }
+
+  barColor(claimOrStatus: ClaimDto | string): string {
+    const s = typeof claimOrStatus === 'string'
+      ? this.mapSurveyStatus({ status: claimOrStatus } as ClaimDto)
+      : this.mapSurveyStatus(claimOrStatus);
     const m: Record<string, string> = { Pending: '#D9920A', Overdue: '#D14343', Submitted: '#1F9D6B' };
     return m[s] ?? '#C5CBD3';
   }
 
-  statusClasses(status: string): string {
-    const s = this.mapSurveyStatus({ status } as ClaimDto);
+  statusClasses(claimOrStatus: ClaimDto | string): string {
+    const s = typeof claimOrStatus === 'string'
+      ? this.mapSurveyStatus({ status: claimOrStatus } as ClaimDto)
+      : this.mapSurveyStatus(claimOrStatus);
     const m: Record<string, string> = {
       Pending: 'bg-warning-bg text-warning border-warning-border',
       Overdue: 'bg-danger-bg text-danger border-danger-border',
@@ -104,8 +110,10 @@ export class SurveyorClaimsComponent implements OnInit {
     return m[s] ?? 'bg-[#F0F1F3] text-muted border-[#D1D5DB]';
   }
 
-  displayStatus(status: string): string {
-    return this.mapSurveyStatus({ status } as ClaimDto);
+  displayStatus(claimOrStatus: ClaimDto | string): string {
+    return typeof claimOrStatus === 'string'
+      ? this.mapSurveyStatus({ status: claimOrStatus } as ClaimDto)
+      : this.mapSurveyStatus(claimOrStatus);
   }
 
   formatINR(value: number): string {
@@ -119,5 +127,14 @@ export class SurveyorClaimsComponent implements OnInit {
       formatted = rest.slice(start, i) + (formatted ? ',' + formatted : '');
     }
     return '₹' + (formatted ? formatted + ',' : '') + lastThree + '.' + decimal;
+  }
+
+  hasSubmittedSurveyReport(claim: ClaimDto): boolean {
+    return Boolean(
+      claim.surveyDate ||
+      claim.surveyEstimatedCost != null ||
+      claim.surveyorRemarks ||
+      claim.documents?.some(d => d.documentKey === 'SurveyorReport')
+    );
   }
 }

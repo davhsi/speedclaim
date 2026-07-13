@@ -1,102 +1,141 @@
-<div class="fixed inset-0 flex flex-col bg-surface">
-  <router-outlet />
-
-  <!-- Bottom Navigation -->
-  @if (!isReportRoute()) {
-    <nav class="shrink-0 bg-white border-t border-line flex z-10" style="height: calc(66px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom);">
-      <a routerLink="/surveyor/claims"
-         class="flex-1 flex flex-col items-center justify-center gap-0.5 pt-2 cursor-pointer no-underline"
-         (click)="$event.stopPropagation()">
-        <div class="w-8 h-7 rounded-lg flex items-center justify-center transition-colors"
-             [class]="activeTab() === 'claims' ? 'bg-gold-light' : 'bg-transparent'">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
-               [attr.stroke]="activeTab() === 'claims' ? '#C4801A' : '#6B7685'"
-               stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
-          </svg>
-        </div>
-        <span class="text-[10px]"
-              [class]="activeTab() === 'claims' ? 'font-semibold text-gold-dark' : 'font-medium text-muted'">
-          My claims
-        </span>
-      </a>
-      <a routerLink="/surveyor/history"
-         class="flex-1 flex flex-col items-center justify-center gap-0.5 pt-2 cursor-pointer no-underline"
-         (click)="$event.stopPropagation()">
-        <div class="w-8 h-7 rounded-lg flex items-center justify-center transition-colors"
-             [class]="activeTab() === 'history' ? 'bg-gold-light' : 'bg-transparent'">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
-               [attr.stroke]="activeTab() === 'history' ? '#C4801A' : '#6B7685'"
-               stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-          </svg>
-        </div>
-        <span class="text-[10px]"
-              [class]="activeTab() === 'history' ? 'font-semibold text-gold-dark' : 'font-medium text-muted'">
-          History
-        </span>
-      </a>
-      <a routerLink="/surveyor/profile"
-         class="flex-1 flex flex-col items-center justify-center gap-0.5 pt-2 cursor-pointer no-underline"
-         (click)="$event.stopPropagation()">
-        <div class="w-8 h-7 rounded-lg flex items-center justify-center transition-colors"
-             [class]="activeTab() === 'profile' ? 'bg-gold-light' : 'bg-transparent'">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
-               [attr.stroke]="activeTab() === 'profile' ? '#C4801A' : '#6B7685'"
-               stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
-          </svg>
-        </div>
-        <span class="text-[10px]"
-              [class]="activeTab() === 'profile' ? 'font-semibold text-gold-dark' : 'font-medium text-muted'">
-          Profile
-        </span>
-      </a>
-    </nav>
+<a href="#main-content" class="skip-link">Skip to main content</a>
+<div class="min-h-screen flex bg-surface">
+  @if (!sidebarCollapsed()) {
+    <button type="button" aria-label="Close sidebar" (click)="toggleSidebar()" class="fixed inset-0 bg-black/40 z-40 lg:hidden border-none cursor-default p-0"></button>
   }
 
-  <!-- Notifications Panel -->
-  @if (showNotifs()) {
-    <button type="button" class="fixed inset-0 bg-black/45 z-[200] border-none cursor-default p-0" (click)="showNotifs.set(false)" aria-label="Close notifications"></button>
-    <div class="fixed inset-0 z-[200] flex items-end pointer-events-none">
-      <div class="bg-white rounded-t-[22px] w-full flex flex-col max-h-[72%] animate-slide-up pointer-events-auto">
-        <div class="flex justify-center pt-2.5 pb-1">
-          <div class="w-9 h-1 rounded-full bg-line"></div>
-        </div>
-        <div class="flex items-center justify-between px-[18px] pb-3.5 border-b border-line">
-          <div class="text-[17px] font-bold text-ink">Notifications</div>
-          <button class="text-xs font-semibold text-primary bg-transparent border-none cursor-pointer"
-                  (click)="markAllRead()">Mark all read</button>
-        </div>
-        <div class="overflow-y-auto flex-1">
-          @for (n of notifService.notifications(); track n.id) {
-            <div class="flex items-start gap-3 px-[18px] py-3.5 border-b border-surface"
-                 [class]="n.isRead ? 'bg-white' : 'bg-[#FFFCF8]'">
-              <div class="w-[38px] h-[38px] rounded-full flex items-center justify-center shrink-0 mt-0.5"
-                   [class]="notifIconBg(n.type)">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                     [attr.stroke]="notifIconColor(n.type)"
-                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                  <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-                </svg>
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="text-[13px] text-ink leading-snug mb-0.5"
-                     [class]="n.isRead ? 'font-normal' : 'font-semibold'">{{ n.title }}</div>
-                <div class="text-[11px] text-muted">{{ n.message }}</div>
-              </div>
-              @if (!n.isRead) {
-                <div class="w-2 h-2 rounded-full bg-accent shrink-0 mt-1.5"></div>
+  <aside
+    class="fixed top-0 left-0 h-full z-50 flex flex-col w-[244px] transition-transform duration-200 ease-out"
+    [class]="sidebarCollapsed() ? '-translate-x-full lg:translate-x-0' : 'translate-x-0'"
+    style="background: var(--color-sidebar); border-right: 1px solid rgba(255,255,255,.07);"
+  >
+    <div class="flex items-center gap-[10px] px-4 py-[18px] shrink-0" style="border-bottom: 1px solid rgba(255,255,255,.08);">
+      <img src="/brand/speedclaim-mark.svg" alt="" class="w-[30px] h-[30px] rounded-lg shrink-0" />
+      <div>
+        <div class="text-sm font-bold text-white leading-tight">SpeedClaim</div>
+        <div class="text-[10px] font-semibold mt-px" style="color: rgba(255,255,255,.45); letter-spacing: .06em;">SURVEYOR</div>
+      </div>
+      <button class="ml-auto lg:hidden text-white/60 hover:text-white bg-transparent border-none cursor-pointer" (click)="toggleSidebar()" aria-label="Close navigation menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto py-2.5 px-2">
+      @for (item of navItems; track item.route) {
+        <a
+          [routerLink]="item.route"
+          routerLinkActive="surveyor-active"
+          [routerLinkActiveOptions]="{ exact: item.exact }"
+          class="flex items-center gap-[10px] w-full px-2.5 py-[9px] rounded-lg text-[13px] mb-0.5 transition-colors no-underline"
+          style="color: rgba(255,255,255,.68);"
+          (click)="closeSidebarOnMobile()"
+        >
+          <span class="w-[18px] h-[18px] shrink-0 flex items-center justify-center" [innerHTML]="item.icon | safeHtml"></span>
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+
+    <div class="px-3 py-3 flex items-center gap-2.5" style="border-top: 1px solid rgba(255,255,255,.08);">
+      <a routerLink="/surveyor/profile" (click)="closeSidebarOnMobile()" class="w-8 h-8 rounded-full bg-gold text-sidebar flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden no-underline">
+        @if (userAvatar()) {
+          <img [src]="userAvatar()!" alt="Profile" class="w-full h-full object-cover" />
+        } @else {
+          {{ userInitials() }}
+        }
+      </a>
+      <div class="flex-1 min-w-0">
+        <div class="text-[13px] font-semibold text-white truncate">{{ userName() }}</div>
+        <div class="text-[11px]" style="color: rgba(255,255,255,.5);">Surveyor</div>
+      </div>
+      <button (click)="logout()" title="Sign out" class="bg-transparent border-none cursor-pointer p-1 flex shrink-0" style="color: rgba(255,255,255,.4);">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <div class="flex-1 flex flex-col min-h-screen transition-[margin] duration-200 lg:ml-[244px]">
+    <header class="h-14 shrink-0 bg-white border-b border-line flex items-center gap-3 px-6 sticky top-0 z-20">
+      <button class="lg:hidden bg-transparent border-none cursor-pointer text-muted p-1 flex" (click)="toggleSidebar()" aria-label="Open navigation menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div class="flex-1 text-[15px] font-semibold text-ink">{{ pageTitle() }}</div>
+
+      <div class="relative">
+        <button (click)="toggleNotifPanel()" class="relative bg-transparent border-none cursor-pointer text-muted p-2 flex" [attr.aria-label]="notifService.unreadCount() > 0 ? 'Notifications, ' + notifService.unreadCount() + ' unread' : 'Notifications'">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          @if (notifService.unreadCount() > 0) {
+            <span class="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-danger border-[1.5px] border-white flex items-center justify-center text-[9px] font-bold text-white" aria-hidden="true">{{ notifService.unreadCount() }}</span>
+          }
+        </button>
+
+        @if (notifPanelOpen()) {
+          <div class="absolute top-[calc(100%+8px)] right-0 w-[340px] max-w-[calc(100vw-32px)] bg-white border border-line rounded-card shadow-dropdown z-50 overflow-hidden animate-sc-fade-fast">
+            <div class="flex items-center justify-between px-4 py-3.5 border-b border-line">
+              <span class="text-sm font-semibold text-ink">
+                Notifications
+                @if (notifService.unreadCount() > 0) {
+                  <span class="text-danger"> · {{ notifService.unreadCount() }} unread</span>
+                }
+              </span>
+              <button (click)="markAllRead()" class="bg-transparent border-none cursor-pointer text-xs font-semibold text-primary">Mark all read</button>
+            </div>
+            <div class="max-h-[360px] overflow-y-auto">
+              @for (n of notifService.notifications(); track n.id) {
+                <button type="button" (click)="onReadNotification(n)" class="w-full text-left bg-transparent border-0 p-0 flex items-start gap-3 px-4 py-3.5 border-b border-line cursor-pointer hover:bg-surface transition-colors" [class.bg-primary-light/30]="!n.isRead">
+                  <div class="w-[7px] h-[7px] rounded-full shrink-0 mt-1.5" [class]="n.isRead ? 'bg-transparent' : 'bg-primary'"></div>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-[13px] text-ink mb-0.5" [class.font-semibold]="!n.isRead">{{ n.title }}</div>
+                    <div class="text-xs text-body leading-relaxed mb-1">{{ n.message }}</div>
+                    <div class="text-[11px] text-muted">{{ n.createdAt | timeAgo }}</div>
+                  </div>
+                </button>
+              } @empty {
+                <div class="px-4 py-8 text-center text-sm text-muted">No notifications</div>
               }
             </div>
-          }
-          @if (notifService.notifications().length === 0) {
-            <div class="text-center py-12 text-sm text-muted">No notifications</div>
-          }
-        </div>
+            <div class="px-4 py-3 text-center border-t border-line">
+              <button (click)="notifPanelOpen.set(false)" class="bg-transparent border-none cursor-pointer text-xs text-muted font-medium">Close</button>
+            </div>
+          </div>
+        }
       </div>
-    </div>
-  }
+
+      <div class="relative">
+        <button (click)="toggleProfileMenu()"
+                class="w-[30px] h-[30px] rounded-full bg-primary text-white flex items-center justify-center text-[11px] font-bold cursor-pointer border-none select-none">
+          {{ userInitials() }}
+        </button>
+        @if (profileMenuOpen()) {
+          <button type="button" class="fixed inset-0 z-40" (click)="profileMenuOpen.set(false)" aria-label="Close menu"></button>
+          <div class="absolute top-[calc(100%+8px)] right-0 w-[200px] bg-white border border-line rounded-card shadow-dropdown z-50 overflow-hidden animate-sc-fade-fast">
+            <div class="px-4 py-3 border-b border-line">
+              <div class="text-[13px] font-semibold text-ink truncate">{{ userName() }}</div>
+              <div class="text-[11px] text-muted">Surveyor</div>
+            </div>
+            <a routerLink="/surveyor/profile" (click)="profileMenuOpen.set(false)"
+               class="flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-body hover:bg-surface transition-colors no-underline">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+              My profile
+            </a>
+            <button (click)="logout()"
+                    class="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-danger hover:bg-danger-bg transition-colors border-none border-t border-line bg-transparent cursor-pointer">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              Sign out
+            </button>
+          </div>
+        }
+      </div>
+    </header>
+
+    <main id="main-content" class="flex-1 overflow-y-auto p-3 sm:p-6">
+      <div class="max-w-[1300px] mx-auto">
+        <router-outlet />
+      </div>
+    </main>
+  </div>
 </div>

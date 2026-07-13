@@ -179,9 +179,9 @@ export class ClaimDetailComponent implements OnInit {
       case 'approve':
         return !this.hasValidApprovedAmount(this.modalAmount);
       case 'reject':
-        return this.modalReason.trim().length === 0;
+        return this.modalReason.trim().length < 10;
       case 'assignSurveyor':
-        return this.modalSurveyorId.trim().length === 0;
+        return this.modalSurveyorId.trim().length === 0 || this.modalNotes.trim().length === 0;
       case 'requestDocs':
         return this.modalDocs.trim().length === 0;
       default:
@@ -208,7 +208,7 @@ export class ClaimDetailComponent implements OnInit {
       case 'reject':
         this.claimsService.approveReject(c.id, {
           isApproved: false,
-          reason: this.modalReason,
+          reason: this.modalReason.trim(),
         }).subscribe({
           next: () => { this.finishAction('Claim rejected', 'success'); this.closeModal(); this.loadClaim(c.id); },
           error: () => this.finishAction('Failed to reject claim', 'error'),
@@ -216,8 +216,8 @@ export class ClaimDetailComponent implements OnInit {
         break;
       case 'assignSurveyor':
         this.claimsService.assignSurveyor(c.id, {
-          surveyorId: this.modalSurveyorId,
-          notes: this.modalNotes || undefined,
+          surveyorId: this.modalSurveyorId.trim(),
+          notes: this.modalNotes.trim(),
         }).subscribe({
           next: () => { this.finishAction('Surveyor assigned', 'success'); this.closeModal(); this.loadClaim(c.id); },
           error: () => this.finishAction('Failed to assign surveyor', 'error'),

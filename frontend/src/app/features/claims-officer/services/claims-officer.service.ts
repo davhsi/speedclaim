@@ -21,7 +21,7 @@ export interface ApproveRejectRequest {
 
 export interface AssignSurveyorRequest {
   surveyorId: string;
-  notes?: string;
+  notes: string;
 }
 
 export interface AssignGrievanceRequest {

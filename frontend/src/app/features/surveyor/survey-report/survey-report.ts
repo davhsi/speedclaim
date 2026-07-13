@@ -96,8 +96,10 @@ export class SurveyReportComponent implements OnInit {
           return;
         }
 
-        if (this.isSurveyReportLocked(found.status)) {
-          this.toastService.warning('This claim no longer accepts survey reports.');
+        if (this.isSurveyReportLocked(found)) {
+          this.toastService.warning(this.hasSubmittedSurveyReport(found)
+            ? 'A survey report has already been submitted for this claim.'
+            : 'This claim no longer accepts survey reports.');
           this.router.navigate(['/surveyor/claims']);
           return;
         }
@@ -182,7 +184,7 @@ export class SurveyReportComponent implements OnInit {
   submit(): void {
     if (this.submitting()) return;
     const c = this.claim();
-    if (!c || this.isSurveyReportLocked(c.status)) {
+    if (!c || this.isSurveyReportLocked(c)) {
       this.toastService.warning('This claim no longer accepts survey reports.');
       this.router.navigate(['/surveyor/claims']);
       return;
@@ -252,7 +254,20 @@ export class SurveyReportComponent implements OnInit {
     return 'N/A';
   }
 
-  private isSurveyReportLocked(status: string): boolean {
+  private isSurveyReportLocked(claim: ClaimDto): boolean {
+    return this.hasSubmittedSurveyReport(claim) || this.isTerminalStatus(claim.status);
+  }
+
+  private hasSubmittedSurveyReport(claim: ClaimDto): boolean {
+    return Boolean(
+      claim.surveyDate ||
+      claim.surveyEstimatedCost != null ||
+      claim.surveyorRemarks ||
+      claim.documents?.some(d => d.documentKey === 'SurveyorReport')
+    );
+  }
+
+  private isTerminalStatus(status: string): boolean {
     return ['Approved', 'Rejected', 'Settled', 'Withdrawn'].includes(status);
   }
 }

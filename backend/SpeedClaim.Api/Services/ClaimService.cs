@@ -207,18 +207,15 @@ public class ClaimService : IClaimService
         if (policy.Status != PolicyStatus.Active)
             throw new UnprocessableException("Claim can only be intimated for an active policy.");
 
-        var productDomain = policy.Product?.Domain;
-        if (string.IsNullOrWhiteSpace(productDomain))
-        {
-            var product = await _unitOfWork.InsuranceProducts.GetByIdAsync(policy.ProductId);
-            productDomain = product?.Domain;
-        }
+        var product = policy.Product ?? await _unitOfWork.InsuranceProducts.GetByIdAsync(policy.ProductId);
+        var productDomain = product?.Domain;
 
         if (!IsClaimTypeAllowedForDomain(request.ClaimType, productDomain))
             throw new UnprocessableException("Claim type is not valid for the selected policy.");
 
         var incidentDate = request.IncidentDate.Date;
-        if (incidentDate < policy.StartDate.Date || incidentDate > policy.EndDate.Date)
+        var claimOpenDate = policy.StartDate.Date.AddDays(Math.Max(product?.WaitingPeriodDays ?? 0, 0));
+        if (incidentDate < claimOpenDate || incidentDate > policy.EndDate.Date)
             throw new UnprocessableException("Incident date must fall within the active policy coverage period.");
 
         if (policy.SumAssured > 0 && request.ClaimAmountRequested > policy.SumAssured)
@@ -494,7 +491,14 @@ public class ClaimService : IClaimService
         var claims = await _unitOfWork.Claims.FindAsync(c =>
             c.SurveyorId == surveyorRecordId &&
             (c.ClaimType == ClaimType.Accident || c.ClaimType == ClaimType.Theft || c.ClaimType == ClaimType.NaturalDamage));
-        return claims.Select(claim => MapToDto(claim));
+        var claimList = claims.ToList();
+        var claimIds = claimList.Select(c => c.Id).ToHashSet();
+        var surveyDetails = await _unitOfWork.MotorClaimDetails.FindAsync(m => claimIds.Contains(m.ClaimId))
+            ?? Enumerable.Empty<MotorClaimDetail>();
+        var surveyDetailsByClaimId = surveyDetails.ToDictionary(m => m.ClaimId);
+
+        return claimList.Select(claim =>
+            MapToDto(claim, surveyDetail: surveyDetailsByClaimId.GetValueOrDefault(claim.Id)));
     }
 
     public async Task<string> SubmitSurveyReportAsync(Guid claimId, Guid surveyorId, SubmitSurveyReportRequest request)

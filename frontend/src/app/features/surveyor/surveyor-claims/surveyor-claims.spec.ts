@@ -76,6 +76,15 @@ describe('SurveyorClaimsComponent', () => {
       }
     });
 
+    it('maps a claim with submitted survey fields to Submitted even while UnderReview', () => {
+      const fixture = create();
+      expect(fixture.componentInstance.mapSurveyStatus(claim({
+        status: 'UnderReview',
+        surveyDate: new Date().toISOString(),
+        surveyEstimatedCost: 8500,
+      }))).toBe('Submitted');
+    });
+
     it('maps a claim intimated more than 7 days ago to Overdue', () => {
       const fixture = create();
       expect(fixture.componentInstance.mapSurveyStatus(claim({ status: 'UnderReview', intimationDate: daysAgo(8) }))).toBe('Overdue');
@@ -143,6 +152,16 @@ describe('SurveyorClaimsComponent', () => {
     it('does not navigate for an already-submitted claim', () => {
       const fixture = create();
       fixture.componentInstance.openClaim(claim({ id: 'c1', status: 'Settled' }));
+      expect(router.navigate).not.toHaveBeenCalled();
+    });
+
+    it('does not navigate when a survey report has already been submitted', () => {
+      const fixture = create();
+      fixture.componentInstance.openClaim(claim({
+        id: 'c1',
+        status: 'UnderReview',
+        surveyDate: new Date().toISOString(),
+      }));
       expect(router.navigate).not.toHaveBeenCalled();
     });
   });

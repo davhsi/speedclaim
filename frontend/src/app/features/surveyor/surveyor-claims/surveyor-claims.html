@@ -1,113 +1,101 @@
-<div class="flex-1 flex flex-col overflow-hidden animate-sc-fade">
-  <!-- Teal header -->
-  <div class="bg-primary px-[18px] pt-3.5 shrink-0">
-    <div class="flex items-center justify-between mb-3.5">
-      <div>
-        <div class="text-[10px] font-semibold text-white/60 tracking-wider uppercase mb-0.5">SpeedClaim</div>
-        <div class="text-[21px] font-bold text-white leading-tight">My claims</div>
-      </div>
-      <div class="flex gap-2 items-center">
-        <button class="w-9 h-9 rounded-full bg-white/[.14] border-none cursor-pointer flex items-center justify-center relative shrink-0"
-                (click)="layout.openNotifications()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
-          </svg>
-          @if (layout.notifService.unreadCount() > 0) {
-            <span class="absolute top-1.5 right-1.5 w-[7px] h-[7px] rounded-full bg-accent border-[1.5px] border-primary"></span>
-          }
-        </button>
-        <button type="button" class="w-9 h-9 rounded-full bg-white/[.18] border-2 border-white/35 flex items-center justify-center text-[13px] font-bold text-white cursor-pointer shrink-0 p-0"
-                [attr.aria-label]="layout.userInitials() + ', go to profile'"
-                (click)="router.navigate(['/surveyor/profile'])">
-          {{ layout.userInitials() }}
-        </button>
-      </div>
+<div class="animate-sc-fade">
+  <div class="flex items-end justify-between flex-wrap gap-3 mb-5">
+    <div>
+      <h1 class="text-xl font-semibold text-ink">My claims</h1>
+      <p class="text-sm text-muted mt-1">{{ filteredClaims().length }} assigned claims · select a claim to submit a survey report</p>
     </div>
-    <!-- Stat pills -->
-    <div class="flex gap-[7px] pb-4">
-      <div class="bg-white/[.13] rounded-full px-[11px] py-[5px] flex items-center gap-[5px]">
-        <span class="w-1.5 h-1.5 rounded-full bg-warning-border shrink-0"></span>
-        <span class="text-xs font-medium text-white">{{ pendingCount() }} pending</span>
+    <div class="flex flex-wrap gap-2">
+      <div class="bg-white border border-line rounded-lg px-3 py-2 min-w-[112px]">
+        <div class="text-[10px] font-semibold text-muted uppercase tracking-wide">Pending</div>
+        <div class="text-lg font-bold text-warning sc-numeric leading-tight">{{ pendingCount() }}</div>
       </div>
-      <div class="bg-white/[.13] rounded-full px-[11px] py-[5px] flex items-center gap-[5px]">
-        <span class="w-1.5 h-1.5 rounded-full bg-danger-border shrink-0"></span>
-        <span class="text-xs font-medium text-white">{{ overdueCount() }} overdue</span>
+      <div class="bg-white border border-line rounded-lg px-3 py-2 min-w-[112px]">
+        <div class="text-[10px] font-semibold text-muted uppercase tracking-wide">Overdue</div>
+        <div class="text-lg font-bold text-danger sc-numeric leading-tight">{{ overdueCount() }}</div>
       </div>
-      <div class="bg-white/[.13] rounded-full px-[11px] py-[5px] flex items-center gap-[5px]">
-        <span class="w-1.5 h-1.5 rounded-full bg-success-border shrink-0"></span>
-        <span class="text-xs font-medium text-white">{{ submittedCount() }} done</span>
+      <div class="bg-white border border-line rounded-lg px-3 py-2 min-w-[112px]">
+        <div class="text-[10px] font-semibold text-muted uppercase tracking-wide">Submitted</div>
+        <div class="text-lg font-bold text-success sc-numeric leading-tight">{{ submittedCount() }}</div>
       </div>
     </div>
   </div>
 
-  <!-- Filter tabs -->
-  <div class="bg-white border-b border-line flex shrink-0 overflow-x-auto">
-    @for (t of tabs; track t.key) {
-      <button class="flex-1 py-[11px] px-1 border-none bg-transparent text-[13px] cursor-pointer whitespace-nowrap min-w-0 transition-all border-b-[2.5px]"
-              [class]="activeTab() === t.key
-                ? 'font-semibold text-primary border-b-primary'
-                : 'font-medium text-muted border-b-transparent'"
-              (click)="onTabChange(t.key)">
-        {{ t.label }}
-      </button>
-    }
-  </div>
+  <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
+    <div class="border-b border-line flex overflow-x-auto">
+      @for (t of tabs; track t.key) {
+        <button class="flex-1 sm:flex-none sm:min-w-[132px] py-3 px-4 border-none bg-transparent text-[13px] cursor-pointer whitespace-nowrap transition-all border-b-[2.5px]"
+                [class]="activeTab() === t.key
+                  ? 'font-semibold text-primary border-b-primary'
+                  : 'font-medium text-muted border-b-transparent hover:text-ink'"
+                (click)="onTabChange(t.key)">
+          {{ t.label }}
+        </button>
+      }
+    </div>
 
-  <!-- Claims list -->
-  <div class="flex-1 overflow-y-auto p-3">
     @if (loading()) {
-      @for (i of [1,2,3]; track i) {
-        <app-skeleton variant="list-card" />
-      }
+      <div class="p-4">
+        @for (i of [1,2,3]; track i) {
+          <app-skeleton variant="list-card" />
+        }
+      </div>
     } @else {
-      @for (claim of pagedClaims(); track claim.id) {
-        <button type="button" class="bg-white border border-line rounded-card mb-2.5 overflow-hidden cursor-pointer shadow-xs hover:shadow-md transition-shadow flex w-full text-left p-0"
-                (click)="openClaim(claim)">
-          <div class="w-1 shrink-0" [style.background]="barColor(claim.status)"></div>
-          <div class="flex-1 py-[13px] px-3 min-w-0">
-            <!-- ID + status -->
-            <div class="flex items-start justify-between gap-2 mb-[5px]">
+      <div class="divide-y divide-line">
+        @for (claim of pagedClaims(); track claim.id) {
+          <button type="button" class="w-full bg-white border-none text-left p-0 transition-colors"
+                  [class.cursor-pointer]="isSurveyActionable(claim)"
+                  [class.cursor-default]="!isSurveyActionable(claim)"
+                  [class.hover:bg-surface]="isSurveyActionable(claim)"
+                  [disabled]="!isSurveyActionable(claim)"
+                  [attr.aria-label]="isSurveyActionable(claim) ? 'Open survey report for ' + claim.claimNumber : 'Survey report already submitted for ' + claim.claimNumber"
+                  (click)="openClaim(claim)">
+            <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1.2fr)_140px_160px_140px_48px] gap-3 lg:gap-4 items-center px-4 py-4">
               <div class="min-w-0">
-                <div class="text-[11px] font-bold text-primary sc-numeric tracking-wide mb-0.5">{{ claim.claimNumber }}</div>
-                <div class="text-[15px] font-semibold text-ink truncate">{{ claim.customerName || claim.claimNumber }}</div>
+                <div class="flex items-center gap-2 flex-wrap mb-1">
+                  <span class="text-xs font-semibold text-primary sc-numeric">{{ claim.claimNumber }}</span>
+                  <span class="inline-flex bg-info-bg text-info text-[10px] font-bold tracking-wide uppercase px-2.5 py-0.5 rounded-full">{{ claim.claimType }}</span>
+                  <span class="inline-flex text-[10px] font-bold tracking-wide uppercase px-2.5 py-0.5 rounded-full border"
+                        [class]="statusClasses(claim)">
+                    {{ displayStatus(claim) }}
+                  </span>
+                </div>
+                <div class="font-semibold text-ink truncate">{{ claim.customerName || claim.claimNumber }}</div>
+                <div class="text-xs text-muted mt-0.5">Incident {{ claim.incidentDate | date:'dd MMM yyyy' }}</div>
               </div>
-              <span class="shrink-0 inline-flex text-[10px] font-bold tracking-wide uppercase px-2 py-[3px] rounded-full whitespace-nowrap mt-0.5 border"
-                    [class]="statusClasses(claim.status)">
-                {{ displayStatus(claim.status) }}
-              </span>
+              <div>
+                <div class="text-[10px] font-semibold text-muted uppercase tracking-wide mb-1 lg:hidden">Amount</div>
+                <div class="text-[13px] font-semibold text-ink sc-numeric">{{ formatINR(claim.claimAmountRequested) }}</div>
+              </div>
+              <div>
+                <div class="text-[10px] font-semibold text-muted uppercase tracking-wide mb-1 lg:hidden">Assigned</div>
+                <div class="text-[13px] text-muted">{{ claim.createdAt | date:'dd MMM yyyy' }}</div>
+              </div>
+              <div>
+                <span class="inline-flex text-[10px] font-bold tracking-wide uppercase px-2.5 py-1 rounded-full border"
+                      [class]="statusClasses(claim)">
+                  {{ displayStatus(claim) }}
+                </span>
+              </div>
+              <div class="hidden lg:flex justify-end">
+                @if (isSurveyActionable(claim)) {
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                } @else {
+                  <span class="w-7 h-7 rounded-full bg-success-bg text-success border border-success-border flex items-center justify-center" aria-hidden="true">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </span>
+                }
+              </div>
             </div>
-            <!-- Claim type + incident date -->
-            <div class="flex items-center gap-[5px] mb-2">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              <span class="text-[12px] font-semibold text-body sc-numeric">{{ claim.claimType }}</span>
-              <span class="w-[3px] h-[3px] rounded-full bg-[#D1D5DB] shrink-0"></span>
-              <span class="text-[11px] text-muted truncate">{{ claim.incidentDate | date:'dd MMM yyyy' }}</span>
-            </div>
-            <!-- Amount + assigned date -->
-            <div class="flex items-center justify-between">
-              <span class="bg-info-bg text-info text-[10px] font-bold tracking-wide uppercase px-2 py-[3px] rounded-full">
-                {{ formatINR(claim.claimAmountRequested) }}
-              </span>
-              <span class="text-[11px] text-muted flex items-center gap-[3px]">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                </svg>
-                {{ claim.createdAt | date:'dd MMM yyyy' }}
-              </span>
-            </div>
-          </div>
-          <div class="flex items-center pr-[11px]">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C5CBD3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="9 18 15 12 9 6"/>
-            </svg>
-          </div>
-        </button>
-      }
+          </button>
+        }
+      </div>
 
       @if (filteredClaims().length === 0 && !loading()) {
-        <div class="text-center py-[52px] px-5">
+        <div class="text-center py-16 px-5">
           <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#C5CBD3" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3.5">
             <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
           </svg>
@@ -115,8 +103,9 @@
           <div class="text-[13px] text-muted leading-relaxed">No claims in this category.</div>
         </div>
       }
+
       @if (totalPages() > 1) {
-        <div class="px-3 pt-2 pb-4">
+        <div class="px-4 border-t border-line">
           <app-pagination [currentPage]="currentPage()" [totalPages]="totalPages()" (pageChange)="onPageChange($event)" />
         </div>
       }

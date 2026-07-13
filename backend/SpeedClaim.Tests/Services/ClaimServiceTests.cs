@@ -183,6 +183,34 @@ public class ClaimServiceTests
     }
 
     [Test]
+    public void IntimateClaimAsync_WithIncidentDuringProductWaitingPeriod_ThrowsException()
+    {
+        var customerId = Guid.NewGuid();
+        var policyId = Guid.NewGuid();
+        var policy = ActivePolicy(policyId, customerId);
+        policy.StartDate = DateTime.UtcNow.Date.AddDays(-10);
+        policy.EndDate = DateTime.UtcNow.Date.AddYears(1);
+
+        _mockProductRepo.Setup(r => r.GetByIdAsync(policy.ProductId))
+            .ReturnsAsync(new InsuranceProduct { Domain = "HEALTH", WaitingPeriodDays = 30 });
+
+        var request = new IntimateClaimRequest(
+            policyId,
+            null,
+            ClaimType.Health,
+            15000,
+            true,
+            DateTime.UtcNow.Date,
+            "Hospitalization during waiting period"
+        );
+
+        _mockPolicyRepo.Setup(r => r.GetByIdAsync(policyId)).ReturnsAsync(policy);
+
+        Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.UnprocessableException>(() =>
+            _claimService.IntimateClaimAsync(customerId, request));
+    }
+
+    [Test]
     public void IntimateClaimAsync_WithIncidentAfterPolicyEnd_ThrowsException()
     {
         var customerId = Guid.NewGuid();
@@ -539,18 +567,37 @@ public class ClaimServiceTests
     public async Task GetAssignedMotorClaimsAsync_ReturnsSurveyorClaims()
     {
         var surveyorId = Guid.NewGuid();
+        var claimId = Guid.NewGuid();
+        var surveyDate = DateTime.UtcNow.AddHours(-1);
         var claims = new List<Claim>
         {
-            new Claim { Id = Guid.NewGuid(), SurveyorId = surveyorId, ClaimType = ClaimType.Accident, Status = ClaimStatus.UnderReview },
+            new Claim { Id = claimId, SurveyorId = surveyorId, ClaimType = ClaimType.Accident, Status = ClaimStatus.UnderReview },
             new Claim { Id = Guid.NewGuid(), SurveyorId = surveyorId, ClaimType = ClaimType.Health, Status = ClaimStatus.UnderReview }
         };
         _mockClaimRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Claim, bool>>>()))
             .ReturnsAsync((Expression<Func<Claim, bool>> predicate) => claims.Where(predicate.Compile()).ToList());
+        var motorDetailsRepo = new Mock<IRepository<MotorClaimDetail>>();
+        motorDetailsRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<MotorClaimDetail, bool>>>()))
+            .ReturnsAsync(new[]
+            {
+                new MotorClaimDetail
+                {
+                    ClaimId = claimId,
+                    EstimatedRepairCost = 8500m,
+                    SurveyDate = surveyDate,
+                    SurveyorRemarks = "Submitted survey report"
+                }
+            });
+        _mockUnitOfWork.Setup(u => u.MotorClaimDetails).Returns(motorDetailsRepo.Object);
 
         var result = await _claimService.GetAssignedMotorClaimsAsync(surveyorId);
 
         Assert.That(result.Count(), Is.EqualTo(1));
-        Assert.That(result.Single().ClaimType, Is.EqualTo(ClaimType.Accident.ToString()));
+        var dto = result.Single();
+        Assert.That(dto.ClaimType, Is.EqualTo(ClaimType.Accident.ToString()));
+        Assert.That(dto.SurveyEstimatedCost, Is.EqualTo(8500m));
+        Assert.That(dto.SurveyDate, Is.EqualTo(surveyDate));
+        Assert.That(dto.SurveyorRemarks, Is.EqualTo("Submitted survey report"));
     }
 
     [Test]

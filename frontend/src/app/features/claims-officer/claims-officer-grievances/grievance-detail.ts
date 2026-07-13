@@ -80,10 +80,14 @@ export class GrievanceDetailComponent implements OnInit {
   onUpdateStatus(): void {
     const g = this.grievance();
     if (!g || this.isTerminal(g) || this.actionInFlight()) return;
+    if ((this.selectedStatus === 'Resolved' || this.selectedStatus === 'Closed') && !this.notes.trim()) {
+      this.toast.warning('Resolution notes are required before resolving or closing a grievance.');
+      return;
+    }
     this.pendingAction.set('status');
     this.claimsService.updateGrievanceStatus(g.id, {
       status: this.selectedStatus,
-      resolutionNotes: this.notes || undefined,
+      resolutionNotes: this.notes.trim() || undefined,
     }).subscribe({
       next: () => {
         this.toast.success('Grievance status updated');
@@ -103,7 +107,7 @@ export class GrievanceDetailComponent implements OnInit {
     this.pendingAction.set('notes');
     this.claimsService.updateGrievanceStatus(g.id, {
       status: g.status,
-      resolutionNotes: this.notes,
+      resolutionNotes: this.notes.trim(),
     }).subscribe({
       next: () => {
         this.toast.success('Notes saved');

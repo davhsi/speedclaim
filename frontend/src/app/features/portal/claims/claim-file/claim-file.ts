@@ -73,7 +73,7 @@ export class ClaimFileComponent implements OnInit, CanComponentDeactivate {
     if (!policy || !value) return null;
 
     const incident = this.toLocalDate(value);
-    const start = this.toLocalDate(policy.startDate);
+    const start = this.toLocalDate(this.policyClaimOpenDate(policy) ?? policy.startDate);
     const end = this.toLocalDate(policy.endDate);
 
     return incident < start || incident > end ? { outsidePolicyPeriod: true } : null;
@@ -148,13 +148,13 @@ export class ClaimFileComponent implements OnInit, CanComponentDeactivate {
   }
 
   isPolicyClaimable(policy: PolicyDto): boolean {
-    const startDate = policy.startDate?.slice(0, 10);
+    const startDate = this.policyClaimOpenDate(policy)?.slice(0, 10);
     const endDate = policy.endDate?.slice(0, 10);
     return (!startDate || startDate <= this.today) && (!endDate || endDate >= this.today);
   }
 
   policyClaimAvailability(policy: PolicyDto): string | null {
-    const startDate = policy.startDate?.slice(0, 10);
+    const startDate = this.policyClaimOpenDate(policy)?.slice(0, 10);
     const endDate = policy.endDate?.slice(0, 10);
     if (startDate && startDate > this.today) return 'Claims open from';
     if (endDate && endDate < this.today) return 'Coverage ended on';
@@ -162,9 +162,10 @@ export class ClaimFileComponent implements OnInit, CanComponentDeactivate {
   }
 
   policyClaimAvailabilityDate(policy: PolicyDto): string | null {
-    const startDate = policy.startDate?.slice(0, 10);
+    const openDate = this.policyClaimOpenDate(policy);
+    const startDate = openDate?.slice(0, 10);
     const endDate = policy.endDate?.slice(0, 10);
-    if (startDate && startDate > this.today) return policy.startDate;
+    if (startDate && startDate > this.today) return openDate;
     if (endDate && endDate < this.today) return policy.endDate;
     return null;
   }
@@ -232,6 +233,23 @@ export class ClaimFileComponent implements OnInit, CanComponentDeactivate {
     const [datePart] = value.split('T');
     const [year, month, day] = datePart.split('-').map(Number);
     return new Date(year, month - 1, day);
+  }
+
+  policyClaimOpenDate(policy: PolicyDto): string | null {
+    if (!policy.startDate) return null;
+    const waitingDays = Math.max(policy.waitingPeriodDays ?? 0, 0);
+    if (waitingDays === 0) return policy.startDate;
+
+    const openDate = this.toLocalDate(policy.startDate);
+    openDate.setDate(openDate.getDate() + waitingDays);
+    return this.formatLocalDate(openDate);
+  }
+
+  private formatLocalDate(value: Date): string {
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, '0');
+    const day = String(value.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   private documentKeyFor(file: File): string {

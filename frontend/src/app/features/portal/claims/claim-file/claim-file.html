@@ -85,7 +85,7 @@
           </div>
           <div>
             <label for="claim-incident-date" class="block text-[13px] font-medium mb-1.5">Incident date</label>
-            <input id="claim-incident-date" type="date" formControlName="incidentDate" [min]="selectedPolicy()?.startDate?.slice(0, 10)" [max]="maxIncidentDate()" class="h-[42px]" />
+            <input id="claim-incident-date" type="date" formControlName="incidentDate" [min]="selectedPolicy() ? policyClaimOpenDate(selectedPolicy()!)?.slice(0, 10) : null" [max]="maxIncidentDate()" class="h-[42px]" />
             @if ((claimForm.controls.incidentDate.touched || claimForm.controls.incidentDate.dirty) && claimForm.controls.incidentDate.errors) {
               <p class="text-xs text-danger mt-1">
                 @if (claimForm.controls.incidentDate.errors['outsidePolicyPeriod']) {

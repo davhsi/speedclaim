@@ -11,7 +11,7 @@ import { AuthUserDto, GrievanceDto } from '../../../core/models/api.models';
 describe('GrievanceDetailComponent', () => {
   let claimsService: { getGrievanceById: ReturnType<typeof vi.fn>; assignGrievance: ReturnType<typeof vi.fn>; updateGrievanceStatus: ReturnType<typeof vi.fn> };
   let authService: { currentUser: ReturnType<typeof vi.fn> };
-  let toast: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
+  let toast: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn>; warning: ReturnType<typeof vi.fn> };
   let router: { navigate: ReturnType<typeof vi.fn> };
 
   const officer = { id: 'officer-1' } as AuthUserDto;
@@ -27,7 +27,7 @@ describe('GrievanceDetailComponent', () => {
       updateGrievanceStatus: vi.fn(),
     };
     authService = { currentUser: vi.fn(() => officer) };
-    toast = { success: vi.fn(), error: vi.fn() };
+    toast = { success: vi.fn(), error: vi.fn(), warning: vi.fn() };
     router = { navigate: vi.fn() };
 
     TestBed.configureTestingModule({
@@ -119,12 +119,23 @@ describe('GrievanceDetailComponent', () => {
       const fixture = create();
       claimsService.updateGrievanceStatus.mockReturnValue(of({ message: 'ok' }));
       fixture.componentInstance.selectedStatus = 'Resolved';
-      fixture.componentInstance.notes = 'resolved via refund';
+      fixture.componentInstance.notes = ' resolved via refund ';
 
       fixture.componentInstance.onUpdateStatus();
 
       expect(claimsService.updateGrievanceStatus).toHaveBeenCalledWith('g1', { status: 'Resolved', resolutionNotes: 'resolved via refund' });
       expect(toast.success).toHaveBeenCalledWith('Grievance status updated');
+    });
+
+    it('blocks resolve or close when resolution notes are missing', () => {
+      const fixture = create();
+      fixture.componentInstance.selectedStatus = 'Closed';
+      fixture.componentInstance.notes = ' ';
+
+      fixture.componentInstance.onUpdateStatus();
+
+      expect(claimsService.updateGrievanceStatus).not.toHaveBeenCalled();
+      expect(toast.warning).toHaveBeenCalledWith('Resolution notes are required before resolving or closing a grievance.');
     });
 
     it('does nothing when already terminal', () => {
@@ -160,7 +171,7 @@ describe('GrievanceDetailComponent', () => {
     it('saves notes against the current status and clears the field', () => {
       const fixture = create();
       claimsService.updateGrievanceStatus.mockReturnValue(of({ message: 'ok' }));
-      fixture.componentInstance.notes = 'called customer';
+      fixture.componentInstance.notes = ' called customer ';
 
       fixture.componentInstance.onSaveNotes();
 

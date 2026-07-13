@@ -22,6 +22,7 @@ export class SurveyorHistoryComponent implements OnInit {
 
   submittedClaims = computed(() =>
     this.claims().filter(c =>
+      this.hasSubmittedSurveyReport(c) ||
       c.status === 'Settled' || c.status === 'Approved' || c.status === 'Withdrawn' || c.status === 'Rejected'
     )
   );
@@ -65,5 +66,14 @@ export class SurveyorHistoryComponent implements OnInit {
     }
     parts.unshift(digits.slice(0, i));
     return parts.join(',');
+  }
+
+  private hasSubmittedSurveyReport(claim: ClaimDto): boolean {
+    return Boolean(
+      claim.surveyDate ||
+      claim.surveyEstimatedCost != null ||
+      claim.surveyorRemarks ||
+      claim.documents?.some(d => d.documentKey === 'SurveyorReport')
+    );
   }
 }

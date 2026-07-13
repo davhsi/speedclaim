@@ -110,6 +110,21 @@ describe('ClaimFileComponent', () => {
       expect(c.policyClaimAvailability(futurePolicy)).toBe('Claims open from');
     });
 
+    it('uses product waiting days when deciding when claims open', () => {
+      const fixture = create();
+      const c = fixture.componentInstance;
+      const waitingPolicy: PolicyDto = {
+        ...activePolicy,
+        startDate: c.today,
+        endDate: '2999-01-01',
+        waitingPeriodDays: 30,
+      };
+
+      expect(c.isPolicyClaimable(waitingPolicy)).toBe(false);
+      expect(c.policyClaimAvailability(waitingPolicy)).toBe('Claims open from');
+      expect(c.policyClaimAvailabilityDate(waitingPolicy)).not.toBe(waitingPolicy.startDate);
+    });
+
     it('limits claim type options to the selected policy domain', () => {
       const fixture = create([activePolicy, lifePolicy, motorPolicy]);
       const c = fixture.componentInstance;
