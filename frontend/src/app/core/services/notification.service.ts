@@ -5,6 +5,7 @@ import { Observable, tap } from 'rxjs';
 import * as signalR from '@microsoft/signalr';
 import { NotificationDto, ApiMessage } from '../models/api.models';
 import { TokenService } from './token.service';
+import { resolveBackendUrl } from '../config/backend-url.config';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -51,7 +52,7 @@ export class NotificationService {
     if (!isPlatformBrowser(this.platformId) || this.hubConnection) return;
 
     this.hubConnection = new signalR.HubConnectionBuilder()
-      .withUrl('/hubs/notifications', {
+      .withUrl(resolveBackendUrl('/hubs/notifications'), {
         accessTokenFactory: () => this.tokenService.getAccessToken() ?? '',
       })
       .withAutomaticReconnect()
