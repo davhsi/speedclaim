@@ -1,10 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+import { ProfileAvatarUploadComponent } from '../../../shared/components/profile-avatar-upload/profile-avatar-upload';
 
 @Component({
   selector: 'app-claims-officer-profile',
   standalone: true,
+  imports: [ProfileAvatarUploadComponent],
   templateUrl: './claims-officer-profile.html',
 })
 export class ClaimsOfficerProfileComponent {

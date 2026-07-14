@@ -3,11 +3,12 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { FinanceOfficerService } from '../services/finance-officer.service';
+import { ProfileAvatarUploadComponent } from '../../../shared/components/profile-avatar-upload/profile-avatar-upload';
 
 @Component({
   selector: 'app-finance-officer-profile',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, ProfileAvatarUploadComponent],
   templateUrl: './finance-officer-profile.html',
 })
 export class FinanceOfficerProfileComponent implements OnInit {

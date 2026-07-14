@@ -62,15 +62,22 @@
       <!-- Profile dropdown -->
       <div class="relative">
         <button (click)="toggleProfileMenu()"
-                class="w-[30px] h-[30px] rounded-full bg-primary text-white flex items-center justify-center text-[11px] font-bold cursor-pointer border-none select-none">
-          {{ userInitials() }}
+                class="w-[30px] h-[30px] rounded-full bg-primary text-white flex items-center justify-center text-[11px] font-bold cursor-pointer border-none select-none overflow-hidden">
+          @if (avatarUrl()) {
+            <img [src]="avatarUrl()!" alt="" class="w-full h-full object-cover" />
+          } @else {
+            {{ userInitials() }}
+          }
         </button>
         @if (profileMenuOpen()) {
           <button type="button" class="fixed inset-0 z-40" (click)="profileMenuOpen.set(false)" aria-label="Close menu"></button>
           <div class="absolute top-[calc(100%+8px)] right-0 w-[200px] bg-white border border-line rounded-card shadow-dropdown z-50 overflow-hidden animate-sc-fade-fast">
-            <div class="px-4 py-3 border-b border-line">
-              <div class="text-[13px] font-semibold text-ink truncate">{{ userName() }}</div>
-              <div class="text-[11px] text-muted">Administrator</div>
+            <div class="px-4 py-3 border-b border-line flex items-center gap-3">
+              <app-profile-avatar-upload [initials]="userInitials()" sizeClass="w-10 h-10" roundedClass="rounded-full" colorClass="bg-primary text-white" />
+              <div class="min-w-0">
+                <div class="text-[13px] font-semibold text-ink truncate">{{ userName() }}</div>
+                <div class="text-[11px] text-muted">Administrator</div>
+              </div>
             </div>
             <button (click)="logout()"
                     class="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-danger hover:bg-danger-bg transition-colors border-none bg-transparent cursor-pointer">

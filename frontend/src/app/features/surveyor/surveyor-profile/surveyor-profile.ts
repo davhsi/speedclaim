@@ -2,10 +2,12 @@ import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
 import { SurveyorProfileDto, SurveyorService } from '../services/surveyor.service';
 import { ClaimDto } from '../../../core/models/api.models';
+import { ProfileAvatarUploadComponent } from '../../../shared/components/profile-avatar-upload/profile-avatar-upload';
 
 @Component({
   selector: 'app-surveyor-profile',
   standalone: true,
+  imports: [ProfileAvatarUploadComponent],
   templateUrl: './surveyor-profile.html',
   host: { class: 'flex-1 min-h-0 flex flex-col' },
 })

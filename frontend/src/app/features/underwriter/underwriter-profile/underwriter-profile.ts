@@ -3,11 +3,12 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { UnderwriterService } from '../services/underwriter.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+import { ProfileAvatarUploadComponent } from '../../../shared/components/profile-avatar-upload/profile-avatar-upload';
 
 @Component({
   selector: 'app-underwriter-profile',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, ProfileAvatarUploadComponent],
   templateUrl: './underwriter-profile.html',
 })
 export class UnderwriterProfileComponent implements OnInit {

@@ -8,11 +8,12 @@ import { NotificationService } from '../../../core/services/notification.service
 import { AdminService } from '../services/admin.service';
 import { NotificationDto } from '../../../core/models/api.models';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
+import { ProfileAvatarUploadComponent } from '../../../shared/components/profile-avatar-upload/profile-avatar-upload';
 
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [RouterOutlet, AdminSidebarComponent, TimeAgoPipe],
+  imports: [RouterOutlet, AdminSidebarComponent, TimeAgoPipe, ProfileAvatarUploadComponent],
   templateUrl: './admin-layout.html',
 })
 export class AdminLayoutComponent implements OnInit {
@@ -89,6 +90,10 @@ export class AdminLayoutComponent implements OnInit {
   userName(): string {
     const u = this.authService.currentUser();
     return u ? `${u.firstName} ${u.lastName}` : '';
+  }
+
+  avatarUrl(): string | null {
+    return this.authService.currentUser()?.avatarUrl ?? null;
   }
 
   onMarkAllRead(): void {

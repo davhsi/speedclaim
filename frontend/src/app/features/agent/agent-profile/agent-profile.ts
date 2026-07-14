@@ -5,11 +5,12 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 import { phoneValidator } from '../../../shared/validators/input.validators';
+import { ProfileAvatarUploadComponent } from '../../../shared/components/profile-avatar-upload/profile-avatar-upload';
 
 @Component({
   selector: 'app-agent-profile',
   standalone: true,
-  imports: [ReactiveFormsModule, DateFormatPipe],
+  imports: [ReactiveFormsModule, DateFormatPipe, ProfileAvatarUploadComponent],
   templateUrl: './agent-profile.html',
 })
 export class AgentProfileComponent implements OnInit {

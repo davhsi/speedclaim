@@ -7,9 +7,7 @@
   <div class="bg-white border border-line rounded-card shadow-sm p-6">
     <!-- Avatar -->
     <div class="flex items-center gap-4 mb-6 pb-6 border-b border-line">
-      <div class="w-14 h-14 rounded-card bg-primary text-white flex items-center justify-center text-[22px] font-bold shrink-0">
-        {{ userInitials() }}
-      </div>
+      <app-profile-avatar-upload [initials]="userInitials()" />
       <div>
         <div class="text-lg font-semibold text-ink">{{ fullName() }}</div>
         <div class="text-[13px] text-muted mt-1">Underwriter</div>
