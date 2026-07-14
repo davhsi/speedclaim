@@ -1,0 +1,35 @@
+# Git and editor metadata
+.git/
+.gitignore
+.DS_Store
+.idea/
+.vscode/
+
+# Local secrets and machine-specific config
+**/appsettings.Development.json
+**/appsettings.*.local.json
+**/.env
+**/.env.*
+
+# Build outputs
+**/bin/
+**/obj/
+**/TestResults/
+**/coverage/
+**/coverage.json
+**/coverage.opencover.xml
+
+# Frontend dependency and build artifacts
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/coverage/
+
+# Runtime-generated backend files
+backend/SpeedClaim.Api/logs/
+backend/SpeedClaim.Api/wwwroot/uploads/
+
+# Local docs/cache noise that should not affect container builds
+*.log
+*.tmp
+*.bak

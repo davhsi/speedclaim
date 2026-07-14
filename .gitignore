@@ -31,6 +31,8 @@ appsettings.Local.json
 *.env
 .env
 .env.*
+k8s/*secret*.yaml
+!k8s/*.example.yaml
 
 # =========================
 # Angular / Node.js

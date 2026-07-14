@@ -87,7 +87,13 @@ public class CreateProductRequestValidatorTests
     [TestCase("Life")]
     public void NonHealth_Domain_Without_FamilyFloater_Passes(string domain)
     {
-        var req = ValidRequest() with { Domain = domain, AllowsFamilyFloater = false, MaxFamilyMembers = 1 };
+        var req = ValidRequest() with
+        {
+            Domain = domain,
+            AllowsFamilyFloater = false,
+            MaxFamilyMembers = 1,
+            MotorVehicleType = domain == "Motor" ? "TwoWheeler" : null
+        };
         _validator.TestValidate(req).ShouldNotHaveAnyValidationErrors();
     }
 

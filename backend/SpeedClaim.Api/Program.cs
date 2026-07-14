@@ -3,7 +3,9 @@ using Microsoft.OpenApi.Models;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
@@ -168,7 +170,14 @@ builder.Services.AddScoped<IStripeWrapper, StripeWrapper>();
 // Infrastructure Services
 builder.Services.AddSingleton<ISmtpClientFactory, SmtpClientFactory>();
 builder.Services.AddTransient<IEmailService, EmailService>();
-builder.Services.AddScoped<IStorageService, LocalStorageService>();
+builder.Services.AddScoped<IStorageService>(sp =>
+{
+    var configuration = sp.GetRequiredService<IConfiguration>();
+    var provider = configuration["Storage:Provider"];
+    return string.Equals(provider, "AzureBlob", StringComparison.OrdinalIgnoreCase)
+        ? ActivatorUtilities.CreateInstance<AzureBlobStorageService>(sp)
+        : ActivatorUtilities.CreateInstance<LocalStorageService>(sp);
+});
 
 
 
@@ -310,6 +319,19 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+app.MapGet("/uploads/{**fileId}", [AllowAnonymous] async (
+    string fileId,
+    IStorageService storageService) =>
+{
+    var storageKey = $"uploads/{fileId}";
+    var provider = new FileExtensionContentTypeProvider();
+    if (!provider.TryGetContentType(storageKey, out var contentType))
+        contentType = "application/octet-stream";
+
+    var stream = await storageService.GetFileAsync(storageKey);
+    return Results.File(stream, contentType);
+});
 
 // Security response headers — applied to every response
 app.Use(async (context, next) =>
