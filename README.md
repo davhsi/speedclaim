@@ -17,6 +17,7 @@ An end-to-end insurance platform covering Health, Life, and Motor domains. Custo
 - [API Documentation](#api-documentation)
 - [Project Structure](#project-structure)
 - [Docs](#docs)
+- [KT Git Workflow](#kt-git-workflow)
 
 ---
 
@@ -25,7 +26,7 @@ An end-to-end insurance platform covering Health, Life, and Motor domains. Custo
 | Layer | Technology |
 | --- | --- |
 | Backend | .NET 10 Web API (C#) |
-| Frontend | Angular 22 |
+| Frontend | Angular 21.2 + Tailwind CSS 4 |
 | Database | PostgreSQL |
 | ORM | Entity Framework Core (Code-First) |
 | Auth | JWT — Access Token (15 min) + Refresh Token (7 days) |
@@ -40,7 +41,7 @@ An end-to-end insurance platform covering Health, Life, and Motor domains. Custo
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - [PostgreSQL 15+](https://www.postgresql.org/download/)
-- [Node.js 20+](https://nodejs.org/) (for Angular frontend)
+- [Node.js 20 or 22 LTS](https://nodejs.org/) (for Angular frontend)
 - [Stripe CLI](https://stripe.com/docs/stripe-cli) (for local webhook testing)
 
 ---
@@ -64,34 +65,48 @@ CREATE DATABASE speedclaim;
 
 ### 3. Configure the API
 
-Copy the example settings and fill in your values:
+Copy the local-development example and fill in your values:
 
 ```bash
-cp backend/SpeedClaim.Api/appsettings.json backend/SpeedClaim.Api/appsettings.Development.json
+cp backend/SpeedClaim.Api/appsettings.Development.example.json \
+  backend/SpeedClaim.Api/appsettings.Development.json
 ```
 
 Edit `appsettings.Development.json` — see [Configuration](#configuration) for all required keys.
+This file is git-ignored and must never be committed.
 
 ### 4. Run database migrations
 
 ```bash
-cd backend/SpeedClaim.Api
-dotnet ef database update
+dotnet ef database update --project backend/SpeedClaim.Api
 ```
 
 ### 5. Start the API
 
 ```bash
-dotnet run
+dotnet run --project backend/SpeedClaim.Api
 ```
 
-The API starts at `https://localhost:7001` (HTTPS) and `http://localhost:5001` (HTTP).
+The API starts at `http://localhost:5062`. Swagger is available at
+`http://localhost:5062/swagger` in Development.
+
+### 6. Install and start the frontend
+
+```bash
+cd frontend
+npm ci
+npm start
+```
+
+Open `http://localhost:4200`. The Angular development proxy sends `/api`, `/uploads`, and
+`/hubs` requests to the local API at `http://localhost:5062`.
 
 ---
 
 ## Configuration
 
-All configuration lives in `appsettings.json` / `appsettings.Development.json`. **Never commit real secrets.**
+Committed non-secret defaults live in `appsettings.json`. Each developer keeps local secrets in
+the git-ignored `appsettings.Development.json`. **Never commit credentials, even test credentials.**
 
 ```json
 {
@@ -110,6 +125,12 @@ All configuration lives in `appsettings.json` / `appsettings.Development.json`. 
     "PublishableKey": "pk_test_...",
     "WebhookSecret": "whsec_..."
   },
+  "Storage": {
+    "Provider": "Local"
+  },
+  "SecuritySettings": {
+    "EncryptionKey": "BASE64_ENCODED_32_BYTE_KEY"
+  },
   "SmtpSettings": {
     "Host": "smtp.gmail.com",
     "Port": 587,
@@ -120,6 +141,26 @@ All configuration lives in `appsettings.json` / `appsettings.Development.json`. 
 }
 ```
 
+Generate local-only JWT and encryption values with:
+
+```bash
+openssl rand -base64 48
+openssl rand -base64 32
+```
+
+The second command produces the KYC encryption key. Keep it stable for the lifetime of the local
+database because existing encrypted KYC values depend on it.
+
+Ordinary local development does not need `KeyVault` or `AzureBlob` sections. The committed base
+configuration leaves `KeyVault:Uri` empty, and `Storage:Provider=Local` writes uploads beneath
+`backend/SpeedClaim.Api/wwwroot/uploads/`. Azure credentials are loaded only in the production
+deployment when `KeyVault:Uri` is configured.
+
+Stripe `sk_test_...`, `pk_test_...`, and `whsec_...` values may be supplied to an authorized KT
+developer for sandbox testing, but send them through an approved secret-sharing channel. Do not
+put them in Git, chat transcripts, tickets, screenshots, or the example file. Prefer a dedicated
+shared test account or restricted test keys where available, and rotate access when KT ends.
+
 > For Gmail SMTP, generate an [App Password](https://myaccount.google.com/apppasswords) — do not use your main account password.
 
 ---
@@ -127,14 +168,13 @@ All configuration lives in `appsettings.json` / `appsettings.Development.json`. 
 ## Running the API
 
 ```bash
-cd backend/SpeedClaim.Api
-dotnet run
+dotnet run --project backend/SpeedClaim.Api
 ```
 
 For hot reload during development:
 
 ```bash
-dotnet watch run
+dotnet watch --project backend/SpeedClaim.Api run
 ```
 
 Logs are written to `backend/SpeedClaim.Api/logs/speedclaim-YYYY-MM-DD.log` (rolling daily, 30-day retention).
@@ -148,7 +188,8 @@ cd backend
 dotnet test SpeedClaim.Tests/SpeedClaim.Tests.csproj
 ```
 
-All tests are NUnit unit tests covering the service layer with Moq-mocked repositories. 252 tests, 0 failures.
+Backend tests use NUnit and service-layer dependencies are generally mocked with Moq. Use current
+command output rather than a hard-coded test count when reporting status.
 
 To generate an HTML coverage report (requires `dotnet-reportgenerator-globaltool`):
 
@@ -165,7 +206,7 @@ Report is written to `coverage-report/index.html`. Service-layer line coverage i
 Swagger UI is available at runtime in the Development environment:
 
 ```text
-http://localhost:5001/swagger
+http://localhost:5062/swagger
 ```
 
 All endpoints are documented with roles, request/response schemas, and status codes.
@@ -213,3 +254,19 @@ InsuranceApp/
 | [user-flows.md](docs/user-flows.md) | Step-by-step user journeys with Mermaid diagrams |
 | [api-page-map.md](docs/api-page-map.md) | Page-by-page API endpoint coverage |
 | [stripe_testing_guide.md](docs/stripe_testing_guide.md) | How to test Stripe payments locally via CLI |
+
+---
+
+## KT Git Workflow
+
+Grant the KT developer repository Write access, protect `main`, and require pull requests. GitHub
+permissions are repository-level; branch protection controls how important branches are changed.
+
+For each assignment, the KT developer can create and push a task branch themselves, for example
+`feature/kt-policy-change`, then open a pull request into `main`. The repository owner reviews and
+merges it. A pre-created long-lived KT branch is only necessary when an instructor or organizational
+policy explicitly requires one; even then, use smaller task branches where possible.
+
+Recommended `main` rules are one required approval, passing build/test checks, resolved review
+conversations, and no force pushes or deletion. Pull requests targeting `main` trigger an Azure
+Static Web Apps preview; merging to `main` triggers the production frontend deployment.

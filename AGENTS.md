@@ -9,32 +9,39 @@ business workflow notes.
 - SpeedClaim is a full-stack insurance platform.
 - Backend: .NET 10 Web API in `backend/SpeedClaim.Api`, EF Core code-first, PostgreSQL,
   repository + unit-of-work services, NUnit tests in `backend/SpeedClaim.Tests`.
-- Frontend: Angular 21/22 standalone components in `frontend/`, Tailwind CSS 4, Vitest via
+- Frontend: Angular 21.2 standalone components in `frontend/`, Tailwind CSS 4, Vitest via
   `ng test`.
 - Main domains: auth, users/customers/agents, proposals, policies, claims, grievances,
   finance/payments, KYC, admin system/config/email templates/audit.
-- Uploaded files are served from backend `wwwroot/uploads/...`; Angular proxy must only
-  forward `/api` and `/uploads`.
+- Local uploads are served from backend `wwwroot/uploads/...`; the Angular development proxy
+  forwards only backend namespaces: `/api`, `/uploads`, and `/hubs`.
 
 ## Current Repository State
 
-- As of 2026-07-11, the worktree already contains many modified backend/frontend files and
-  several untracked migration/spec files before Codex started. Treat them as prior user/Claude
-  work. Do not revert or overwrite them unless explicitly asked.
-- As of 2026-07-14, Azure deployment preparation was split into conventional commits:
+- As of 2026-07-14, Azure deployment preparation and deployment integration were split into
+  conventional commits:
   - `feat(deploy): prepare backend for Azure deployment`
   - `feat(profile): add staff avatar upload`
+  - `fix(frontend): route deployed app to AKS backend`
+  - `feat(deploy): load backend secrets from Azure Key Vault`
 - `docs/azure-deployment-plan.md` and `k8s/` are intentionally uncommitted local deployment
   planning/experiment files for now. Do not stage them unless the user explicitly asks.
+- Immediately before the 2026-07-14 KT documentation/configuration update, the tracked worktree
+  was clean on `main`; the only known pre-existing untracked paths were
+  `docs/azure-deployment-plan.md` and `k8s/`. Preserve them as prior deployment work.
 - Last audit verification on 2026-07-11:
   - `dotnet build backend/SpeedClaim.Api` passed with 0 warnings/errors.
   - `dotnet test backend/SpeedClaim.Tests` passed: 510 tests.
   - `cd frontend && npm run build -- --configuration development` passed.
   - `cd frontend && npm test -- --watch=false` passed: 1140 tests.
-- Root `CLAUDE.md` and `README.md` have stale backend test counts; use fresh test output before
-  reporting status.
-- `README.md` says Angular 22, while `frontend/package.json` currently pins Angular `^21.2.x`.
-  Prefer package metadata/source over README when in conflict.
+- KT/configuration verification on 2026-07-14:
+  - `cd frontend && npm run build -- --configuration development` passed.
+  - `cd frontend && npm run build -- --configuration production` passed.
+  - Focused backend URL configuration tests passed: 3 tests.
+  - The development bundle contained no production backend origin; the production bundle did.
+- Root `CLAUDE.md` has a stale backend test count; use fresh test output before reporting status.
+- `frontend/package.json` pins Angular `^21.2.x`; prefer package metadata/source when another
+  document conflicts.
 - Local Node observed during frontend build/test is v25.9.0, which Angular/npm warn is odd
   numbered and not production LTS.
 
@@ -57,7 +64,12 @@ Frontend notes:
 Backend notes:
 
 - `dotnet ef database update --project backend/SpeedClaim.Api` applies migrations.
-- Real secrets belong only in `backend/SpeedClaim.Api/appsettings.Development.json`.
+- Local secrets belong only in the git-ignored
+  `backend/SpeedClaim.Api/appsettings.Development.json`; start from the committed
+  `appsettings.Development.example.json`.
+- Local development must use an empty/absent `KeyVault:Uri`, `Storage:Provider=Local`, and a
+  localhost PostgreSQL connection. It must not require Azure login, Key Vault, Azure Database,
+  AKS, or Blob Storage.
 - Build the backend container from the repo root:
   `docker build -f backend/SpeedClaim.Api/Dockerfile -t speedclaim-api:local .`
 
@@ -71,19 +83,26 @@ Backend notes:
     (`speedclaim.postgres.database.azure.com`).
   - Azure Container Registry `acrspeedclaim` (`acrspeedclaim.azurecr.io`).
   - AKS cluster `aks-speedclaim-davish`.
-- Backend image pushed to ACR: `acrspeedclaim.azurecr.io/speedclaim-api:v1`.
+- Frontend is deployed through Azure Static Web Apps at
+  `https://green-bush-029304c00.7.azurestaticapps.net`.
+- Public backend origin is
+  `https://speedclaim-api-davish.southindia.cloudapp.azure.com`.
+- The current local Kubernetes deployment manifest references
+  `acrspeedclaim.azurecr.io/speedclaim-api:v5`; verify the live deployment before reporting its
+  active image tag.
 - Local Docker backend has already been verified against Azure PostgreSQL and Azure Blob
   Storage with the local Angular frontend.
 - The AKS registry attach flow failed because the user has Contributor access but not
   `Microsoft.Authorization/roleAssignments/write`. Use an ACR image pull secret as a temporary
   demo workaround, or ask an Owner/User Access Administrator to grant `AcrPull` to the AKS
   kubelet identity.
-- Secret-management approaches under evaluation:
-  1. .NET SDK / Azure Key Vault configuration provider, avoiding app Kubernetes Secrets.
-  2. Secrets Store CSI driver syncing Key Vault values into Kubernetes Secrets and env vars.
-  3. Secrets Store CSI driver direct file mounts without Kubernetes Secret sync.
-- Senior-engineer preference for the final demo is Key Vault-backed secrets, ConfigMaps for
-  non-sensitive config, and no committed secret manifests.
+- Production secret loading now uses the .NET Azure Key Vault configuration provider. It is
+  strictly opt-in: `Program.cs` calls Key Vault only when `KeyVault:Uri` is non-empty, using
+  `DefaultAzureCredential`. Kubernetes supplies the URI and production identity/configuration.
+- Production uses Key Vault-backed secrets and ConfigMaps for non-sensitive settings. Never
+  commit populated Kubernetes Secret manifests or production credentials.
+- Azure Static Web Apps builds on pull requests targeting `main` and deploys the production
+  frontend on pushes to `main`.
 
 ## Backend Invariants
 
@@ -104,6 +123,8 @@ Backend notes:
   seed data are out of date, not a normal user error.
 - `Storage:Provider` selects storage implementation. `AzureBlob` uses `AzureBlob:ConnectionString`
   and `AzureBlob:ContainerName`; `Local` uses the existing local upload path.
+- Key Vault must remain disabled for ordinary local development. An empty or absent
+  `KeyVault:Uri` prevents any Azure credential lookup.
 - Admin-created agents/staff/customers should receive reset-token welcome flows, not admin-set
   plaintext passwords.
 - Agent management routes that look like `agentId` currently key off linked `UserId`; frontend
@@ -113,6 +134,8 @@ Backend notes:
 
 - Standalone Angular components and route files are organized by role under
   `frontend/src/app/features`.
+- Backend origins are build-environment configuration, not secrets. Development uses relative
+  backend URLs through the proxy; production uses the deployed AKS origin.
 - Customer portal routes are root-level (`/claims`, `/policies`, `/kyc`, etc.); do not add
   those bare route names to the dev proxy.
 - Access tokens are memory-only. Refresh tokens are in localStorage only for remember-me,
