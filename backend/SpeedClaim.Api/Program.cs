@@ -1,3 +1,5 @@
+using Azure.Extensions.AspNetCore.Configuration.Secrets;
+using Azure.Identity;
 using Asp.Versioning;
 using Microsoft.OpenApi.Models;
 using FluentValidation;
@@ -22,6 +24,12 @@ using System.Threading.RateLimiting;
 using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var keyVaultUri = builder.Configuration["KeyVault:Uri"];
+if (!string.IsNullOrWhiteSpace(keyVaultUri))
+{
+    builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), new DefaultAzureCredential());
+}
 
 // 1. Configure Serilog
 Log.Logger = new LoggerConfiguration()
