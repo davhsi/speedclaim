@@ -21,6 +21,11 @@ business workflow notes.
 - As of 2026-07-11, the worktree already contains many modified backend/frontend files and
   several untracked migration/spec files before Codex started. Treat them as prior user/Claude
   work. Do not revert or overwrite them unless explicitly asked.
+- As of 2026-07-14, Azure deployment preparation was split into conventional commits:
+  - `feat(deploy): prepare backend for Azure deployment`
+  - `feat(profile): add staff avatar upload`
+- `docs/azure-deployment-plan.md` and `k8s/` are intentionally uncommitted local deployment
+  planning/experiment files for now. Do not stage them unless the user explicitly asks.
 - Last audit verification on 2026-07-11:
   - `dotnet build backend/SpeedClaim.Api` passed with 0 warnings/errors.
   - `dotnet test backend/SpeedClaim.Tests` passed: 510 tests.
@@ -53,6 +58,32 @@ Backend notes:
 
 - `dotnet ef database update --project backend/SpeedClaim.Api` applies migrations.
 - Real secrets belong only in `backend/SpeedClaim.Api/appsettings.Development.json`.
+- Build the backend container from the repo root:
+  `docker build -f backend/SpeedClaim.Api/Dockerfile -t speedclaim-api:local .`
+
+## Azure Deployment State
+
+- Resource group: `rg-davish`; subscription: `Training-2026`.
+- Current Azure services created/tested:
+  - Azure Blob Storage account `stspeedclaimdavish`, container `speedclaim-uploads`.
+  - Azure Key Vault `kv-speedclaim-davish`.
+  - Azure Database for PostgreSQL flexible server `speedclaim`
+    (`speedclaim.postgres.database.azure.com`).
+  - Azure Container Registry `acrspeedclaim` (`acrspeedclaim.azurecr.io`).
+  - AKS cluster `aks-speedclaim-davish`.
+- Backend image pushed to ACR: `acrspeedclaim.azurecr.io/speedclaim-api:v1`.
+- Local Docker backend has already been verified against Azure PostgreSQL and Azure Blob
+  Storage with the local Angular frontend.
+- The AKS registry attach flow failed because the user has Contributor access but not
+  `Microsoft.Authorization/roleAssignments/write`. Use an ACR image pull secret as a temporary
+  demo workaround, or ask an Owner/User Access Administrator to grant `AcrPull` to the AKS
+  kubelet identity.
+- Secret-management approaches under evaluation:
+  1. .NET SDK / Azure Key Vault configuration provider, avoiding app Kubernetes Secrets.
+  2. Secrets Store CSI driver syncing Key Vault values into Kubernetes Secrets and env vars.
+  3. Secrets Store CSI driver direct file mounts without Kubernetes Secret sync.
+- Senior-engineer preference for the final demo is Key Vault-backed secrets, ConfigMaps for
+  non-sensitive config, and no committed secret manifests.
 
 ## Backend Invariants
 
@@ -71,6 +102,8 @@ Backend notes:
   moves `Approved` claims to `Settled` without finance/payment handling.
 - Email templates are DB seeded and rendered by key. Missing templates indicate migrations or
   seed data are out of date, not a normal user error.
+- `Storage:Provider` selects storage implementation. `AzureBlob` uses `AzureBlob:ConnectionString`
+  and `AzureBlob:ContainerName`; `Local` uses the existing local upload path.
 - Admin-created agents/staff/customers should receive reset-token welcome flows, not admin-set
   plaintext passwords.
 - Agent management routes that look like `agentId` currently key off linked `UserId`; frontend
