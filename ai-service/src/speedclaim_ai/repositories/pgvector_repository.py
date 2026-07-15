@@ -1,0 +1,140 @@
+from collections.abc import Sequence
+from uuid import UUID
+
+from sqlalchemy import delete, select, text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+from speedclaim_ai.config.settings import EMBEDDING_DIMENSION
+from speedclaim_ai.database.models import RagChunk, RagDocument
+from speedclaim_ai.repositories.vector_repository import (
+    ChunkInput,
+    ChunkMatch,
+    DocumentInput,
+    ImmutableDocumentConflict,
+    StoreResult,
+    validate_document_batch,
+    validate_embedding,
+)
+
+
+class PgVectorRepository:
+    def __init__(
+        self,
+        session_factory: async_sessionmaker[AsyncSession],
+        *,
+        dimension: int = EMBEDDING_DIMENSION,
+    ) -> None:
+        self._session_factory = session_factory
+        self._dimension = dimension
+
+    async def store_document(
+        self, document: DocumentInput, chunks: Sequence[ChunkInput]
+    ) -> StoreResult:
+        identified_chunks = validate_document_batch(document, chunks)
+        if document.embedding_dimension != self._dimension:
+            raise ValueError("document embedding dimension does not match repository dimension")
+
+        async with self._session_factory() as session, session.begin():
+            # Serialize same-brochure writers even before the unique row exists.
+            await session.execute(
+                text("SELECT pg_advisory_xact_lock(hashtextextended(:brochure_id, 0))"),
+                {"brochure_id": str(document.brochure_id)},
+            )
+            existing = await session.scalar(
+                select(RagDocument)
+                .where(RagDocument.brochure_id == document.brochure_id)
+                .with_for_update()
+            )
+            if existing is not None:
+                if existing.content_hash == document.content_hash:
+                    return StoreResult(document_id=existing.id, created=False)
+                raise ImmutableDocumentConflict(
+                    "brochure ID is already indexed with different immutable content"
+                )
+
+            stored_document = RagDocument(
+                brochure_id=document.brochure_id,
+                product_id=document.product_id,
+                brochure_version=document.brochure_version.strip(),
+                content_hash=document.content_hash,
+                page_count=document.page_count,
+                embedding_provider=document.embedding_provider.strip(),
+                embedding_model=document.embedding_model.strip(),
+                embedding_dimension=document.embedding_dimension,
+            )
+            session.add(stored_document)
+            await session.flush()
+
+            # Parents must exist before child foreign keys are inserted.
+            ordered_chunks = sorted(
+                identified_chunks, key=lambda item: item[0].parent_chunk_id is not None
+            )
+            for chunk, chunk_id in ordered_chunks:
+                session.add(self._to_model(stored_document.id, chunk, chunk_id))
+                if chunk.parent_chunk_id is None:
+                    await session.flush()
+
+            return StoreResult(document_id=stored_document.id, created=True)
+
+    async def search(
+        self, brochure_id: UUID, query_embedding: Sequence[float], *, limit: int
+    ) -> list[ChunkMatch]:
+        if not 1 <= limit <= 100:
+            raise ValueError("search limit must be between 1 and 100")
+        query = validate_embedding(query_embedding, dimension=self._dimension)
+        distance = RagChunk.embedding.cosine_distance(query).label("distance")
+        statement = (
+            select(RagChunk, RagDocument.brochure_id, distance)
+            .join(RagDocument, RagDocument.id == RagChunk.document_id)
+            .where(
+                RagDocument.brochure_id == brochure_id,
+                RagChunk.embedding.is_not(None),
+            )
+            .order_by(distance, RagChunk.chunk_index)
+            .limit(limit)
+        )
+
+        async with self._session_factory() as session:
+            rows = (await session.execute(statement)).all()
+        return [
+            ChunkMatch(
+                chunk_id=chunk.id,
+                document_id=chunk.document_id,
+                brochure_id=stored_brochure_id,
+                parent_chunk_id=chunk.parent_chunk_id,
+                page_number=chunk.page_number,
+                section_title=chunk.section_title,
+                clause_reference=chunk.clause_reference,
+                chunk_index=chunk.chunk_index,
+                content=chunk.content,
+                score=max(-1.0, min(1.0, 1.0 - float(raw_distance))),
+            )
+            for chunk, stored_brochure_id, raw_distance in rows
+        ]
+
+    async def delete_by_brochure_id(self, brochure_id: UUID) -> bool:
+        async with self._session_factory() as session, session.begin():
+            result = await session.execute(
+                delete(RagDocument).where(RagDocument.brochure_id == brochure_id)
+            )
+            return bool(result.rowcount)
+
+    @staticmethod
+    def _to_model(document_id: UUID, chunk: ChunkInput, chunk_id: UUID) -> RagChunk:
+        return RagChunk(
+            id=chunk_id,
+            document_id=document_id,
+            parent_chunk_id=chunk.parent_chunk_id,
+            page_number=chunk.page_number,
+            section_title=chunk.section_title.strip() if chunk.section_title else None,
+            clause_reference=(
+                chunk.clause_reference.strip() if chunk.clause_reference else None
+            ),
+            chunk_index=chunk.chunk_index,
+            content=chunk.content.strip(),
+            content_hash=chunk.content_hash,
+            token_count=chunk.token_count,
+            embedding=(
+                validate_embedding(chunk.embedding) if chunk.embedding is not None else None
+            ),
+        )
