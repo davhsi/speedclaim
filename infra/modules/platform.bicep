@@ -416,7 +416,7 @@ resource emailFunctionApp 'Microsoft.Web/sites@2024-04-01' = {
           value: functionEmailListenerRule.listKeys().primaryConnectionString
         }
         {
-          name: 'EmailDelivery__QueueName'
+          name: 'ServiceBusQueueName'
           value: emailQueueName
         }
         {
