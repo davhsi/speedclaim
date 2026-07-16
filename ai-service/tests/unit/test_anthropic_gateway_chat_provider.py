@@ -20,6 +20,7 @@ from speedclaim_ai.providers.chat.base import (
     ChatProviderUnavailable,
     ChatRequest,
 )
+from speedclaim_ai.rag.citations import parse_generated_answer_contract
 
 pytestmark = pytest.mark.anyio
 
@@ -135,6 +136,56 @@ async def test_validated_json_mode_prompts_for_raw_json_without_native_schema() 
     assert "Do not use Markdown or code fences" in payload["system"]
     assert '"additionalProperties":false' in payload["system"]
     assert "tools" not in payload
+
+
+async def test_validated_json_accepts_one_canonical_fence_on_first_call() -> None:
+    fenced = '```json\n  {"answerType":"Grounded"}  \n```'
+
+    async with httpx.AsyncClient(
+        transport=httpx.MockTransport(lambda _request: _success(fenced))
+    ) as client:
+        provider = AnthropicGatewayChatProvider(
+            auth_token="test-token",
+            model=DEFAULT_ANTHROPIC_GATEWAY_MODEL,
+            base_url="https://gateway.example.test",
+            client=client,
+        )
+        completion = await provider.complete(_request())
+
+    assert completion.content == '  {"answerType":"Grounded"}  '
+    assert provider.request_count == 1
+    assert provider.input_tokens_used == 21
+    assert provider.output_tokens_used == 9
+
+
+async def test_canonical_fence_does_not_bypass_pydantic_unknown_field_rejection() -> None:
+    request = ChatRequest(
+        system_prompt="System safety rules",
+        user_prompt='{"QUESTION_DATA":"waiting period"}',
+        response_schema_name="speedclaim_policy_qa",
+        response_schema={"type": "object"},
+        response_validator=parse_generated_answer_contract,
+    )
+    fenced = (
+        "```json\n"
+        '{"answerType":"InsufficientEvidence","claims":[],"unexpected":true}\n'
+        "```"
+    )
+
+    async with httpx.AsyncClient(
+        transport=httpx.MockTransport(lambda _request: _success(fenced))
+    ) as client:
+        provider = AnthropicGatewayChatProvider(
+            auth_token="test-token",
+            model=DEFAULT_ANTHROPIC_GATEWAY_MODEL,
+            base_url="https://gateway.example.test",
+            client=client,
+        )
+        with pytest.raises(ChatProviderResponseError, match="invalid JSON"):
+            await provider.complete(request)
+
+    assert provider.request_count == 2
+    assert provider.last_validation_failure == "answer_contract"
 
 
 async def test_gateway_retries_server_error_then_succeeds() -> None:
@@ -348,11 +399,15 @@ async def test_gateway_removes_only_unsupported_grammar_bounds_without_mutating_
 @pytest.mark.parametrize(
     "malformed",
     [
-        '```json\n{"answerType":"Grounded"}\n```',
         'Here is the answer: {"answerType":"Grounded"}',
         '{"answerType":"Grounded"} trailing prose',
         '[{"answerType":"Grounded"}]',
         '{"wrong":"shape"}',
+        '```\n{"answerType":"Grounded"}\n```',
+        '```JSON\n{"answerType":"Grounded"}\n```',
+        '```json\n{"answerType":"Grounded"}\n```\ntrailing prose',
+        '```json\n{"answerType":"Grounded"}\n```\n```json\n{}\n```',
+        '```json\n{"answerType":"Grounded",}\n```',
     ],
 )
 async def test_validated_json_retries_adversarial_format_once_then_fails_safely(
@@ -385,10 +440,13 @@ async def test_validated_json_retries_adversarial_format_once_then_fails_safely(
     assert len(calls) == 2
     assert "FORMAT CORRECTION" not in calls[0]["system"]
     assert "FORMAT CORRECTION" in calls[1]["system"]
-    assert calls[1]["messages"][-1] == {"role": "assistant", "content": "{"}
+    assert calls[1]["messages"] == [
+        {"role": "user", "content": _request().user_prompt}
+    ]
     assert malformed not in calls[1]["system"]
     assert malformed not in str(failure.value)
     assert provider.last_validation_failure in {
+        "invalid_markdown_envelope",
         "markdown_wrapper",
         "non_json_prefix",
         "invalid_json_syntax",
@@ -401,8 +459,8 @@ async def test_validated_json_retries_adversarial_format_once_then_fails_safely(
 async def test_validated_json_accepts_fresh_valid_object_on_format_retry() -> None:
     responses = iter(
         [
-            _success('```json\n{"answerType":"Grounded"}\n```'),
-            _success('"answerType":"Grounded"}'),
+            _success('Answer: {"answerType":"Grounded"}'),
+            _success('{"answerType":"Grounded"}'),
         ]
     )
 

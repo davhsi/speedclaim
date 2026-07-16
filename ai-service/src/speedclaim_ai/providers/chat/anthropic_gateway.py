@@ -2,7 +2,6 @@ import asyncio
 import json
 import re
 from collections.abc import Awaitable, Callable
-from dataclasses import replace
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -24,6 +23,10 @@ ANTHROPIC_VERSION = "2023-06-01"
 NATIVE_SCHEMA_MODE = "NativeSchema"
 VALIDATED_JSON_MODE = "ValidatedJson"
 _OUTPUT_MODES = frozenset({NATIVE_SCHEMA_MODE, VALIDATED_JSON_MODE})
+_CANONICAL_JSON_FENCE = re.compile(
+    r"\A```json\n(?P<content>.*)\n```\Z",
+    flags=re.DOTALL,
+)
 _UNSUPPORTED_SCHEMA_CONSTRAINTS = frozenset(
     {"minLength", "maxLength", "minItems", "maxItems"}
 )
@@ -135,18 +138,21 @@ class AnthropicGatewayChatProvider:
                     "FORMAT CORRECTION: Return a fresh response as exactly one raw JSON "
                     "object that matches the supplied schema. Do not include Markdown, code "
                     "fences, commentary, or any text before or after the object."
-                    " The assistant response is already prefixed with an opening brace; "
-                    "continue immediately with the first property name and finish the object."
                 )
-            completion = await self._send(
+            completion = await self._send(request, system_prompt=system_prompt)
+            normalized_content, failure = self._validated_json_content(
+                completion.content,
                 request,
-                system_prompt=system_prompt,
-                assistant_prefix="{" if format_attempt == 1 else None,
             )
-            failure = self._validated_json_failure(completion.content, request)
             self._last_validation_failure = failure
-            if failure is None:
-                return completion
+            if normalized_content is not None:
+                return ChatCompletion(
+                    content=normalized_content,
+                    provider=completion.provider,
+                    model=completion.model,
+                    input_tokens=completion.input_tokens,
+                    output_tokens=completion.output_tokens,
+                )
 
         raise ChatProviderResponseError("chat provider returned invalid JSON")
 
@@ -155,17 +161,13 @@ class AnthropicGatewayChatProvider:
         request: ChatRequest,
         *,
         system_prompt: str,
-        assistant_prefix: str | None = None,
     ) -> ChatCompletion:
-        messages = [{"role": "user", "content": request.user_prompt}]
-        if assistant_prefix is not None:
-            messages.append({"role": "assistant", "content": assistant_prefix})
         payload = {
             "model": self._model,
             "max_tokens": self._max_output_tokens,
             "temperature": 0,
             "system": system_prompt,
-            "messages": messages,
+            "messages": [{"role": "user", "content": request.user_prompt}],
         }
         if self._output_mode == NATIVE_SCHEMA_MODE:
             payload["output_config"] = {
@@ -211,30 +213,34 @@ class AnthropicGatewayChatProvider:
             if response.status_code >= 400:
                 raise ChatProviderError("chat provider rejected the request")
 
-            completion = self._parse_completion(response)
-            if assistant_prefix is not None:
-                completion = replace(
-                    completion,
-                    content=f"{assistant_prefix}{completion.content}",
-                )
-            return completion
+            return self._parse_completion(response)
 
         raise ChatProviderUnavailable("chat provider is unavailable")
 
     @staticmethod
-    def _validated_json_failure(content: str, request: ChatRequest) -> str | None:
+    def _validated_json_content(
+        content: str,
+        request: ChatRequest,
+    ) -> tuple[str | None, str | None]:
+        candidate = content
+        if content.startswith("```"):
+            fenced = _CANONICAL_JSON_FENCE.fullmatch(content)
+            if fenced is None:
+                return None, "invalid_markdown_envelope"
+            candidate = fenced.group("content")
+
         try:
-            parsed = json.loads(content)
+            parsed = json.loads(candidate)
         except (TypeError, ValueError):
-            return AnthropicGatewayChatProvider._json_syntax_category(content)
+            return None, AnthropicGatewayChatProvider._json_syntax_category(candidate)
         if not isinstance(parsed, dict):
-            return "top_level_shape"
+            return None, "top_level_shape"
         try:
             assert request.response_validator is not None
-            request.response_validator(content)
+            request.response_validator(candidate)
         except (TypeError, ValueError):
-            return "answer_contract"
-        return None
+            return None, "answer_contract"
+        return candidate, None
 
     @staticmethod
     def _json_syntax_category(content: str) -> str:

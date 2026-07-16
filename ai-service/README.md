@@ -201,9 +201,10 @@ Groq remains the default development provider with `openai/gpt-oss-120b`. Select
 the lowercase `claude-haiku-4-5-20251001` model by default. Its explicit
 `AI__AnthropicOutputMode` is `ValidatedJson` for the corporate gateway: Claude is instructed
 to emit one raw JSON object, the complete response is parsed, and the existing Pydantic answer
-contract is applied. One format-only retry is allowed without echoing invalid output.
-That retry uses a fixed opening-brace assistant prefill and validates the complete prefixed
-response; it never strips Markdown or extracts an object from surrounding text.
+contract is applied. A single canonical `json` Markdown fence is also accepted through strict
+whole-envelope normalization, because this gateway predictably fences Haiku JSON. Arbitrary
+prose, extra fences, arrays, and substring extraction remain rejected. One format-only retry is
+allowed without echoing invalid output and does not use assistant prefilling.
 `NativeSchema` keeps `output_config.format` available for gateways that support it. Modes are
 never auto-detected, provider selection is explicit, and neither mode falls back to Groq.
 
