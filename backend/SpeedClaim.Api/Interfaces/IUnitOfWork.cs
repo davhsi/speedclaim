@@ -28,6 +28,8 @@ public interface IUnitOfWork : IDisposable
     IRepository<Proposal> Proposals { get; }
     IRepository<ProposalMember> ProposalMembers { get; }
     IRepository<PolicyMember> PolicyMembers { get; }
+    IRepository<PolicyAssistantConversation> PolicyAssistantConversations { get; }
+    IRepository<PolicyAssistantMessage> PolicyAssistantMessages { get; }
     IRepository<Nominee> Nominees { get; }
     IRepository<PolicyStatusHistory> PolicyStatusHistories { get; }
     IRepository<Endorsement> Endorsements { get; }

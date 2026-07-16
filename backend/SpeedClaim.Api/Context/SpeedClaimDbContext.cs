@@ -30,6 +30,8 @@ public partial class SpeedClaimDbContext : DbContext
     public DbSet<Proposal> Proposals { get; set; } = null!;
     public DbSet<ProposalMember> ProposalMembers { get; set; } = null!;
     public DbSet<Policy> Policies { get; set; } = null!;
+    public DbSet<PolicyAssistantConversation> PolicyAssistantConversations { get; set; } = null!;
+    public DbSet<PolicyAssistantMessage> PolicyAssistantMessages { get; set; } = null!;
     public DbSet<PolicyMember> PolicyMembers { get; set; } = null!;
     public DbSet<Nominee> Nominees { get; set; } = null!;
     public DbSet<PolicyStatusHistory> PolicyStatusHistories { get; set; } = null!;
@@ -285,6 +287,33 @@ public partial class SpeedClaimDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
+        modelBuilder.Entity<PolicyAssistantConversation>(e =>
+        {
+            e.HasKey(x => x.Id).HasName("PK_policy_assistant_conversations");
+            e.HasIndex(x => new { x.PolicyId, x.CreatedByUserId, x.UpdatedAt })
+                .HasDatabaseName("ix_policy_assistant_conversations_policy_creator_updated");
+            e.HasIndex(x => x.RetainUntil).HasDatabaseName("ix_policy_assistant_conversations_retain_until");
+            e.HasOne(x => x.Policy).WithMany(x => x.AssistantConversations).HasForeignKey(x => x.PolicyId)
+                .HasConstraintName("FK_policy_assistant_conversations_policies_policy_id").OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.Brochure).WithMany().HasForeignKey(x => x.BrochureId)
+                .HasConstraintName("FK_policy_assistant_conversations_product_brochures_brochure_id").OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.CreatedBy).WithMany().HasForeignKey(x => x.CreatedByUserId)
+                .HasConstraintName("FK_policy_assistant_conversations_users_created_by_id").OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<PolicyAssistantMessage>(e =>
+        {
+            e.HasKey(x => x.Id).HasName("PK_policy_assistant_messages");
+            e.HasIndex(x => new { x.ConversationId, x.CreatedAt }).HasDatabaseName("ix_policy_assistant_messages_conversation_created");
+            e.Property(x => x.Role).HasMaxLength(16).HasConversion<string>();
+            e.Property(x => x.Content).IsRequired().HasMaxLength(4000);
+            e.Property(x => x.EvidenceStatus).HasMaxLength(64);
+            e.Property(x => x.Model).HasMaxLength(255);
+            e.Property(x => x.PromptVersion).HasMaxLength(100);
+            e.HasOne(x => x.Conversation).WithMany(x => x.Messages).HasForeignKey(x => x.ConversationId)
+                .HasConstraintName("FK_policy_assistant_messages_conversations_conversation_id").OnDelete(DeleteBehavior.Cascade);
+        });
+
         modelBuilder.Entity<PremiumRateTable>(e =>
         {
             e.HasKey(x => x.Id).HasName("PK_premium_rate_tables");
@@ -336,6 +365,7 @@ public partial class SpeedClaimDbContext : DbContext
             e.HasOne(x => x.Customer).WithMany(c => c.Policies).HasForeignKey(x => x.CustomerId).HasConstraintName("FK_policies_customers_customer_id").OnDelete(DeleteBehavior.Restrict);
             e.HasOne(x => x.Agent).WithMany().HasForeignKey(x => x.AgentId).HasConstraintName("FK_policies_agents_agent_id").OnDelete(DeleteBehavior.SetNull);
             e.HasOne(x => x.Product).WithMany().HasForeignKey(x => x.ProductId).HasConstraintName("FK_policies_products_product_id").OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.ProductBrochure).WithMany().HasForeignKey(x => x.ProductBrochureId).HasConstraintName("FK_policies_product_brochures_product_brochure_id").OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<PolicyMember>(e =>

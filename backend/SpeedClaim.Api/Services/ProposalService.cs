@@ -459,6 +459,16 @@ public class ProposalService : IProposalService
         if (isApproved)
         {
             proposal.UnderwriterNotes = notes;
+            // The policy workflow remains available when the brochure feature is not configured
+            // (and for existing unit-of-work doubles created before this optional repository).
+            var brochureRepository = _unitOfWork.ProductBrochures;
+            var publishedBrochures = brochureRepository is null
+                ? Enumerable.Empty<ProductBrochure>()
+                : await brochureRepository.FindAsync(b =>
+                    b.ProductId == proposal.ProductId &&
+                    b.Status == ProductBrochureStatus.Published &&
+                    b.PageCount > 0 && b.ParentChunkCount > 0 && b.ChildChunkCount > 0);
+            var publishedBrochure = publishedBrochures.OrderByDescending(b => b.PublishedAt).FirstOrDefault();
 
             var activationDate = DateTime.UtcNow.Date;
             issuedPolicy = new Policy
@@ -468,6 +478,7 @@ public class ProposalService : IProposalService
                 ProposalId = proposal.Id,
                 CustomerId = proposal.CustomerId,
                 ProductId = proposal.ProductId,
+                ProductBrochureId = publishedBrochure?.Id,
                 AgentId = proposal.AgentId,
                 PolicyType = proposal.PolicyType,
                 SumAssured = proposal.SumAssured,

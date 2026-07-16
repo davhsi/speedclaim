@@ -11,6 +11,8 @@ public class Policy
     public Guid? ProposalId { get; set; }
     public Guid CustomerId { get; set; }
     public Guid ProductId { get; set; }
+    // Nullable for legacy policies. New issuance sets this once when an indexed brochure is published.
+    public Guid? ProductBrochureId { get; set; }
     public Guid? AgentId { get; set; }
     
     public SpeedClaim.Api.Models.Enums.PolicyType PolicyType { get; set; }
@@ -31,6 +33,7 @@ public class Policy
     public virtual Customer Customer { get; set; } = null!;
     public virtual Proposal? Proposal { get; set; }
     public virtual InsuranceProduct Product { get; set; } = null!;
+    public virtual ProductBrochure? ProductBrochure { get; set; }
     public virtual Agent? Agent { get; set; }
     
     public virtual HealthDetail? HealthDetail { get; set; }
@@ -44,4 +47,5 @@ public class Policy
     public virtual ICollection<PremiumSchedule> PremiumSchedules { get; set; } = new List<PremiumSchedule>();
     public virtual ICollection<PremiumPayment> PremiumPayments { get; set; } = new List<PremiumPayment>();
     public virtual ICollection<Claim> Claims { get; set; } = new List<Claim>();
+    public virtual ICollection<PolicyAssistantConversation> AssistantConversations { get; set; } = new List<PolicyAssistantConversation>();
 }

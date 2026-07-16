@@ -167,6 +167,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProductService, SpeedClaim.Api.Services.ProductService>();
 builder.Services.AddScoped<IProductBrochureService, ProductBrochureService>();
+builder.Services.AddScoped<IPolicyAssistantService, PolicyAssistantService>();
 builder.Services.AddScoped<IPolicyService, PolicyService>();
 builder.Services.AddScoped<IClaimService, ClaimService>();
 builder.Services.AddScoped<IFinanceService, FinanceService>();
@@ -191,6 +192,9 @@ builder.Services.AddScoped<IStorageService>(sp =>
 builder.Services.Configure<AiServiceOptions>(
     builder.Configuration.GetSection(AiServiceOptions.SectionName));
 builder.Services.AddHttpClient<IBrochureIngestionClient, FastApiBrochureIngestionClient>()
+    .RedactLoggedHeaders(headerName =>
+        string.Equals(headerName, "X-Internal-Api-Key", StringComparison.OrdinalIgnoreCase));
+builder.Services.AddHttpClient<IPolicyQaClient, FastApiPolicyQaClient>()
     .RedactLoggedHeaders(headerName =>
         string.Equals(headerName, "X-Internal-Api-Key", StringComparison.OrdinalIgnoreCase));
 
@@ -299,6 +303,13 @@ builder.Services.AddRateLimiter(options =>
         limiterOptions.PermitLimit = 100;
         limiterOptions.Window = TimeSpan.FromSeconds(60);
         limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        limiterOptions.QueueLimit = 0;
+    });
+
+    options.AddFixedWindowLimiter("policy-qa", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 20;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
         limiterOptions.QueueLimit = 0;
     });
 
