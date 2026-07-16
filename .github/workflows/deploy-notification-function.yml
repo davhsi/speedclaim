@@ -33,4 +33,5 @@ jobs:
         with:
           app-name: ${{ env.FUNCTION_APP_NAME }}
           package: ./function-publish
+          sku: flexconsumption
           publish-profile: ${{ env.FUNCTION_APP_PUBLISH_PROFILE }}
