@@ -12,6 +12,7 @@ describe('AdminBrochuresComponent', () => {
   let admin: any;
 
   beforeEach(() => {
+    vi.stubGlobal('confirm', vi.fn(() => true));
     admin = { getAdminProducts: vi.fn(() => of([product])), getProductBrochures: vi.fn(() => of([brochure])), uploadProductBrochure: vi.fn(), publishProductBrochure: vi.fn(() => of({ ...brochure, status: 'Published' })), archiveProductBrochure: vi.fn(), retryProductBrochure: vi.fn() };
     TestBed.configureTestingModule({ imports: [AdminBrochuresComponent], providers: [ { provide: AdminService, useValue: admin }, { provide: ToastService, useValue: { success: vi.fn(), error: vi.fn() } }, { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: () => 'product-1' } } } }, { provide: Router, useValue: { navigate: vi.fn() } } ] });
   });
