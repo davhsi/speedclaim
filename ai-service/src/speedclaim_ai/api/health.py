@@ -32,7 +32,8 @@ async def liveness(request: Request, response: Response) -> LivenessResponse:
 
 @router.get("/ready", response_model=ReadinessResponse)
 async def readiness(request: Request, response: Response) -> ReadinessResponse:
-    # R1 has no external dependencies. Later phases extend this with bounded dependency checks.
+    # Optional RAG dependencies are initialized and checked only when an ingestion call uses them,
+    # so the service can start and expose probes before a database or model cache is configured.
     response.headers["Cache-Control"] = "no-store"
     return ReadinessResponse(
         status="ready",

@@ -1,3 +1,4 @@
+import re
 from functools import lru_cache
 from pathlib import Path
 from typing import Self
@@ -75,6 +76,84 @@ class Settings(BaseSettings):
             "AI__VECTOR_CONNECTION_STRING",
         ),
     )
+    storage_provider: str = Field(
+        default="Local",
+        validation_alias=AliasChoices("AI__StorageProvider", "AI__STORAGE_PROVIDER"),
+    )
+    local_brochure_root: Path = Field(
+        default=Path("/data/brochures"),
+        validation_alias=AliasChoices(
+            "AI__LocalBrochureRoot",
+            "AI__LOCAL_BROCHURE_ROOT",
+        ),
+    )
+    azure_blob_connection_string: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "AI__AzureBlobConnectionString",
+            "AI__AZURE_BLOB_CONNECTION_STRING",
+        ),
+    )
+    azure_blob_container_name: str = Field(
+        default="speedclaim-uploads",
+        min_length=3,
+        max_length=63,
+        validation_alias=AliasChoices(
+            "AI__AzureBlobContainerName",
+            "AI__AZURE_BLOB_CONTAINER_NAME",
+        ),
+    )
+    pdf_max_size_bytes: int = Field(
+        default=10_485_760,
+        ge=1_024,
+        le=52_428_800,
+        validation_alias=AliasChoices(
+            "AI__PdfMaxSizeBytes",
+            "AI__PDF_MAX_SIZE_BYTES",
+        ),
+    )
+    pdf_max_pages: int = Field(
+        default=300,
+        ge=1,
+        le=1_000,
+        validation_alias=AliasChoices("AI__PdfMaxPages", "AI__PDF_MAX_PAGES"),
+    )
+    pdf_min_text_characters: int = Field(
+        default=100,
+        ge=1,
+        le=10_000,
+        validation_alias=AliasChoices(
+            "AI__PdfMinTextCharacters",
+            "AI__PDF_MIN_TEXT_CHARACTERS",
+        ),
+    )
+    parent_chunk_max_characters: int = Field(
+        default=6_000,
+        ge=500,
+        le=20_000,
+        validation_alias=AliasChoices(
+            "AI__ParentChunkMaxCharacters",
+            "AI__PARENT_CHUNK_MAX_CHARACTERS",
+        ),
+    )
+    child_chunk_max_characters: int = Field(
+        default=1_200,
+        ge=200,
+        le=4_000,
+        validation_alias=AliasChoices(
+            "AI__ChildChunkMaxCharacters",
+            "AI__CHILD_CHUNK_MAX_CHARACTERS",
+        ),
+    )
+    child_chunk_overlap_characters: int = Field(
+        default=150,
+        ge=0,
+        le=1_000,
+        validation_alias=AliasChoices(
+            "AI__ChildChunkOverlapCharacters",
+            "AI__CHILD_CHUNK_OVERLAP_CHARACTERS",
+        ),
+    )
 
     @field_validator("service_name")
     @classmethod
@@ -134,6 +213,43 @@ class Settings(BaseSettings):
             raise ValueError("vector connection string must use PostgreSQL with Psycopg")
         return value
 
+    @field_validator("storage_provider")
+    @classmethod
+    def validate_storage_provider(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        if normalized not in {"local", "azureblob"}:
+            raise ValueError("brochure storage provider must be Local or AzureBlob")
+        return "Local" if normalized == "local" else "AzureBlob"
+
+    @field_validator("local_brochure_root")
+    @classmethod
+    def validate_local_brochure_root(cls, value: Path) -> Path:
+        if not value.is_absolute():
+            raise ValueError("local brochure root must be an absolute path")
+        return value
+
+    @field_validator("azure_blob_connection_string")
+    @classmethod
+    def validate_azure_blob_connection_string(
+        cls, value: SecretStr | None
+    ) -> SecretStr | None:
+        if value is None:
+            return None
+        connection_string = value.get_secret_value()
+        if connection_string != connection_string.strip() or not connection_string:
+            raise ValueError("Azure Blob connection string must not be blank or padded")
+        return value
+
+    @field_validator("azure_blob_container_name")
+    @classmethod
+    def validate_azure_blob_container_name(cls, value: str) -> str:
+        normalized = value.strip()
+        if not re.fullmatch(r"[a-z0-9](?:[a-z0-9-]{1,61}[a-z0-9])?", normalized):
+            raise ValueError("Azure Blob container name is invalid")
+        if "--" in normalized:
+            raise ValueError("Azure Blob container name is invalid")
+        return normalized
+
     @model_validator(mode="after")
     def validate_internal_api_key(self) -> Self:
         value = self.internal_api_key.get_secret_value()
@@ -141,6 +257,14 @@ class Settings(BaseSettings):
             raise ValueError("internal API key must not contain surrounding whitespace")
         if not 32 <= len(value) <= 512:
             raise ValueError("internal API key must contain between 32 and 512 characters")
+        if self.child_chunk_overlap_characters >= self.child_chunk_max_characters:
+            raise ValueError("child chunk overlap must be smaller than the child chunk size")
+        if self.parent_chunk_max_characters < self.child_chunk_max_characters:
+            raise ValueError("parent chunk size must not be smaller than the child chunk size")
+        if self.storage_provider == "AzureBlob" and self.azure_blob_connection_string is None:
+            raise ValueError(
+                "Azure Blob connection string is required when AzureBlob storage is selected"
+            )
         return self
 
 

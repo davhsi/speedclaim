@@ -46,6 +46,21 @@ class StoreResult:
 
 
 @dataclass(frozen=True, slots=True)
+class DocumentRecord:
+    document_id: UUID
+    brochure_id: UUID
+    product_id: UUID
+    brochure_version: str
+    content_hash: str
+    page_count: int
+    parent_chunk_count: int
+    child_chunk_count: int
+    embedding_provider: str
+    embedding_model: str
+    embedding_dimension: int
+
+
+@dataclass(frozen=True, slots=True)
 class ChunkMatch:
     chunk_id: UUID
     document_id: UUID
@@ -60,6 +75,10 @@ class ChunkMatch:
 
 
 class VectorRepository(Protocol):
+    async def get_document_by_brochure_id(
+        self, brochure_id: UUID
+    ) -> DocumentRecord | None: ...
+
     async def store_document(
         self, document: DocumentInput, chunks: Sequence[ChunkInput]
     ) -> StoreResult: ...
@@ -69,6 +88,16 @@ class VectorRepository(Protocol):
     ) -> list[ChunkMatch]: ...
 
     async def delete_by_brochure_id(self, brochure_id: UUID) -> bool: ...
+
+    async def start_ingestion_run(self, brochure_id: UUID) -> UUID: ...
+
+    async def complete_ingestion_run(
+        self, run_id: UUID, *, page_count: int, chunk_count: int
+    ) -> None: ...
+
+    async def fail_ingestion_run(
+        self, run_id: UUID, *, error_code: str, error_message_redacted: str
+    ) -> None: ...
 
 
 def validate_document_batch(

@@ -64,6 +64,9 @@ def test_external_provider_configuration_is_not_required() -> None:
     assert settings.embedding_provider == "Local"
     assert settings.embedding_model == DEFAULT_EMBEDDING_MODEL
     assert settings.embedding_dimension == EMBEDDING_DIMENSION
+    assert settings.storage_provider == "Local"
+    assert settings.local_brochure_root.is_absolute()
+    assert settings.pdf_max_size_bytes == 10_485_760
 
 
 def test_vector_connection_string_is_validated_and_redacted() -> None:
@@ -95,4 +98,67 @@ def test_phase_r2_provider_configuration_is_fixed(field: str, value: object) -> 
             internal_api_key=SecretStr(VALID_KEY),
             _env_file=None,
             **{field: value},
+        )
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("storage_provider", "AzureBlob"),
+        ("local_brochure_root", "relative/brochures"),
+        ("pdf_max_pages", 0),
+    ],
+)
+def test_phase_r3_ingestion_configuration_is_validated(
+    field: str, value: object
+) -> None:
+    with pytest.raises(ValidationError):
+        Settings(
+            internal_api_key=SecretStr(VALID_KEY),
+            _env_file=None,
+            **{field: value},
+        )
+
+
+def test_child_chunk_overlap_must_be_smaller_than_chunk_size() -> None:
+    with pytest.raises(ValidationError, match="overlap"):
+        Settings(
+            internal_api_key=SecretStr(VALID_KEY),
+            child_chunk_max_characters=500,
+            child_chunk_overlap_characters=500,
+            _env_file=None,
+        )
+
+
+def test_parent_chunk_must_not_be_smaller_than_child_chunk() -> None:
+    with pytest.raises(ValidationError, match="parent chunk"):
+        Settings(
+            internal_api_key=SecretStr(VALID_KEY),
+            parent_chunk_max_characters=500,
+            child_chunk_max_characters=600,
+            _env_file=None,
+        )
+
+
+def test_azure_blob_storage_requires_and_redacts_connection_string() -> None:
+    connection_string = "DefaultEndpointsProtocol=https;AccountName=test;AccountKey=secret"
+    settings = Settings(
+        internal_api_key=SecretStr(VALID_KEY),
+        storage_provider="AzureBlob",
+        azure_blob_connection_string=SecretStr(connection_string),
+        azure_blob_container_name="speedclaim-uploads",
+        _env_file=None,
+    )
+
+    assert settings.storage_provider == "AzureBlob"
+    assert settings.azure_blob_connection_string is not None
+    assert connection_string not in repr(settings)
+
+
+def test_azure_blob_container_name_is_validated() -> None:
+    with pytest.raises(ValidationError, match="container"):
+        Settings(
+            internal_api_key=SecretStr(VALID_KEY),
+            azure_blob_container_name="Invalid_Name",
+            _env_file=None,
         )

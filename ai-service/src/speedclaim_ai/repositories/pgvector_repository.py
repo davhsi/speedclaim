@@ -1,15 +1,16 @@
 from collections.abc import Sequence
-from uuid import UUID
+from uuid import UUID, uuid4
 
-from sqlalchemy import delete, select, text
+from sqlalchemy import delete, func, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from speedclaim_ai.config.settings import EMBEDDING_DIMENSION
-from speedclaim_ai.database.models import RagChunk, RagDocument
+from speedclaim_ai.database.models import RagChunk, RagDocument, RagIngestionRun
 from speedclaim_ai.repositories.vector_repository import (
     ChunkInput,
     ChunkMatch,
     DocumentInput,
+    DocumentRecord,
     ImmutableDocumentConflict,
     StoreResult,
     validate_document_batch,
@@ -26,6 +27,41 @@ class PgVectorRepository:
     ) -> None:
         self._session_factory = session_factory
         self._dimension = dimension
+
+    async def get_document_by_brochure_id(
+        self, brochure_id: UUID
+    ) -> DocumentRecord | None:
+        async with self._session_factory() as session:
+            document = await session.scalar(
+                select(RagDocument).where(RagDocument.brochure_id == brochure_id)
+            )
+            if document is None:
+                return None
+            parent_count = await session.scalar(
+                select(func.count(RagChunk.id)).where(
+                    RagChunk.document_id == document.id,
+                    RagChunk.embedding.is_(None),
+                )
+            )
+            child_count = await session.scalar(
+                select(func.count(RagChunk.id)).where(
+                    RagChunk.document_id == document.id,
+                    RagChunk.embedding.is_not(None),
+                )
+            )
+        return DocumentRecord(
+            document_id=document.id,
+            brochure_id=document.brochure_id,
+            product_id=document.product_id,
+            brochure_version=document.brochure_version,
+            content_hash=document.content_hash,
+            page_count=document.page_count,
+            parent_chunk_count=int(parent_count or 0),
+            child_chunk_count=int(child_count or 0),
+            embedding_provider=document.embedding_provider,
+            embedding_model=document.embedding_model,
+            embedding_dimension=document.embedding_dimension,
+        )
 
     async def store_document(
         self, document: DocumentInput, chunks: Sequence[ChunkInput]
@@ -118,6 +154,60 @@ class PgVectorRepository:
                 delete(RagDocument).where(RagDocument.brochure_id == brochure_id)
             )
             return bool(result.rowcount)
+
+    async def start_ingestion_run(self, brochure_id: UUID) -> UUID:
+        run_id = uuid4()
+        async with self._session_factory() as session, session.begin():
+            session.add(
+                RagIngestionRun(
+                    id=run_id,
+                    brochure_id=brochure_id,
+                    status="Processing",
+                )
+            )
+        return run_id
+
+    async def complete_ingestion_run(
+        self, run_id: UUID, *, page_count: int, chunk_count: int
+    ) -> None:
+        async with self._session_factory() as session, session.begin():
+            result = await session.execute(
+                update(RagIngestionRun)
+                .where(
+                    RagIngestionRun.id == run_id,
+                    RagIngestionRun.status == "Processing",
+                )
+                .values(
+                    status="Succeeded",
+                    completed_at=func.now(),
+                    page_count=page_count,
+                    chunk_count=chunk_count,
+                    error_code=None,
+                    error_message_redacted=None,
+                )
+            )
+            if result.rowcount != 1:
+                raise RuntimeError("ingestion run is missing or no longer processing")
+
+    async def fail_ingestion_run(
+        self, run_id: UUID, *, error_code: str, error_message_redacted: str
+    ) -> None:
+        async with self._session_factory() as session, session.begin():
+            result = await session.execute(
+                update(RagIngestionRun)
+                .where(
+                    RagIngestionRun.id == run_id,
+                    RagIngestionRun.status == "Processing",
+                )
+                .values(
+                    status="Failed",
+                    completed_at=func.now(),
+                    error_code=error_code[:128],
+                    error_message_redacted=error_message_redacted[:1024],
+                )
+            )
+            if result.rowcount != 1:
+                raise RuntimeError("ingestion run is missing or no longer processing")
 
     @staticmethod
     def _to_model(document_id: UUID, chunk: ChunkInput, chunk_id: UUID) -> RagChunk:

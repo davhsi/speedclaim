@@ -1,14 +1,23 @@
 import hashlib
 import os
 from dataclasses import replace
+from pathlib import Path
 from uuid import uuid4
 
 import pytest
 from alembic import command
 from alembic.config import Config
+from sqlalchemy import select
 
 from speedclaim_ai.config.settings import DEFAULT_EMBEDDING_MODEL, EMBEDDING_DIMENSION
+from speedclaim_ai.database.models import RagChunk, RagDocument, RagIngestionRun
 from speedclaim_ai.database.session import create_database_engine, create_session_factory
+from speedclaim_ai.providers.storage.local import LocalBrochureReader
+from speedclaim_ai.rag.chunker import HierarchicalChunker
+from speedclaim_ai.rag.errors import IngestionFailure
+from speedclaim_ai.rag.ingestion_service import BrochureIngestionService
+from speedclaim_ai.rag.models import IngestionCommand
+from speedclaim_ai.rag.pdf_parser import PdfParser
 from speedclaim_ai.repositories.pgvector_repository import PgVectorRepository
 from speedclaim_ai.repositories.vector_repository import (
     ChunkInput,
@@ -71,6 +80,18 @@ def _chunk(content: str, index: int, embedding_index: int) -> ChunkInput:
     )
 
 
+class DeterministicEmbeddingProvider:
+    provider_name = "DeterministicTest"
+    model_name = DEFAULT_EMBEDDING_MODEL
+    dimension = EMBEDDING_DIMENSION
+
+    def embed_documents(self, texts) -> list[list[float]]:
+        return [_vector(0) for _ in texts]
+
+    def embed_query(self, _text: str) -> list[float]:
+        return _vector(0)
+
+
 async def test_transactional_idempotent_filtered_search_and_delete(
     migrated_database: str,
 ) -> None:
@@ -123,4 +144,86 @@ async def test_transactional_idempotent_filtered_search_and_delete(
         assert await repository.search(brochure_a, _vector(0), limit=5) == []
         assert len(await repository.search(brochure_b, _vector(0), limit=5)) == 1
     finally:
+        await engine.dispose()
+
+
+async def test_synthetic_pdf_ingestion_preserves_hierarchical_metadata(
+    migrated_database: str,
+) -> None:
+    root = Path(__file__).resolve().parents[3]
+    blob_path = "output/pdf/speedclaim-arogya-shield-plus-synthetic-brochure-v1.pdf"
+    data = (root / blob_path).read_bytes()
+    engine = create_database_engine(migrated_database)
+    session_factory = create_session_factory(engine)
+    repository = PgVectorRepository(session_factory)
+    brochure_id = uuid4()
+    command_model = IngestionCommand(
+        request_id=uuid4(),
+        brochure_id=brochure_id,
+        product_id=uuid4(),
+        brochure_version="1.0",
+        blob_path=blob_path,
+        content_hash=hashlib.sha256(data).hexdigest(),
+    )
+    service = BrochureIngestionService(
+        brochure_reader=LocalBrochureReader(root),
+        parser=PdfParser(
+            max_size_bytes=10_485_760,
+            max_pages=300,
+            minimum_text_characters=100,
+        ),
+        chunker=HierarchicalChunker(
+            parent_max_characters=6_000,
+            child_max_characters=1_200,
+            child_overlap_characters=150,
+        ),
+        embedding_provider=DeterministicEmbeddingProvider(),
+        repository=repository,
+        max_pdf_size_bytes=10_485_760,
+    )
+
+    try:
+        with pytest.raises(IngestionFailure) as failed_attempt:
+            await service.ingest(replace(command_model, content_hash="a" * 64))
+        result = await service.ingest(command_model)
+        no_op = await service.ingest(replace(command_model, request_id=uuid4()))
+        record = await repository.get_document_by_brochure_id(brochure_id)
+
+        assert result.status == "Succeeded"
+        assert failed_attempt.value.code == "brochure_hash_mismatch"
+        assert no_op.status == "NoOp"
+        assert record is not None
+        assert record.brochure_version == "1.0"
+        assert record.page_count == 13
+        assert record.parent_chunk_count == 13
+        assert record.child_chunk_count == 95
+
+        async with session_factory() as session:
+            waiting_period = await session.scalar(
+                select(RagChunk)
+                .join(RagDocument, RagDocument.id == RagChunk.document_id)
+                .where(
+                    RagDocument.brochure_id == brochure_id,
+                    RagChunk.clause_reference == "5.1",
+                )
+            )
+            runs = list(
+                await session.scalars(
+                    select(RagIngestionRun)
+                    .where(RagIngestionRun.brochure_id == brochure_id)
+                    .order_by(RagIngestionRun.started_at)
+                )
+            )
+
+        assert waiting_period is not None
+        assert waiting_period.page_number == 6
+        assert waiting_period.section_title == "Waiting periods"
+        assert waiting_period.parent_chunk_id is not None
+        assert [run.status for run in runs] == ["Failed", "Succeeded", "Succeeded"]
+        assert runs[0].error_code == "brochure_hash_mismatch"
+        assert runs[0].error_message_redacted == (
+            "The brochure content hash does not match the stored file."
+        )
+    finally:
+        await repository.delete_by_brochure_id(brochure_id)
         await engine.dispose()
