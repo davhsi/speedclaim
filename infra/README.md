@@ -14,7 +14,7 @@ production resource group: `rg-speedclaim-prod` in South India.
 - Key Vault using access policies, rather than Azure RBAC, so the deployment can work with
   Contributor access.
 - Standard Service Bus namespace and an `email-dispatch` queue.
-- A .NET 10 isolated Function App on Elastic Premium that consumes the email queue.
+- A .NET 10 isolated Function App on Flex Consumption that consumes the email queue.
 - Log Analytics with 180-day retention and Application Insights for the Function App.
 - A new Azure Static Web App. GitHub deploys frontend code after its deployment token is added
   as a repository secret.
@@ -30,6 +30,9 @@ The template does **not** create Azure role assignments. Contributor cannot crea
   policy for the Function App.
 - The Function App accesses Key Vault with an access policy assigned to its user-assigned
   managed identity.
+- Function host and deployment storage use connection strings because this Contributor-only
+  subscription cannot create the Storage Blob Data Contributor role assignment required for
+  managed-identity storage access.
 
 ## Before deploying
 

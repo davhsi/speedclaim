@@ -23,12 +23,14 @@ var postgresServerName = take('psql-${namePrefix}-${uniqueSuffix}', 63)
 var aksName = 'aks-${namePrefix}-prod'
 var staticWebAppName = take('swa-${namePrefix}-${uniqueSuffix}', 60)
 var serviceBusNamespaceName = take('sb-${namePrefix}-${uniqueSuffix}', 50)
-var emailFunctionAppName = take('func-${namePrefix}-${uniqueSuffix}', 60)
-var functionPlanName = 'plan-${namePrefix}-functions'
+var emailFunctionAppName = take('func-${namePrefix}-flex-${uniqueSuffix}', 60)
+var functionPlanName = 'plan-${namePrefix}-functions-flex'
 var apiIdentityName = 'id-${namePrefix}-api'
 var functionIdentityName = 'id-${namePrefix}-functions'
 var emailQueueName = 'email-dispatch'
 var apiNamespace = 'speedclaim'
+var functionDeploymentContainerName = 'function-deployments'
+var functionStorageConnectionString = 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
 
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: 'log-${namePrefix}-prod'
@@ -365,15 +367,24 @@ resource apiFederatedCredential 'Microsoft.ManagedIdentity/userAssignedIdentitie
   }
 }
 
-// Elastic Premium avoids the Linux Consumption/.NET 10 restriction and needs no Azure RBAC role assignments.
+// Flex Consumption supports Linux .NET 10 isolated Functions without a permanent Premium worker.
+// Connection strings are used for the Function host/deployment storage because this Contributor-only
+// subscription cannot create the Storage Blob Data Contributor role assignment required by managed identity.
+resource functionDeploymentContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  parent: blobService
+  name: functionDeploymentContainerName
+  properties: {
+    publicAccess: 'None'
+  }
+}
+
 resource functionPlan 'Microsoft.Web/serverfarms@2024-04-01' = {
   name: functionPlanName
   location: location
-  kind: 'elastic'
+  kind: 'functionapp'
   sku: {
-    name: 'EP1'
-    tier: 'ElasticPremium'
-    capacity: 1
+    name: 'FC1'
+    tier: 'FlexConsumption'
   }
   properties: {
     reserved: true
@@ -399,22 +410,37 @@ resource emailFunctionApp 'Microsoft.Web/sites@2024-04-01' = {
     serverFarmId: functionPlan.id
     httpsOnly: true
     keyVaultReferenceIdentity: functionWorkloadIdentity.id
+    functionAppConfig: {
+      deployment: {
+        storage: {
+          type: 'blobContainer'
+          value: '${storageAccount.properties.primaryEndpoints.blob}${functionDeploymentContainerName}'
+          authentication: {
+            type: 'StorageAccountConnectionString'
+            storageAccountConnectionStringName: 'DEPLOYMENT_STORAGE_CONNECTION_STRING'
+          }
+        }
+      }
+      scaleAndConcurrency: {
+        maximumInstanceCount: 10
+        instanceMemoryMB: 512
+      }
+      runtime: {
+        name: 'dotnet-isolated'
+        version: '10.0'
+      }
+    }
     siteConfig: {
-      linuxFxVersion: 'DOTNET-ISOLATED|10.0'
       minTlsVersion: '1.2'
       ftpsState: 'Disabled'
       appSettings: [
         {
           name: 'AzureWebJobsStorage'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
+          value: functionStorageConnectionString
         }
         {
-          name: 'FUNCTIONS_EXTENSION_VERSION'
-          value: '~4'
-        }
-        {
-          name: 'FUNCTIONS_WORKER_RUNTIME'
-          value: 'dotnet-isolated'
+          name: 'DEPLOYMENT_STORAGE_CONNECTION_STRING'
+          value: functionStorageConnectionString
         }
         {
           name: 'ServiceBusConnection'
