@@ -138,6 +138,18 @@ async def test_transactional_idempotent_filtered_search_and_delete(
         ]
         assert all(match.brochure_id == brochure_a for match in matches)
         assert matches[0].score == pytest.approx(1.0)
+        stored_chunks = await repository.get_chunks_by_ids(
+            brochure_a,
+            [match.chunk_id for match in matches],
+        )
+        assert [chunk.chunk_id for chunk in stored_chunks] == [
+            match.chunk_id for match in matches
+        ]
+        assert all(chunk.brochure_id == brochure_a for chunk in stored_chunks)
+        assert await repository.get_chunks_by_ids(
+            brochure_b,
+            [matches[0].chunk_id],
+        ) == []
 
         assert await repository.delete_by_brochure_id(brochure_a) is True
         assert await repository.delete_by_brochure_id(brochure_a) is False

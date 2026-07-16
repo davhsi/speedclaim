@@ -12,6 +12,7 @@ from speedclaim_ai.repositories.vector_repository import (
     DocumentInput,
     DocumentRecord,
     ImmutableDocumentConflict,
+    StoredChunk,
     StoreResult,
     validate_document_batch,
     validate_embedding,
@@ -147,6 +148,42 @@ class PgVectorRepository:
             )
             for chunk, stored_brochure_id, raw_distance in rows
         ]
+
+    async def get_chunks_by_ids(
+        self, brochure_id: UUID, chunk_ids: Sequence[UUID]
+    ) -> list[StoredChunk]:
+        requested_ids = list(dict.fromkeys(chunk_ids))
+        if not requested_ids:
+            return []
+        if len(requested_ids) > 100:
+            raise ValueError("at most 100 chunks can be loaded at once")
+
+        statement = (
+            select(RagChunk, RagDocument.brochure_id)
+            .join(RagDocument, RagDocument.id == RagChunk.document_id)
+            .where(
+                RagDocument.brochure_id == brochure_id,
+                RagChunk.id.in_(requested_ids),
+            )
+        )
+        async with self._session_factory() as session:
+            rows = (await session.execute(statement)).all()
+
+        by_id = {
+            chunk.id: StoredChunk(
+                chunk_id=chunk.id,
+                document_id=chunk.document_id,
+                brochure_id=stored_brochure_id,
+                parent_chunk_id=chunk.parent_chunk_id,
+                page_number=chunk.page_number,
+                section_title=chunk.section_title,
+                clause_reference=chunk.clause_reference,
+                chunk_index=chunk.chunk_index,
+                content=chunk.content,
+            )
+            for chunk, stored_brochure_id in rows
+        }
+        return [by_id[chunk_id] for chunk_id in requested_ids if chunk_id in by_id]
 
     async def delete_by_brochure_id(self, brochure_id: UUID) -> bool:
         async with self._session_factory() as session, session.begin():

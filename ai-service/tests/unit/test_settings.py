@@ -1,7 +1,13 @@
 import pytest
 from pydantic import SecretStr, ValidationError
 
-from speedclaim_ai.config.settings import DEFAULT_EMBEDDING_MODEL, EMBEDDING_DIMENSION, Settings
+from speedclaim_ai.config.settings import (
+    DEFAULT_CHAT_MODEL,
+    DEFAULT_EMBEDDING_MODEL,
+    EMBEDDING_DIMENSION,
+    POLICY_QA_PROMPT_VERSION,
+    Settings,
+)
 
 VALID_KEY = "settings-test-key-0123456789abcdef"
 
@@ -59,7 +65,7 @@ def test_external_provider_configuration_is_not_required() -> None:
     )
 
     assert settings.environment == "Development"
-    assert not hasattr(settings, "chat_api_key")
+    assert settings.groq_api_key is None
     assert settings.vector_connection_string is None
     assert settings.embedding_provider == "Local"
     assert settings.embedding_model == DEFAULT_EMBEDDING_MODEL
@@ -67,6 +73,10 @@ def test_external_provider_configuration_is_not_required() -> None:
     assert settings.storage_provider == "Local"
     assert settings.local_brochure_root.is_absolute()
     assert settings.pdf_max_size_bytes == 10_485_760
+    assert settings.chat_provider == "Groq"
+    assert settings.chat_model == DEFAULT_CHAT_MODEL
+    assert settings.policy_qa_prompt_version == POLICY_QA_PROMPT_VERSION
+    assert settings.retrieval_min_similarity == pytest.approx(0.45)
 
 
 def test_vector_connection_string_is_validated_and_redacted() -> None:
@@ -161,4 +171,37 @@ def test_azure_blob_container_name_is_validated() -> None:
             internal_api_key=SecretStr(VALID_KEY),
             azure_blob_container_name="Invalid_Name",
             _env_file=None,
+        )
+
+
+def test_optional_groq_key_is_validated_and_redacted() -> None:
+    api_key = "test-groq-api-key-not-live"
+    settings = Settings(
+        internal_api_key=SecretStr(VALID_KEY),
+        groq_api_key=SecretStr(api_key),
+        _env_file=None,
+    )
+
+    assert settings.groq_api_key is not None
+    assert settings.groq_api_key.get_secret_value() == api_key
+    assert api_key not in repr(settings)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("chat_provider", "Other"),
+        ("groq_api_key", SecretStr(" ")),
+        ("groq_base_url", "https://example.com/openai/v1"),
+        ("policy_qa_prompt_version", "unreviewed-v2"),
+        ("retrieval_min_similarity", 1.1),
+        ("retrieval_child_limit", 0),
+    ],
+)
+def test_phase_r4_configuration_is_validated(field: str, value: object) -> None:
+    with pytest.raises(ValidationError):
+        Settings(
+            internal_api_key=SecretStr(VALID_KEY),
+            _env_file=None,
+            **{field: value},
         )

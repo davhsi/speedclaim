@@ -74,6 +74,19 @@ class ChunkMatch:
     score: float
 
 
+@dataclass(frozen=True, slots=True)
+class StoredChunk:
+    chunk_id: UUID
+    document_id: UUID
+    brochure_id: UUID
+    parent_chunk_id: UUID | None
+    page_number: int
+    section_title: str | None
+    clause_reference: str | None
+    chunk_index: int
+    content: str
+
+
 class VectorRepository(Protocol):
     async def get_document_by_brochure_id(
         self, brochure_id: UUID
@@ -86,6 +99,10 @@ class VectorRepository(Protocol):
     async def search(
         self, brochure_id: UUID, query_embedding: Sequence[float], *, limit: int
     ) -> list[ChunkMatch]: ...
+
+    async def get_chunks_by_ids(
+        self, brochure_id: UUID, chunk_ids: Sequence[UUID]
+    ) -> list[StoredChunk]: ...
 
     async def delete_by_brochure_id(self, brochure_id: UUID) -> bool: ...
 

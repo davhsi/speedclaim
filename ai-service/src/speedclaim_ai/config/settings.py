@@ -10,6 +10,8 @@ _ENVIRONMENTS = {"local", "development", "test", "staging", "production"}
 _LOG_LEVELS = {"CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"}
 DEFAULT_EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
 EMBEDDING_DIMENSION = 384
+DEFAULT_CHAT_MODEL = "openai/gpt-oss-120b"
+POLICY_QA_PROMPT_VERSION = "insurance-qa-v1"
 
 
 class Settings(BaseSettings):
@@ -154,6 +156,98 @@ class Settings(BaseSettings):
             "AI__CHILD_CHUNK_OVERLAP_CHARACTERS",
         ),
     )
+    chat_provider: str = Field(
+        default="Groq",
+        validation_alias=AliasChoices("AI__ChatProvider", "AI__CHAT_PROVIDER"),
+    )
+    groq_api_key: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices("AI__GroqApiKey", "AI__GROQ_API_KEY"),
+    )
+    groq_base_url: str = Field(
+        default="https://api.groq.com/openai/v1",
+        validation_alias=AliasChoices("AI__GroqBaseUrl", "AI__GROQ_BASE_URL"),
+    )
+    chat_model: str = Field(
+        default=DEFAULT_CHAT_MODEL,
+        validation_alias=AliasChoices("AI__ChatModel", "AI__CHAT_MODEL"),
+    )
+    chat_timeout_seconds: float = Field(
+        default=15.0,
+        ge=1.0,
+        le=60.0,
+        validation_alias=AliasChoices(
+            "AI__ChatTimeoutSeconds",
+            "AI__CHAT_TIMEOUT_SECONDS",
+        ),
+    )
+    chat_max_attempts: int = Field(
+        default=2,
+        ge=1,
+        le=3,
+        validation_alias=AliasChoices("AI__ChatMaxAttempts", "AI__CHAT_MAX_ATTEMPTS"),
+    )
+    chat_max_output_tokens: int = Field(
+        default=700,
+        ge=128,
+        le=2_048,
+        validation_alias=AliasChoices(
+            "AI__ChatMaxOutputTokens",
+            "AI__CHAT_MAX_OUTPUT_TOKENS",
+        ),
+    )
+    policy_qa_prompt_version: str = Field(
+        default=POLICY_QA_PROMPT_VERSION,
+        validation_alias=AliasChoices(
+            "AI__PolicyQaPromptVersion",
+            "AI__POLICY_QA_PROMPT_VERSION",
+        ),
+    )
+    policy_qa_question_max_characters: int = Field(
+        default=1_000,
+        ge=100,
+        le=4_000,
+        validation_alias=AliasChoices(
+            "AI__PolicyQaQuestionMaxCharacters",
+            "AI__POLICY_QA_QUESTION_MAX_CHARACTERS",
+        ),
+    )
+    retrieval_child_limit: int = Field(
+        default=8,
+        ge=1,
+        le=20,
+        validation_alias=AliasChoices(
+            "AI__RetrievalChildLimit",
+            "AI__RETRIEVAL_CHILD_LIMIT",
+        ),
+    )
+    retrieval_min_similarity: float = Field(
+        default=0.45,
+        ge=0.0,
+        le=1.0,
+        validation_alias=AliasChoices(
+            "AI__RetrievalMinSimilarity",
+            "AI__RETRIEVAL_MIN_SIMILARITY",
+        ),
+    )
+    retrieval_max_parent_chunks: int = Field(
+        default=4,
+        ge=1,
+        le=10,
+        validation_alias=AliasChoices(
+            "AI__RetrievalMaxParentChunks",
+            "AI__RETRIEVAL_MAX_PARENT_CHUNKS",
+        ),
+    )
+    retrieval_max_context_characters: int = Field(
+        default=18_000,
+        ge=1_000,
+        le=40_000,
+        validation_alias=AliasChoices(
+            "AI__RetrievalMaxContextCharacters",
+            "AI__RETRIEVAL_MAX_CONTEXT_CHARACTERS",
+        ),
+    )
 
     @field_validator("service_name")
     @classmethod
@@ -248,6 +342,49 @@ class Settings(BaseSettings):
             raise ValueError("Azure Blob container name is invalid")
         if "--" in normalized:
             raise ValueError("Azure Blob container name is invalid")
+        return normalized
+
+    @field_validator("chat_provider")
+    @classmethod
+    def validate_chat_provider(cls, value: str) -> str:
+        if value.strip().lower() != "groq":
+            raise ValueError("only the Groq chat provider is supported in Phase R4")
+        return "Groq"
+
+    @field_validator("groq_api_key")
+    @classmethod
+    def validate_groq_api_key(cls, value: SecretStr | None) -> SecretStr | None:
+        if value is None:
+            return None
+        api_key = value.get_secret_value()
+        if api_key != api_key.strip() or not api_key:
+            raise ValueError("Groq API key must not be blank or padded")
+        return value
+
+    @field_validator("groq_base_url")
+    @classmethod
+    def validate_groq_base_url(cls, value: str) -> str:
+        normalized = value.strip().rstrip("/")
+        if normalized != "https://api.groq.com/openai/v1":
+            raise ValueError("Groq base URL must use the official HTTPS API endpoint")
+        return normalized
+
+    @field_validator("chat_model")
+    @classmethod
+    def validate_chat_model(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized or len(normalized) > 255:
+            raise ValueError("chat model must contain between 1 and 255 characters")
+        return normalized
+
+    @field_validator("policy_qa_prompt_version")
+    @classmethod
+    def validate_policy_qa_prompt_version(cls, value: str) -> str:
+        normalized = value.strip()
+        if normalized != POLICY_QA_PROMPT_VERSION:
+            raise ValueError(
+                f"Phase R4 requires prompt version {POLICY_QA_PROMPT_VERSION}"
+            )
         return normalized
 
     @model_validator(mode="after")

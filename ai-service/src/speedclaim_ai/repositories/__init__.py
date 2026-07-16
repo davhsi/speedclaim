@@ -6,6 +6,7 @@ from speedclaim_ai.repositories.vector_repository import (
     DocumentInput,
     ImmutableDocumentConflict,
     StoreResult,
+    StoredChunk,
     VectorRepository,
 )
 
@@ -17,5 +18,6 @@ __all__ = [
     "ImmutableDocumentConflict",
     "PgVectorRepository",
     "StoreResult",
+    "StoredChunk",
     "VectorRepository",
 ]

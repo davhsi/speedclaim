@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "speedclaim-ai"
-version = "0.3.0"
+version = "0.4.0"
 description = "Private AI service for SpeedClaim policy brochure RAG"
 readme = "README.md"
 requires-python = ">=3.14,<3.15"
@@ -13,6 +13,7 @@ dependencies = [
   "azure-storage-blob==12.30.0",
   "fastapi==0.139.0",
   "fastembed==0.8.0",
+  "httpx==0.28.1",
   "onnxruntime==1.27.0",
   "pgvector==0.5.0",
   "psycopg[binary]==3.3.4",
@@ -41,4 +42,5 @@ testpaths = ["tests"]
 pythonpath = ["src"]
 markers = [
   "database: requires an isolated PostgreSQL database with pgvector",
+  "live: requires explicitly enabled external-provider access",
 ]

@@ -58,3 +58,33 @@ class IngestionResult:
     embedding_provider: str
     embedding_model: str
     embedding_dimension: int
+
+
+@dataclass(frozen=True, slots=True)
+class PolicyQaCommand:
+    request_id: UUID
+    brochure_id: UUID
+    product_id: UUID
+    brochure_version: str
+    question: str
+
+
+@dataclass(frozen=True, slots=True)
+class AnswerCitation:
+    index: int
+    page_number: int
+    section_title: str | None
+    clause_reference: str | None
+    excerpt: str
+
+
+@dataclass(frozen=True, slots=True)
+class PolicyQaResult:
+    request_id: UUID
+    answer: str
+    evidence_status: Literal["Grounded", "InsufficientEvidence", "Rejected"]
+    brochure_version: str
+    citations: tuple[AnswerCitation, ...]
+    prompt_version: str
+    provider: str | None
+    model: str | None

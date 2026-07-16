@@ -12,6 +12,7 @@ class AppError(Exception):
     status_code: int
     code: str
     message: str
+    headers: dict[str, str] | None = None
 
 
 def get_correlation_id(request: Request) -> str:
@@ -68,6 +69,7 @@ def register_exception_handlers(app: FastAPI) -> None:
             status_code=exc.status_code,
             code=exc.code,
             message=exc.message,
+            headers=exc.headers,
         )
 
     @app.exception_handler(RequestValidationError)
