@@ -40,6 +40,8 @@ public partial class SpeedClaimDbContext
         typeof(PolicyStatusHistory),
         typeof(PremiumSchedule),
         typeof(PremiumPayment),
+        // ProductBrochure lifecycle uses explicit semantic audit records without file paths or content.
+        typeof(ProductBrochure),
         // Customer changes are captured by the ProfileUpdated semantic entry with human-readable field names
         typeof(Customer),
     };

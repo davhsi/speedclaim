@@ -25,6 +25,7 @@ public partial class SpeedClaimDbContext : DbContext
     public DbSet<Agent> Agents { get; set; } = null!;
     public DbSet<AgentCommission> AgentCommissions { get; set; } = null!;
     public DbSet<InsuranceProduct> InsuranceProducts { get; set; } = null!;
+    public DbSet<ProductBrochure> ProductBrochures { get; set; } = null!;
     public DbSet<PremiumRateTable> PremiumRateTables { get; set; } = null!;
     public DbSet<Proposal> Proposals { get; set; } = null!;
     public DbSet<ProposalMember> ProposalMembers { get; set; } = null!;
@@ -243,6 +244,45 @@ public partial class SpeedClaimDbContext : DbContext
                 new InsuranceProduct { Id = Guid.Parse("10000000-1111-1111-1111-111111111111"), ProductName = "Term Life Basic", Domain = "LIFE", Uin = "UIN123", Description = "Basic term life insurance", MinAge = 18, MaxAge = 60, MinSumAssured = 100000m, MaxSumAssured = 5000000m, MinTenureYears = 5, MaxTenureYears = 30, WaitingPeriodDays = 0, AllowsFamilyFloater = false, MaxFamilyMembers = 1, IsActive = true, CreatedAt = new DateTimeOffset(2026, 6, 7, 0, 0, 0, TimeSpan.Zero) },
                 new InsuranceProduct { Id = Guid.Parse("70000000-0000-0000-0000-000000000001"), ProductName = "SpeedCare Platinum Health", Domain = "HEALTH", Uin = "UIN-HC-DEMO-2026", Description = "Comprehensive health insurance with cashless hospitalisation across 5000+ network hospitals", MinAge = 18, MaxAge = 65, MinSumAssured = 100000m, MaxSumAssured = 5000000m, MinTenureYears = 1, MaxTenureYears = 10, WaitingPeriodDays = 30, AllowsFamilyFloater = true, MaxFamilyMembers = 6, IsActive = true, CreatedAt = new DateTimeOffset(2026, 6, 7, 0, 0, 0, TimeSpan.Zero) }
             );
+        });
+
+        modelBuilder.Entity<ProductBrochure>(e =>
+        {
+            e.HasKey(x => x.Id).HasName("PK_product_brochures");
+            e.HasIndex(x => new { x.ProductId, x.Version })
+                .IsUnique()
+                .HasDatabaseName("uq_product_brochures_product_version");
+            e.HasIndex(x => new { x.ProductId, x.ContentHash })
+                .IsUnique()
+                .HasDatabaseName("uq_product_brochures_product_content_hash");
+            e.HasIndex(x => x.ProductId)
+                .IsUnique()
+                .HasFilter("\"status\" = 'Published'")
+                .HasDatabaseName("uq_product_brochures_current_published");
+            e.Property(x => x.Version).IsRequired().HasMaxLength(32);
+            e.Property(x => x.OriginalFilename).IsRequired().HasMaxLength(255);
+            e.Property(x => x.BlobPath).IsRequired().HasMaxLength(1024);
+            e.Property(x => x.MimeType).IsRequired().HasMaxLength(100);
+            e.Property(x => x.ContentHash).IsRequired().HasMaxLength(64);
+            e.Property(x => x.Status).IsRequired().HasMaxLength(32).HasConversion<string>();
+            e.Property(x => x.EmbeddingProvider).HasMaxLength(100);
+            e.Property(x => x.EmbeddingModel).HasMaxLength(255);
+            e.Property(x => x.IngestionErrorCode).HasMaxLength(100);
+            e.HasOne(x => x.Product)
+                .WithMany(x => x.Brochures)
+                .HasForeignKey(x => x.ProductId)
+                .HasConstraintName("FK_product_brochures_products_product_id")
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.CreatedBy)
+                .WithMany()
+                .HasForeignKey(x => x.CreatedById)
+                .HasConstraintName("FK_product_brochures_users_created_by_id")
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.PublishedBy)
+                .WithMany()
+                .HasForeignKey(x => x.PublishedById)
+                .HasConstraintName("FK_product_brochures_users_published_by_id")
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<PremiumRateTable>(e =>

@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using SpeedClaim.Api.Context;
+using SpeedClaim.Api.Configuration;
 using SpeedClaim.Api.Hubs;
 using SpeedClaim.Api.Swagger;
 using SpeedClaim.Api.Exceptions;
@@ -165,6 +166,7 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProductService, SpeedClaim.Api.Services.ProductService>();
+builder.Services.AddScoped<IProductBrochureService, ProductBrochureService>();
 builder.Services.AddScoped<IPolicyService, PolicyService>();
 builder.Services.AddScoped<IClaimService, ClaimService>();
 builder.Services.AddScoped<IFinanceService, FinanceService>();
@@ -186,6 +188,11 @@ builder.Services.AddScoped<IStorageService>(sp =>
         ? ActivatorUtilities.CreateInstance<AzureBlobStorageService>(sp)
         : ActivatorUtilities.CreateInstance<LocalStorageService>(sp);
 });
+builder.Services.Configure<AiServiceOptions>(
+    builder.Configuration.GetSection(AiServiceOptions.SectionName));
+builder.Services.AddHttpClient<IBrochureIngestionClient, FastApiBrochureIngestionClient>()
+    .RedactLoggedHeaders(headerName =>
+        string.Equals(headerName, "X-Internal-Api-Key", StringComparison.OrdinalIgnoreCase));
 
 
 

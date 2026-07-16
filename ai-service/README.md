@@ -156,6 +156,12 @@ the MIT-licensed `azure-storage-blob` 12.30.0 SDK, which explicitly supports Pyt
 client is created only when `AI__StorageProvider=AzureBlob`; ordinary startup and tests require no
 Azure credentials or access.
 
+For .NET R5 uploads with local storage, set `AI__LocalBrochureRoot` to the backend's `wwwroot`
+directory because .NET stores keys such as `uploads/product-brochures/...`. Configure the same
+32-or-more-character internal key in `.NET AI:InternalApiKey` and Python
+`AI__InternalApiKey`. With Azure Blob storage, both services must use the same container while
+keeping their connection strings in ignored local configuration or a secret store.
+
 With a database migrated and a brochure mounted below `AI__LocalBrochureRoot`:
 
 ```bash

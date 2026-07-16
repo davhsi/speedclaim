@@ -23,6 +23,7 @@ public interface IUnitOfWork : IDisposable
     IRepository<Agent> Agents { get; }
     IRepository<AgentCommission> AgentCommissions { get; }
     IRepository<InsuranceProduct> InsuranceProducts { get; }
+    IRepository<ProductBrochure> ProductBrochures { get; }
     IRepository<PremiumRateTable> PremiumRateTables { get; }
     IRepository<Proposal> Proposals { get; }
     IRepository<ProposalMember> ProposalMembers { get; }

@@ -27,6 +27,7 @@ public class UnitOfWork : IUnitOfWork
     public IRepository<Agent> Agents { get; }
     public IRepository<AgentCommission> AgentCommissions { get; }
     public IRepository<InsuranceProduct> InsuranceProducts { get; }
+    public IRepository<ProductBrochure> ProductBrochures { get; }
     public IRepository<PremiumRateTable> PremiumRateTables { get; }
     public IRepository<Proposal> Proposals { get; }
     public IRepository<ProposalMember> ProposalMembers { get; }
@@ -74,6 +75,7 @@ public class UnitOfWork : IUnitOfWork
         Agents = new Repository<Agent>(_context);
         AgentCommissions = new Repository<AgentCommission>(_context);
         InsuranceProducts = new Repository<InsuranceProduct>(_context);
+        ProductBrochures = new Repository<ProductBrochure>(_context);
         PremiumRateTables = new Repository<PremiumRateTable>(_context);
         Proposals = new ProposalRepository(_context);
         ProposalMembers = new Repository<ProposalMember>(_context);

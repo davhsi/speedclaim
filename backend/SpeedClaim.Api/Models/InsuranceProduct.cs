@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace SpeedClaim.Api.Models;
 
@@ -30,4 +31,5 @@ public class InsuranceProduct
     public DateTimeOffset? UpdatedAt { get; set; }
     
     public virtual User? CreatedBy { get; set; }
+    public virtual ICollection<ProductBrochure> Brochures { get; set; } = new List<ProductBrochure>();
 }
