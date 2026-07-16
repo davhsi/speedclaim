@@ -99,7 +99,19 @@ images by default.
      --name swa-speedclaim-acvq6nlrs3xns --query properties.apiKey --output tsv
    ```
 
-2. Create these repository secrets. Do not copy the old `GREEN_BUSH` token: it belongs only to
+2. Create the namespace-scoped AKS deployment credential from an operator account that can
+   already use `kubectl` against `aks-speedclaim-prod`:
+
+   ```bash
+   kubectl apply -f deploy/k8s/github-deployer.yaml
+   ./deploy/scripts/print-github-deployer-kubeconfig.sh
+   ```
+
+   Copy the complete YAML printed by the second command into the
+   `AKS_DEPLOY_KUBECONFIG` GitHub repository secret. It can modify only `speedclaim`
+   namespace workloads and supporting secrets, not the AKS cluster.
+
+3. Create these repository secrets. Do not copy the old `GREEN_BUSH` token: it belongs only to
    the old Static Web App.
 
 | Secret | Used by |
@@ -111,9 +123,9 @@ images by default.
 | `API_PUBLIC_ORIGIN` | frontend build (`https://<public-ip>.sslip.io`) |
 | `AZURE_FUNCTIONAPP_NAME_SPEEDCLAIM_PROD`, `AZURE_FUNCTIONAPP_PUBLISH_PROFILE_SPEEDCLAIM_PROD` | Function deployment |
 
-3. Push a frontend-only change and confirm the new Static Web App deploys. The old workflow is
+4. Push a frontend-only change and confirm the new Static Web App deploys. The old workflow is
    intentionally left in place during this migration, so both sites receive the deployment.
-4. After the new endpoint and frontend pass the smoke tests, retire the old workflow and only
+5. After the new endpoint and frontend pass the smoke tests, retire the old workflow and only
    then delete the old Static Web App or `rg-davish`.
 
 ## Smoke tests

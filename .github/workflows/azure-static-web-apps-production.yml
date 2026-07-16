@@ -11,23 +11,30 @@ on:
 jobs:
   deploy:
     # This lets the workflow exist safely before the new Static Web App token is created.
-    if: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_SPEEDCLAIM_PROD != '' && secrets.API_PUBLIC_ORIGIN != '' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      API_PUBLIC_ORIGIN: ${{ secrets.API_PUBLIC_ORIGIN }}
+      STATIC_WEB_APP_TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_SPEEDCLAIM_PROD }}
     steps:
+      - name: Verify deployment configuration
+        run: |
+          if [ -z "$API_PUBLIC_ORIGIN" ] || [ -z "$STATIC_WEB_APP_TOKEN" ]; then
+            echo "Missing API_PUBLIC_ORIGIN or AZURE_STATIC_WEB_APPS_API_TOKEN_SPEEDCLAIM_PROD repository secret." >&2
+            exit 1
+          fi
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           submodules: true
           lfs: false
       - name: Configure production API origin
-        env:
-          API_PUBLIC_ORIGIN: ${{ secrets.API_PUBLIC_ORIGIN }}
-        run: sed -i "s|backendOrigin: '.*'|backendOrigin: '${API_PUBLIC_ORIGIN}'|" frontend/src/environments/environment.production.ts
+        run: |
+          sed -i "s|backendOrigin: '.*'|backendOrigin: '${API_PUBLIC_ORIGIN}'|" frontend/src/environments/environment.production.ts
       - name: Build and deploy
         uses: Azure/static-web-apps-deploy@1a947af9992250f3bc2e68ad0754c0b0c11566c9 # v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_SPEEDCLAIM_PROD }}
+          azure_static_web_apps_api_token: ${{ env.STATIC_WEB_APP_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: upload
           app_location: ./frontend
