@@ -178,7 +178,7 @@ public sealed class ProductBrochureService : IProductBrochureService
                     brochure.ContentHash),
                 cancellationToken);
 
-            if (result.RequestId != requestId || result.DocumentId != brochure.Id)
+            if (result.RequestId != requestId || result.BrochureId != brochure.Id)
                 throw new BrochureIngestionException("invalid_ingestion_response", "The AI service returned mismatched identifiers.");
 
             brochure.Status = ProductBrochureStatus.Ready;

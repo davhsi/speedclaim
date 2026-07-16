@@ -42,6 +42,7 @@ async def ingest_brochure(
 
     return BrochureIngestionResponse(
         requestId=result.request_id,
+        brochureId=request.brochure_id,
         documentId=result.document_id,
         status=result.status,
         pageCount=result.page_count,

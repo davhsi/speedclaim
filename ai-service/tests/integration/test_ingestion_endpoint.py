@@ -58,6 +58,7 @@ def test_ingestion_endpoint_maps_internal_contract(client: TestClient) -> None:
     assert response.status_code == 200
     assert response.json() == {
         "requestId": str(service.outcome.request_id),
+        "brochureId": payload["brochureId"],
         "documentId": str(document_id),
         "status": "Succeeded",
         "pageCount": 13,

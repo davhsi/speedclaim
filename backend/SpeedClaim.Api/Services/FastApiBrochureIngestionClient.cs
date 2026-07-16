@@ -76,6 +76,8 @@ public sealed class FastApiBrochureIngestionClient : IBrochureIngestionClient
             }
 
             if (result is null ||
+                result.BrochureId == Guid.Empty ||
+                result.DocumentId == Guid.Empty ||
                 result.Status is not ("Succeeded" or "NoOp") ||
                 result.PageCount <= 0 ||
                 result.ParentChunkCount <= 0 ||

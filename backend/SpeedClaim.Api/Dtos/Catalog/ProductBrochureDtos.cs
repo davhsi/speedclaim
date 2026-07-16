@@ -44,6 +44,7 @@ public record BrochureIngestionRequest(
 
 public record BrochureIngestionResponse(
     Guid RequestId,
+    Guid BrochureId,
     Guid DocumentId,
     string Status,
     int PageCount,

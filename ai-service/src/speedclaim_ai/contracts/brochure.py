@@ -36,6 +36,7 @@ class BrochureIngestionResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     request_id: UUID = Field(alias="requestId")
+    brochure_id: UUID = Field(alias="brochureId")
     document_id: UUID = Field(alias="documentId")
     status: Literal["Succeeded", "NoOp"]
     page_count: int = Field(alias="pageCount")

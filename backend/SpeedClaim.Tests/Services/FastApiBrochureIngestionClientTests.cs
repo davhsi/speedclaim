@@ -20,6 +20,7 @@ public class FastApiBrochureIngestionClientTests
         string? capturedCorrelationId = null;
         string? capturedBody = null;
         var request = Request();
+        var documentId = Guid.NewGuid();
         var handler = new StubHandler(async (message, _) =>
         {
             capturedKey = message.Headers.GetValues("X-Internal-Api-Key").Single();
@@ -28,7 +29,8 @@ public class FastApiBrochureIngestionClientTests
             return JsonResponse(HttpStatusCode.OK, $$"""
                 {
                   "requestId": "{{request.RequestId}}",
-                  "documentId": "{{request.BrochureId}}",
+                  "brochureId": "{{request.BrochureId}}",
+                  "documentId": "{{documentId}}",
                   "status": "Succeeded",
                   "pageCount": 12,
                   "parentChunkCount": 8,
@@ -47,6 +49,8 @@ public class FastApiBrochureIngestionClientTests
         {
             Assert.That(result.Status, Is.EqualTo("Succeeded"));
             Assert.That(result.PageCount, Is.EqualTo(12));
+            Assert.That(result.BrochureId, Is.EqualTo(request.BrochureId));
+            Assert.That(result.DocumentId, Is.EqualTo(documentId));
             Assert.That(capturedKey, Is.EqualTo(ApiKey));
             Assert.That(capturedCorrelationId, Is.EqualTo(request.RequestId.ToString()));
             Assert.That(capturedBody, Does.Contain($"\"brochureId\":\"{request.BrochureId}\""));
@@ -111,6 +115,7 @@ public class FastApiBrochureIngestionClientTests
         var handler = new StubHandler((_, _) => Task.FromResult(JsonResponse(HttpStatusCode.OK, $$"""
             {
               "requestId": "{{request.RequestId}}",
+              "brochureId": "{{request.BrochureId}}",
               "documentId": "{{request.BrochureId}}",
               "status": "Succeeded",
               "pageCount": 0,

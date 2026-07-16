@@ -157,6 +157,33 @@ public class ProductBrochureServiceTests
     }
 
     [Test]
+    public async Task UploadAsync_MismatchedBrochureResponse_PersistsFailedState()
+    {
+        _ingestion.Setup(x => x.IngestAsync(
+                It.IsAny<BrochureIngestionRequest>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BrochureIngestionResponse(
+                Guid.NewGuid(),
+                Guid.NewGuid(),
+                Guid.NewGuid(),
+                "Succeeded",
+                12,
+                8,
+                22,
+                "FastEmbed",
+                "BAAI/bge-small-en-v1.5",
+                384));
+
+        var result = await _service.UploadAsync(_productId, Request(), _adminId);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Status, Is.EqualTo(ProductBrochureStatus.Failed));
+            Assert.That(result.IngestionErrorCode, Is.EqualTo("invalid_ingestion_response"));
+        });
+    }
+
+    [Test]
     public async Task RetryIngestionAsync_FailedBrochure_BecomesReadyWithoutReplacingFile()
     {
         var brochure = Brochure(ProductBrochureStatus.Failed, "1");
@@ -274,7 +301,17 @@ public class ProductBrochureServiceTests
     }
 
     private static BrochureIngestionResponse Succeeded(BrochureIngestionRequest request)
-        => new(request.RequestId, request.BrochureId, "Succeeded", 12, 8, 22, "FastEmbed", "BAAI/bge-small-en-v1.5", 384);
+        => new(
+            request.RequestId,
+            request.BrochureId,
+            Guid.NewGuid(),
+            "Succeeded",
+            12,
+            8,
+            22,
+            "FastEmbed",
+            "BAAI/bge-small-en-v1.5",
+            384);
 
     private UploadProductBrochureRequest Request(
         string? version = null,
