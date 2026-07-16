@@ -1,6 +1,7 @@
 import json
 
 from speedclaim_ai.providers.chat.base import ChatRequest
+from speedclaim_ai.rag.citations import parse_generated_answer_contract
 from speedclaim_ai.rag.retrieval_service import RetrievedEvidence
 
 POLICY_QA_RESPONSE_SCHEMA: dict = {
@@ -87,4 +88,5 @@ def build_policy_qa_request(
         user_prompt=json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
         response_schema_name="speedclaim_policy_qa",
         response_schema=POLICY_QA_RESPONSE_SCHEMA,
+        response_validator=parse_generated_answer_contract,
     )

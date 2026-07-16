@@ -65,10 +65,7 @@ def validate_generated_answer(
     content: str,
     evidence: tuple[RetrievedEvidence, ...],
 ) -> ValidatedGeneratedAnswer:
-    try:
-        generated = GeneratedAnswer.model_validate_json(content)
-    except ValidationError as exc:
-        raise InvalidGroundedAnswer("model output does not match the answer schema") from exc
+    generated = parse_generated_answer_contract(content)
 
     if generated.answer_type == "UnsupportedRequest":
         return ValidatedGeneratedAnswer(
@@ -116,6 +113,14 @@ def validate_generated_answer(
         answer="\n\n".join(rendered_claims),
         citations=citations,
     )
+
+
+def parse_generated_answer_contract(content: str) -> GeneratedAnswer:
+    """Validate only the provider-neutral answer shape, not its evidence claims."""
+    try:
+        return GeneratedAnswer.model_validate_json(content)
+    except ValidationError as exc:
+        raise InvalidGroundedAnswer("model output does not match the answer schema") from exc
 
 
 def _contains_exact_quote(content: str, quote: str) -> bool:

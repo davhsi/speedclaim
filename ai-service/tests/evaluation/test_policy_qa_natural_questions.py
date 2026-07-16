@@ -11,6 +11,8 @@ from alembic.config import Config
 
 from speedclaim_ai.config.settings import Settings
 from speedclaim_ai.database.session import create_database_engine, create_session_factory
+from speedclaim_ai.providers.chat.anthropic_gateway import AnthropicGatewayChatProvider
+from speedclaim_ai.providers.chat.base import ChatProvider
 from speedclaim_ai.providers.chat.groq import GroqChatProvider
 from speedclaim_ai.providers.embeddings.local import FastEmbedProvider
 from speedclaim_ai.providers.storage.local import LocalBrochureReader
@@ -77,17 +79,46 @@ def live_settings() -> Settings:
 
     os.environ["AI__VectorConnectionString"] = connection_string
     settings = Settings()
-    if settings.groq_api_key is None:
-        pytest.skip("an ignored AI__GroqApiKey setting is required for the live evaluation")
+    if settings.chat_provider == "Groq" and settings.groq_api_key is None:
+        pytest.skip("an ignored Groq credential is required for the live evaluation")
+    if settings.chat_provider == "AnthropicGateway" and (
+        settings.anthropic_base_url is None
+        or settings.anthropic_auth_token is None
+    ):
+        pytest.skip("ignored Anthropic gateway credentials are required for the live evaluation")
     command.upgrade(Config("alembic.ini"), "head")
     return settings
+
+
+def _create_chat_provider(settings: Settings) -> ChatProvider:
+    if settings.chat_provider == "AnthropicGateway":
+        assert settings.anthropic_base_url is not None
+        assert settings.anthropic_auth_token is not None
+        return AnthropicGatewayChatProvider(
+            auth_token=settings.anthropic_auth_token.get_secret_value(),
+            model=settings.anthropic_chat_model,
+            base_url=settings.anthropic_base_url,
+            output_mode=settings.anthropic_output_mode,
+            timeout_seconds=settings.chat_timeout_seconds,
+            max_attempts=1,
+            max_output_tokens=settings.chat_max_output_tokens,
+        )
+
+    assert settings.groq_api_key is not None
+    return GroqChatProvider(
+        api_key=settings.groq_api_key.get_secret_value(),
+        model=settings.chat_model,
+        base_url=settings.groq_base_url,
+        timeout_seconds=settings.chat_timeout_seconds,
+        max_attempts=settings.chat_max_attempts,
+        max_output_tokens=settings.chat_max_output_tokens,
+    )
 
 
 async def test_natural_waiting_period_questions_remain_grounded(
     live_settings: Settings,
 ) -> None:
     assert live_settings.vector_connection_string is not None
-    assert live_settings.groq_api_key is not None
     engine = create_database_engine(
         live_settings.vector_connection_string.get_secret_value()
     )
@@ -101,14 +132,7 @@ async def test_natural_waiting_period_questions_remain_grounded(
         cache_dir=live_settings.embedding_cache_dir,
         threads=live_settings.embedding_threads,
     )
-    chat = GroqChatProvider(
-        api_key=live_settings.groq_api_key.get_secret_value(),
-        model=live_settings.chat_model,
-        base_url=live_settings.groq_base_url,
-        timeout_seconds=live_settings.chat_timeout_seconds,
-        max_attempts=live_settings.chat_max_attempts,
-        max_output_tokens=live_settings.chat_max_output_tokens,
-    )
+    chat = _create_chat_provider(live_settings)
     retrieval = RetrievalService(
         embedding_provider=embedding,
         repository=repository,
@@ -159,8 +183,13 @@ async def test_natural_waiting_period_questions_remain_grounded(
         assert ingested.parent_chunk_count == 13
         assert ingested.child_chunk_count == 95
 
+        configured_limit = int(os.getenv("AI_LIVE_POLICY_QA_QUESTION_LIMIT", len(QUESTIONS)))
+        if not 1 <= configured_limit <= len(QUESTIONS):
+            raise AssertionError("live question limit must be between 1 and 5")
+        questions = QUESTIONS[:configured_limit]
+        provider_call_limit = 4 * len(questions)
         evaluation_rows = []
-        for question in QUESTIONS:
+        for question in questions:
             query_embedding = await asyncio.to_thread(embedding.embed_query, question)
             ranked = await repository.search(
                 brochure_id,
@@ -184,16 +213,30 @@ async def test_natural_waiting_period_questions_remain_grounded(
                     ensure_ascii=False,
                 )
             )
-            answer = await answer_with_rate_limit_retry(
-                policy_qa,
-                PolicyQaCommand(
-                    request_id=uuid4(),
-                    brochure_id=brochure_id,
-                    product_id=product_id,
-                    brochure_version="1.0",
-                    question=question,
+            try:
+                answer = await answer_with_rate_limit_retry(
+                    policy_qa,
+                    PolicyQaCommand(
+                        request_id=uuid4(),
+                        brochure_id=brochure_id,
+                        product_id=product_id,
+                        brochure_version="1.0",
+                        question=question,
+                    )
                 )
-            )
+            except PolicyQaFailure:
+                if isinstance(chat, AnthropicGatewayChatProvider):
+                    print(
+                        json.dumps(
+                            {
+                                "validationFailureCategory": chat.last_validation_failure,
+                                "messagesApiCalls": chat.request_count,
+                                "inputTokens": chat.input_tokens_used,
+                                "outputTokens": chat.output_tokens_used,
+                            }
+                        )
+                    )
+                raise
 
             assert answer.evidence_status == "Grounded"
             assert answer.citations
@@ -214,7 +257,6 @@ async def test_natural_waiting_period_questions_remain_grounded(
             evaluation_rows.append(
                 {
                     "question": question,
-                    "answer": answer.answer,
                     "citations": [
                         {
                             "index": citation.index,
@@ -228,7 +270,29 @@ async def test_natural_waiting_period_questions_remain_grounded(
                 }
             )
 
-        print(json.dumps(evaluation_rows, ensure_ascii=False, indent=2))
+        if isinstance(chat, AnthropicGatewayChatProvider):
+            assert chat.request_count <= provider_call_limit
+            usage = {
+                "messagesApiCalls": chat.request_count,
+                "callLimit": provider_call_limit,
+                "inputTokens": chat.input_tokens_used,
+                "outputTokens": chat.output_tokens_used,
+            }
+        else:
+            usage = {"messagesApiCalls": None, "callLimit": None}
+        print(
+            json.dumps(
+                {
+                    "provider": chat.provider_name,
+                    "model": chat.model_name,
+                    "questionCount": len(questions),
+                    "usage": usage,
+                    "results": evaluation_rows,
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
     finally:
         await repository.delete_by_brochure_id(brochure_id)
         await chat.close()

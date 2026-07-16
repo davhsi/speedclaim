@@ -2,6 +2,7 @@ import re
 from functools import lru_cache
 from pathlib import Path
 from typing import Self
+from urllib.parse import urlsplit
 
 from pydantic import AliasChoices, Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -11,6 +12,8 @@ _LOG_LEVELS = {"CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"}
 DEFAULT_EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
 EMBEDDING_DIMENSION = 384
 DEFAULT_CHAT_MODEL = "openai/gpt-oss-120b"
+DEFAULT_ANTHROPIC_GATEWAY_MODEL = "claude-haiku-4-5-20251001"
+DEFAULT_ANTHROPIC_OUTPUT_MODE = "ValidatedJson"
 POLICY_QA_PROMPT_VERSION = "insurance-qa-v1"
 
 
@@ -167,6 +170,36 @@ class Settings(BaseSettings):
     groq_base_url: str = Field(
         default="https://api.groq.com/openai/v1",
         validation_alias=AliasChoices("AI__GroqBaseUrl", "AI__GROQ_BASE_URL"),
+    )
+    anthropic_base_url: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "ANTHROPIC_BASE_URL",
+            "AI__AnthropicBaseUrl",
+            "AI__ANTHROPIC_BASE_URL",
+        ),
+    )
+    anthropic_auth_token: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "ANTHROPIC_AUTH_TOKEN",
+            "AI__AnthropicAuthToken",
+            "AI__ANTHROPIC_AUTH_TOKEN",
+        ),
+    )
+    anthropic_chat_model: str = Field(
+        default=DEFAULT_ANTHROPIC_GATEWAY_MODEL,
+        validation_alias=AliasChoices(
+            "AI__AnthropicChatModel",
+            "AI__ANTHROPIC_CHAT_MODEL",
+        ),
+    )
+    anthropic_output_mode: str = Field(
+        default=DEFAULT_ANTHROPIC_OUTPUT_MODE,
+        validation_alias=AliasChoices(
+            "AI__AnthropicOutputMode",
+            "AI__ANTHROPIC_OUTPUT_MODE",
+        ),
     )
     chat_model: str = Field(
         default=DEFAULT_CHAT_MODEL,
@@ -347,9 +380,10 @@ class Settings(BaseSettings):
     @field_validator("chat_provider")
     @classmethod
     def validate_chat_provider(cls, value: str) -> str:
-        if value.strip().lower() != "groq":
-            raise ValueError("only the Groq chat provider is supported in Phase R4")
-        return "Groq"
+        normalized = value.strip().lower()
+        if normalized not in {"groq", "anthropicgateway"}:
+            raise ValueError("chat provider must be Groq or AnthropicGateway")
+        return "Groq" if normalized == "groq" else "AnthropicGateway"
 
     @field_validator("groq_api_key")
     @classmethod
@@ -368,6 +402,59 @@ class Settings(BaseSettings):
         if normalized != "https://api.groq.com/openai/v1":
             raise ValueError("Groq base URL must use the official HTTPS API endpoint")
         return normalized
+
+    @field_validator("anthropic_base_url")
+    @classmethod
+    def validate_anthropic_base_url(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip().rstrip("/")
+        parsed = urlsplit(normalized)
+        if (
+            parsed.scheme != "https"
+            or not parsed.netloc
+            or parsed.username is not None
+            or parsed.password is not None
+            or parsed.query
+            or parsed.fragment
+        ):
+            raise ValueError("Anthropic gateway base URL must be an HTTPS origin or path")
+        return normalized
+
+    @field_validator("anthropic_auth_token")
+    @classmethod
+    def validate_anthropic_auth_token(
+        cls, value: SecretStr | None
+    ) -> SecretStr | None:
+        if value is None:
+            return None
+        token = value.get_secret_value()
+        if not token or token != token.strip():
+            raise ValueError("Anthropic gateway token must not be blank or padded")
+        return value
+
+    @field_validator("anthropic_chat_model")
+    @classmethod
+    def validate_anthropic_chat_model(cls, value: str) -> str:
+        normalized = value.strip()
+        if (
+            not normalized
+            or len(normalized) > 255
+            or not re.fullmatch(r"[a-z0-9][a-z0-9._:-]{0,254}", normalized)
+        ):
+            raise ValueError("Anthropic gateway model must be a lowercase identifier")
+        return normalized
+
+    @field_validator("anthropic_output_mode")
+    @classmethod
+    def validate_anthropic_output_mode(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        modes = {"nativeschema": "NativeSchema", "validatedjson": "ValidatedJson"}
+        if normalized not in modes:
+            raise ValueError(
+                "Anthropic output mode must be NativeSchema or ValidatedJson"
+            )
+        return modes[normalized]
 
     @field_validator("chat_model")
     @classmethod

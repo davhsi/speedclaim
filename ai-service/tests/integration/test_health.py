@@ -10,7 +10,7 @@ def test_liveness_contract_is_external_dependency_free(client: TestClient) -> No
     assert response.json() == {
         "status": "alive",
         "service": "speedclaim-ai",
-        "version": "0.4.0",
+        "version": "0.5.0",
     }
     assert response.headers["cache-control"] == "no-store"
     uuid.UUID(response.headers["x-correlation-id"])

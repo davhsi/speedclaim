@@ -2,6 +2,8 @@ import pytest
 from pydantic import SecretStr, ValidationError
 
 from speedclaim_ai.config.settings import (
+    DEFAULT_ANTHROPIC_GATEWAY_MODEL,
+    DEFAULT_ANTHROPIC_OUTPUT_MODE,
     DEFAULT_CHAT_MODEL,
     DEFAULT_EMBEDDING_MODEL,
     EMBEDDING_DIMENSION,
@@ -66,6 +68,8 @@ def test_external_provider_configuration_is_not_required() -> None:
 
     assert settings.environment == "Development"
     assert settings.groq_api_key is None
+    assert settings.anthropic_base_url is None
+    assert settings.anthropic_auth_token is None
     assert settings.vector_connection_string is None
     assert settings.embedding_provider == "Local"
     assert settings.embedding_model == DEFAULT_EMBEDDING_MODEL
@@ -75,6 +79,8 @@ def test_external_provider_configuration_is_not_required() -> None:
     assert settings.pdf_max_size_bytes == 10_485_760
     assert settings.chat_provider == "Groq"
     assert settings.chat_model == DEFAULT_CHAT_MODEL
+    assert settings.anthropic_chat_model == DEFAULT_ANTHROPIC_GATEWAY_MODEL
+    assert settings.anthropic_output_mode == DEFAULT_ANTHROPIC_OUTPUT_MODE
     assert settings.policy_qa_prompt_version == POLICY_QA_PROMPT_VERSION
     assert settings.retrieval_min_similarity == pytest.approx(0.45)
 
@@ -187,10 +193,74 @@ def test_optional_groq_key_is_validated_and_redacted() -> None:
     assert api_key not in repr(settings)
 
 
+def test_anthropic_gateway_reads_bare_environment_names_and_redacts_token(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    token = "test-corporate-auth-token-not-live"
+    monkeypatch.setenv("ANTHROPIC_BASE_URL", "https://gateway.example.test/anthropic/")
+    monkeypatch.setenv("ANTHROPIC_AUTH_TOKEN", token)
+
+    settings = Settings(
+        internal_api_key=SecretStr(VALID_KEY),
+        chat_provider="anthropicgateway",
+        _env_file=None,
+    )
+
+    assert settings.chat_provider == "AnthropicGateway"
+    assert settings.anthropic_base_url == "https://gateway.example.test/anthropic"
+    assert settings.anthropic_auth_token is not None
+    assert settings.anthropic_auth_token.get_secret_value() == token
+    assert settings.anthropic_chat_model == DEFAULT_ANTHROPIC_GATEWAY_MODEL
+    assert settings.anthropic_output_mode == "ValidatedJson"
+    assert token not in repr(settings)
+
+
+@pytest.mark.parametrize(
+    "base_url",
+    [
+        "http://gateway.example.test",
+        "https://user:password@gateway.example.test",
+        "https://gateway.example.test?secret=value",
+        "not-a-url",
+    ],
+)
+def test_anthropic_gateway_base_url_requires_safe_https(base_url: str) -> None:
+    with pytest.raises(ValidationError, match="gateway base URL"):
+        Settings(
+            internal_api_key=SecretStr(VALID_KEY),
+            anthropic_base_url=base_url,
+            _env_file=None,
+        )
+
+
+def test_anthropic_gateway_model_must_be_lowercase() -> None:
+    with pytest.raises(ValidationError, match="lowercase"):
+        Settings(
+            internal_api_key=SecretStr(VALID_KEY),
+            anthropic_chat_model="Claude-Haiku-4-5-20251001",
+            _env_file=None,
+        )
+
+
+@pytest.mark.parametrize(
+    ("configured", "expected"),
+    [("nativeschema", "NativeSchema"), ("validatedjson", "ValidatedJson")],
+)
+def test_anthropic_output_mode_is_explicit(configured: str, expected: str) -> None:
+    settings = Settings(
+        internal_api_key=SecretStr(VALID_KEY),
+        anthropic_output_mode=configured,
+        _env_file=None,
+    )
+
+    assert settings.anthropic_output_mode == expected
+
+
 @pytest.mark.parametrize(
     ("field", "value"),
     [
         ("chat_provider", "Other"),
+        ("anthropic_output_mode", "Automatic"),
         ("groq_api_key", SecretStr(" ")),
         ("groq_base_url", "https://example.com/openai/v1"),
         ("policy_qa_prompt_version", "unreviewed-v2"),

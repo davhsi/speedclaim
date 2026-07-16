@@ -5,6 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from speedclaim_ai.config.settings import Settings
 from speedclaim_ai.database.session import create_database_engine, create_session_factory
 from speedclaim_ai.errors import AppError
+from speedclaim_ai.providers.chat.anthropic_gateway import (
+    AnthropicGatewayChatProvider,
+)
+from speedclaim_ai.providers.chat.base import ChatProvider
 from speedclaim_ai.providers.chat.groq import GroqChatProvider
 from speedclaim_ai.providers.embeddings.local import FastEmbedProvider
 from speedclaim_ai.providers.storage.azure_blob import AzureBlobBrochureReader
@@ -27,7 +31,7 @@ class ServiceContainer:
         self._embedding_provider: FastEmbedProvider | None = None
         self._brochure_reader: BrochureReader | None = None
         self._ingestion_service: BrochureIngestionService | None = None
-        self._chat_provider: GroqChatProvider | None = None
+        self._chat_provider: ChatProvider | None = None
         self._policy_qa_service: PolicyQaService | None = None
 
     async def get_ingestion_service(self) -> BrochureIngestionService:
@@ -92,7 +96,16 @@ class ServiceContainer:
                 code="vector_database_not_configured",
                 message="The AI vector database is not configured.",
             )
-        if self._settings.groq_api_key is None:
+        if self._settings.chat_provider == "Groq" and self._settings.groq_api_key is None:
+            raise AppError(
+                status_code=503,
+                code="chat_provider_not_configured",
+                message="The policy answer provider is not configured.",
+            )
+        if self._settings.chat_provider == "AnthropicGateway" and (
+            self._settings.anthropic_base_url is None
+            or self._settings.anthropic_auth_token is None
+        ):
             raise AppError(
                 status_code=503,
                 code="chat_provider_not_configured",
@@ -104,14 +117,36 @@ class ServiceContainer:
                 self._ensure_vector_dependencies()
                 assert self._repository is not None
                 assert self._embedding_provider is not None
-                self._chat_provider = GroqChatProvider(
-                    api_key=self._settings.groq_api_key.get_secret_value(),
-                    model=self._settings.chat_model,
-                    base_url=self._settings.groq_base_url,
-                    timeout_seconds=self._settings.chat_timeout_seconds,
-                    max_attempts=self._settings.chat_max_attempts,
-                    max_output_tokens=self._settings.chat_max_output_tokens,
-                )
+                if self._settings.chat_provider == "Groq":
+                    assert self._settings.groq_api_key is not None
+                    self._chat_provider = GroqChatProvider(
+                        api_key=self._settings.groq_api_key.get_secret_value(),
+                        model=self._settings.chat_model,
+                        base_url=self._settings.groq_base_url,
+                        timeout_seconds=self._settings.chat_timeout_seconds,
+                        max_attempts=self._settings.chat_max_attempts,
+                        max_output_tokens=self._settings.chat_max_output_tokens,
+                    )
+                elif self._settings.chat_provider == "AnthropicGateway":
+                    assert self._settings.anthropic_base_url is not None
+                    assert self._settings.anthropic_auth_token is not None
+                    self._chat_provider = AnthropicGatewayChatProvider(
+                        auth_token=(
+                            self._settings.anthropic_auth_token.get_secret_value()
+                        ),
+                        model=self._settings.anthropic_chat_model,
+                        base_url=self._settings.anthropic_base_url,
+                        output_mode=self._settings.anthropic_output_mode,
+                        timeout_seconds=self._settings.chat_timeout_seconds,
+                        max_attempts=self._settings.chat_max_attempts,
+                        max_output_tokens=self._settings.chat_max_output_tokens,
+                    )
+                else:
+                    raise AppError(
+                        status_code=503,
+                        code="chat_provider_not_configured",
+                        message="The policy answer provider is not configured.",
+                    )
                 retrieval = RetrievalService(
                     embedding_provider=self._embedding_provider,
                     repository=self._repository,

@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, Protocol
 
@@ -18,6 +19,14 @@ class ChatProviderResponseError(ChatProviderError):
     pass
 
 
+class ChatProviderRefusal(ChatProviderResponseError):
+    pass
+
+
+class ChatProviderTruncated(ChatProviderResponseError):
+    pass
+
+
 class ChatProviderRateLimited(ChatProviderError):
     def __init__(self, retry_after_seconds: int | None = None) -> None:
         super().__init__("chat provider rate limited the request")
@@ -30,6 +39,7 @@ class ChatRequest:
     user_prompt: str
     response_schema_name: str
     response_schema: dict[str, Any]
+    response_validator: Callable[[str], object] | None = None
 
 
 @dataclass(frozen=True, slots=True)

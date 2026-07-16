@@ -2,7 +2,8 @@
 
 Phases R1–R4 provide the private FastAPI foundation, local embedding adapter, isolated
 pgvector persistence, text-PDF ingestion, exact-brochure retrieval, and grounded policy answer
-generation. R4 includes a provider-neutral chat interface and a Groq adapter, but no Redis,
+generation. R4 includes a provider-neutral chat interface, a Groq development adapter, and an
+explicitly selected Anthropic-compatible corporate gateway adapter, but no Redis,
 persistent conversations, .NET, Angular, pre-purchase Q&A, or grievance-AI integration.
 
 ## Prerequisites
@@ -27,8 +28,9 @@ python -m uvicorn speedclaim_ai.main:create_app --factory --host 127.0.0.1 --por
 
 The internal key remains the only required secret to start the service. PostgreSQL is needed
 only for ingestion or policy Q&A; the embedding model is loaded lazily on its first call. A
-Groq key is required only when calling the policy Q&A endpoint. Redis, Blob Storage, Azure, and
-Groq are not contacted during ordinary startup or automated tests.
+selected provider credential is required only when calling the policy Q&A endpoint. Redis, Blob
+Storage, Azure, Groq, and the corporate gateway are not contacted during ordinary startup or
+automated tests.
 
 ```bash
 curl http://127.0.0.1:8000/health/live
@@ -63,10 +65,13 @@ Health endpoints are unauthenticated for container/orchestrator probes. All path
 | `AI__ParentChunkMaxCharacters` | no | `6000` | configurable parent context bound |
 | `AI__ChildChunkMaxCharacters` | no | `1200` | configurable searchable child bound |
 | `AI__ChildChunkOverlapCharacters` | no | `150` | must be smaller than child size |
-| `AI__ChatProvider` | no | `Groq` | Phase R4 supports only `Groq` |
+| `AI__ChatProvider` | no | `Groq` | `Groq` or `AnthropicGateway`; selection never falls back |
 | `AI__GroqApiKey` | Q&A only | none | secret; non-empty with no surrounding whitespace |
 | `AI__GroqBaseUrl` | no | `https://api.groq.com/openai/v1` | fixed official HTTPS endpoint |
-| `AI__ChatModel` | no | `openai/gpt-oss-120b` | configurable model identifier |
+| `AI__ChatModel` | no | `openai/gpt-oss-120b` | Groq model identifier |
+| `ANTHROPIC_BASE_URL` | with `AnthropicGateway` | none | corporate HTTPS gateway origin/path |
+| `ANTHROPIC_AUTH_TOKEN` | with `AnthropicGateway` | none | secret bearer token; never logged |
+| `AI__AnthropicChatModel` | no | `claude-haiku-4-5-20251001` | lowercase gateway model identifier |
 | `AI__ChatTimeoutSeconds` | no | `15` | 1–60 seconds |
 | `AI__ChatMaxAttempts` | no | `2` | 1–3 bounded transport attempts |
 | `AI__ChatMaxOutputTokens` | no | `700` | 128–2048 tokens |
@@ -90,7 +95,7 @@ python -m pytest
 
 The default suite uses fake embedding/chat models and skips the database integration test unless
 an isolated test database is explicitly supplied. It requires no external service or live model
-call; Groq behavior is exercised through provider mocks and HTTP mock transports.
+call; both provider adapters are exercised through HTTP mock transports.
 
 The five natural-language waiting-period regression questions are retained as an opt-in live
 evaluation. They print only answer/citation/ranking metadata and never the configured key:
@@ -188,14 +193,26 @@ failure state and can be retried safely.
 metadata, and a policy question. Retrieval embeds the normalized question, filters vector
 search by the exact brochure ID, applies a configurable similarity threshold, deduplicates
 child hits, and expands a bounded set of parent chunks. Weak evidence returns
-`InsufficientEvidence` without calling Groq.
+`InsufficientEvidence` without calling the selected provider.
 
-The default chat model is `openai/gpt-oss-120b` through Groq. The adapter requests strict JSON
-Schema output and enables no tools. The versioned `insurance-qa-v1` prompt treats both the
-question and brochure text as untrusted data. Every generated claim must name a retrieved
-citation and provide an exact supporting quote. The application checks that quote against the
-stored parent chunk, rejects unknown or unsupported citations, and builds citation markers and
-excerpts from repository metadata rather than model-supplied page details.
+Groq remains the default development provider with `openai/gpt-oss-120b`. Selecting
+`AnthropicGateway` instead sends the same provider-neutral contract to `/v1/messages` using
+`Authorization: Bearer`, `anthropic-version: 2023-06-01`, and
+the lowercase `claude-haiku-4-5-20251001` model by default. Its explicit
+`AI__AnthropicOutputMode` is `ValidatedJson` for the corporate gateway: Claude is instructed
+to emit one raw JSON object, the complete response is parsed, and the existing Pydantic answer
+contract is applied. One format-only retry is allowed without echoing invalid output.
+That retry uses a fixed opening-brace assistant prefill and validates the complete prefixed
+response; it never strips Markdown or extracts an object from surrounding text.
+`NativeSchema` keeps `output_config.format` available for gateways that support it. Modes are
+never auto-detected, provider selection is explicit, and neither mode falls back to Groq.
+
+Both adapters enable no tools. The versioned `insurance-qa-v1` prompt treats the question and
+brochure text as untrusted data. Every generated claim must name retrieved evidence and provide
+an exact supporting quote. Application-owned validation checks that quote against the stored
+parent chunk, rejects unknown or unsupported citations, and builds citation markers and excerpts
+from repository metadata rather than model-supplied page details. Gateway refusals, truncation,
+timeouts, rate limits, malformed content, and provider failures are rejected safely.
 
 Store a development key only in the ignored `ai-service/.env` file or an environment variable;
 never commit it:
@@ -203,6 +220,10 @@ never commit it:
 ```bash
 AI__GroqApiKey=gsk_replace_with_local_secret
 ```
+
+For the corporate provider, set `AI__ChatProvider=AnthropicGateway` and configure the ignored
+`ANTHROPIC_BASE_URL` and `ANTHROPIC_AUTH_TOKEN` variables. Do not place those credentials in
+committed configuration or command-line examples.
 
 With the vector database migrated, the brochure ingested, and `AI__GroqApiKey` configured:
 
@@ -228,10 +249,10 @@ output is validated and retried once, then rejected without an invented fallback
 From the repository root:
 
 ```bash
-docker build -f ai-service/Dockerfile -t speedclaim-ai:r4 ai-service
+docker build -f ai-service/Dockerfile -t speedclaim-ai:0.5.0 ai-service
 docker run --rm -p 8000:8000 \
   -e AI__InternalApiKey="$(openssl rand -hex 32)" \
   -e AI__LocalBrochureRoot=/data/brochures \
   -v /absolute/local/brochures:/data/brochures:ro \
-  speedclaim-ai:r4
+  speedclaim-ai:0.5.0
 ```

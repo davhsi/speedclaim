@@ -3,10 +3,16 @@ from speedclaim_ai.providers.chat.base import (
     ChatProvider,
     ChatProviderError,
     ChatProviderRateLimited,
+    ChatProviderRefusal,
     ChatProviderResponseError,
     ChatProviderTimeout,
+    ChatProviderTruncated,
     ChatProviderUnavailable,
     ChatRequest,
+)
+from speedclaim_ai.providers.chat.anthropic_gateway import (
+    ANTHROPIC_VERSION,
+    AnthropicGatewayChatProvider,
 )
 from speedclaim_ai.providers.chat.groq import GroqChatProvider
 
@@ -15,9 +21,13 @@ __all__ = [
     "ChatProvider",
     "ChatProviderError",
     "ChatProviderRateLimited",
+    "ChatProviderRefusal",
     "ChatProviderResponseError",
     "ChatProviderTimeout",
+    "ChatProviderTruncated",
     "ChatProviderUnavailable",
     "ChatRequest",
+    "ANTHROPIC_VERSION",
+    "AnthropicGatewayChatProvider",
     "GroqChatProvider",
 ]
