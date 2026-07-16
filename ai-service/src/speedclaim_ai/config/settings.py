@@ -11,8 +11,7 @@ _ENVIRONMENTS = {"local", "development", "test", "staging", "production"}
 _LOG_LEVELS = {"CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"}
 DEFAULT_EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
 EMBEDDING_DIMENSION = 384
-DEFAULT_CHAT_MODEL = "openai/gpt-oss-120b"
-DEFAULT_ANTHROPIC_GATEWAY_MODEL = "claude-haiku-4-5-20251001"
+DEFAULT_ANTHROPIC_GATEWAY_MODEL = "claude-sonnet-4-6"
 DEFAULT_ANTHROPIC_OUTPUT_MODE = "ValidatedJson"
 POLICY_QA_PROMPT_VERSION = "insurance-qa-v1"
 
@@ -159,18 +158,6 @@ class Settings(BaseSettings):
             "AI__CHILD_CHUNK_OVERLAP_CHARACTERS",
         ),
     )
-    chat_provider: str = Field(
-        default="Groq",
-        validation_alias=AliasChoices("AI__ChatProvider", "AI__CHAT_PROVIDER"),
-    )
-    groq_api_key: SecretStr | None = Field(
-        default=None,
-        validation_alias=AliasChoices("AI__GroqApiKey", "AI__GROQ_API_KEY"),
-    )
-    groq_base_url: str = Field(
-        default="https://api.groq.com/openai/v1",
-        validation_alias=AliasChoices("AI__GroqBaseUrl", "AI__GROQ_BASE_URL"),
-    )
     anthropic_base_url: str | None = Field(
         default=None,
         validation_alias=AliasChoices(
@@ -200,10 +187,6 @@ class Settings(BaseSettings):
             "AI__AnthropicOutputMode",
             "AI__ANTHROPIC_OUTPUT_MODE",
         ),
-    )
-    chat_model: str = Field(
-        default=DEFAULT_CHAT_MODEL,
-        validation_alias=AliasChoices("AI__ChatModel", "AI__CHAT_MODEL"),
     )
     chat_timeout_seconds: float = Field(
         default=15.0,
@@ -377,32 +360,6 @@ class Settings(BaseSettings):
             raise ValueError("Azure Blob container name is invalid")
         return normalized
 
-    @field_validator("chat_provider")
-    @classmethod
-    def validate_chat_provider(cls, value: str) -> str:
-        normalized = value.strip().lower()
-        if normalized not in {"groq", "anthropicgateway"}:
-            raise ValueError("chat provider must be Groq or AnthropicGateway")
-        return "Groq" if normalized == "groq" else "AnthropicGateway"
-
-    @field_validator("groq_api_key")
-    @classmethod
-    def validate_groq_api_key(cls, value: SecretStr | None) -> SecretStr | None:
-        if value is None:
-            return None
-        api_key = value.get_secret_value()
-        if api_key != api_key.strip() or not api_key:
-            raise ValueError("Groq API key must not be blank or padded")
-        return value
-
-    @field_validator("groq_base_url")
-    @classmethod
-    def validate_groq_base_url(cls, value: str) -> str:
-        normalized = value.strip().rstrip("/")
-        if normalized != "https://api.groq.com/openai/v1":
-            raise ValueError("Groq base URL must use the official HTTPS API endpoint")
-        return normalized
-
     @field_validator("anthropic_base_url")
     @classmethod
     def validate_anthropic_base_url(cls, value: str | None) -> str | None:
@@ -455,14 +412,6 @@ class Settings(BaseSettings):
                 "Anthropic output mode must be NativeSchema or ValidatedJson"
             )
         return modes[normalized]
-
-    @field_validator("chat_model")
-    @classmethod
-    def validate_chat_model(cls, value: str) -> str:
-        normalized = value.strip()
-        if not normalized or len(normalized) > 255:
-            raise ValueError("chat model must contain between 1 and 255 characters")
-        return normalized
 
     @field_validator("policy_qa_prompt_version")
     @classmethod

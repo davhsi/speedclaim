@@ -9,7 +9,6 @@ from speedclaim_ai.providers.chat.anthropic_gateway import (
     AnthropicGatewayChatProvider,
 )
 from speedclaim_ai.providers.chat.base import ChatProvider
-from speedclaim_ai.providers.chat.groq import GroqChatProvider
 from speedclaim_ai.providers.embeddings.local import FastEmbedProvider
 from speedclaim_ai.providers.storage.azure_blob import AzureBlobBrochureReader
 from speedclaim_ai.providers.storage.base import BrochureReader
@@ -96,16 +95,7 @@ class ServiceContainer:
                 code="vector_database_not_configured",
                 message="The AI vector database is not configured.",
             )
-        if self._settings.chat_provider == "Groq" and self._settings.groq_api_key is None:
-            raise AppError(
-                status_code=503,
-                code="chat_provider_not_configured",
-                message="The policy answer provider is not configured.",
-            )
-        if self._settings.chat_provider == "AnthropicGateway" and (
-            self._settings.anthropic_base_url is None
-            or self._settings.anthropic_auth_token is None
-        ):
+        if self._settings.anthropic_base_url is None or self._settings.anthropic_auth_token is None:
             raise AppError(
                 status_code=503,
                 code="chat_provider_not_configured",
@@ -117,36 +107,17 @@ class ServiceContainer:
                 self._ensure_vector_dependencies()
                 assert self._repository is not None
                 assert self._embedding_provider is not None
-                if self._settings.chat_provider == "Groq":
-                    assert self._settings.groq_api_key is not None
-                    self._chat_provider = GroqChatProvider(
-                        api_key=self._settings.groq_api_key.get_secret_value(),
-                        model=self._settings.chat_model,
-                        base_url=self._settings.groq_base_url,
-                        timeout_seconds=self._settings.chat_timeout_seconds,
-                        max_attempts=self._settings.chat_max_attempts,
-                        max_output_tokens=self._settings.chat_max_output_tokens,
-                    )
-                elif self._settings.chat_provider == "AnthropicGateway":
-                    assert self._settings.anthropic_base_url is not None
-                    assert self._settings.anthropic_auth_token is not None
-                    self._chat_provider = AnthropicGatewayChatProvider(
-                        auth_token=(
-                            self._settings.anthropic_auth_token.get_secret_value()
-                        ),
-                        model=self._settings.anthropic_chat_model,
-                        base_url=self._settings.anthropic_base_url,
-                        output_mode=self._settings.anthropic_output_mode,
-                        timeout_seconds=self._settings.chat_timeout_seconds,
-                        max_attempts=self._settings.chat_max_attempts,
-                        max_output_tokens=self._settings.chat_max_output_tokens,
-                    )
-                else:
-                    raise AppError(
-                        status_code=503,
-                        code="chat_provider_not_configured",
-                        message="The policy answer provider is not configured.",
-                    )
+                assert self._settings.anthropic_base_url is not None
+                assert self._settings.anthropic_auth_token is not None
+                self._chat_provider = AnthropicGatewayChatProvider(
+                    auth_token=self._settings.anthropic_auth_token.get_secret_value(),
+                    model=self._settings.anthropic_chat_model,
+                    base_url=self._settings.anthropic_base_url,
+                    output_mode=self._settings.anthropic_output_mode,
+                    timeout_seconds=self._settings.chat_timeout_seconds,
+                    max_attempts=self._settings.chat_max_attempts,
+                    max_output_tokens=self._settings.chat_max_output_tokens,
+                )
                 retrieval = RetrievalService(
                     embedding_provider=self._embedding_provider,
                     repository=self._repository,

@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 
 from speedclaim_ai.config.settings import (
-    DEFAULT_CHAT_MODEL,
+    DEFAULT_ANTHROPIC_GATEWAY_MODEL,
     DEFAULT_EMBEDDING_MODEL,
     EMBEDDING_DIMENSION,
     POLICY_QA_PROMPT_VERSION,
@@ -51,7 +51,7 @@ class FakeRetrievalService:
 
 class FakeChatProvider:
     provider_name = "FakeChat"
-    model_name = DEFAULT_CHAT_MODEL
+    model_name = DEFAULT_ANTHROPIC_GATEWAY_MODEL
 
     def __init__(self, outcomes) -> None:
         self.outcomes = list(outcomes)
@@ -165,7 +165,7 @@ async def test_grounded_answer_maps_validated_application_citations() -> None:
     assert result.citations[0].page_number == 6
     assert result.citations[0].clause_reference == "5.1"
     assert result.provider == "FakeChat"
-    assert result.model == DEFAULT_CHAT_MODEL
+    assert result.model == DEFAULT_ANTHROPIC_GATEWAY_MODEL
     assert result.prompt_version == POLICY_QA_PROMPT_VERSION
 
 
@@ -218,7 +218,7 @@ async def test_malformed_output_is_retried_once_then_accepted() -> None:
     assert "failed application validation" in provider.requests[1].system_prompt
 
 
-async def test_unknown_citations_are_rejected_after_validation_retry() -> None:
+async def test_unknown_citations_return_safe_rejection_after_validation_retry() -> None:
     command = _command()
     invalid = json.dumps(
         {
@@ -235,14 +235,14 @@ async def test_unknown_citations_are_rejected_after_validation_retry() -> None:
     )
     provider = FakeChatProvider([invalid, invalid])
 
-    with pytest.raises(PolicyQaFailure) as failure:
-        await _service(
-            command,
-            FakeRetrievalService(_retrieval()),
-            provider,
-        ).answer(command)
+    result = await _service(
+        command,
+        FakeRetrievalService(_retrieval()),
+        provider,
+    ).answer(command)
 
-    assert failure.value.code == "invalid_model_output"
+    assert result.evidence_status == "Rejected"
+    assert result.citations == ()
     assert len(provider.requests) == 2
 
 

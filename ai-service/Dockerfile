@@ -7,7 +7,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 RUN groupadd --system speedclaim \
-    && useradd --system --gid speedclaim --no-create-home speedclaim
+    && useradd --system --gid speedclaim --create-home --home-dir /home/speedclaim speedclaim \
+    && mkdir --parents /home/speedclaim/.cache /tmp/speedclaim-ai-models \
+    && chown --recursive speedclaim:speedclaim /home/speedclaim /tmp/speedclaim-ai-models
 
 COPY requirements.lock ./
 
@@ -18,6 +20,11 @@ COPY src ./src
 COPY migrations ./migrations
 
 RUN python -m pip install --no-cache-dir --no-deps .
+
+ENV HOME=/home/speedclaim \
+    XDG_CACHE_HOME=/home/speedclaim/.cache \
+    HF_HOME=/home/speedclaim/.cache/huggingface \
+    AI__EmbeddingCacheDir=/tmp/speedclaim-ai-models
 
 USER speedclaim
 

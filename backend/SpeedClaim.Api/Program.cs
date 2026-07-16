@@ -180,6 +180,10 @@ builder.Services.AddScoped<IStripeWrapper, StripeWrapper>();
 
 // Infrastructure Services
 builder.Services.AddSingleton<ISmtpClientFactory, SmtpClientFactory>();
+if (string.Equals(builder.Configuration["EmailDelivery:Provider"], "ServiceBus", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddSingleton<IEmailDispatchQueue, ServiceBusEmailDispatchQueue>();
+}
 builder.Services.AddTransient<IEmailService, EmailService>();
 builder.Services.AddScoped<IStorageService>(sp =>
 {
@@ -376,6 +380,8 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapGet("/health/live", () => Results.Ok(new { status = "ok" })).AllowAnonymous();
+app.MapGet("/health/ready", () => Results.Ok(new { status = "ready" })).AllowAnonymous();
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications");
 

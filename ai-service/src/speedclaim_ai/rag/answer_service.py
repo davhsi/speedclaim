@@ -21,6 +21,11 @@ _INSUFFICIENT_ANSWER = (
     "I couldn’t find enough evidence in this brochure to answer that question. "
     "Please check the policy document or contact SpeedClaim support."
 )
+_VALIDATION_FALLBACK_ANSWER = (
+    "I couldn’t produce a response that met the Policy Guide’s evidence-checking rules. "
+    "Please ask a more specific question about coverage, exclusions, waiting periods, "
+    "endorsements, or claim documents."
+)
 
 
 class PolicyQaService:
@@ -125,11 +130,19 @@ class PolicyQaService:
                 model=completion.model,
             )
 
-        raise PolicyQaFailure(
-            code="invalid_model_output",
-            message="The answer provider returned an unsupported or malformed answer.",
-            status_code=503,
-        ) from last_validation_error
+        # Never surface an answer whose citations did not validate. A model formatting or
+        # citation failure is not an infrastructure outage, so return a safe, usable result
+        # rather than turning a customer question into a 503 error.
+        return PolicyQaResult(
+            request_id=command.request_id,
+            answer=_VALIDATION_FALLBACK_ANSWER,
+            evidence_status="Rejected",
+            brochure_version=document.brochure_version,
+            citations=(),
+            prompt_version=self._prompt_version,
+            provider=None,
+            model=None,
+        )
 
     async def _complete(self, chat_request):
         try:

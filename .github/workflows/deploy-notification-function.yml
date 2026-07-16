@@ -1,0 +1,28 @@
+name: Deploy notification Function
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - functions/**
+      - .github/workflows/deploy-notification-function.yml
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    if: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE_SPEEDCLAIM_PROD != '' && secrets.AZURE_FUNCTIONAPP_NAME_SPEEDCLAIM_PROD != '' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Publish Function
+        run: dotnet publish functions/SpeedClaim.Notifications.Functions/SpeedClaim.Notifications.Functions.csproj --configuration Release --output ./function-publish
+      - uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ secrets.AZURE_FUNCTIONAPP_NAME_SPEEDCLAIM_PROD }}
+          package: ./function-publish
+          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE_SPEEDCLAIM_PROD }}

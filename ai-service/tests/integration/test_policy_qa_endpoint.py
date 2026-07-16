@@ -47,8 +47,8 @@ def test_policy_qa_endpoint_maps_grounded_contract(client: TestClient) -> None:
             ),
         ),
         prompt_version=POLICY_QA_PROMPT_VERSION,
-        provider="Groq",
-        model="openai/gpt-oss-120b",
+        provider="AnthropicGateway",
+        model="claude-sonnet-4-6",
     )
     service = FakePolicyQaService(result)
     client.app.state.policy_qa_service_override = service
@@ -75,8 +75,8 @@ def test_policy_qa_endpoint_maps_grounded_contract(client: TestClient) -> None:
             }
         ],
         "promptVersion": POLICY_QA_PROMPT_VERSION,
-        "provider": "Groq",
-        "model": "openai/gpt-oss-120b",
+        "provider": "AnthropicGateway",
+        "model": "claude-sonnet-4-6",
     }
     assert service.commands[0].question == "What is the initial waiting period?"
     assert service.commands[0].brochure_version == "1.0"

@@ -4,7 +4,6 @@ from pydantic import SecretStr, ValidationError
 from speedclaim_ai.config.settings import (
     DEFAULT_ANTHROPIC_GATEWAY_MODEL,
     DEFAULT_ANTHROPIC_OUTPUT_MODE,
-    DEFAULT_CHAT_MODEL,
     DEFAULT_EMBEDDING_MODEL,
     EMBEDDING_DIMENSION,
     POLICY_QA_PROMPT_VERSION,
@@ -67,7 +66,6 @@ def test_external_provider_configuration_is_not_required() -> None:
     )
 
     assert settings.environment == "Development"
-    assert settings.groq_api_key is None
     assert settings.anthropic_base_url is None
     assert settings.anthropic_auth_token is None
     assert settings.vector_connection_string is None
@@ -77,8 +75,6 @@ def test_external_provider_configuration_is_not_required() -> None:
     assert settings.storage_provider == "Local"
     assert settings.local_brochure_root.is_absolute()
     assert settings.pdf_max_size_bytes == 10_485_760
-    assert settings.chat_provider == "Groq"
-    assert settings.chat_model == DEFAULT_CHAT_MODEL
     assert settings.anthropic_chat_model == DEFAULT_ANTHROPIC_GATEWAY_MODEL
     assert settings.anthropic_output_mode == DEFAULT_ANTHROPIC_OUTPUT_MODE
     assert settings.policy_qa_prompt_version == POLICY_QA_PROMPT_VERSION
@@ -180,19 +176,6 @@ def test_azure_blob_container_name_is_validated() -> None:
         )
 
 
-def test_optional_groq_key_is_validated_and_redacted() -> None:
-    api_key = "test-groq-api-key-not-live"
-    settings = Settings(
-        internal_api_key=SecretStr(VALID_KEY),
-        groq_api_key=SecretStr(api_key),
-        _env_file=None,
-    )
-
-    assert settings.groq_api_key is not None
-    assert settings.groq_api_key.get_secret_value() == api_key
-    assert api_key not in repr(settings)
-
-
 def test_anthropic_gateway_reads_bare_environment_names_and_redacts_token(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -202,11 +185,9 @@ def test_anthropic_gateway_reads_bare_environment_names_and_redacts_token(
 
     settings = Settings(
         internal_api_key=SecretStr(VALID_KEY),
-        chat_provider="anthropicgateway",
         _env_file=None,
     )
 
-    assert settings.chat_provider == "AnthropicGateway"
     assert settings.anthropic_base_url == "https://gateway.example.test/anthropic"
     assert settings.anthropic_auth_token is not None
     assert settings.anthropic_auth_token.get_secret_value() == token
@@ -259,10 +240,7 @@ def test_anthropic_output_mode_is_explicit(configured: str, expected: str) -> No
 @pytest.mark.parametrize(
     ("field", "value"),
     [
-        ("chat_provider", "Other"),
         ("anthropic_output_mode", "Automatic"),
-        ("groq_api_key", SecretStr(" ")),
-        ("groq_base_url", "https://example.com/openai/v1"),
         ("policy_qa_prompt_version", "unreviewed-v2"),
         ("retrieval_min_similarity", 1.1),
         ("retrieval_child_limit", 0),

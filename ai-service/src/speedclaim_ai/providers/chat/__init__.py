@@ -14,7 +14,6 @@ from speedclaim_ai.providers.chat.anthropic_gateway import (
     ANTHROPIC_VERSION,
     AnthropicGatewayChatProvider,
 )
-from speedclaim_ai.providers.chat.groq import GroqChatProvider
 
 __all__ = [
     "ChatCompletion",
@@ -29,5 +28,4 @@ __all__ = [
     "ChatRequest",
     "ANTHROPIC_VERSION",
     "AnthropicGatewayChatProvider",
-    "GroqChatProvider",
 ]

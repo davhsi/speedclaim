@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: speedclaim-ai
+  namespace: speedclaim
+  labels:
+    app.kubernetes.io/name: speedclaim-ai
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: speedclaim-ai
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: speedclaim-ai
+    spec:
+      imagePullSecrets:
+        - name: acr-pull
+      containers:
+        - name: ai
+          image: __ACR_LOGIN_SERVER__/speedclaim-ai:__AI_IMAGE_TAG__
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              name: http
+          env:
+            - name: AI__Environment
+              value: Production
+            - name: AI__StorageProvider
+              value: AzureBlob
+            - name: AI__AzureBlobContainerName
+              value: speedclaim-uploads
+            - name: AI__AnthropicChatModel
+              value: claude-sonnet-4-6
+          envFrom:
+            - secretRef:
+                name: speedclaim-ai-secrets
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 250m
+              memory: 768Mi
+            limits:
+              cpu: "1"
+              memory: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: speedclaim-ai
+  namespace: speedclaim
+spec:
+  selector:
+    app.kubernetes.io/name: speedclaim-ai
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http

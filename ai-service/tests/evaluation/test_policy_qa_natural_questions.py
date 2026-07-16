@@ -13,7 +13,6 @@ from speedclaim_ai.config.settings import Settings
 from speedclaim_ai.database.session import create_database_engine, create_session_factory
 from speedclaim_ai.providers.chat.anthropic_gateway import AnthropicGatewayChatProvider
 from speedclaim_ai.providers.chat.base import ChatProvider
-from speedclaim_ai.providers.chat.groq import GroqChatProvider
 from speedclaim_ai.providers.embeddings.local import FastEmbedProvider
 from speedclaim_ai.providers.storage.local import LocalBrochureReader
 from speedclaim_ai.rag.answer_service import PolicyQaService
@@ -79,38 +78,22 @@ def live_settings() -> Settings:
 
     os.environ["AI__VectorConnectionString"] = connection_string
     settings = Settings()
-    if settings.chat_provider == "Groq" and settings.groq_api_key is None:
-        pytest.skip("an ignored Groq credential is required for the live evaluation")
-    if settings.chat_provider == "AnthropicGateway" and (
-        settings.anthropic_base_url is None
-        or settings.anthropic_auth_token is None
-    ):
+    if settings.anthropic_base_url is None or settings.anthropic_auth_token is None:
         pytest.skip("ignored Anthropic gateway credentials are required for the live evaluation")
     command.upgrade(Config("alembic.ini"), "head")
     return settings
 
 
 def _create_chat_provider(settings: Settings) -> ChatProvider:
-    if settings.chat_provider == "AnthropicGateway":
-        assert settings.anthropic_base_url is not None
-        assert settings.anthropic_auth_token is not None
-        return AnthropicGatewayChatProvider(
-            auth_token=settings.anthropic_auth_token.get_secret_value(),
-            model=settings.anthropic_chat_model,
-            base_url=settings.anthropic_base_url,
-            output_mode=settings.anthropic_output_mode,
-            timeout_seconds=settings.chat_timeout_seconds,
-            max_attempts=1,
-            max_output_tokens=settings.chat_max_output_tokens,
-        )
-
-    assert settings.groq_api_key is not None
-    return GroqChatProvider(
-        api_key=settings.groq_api_key.get_secret_value(),
-        model=settings.chat_model,
-        base_url=settings.groq_base_url,
+    assert settings.anthropic_base_url is not None
+    assert settings.anthropic_auth_token is not None
+    return AnthropicGatewayChatProvider(
+        auth_token=settings.anthropic_auth_token.get_secret_value(),
+        model=settings.anthropic_chat_model,
+        base_url=settings.anthropic_base_url,
+        output_mode=settings.anthropic_output_mode,
         timeout_seconds=settings.chat_timeout_seconds,
-        max_attempts=settings.chat_max_attempts,
+        max_attempts=1,
         max_output_tokens=settings.chat_max_output_tokens,
     )
 
