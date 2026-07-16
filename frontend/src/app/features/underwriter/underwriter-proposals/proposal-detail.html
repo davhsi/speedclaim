@@ -116,22 +116,24 @@
         @if (p.members && p.members.length > 0) {
           <div class="bg-white border border-line rounded-card shadow-sm p-5 mb-4">
             <div class="text-sm font-semibold text-ink mb-3.5">Members to be covered</div>
-            <table class="w-full border-collapse text-[13px]">
-              <thead>
-                <tr class="border-b border-line bg-surface">
-                  <th class="px-3 py-2 text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Relationship</th>
-                  <th class="px-3 py-2 text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Name</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (m of p.members; track m.id) {
-                  <tr class="border-b border-line">
-                    <td class="px-3 py-2.5 text-body">{{ m.relationship }}</td>
-                    <td class="px-3 py-2.5 font-medium text-ink">{{ m.name }}</td>
+            <div class="sc-table-scroll">
+              <table class="w-full border-collapse text-[13px]">
+                <thead>
+                  <tr class="border-b border-line bg-surface">
+                    <th class="px-3 py-2 text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Relationship</th>
+                    <th class="px-3 py-2 text-left text-[11px] font-semibold text-muted uppercase tracking-wide">Name</th>
                   </tr>
-                }
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  @for (m of p.members; track m.id) {
+                    <tr class="border-b border-line">
+                      <td class="px-3 py-2.5 text-body">{{ m.relationship }}</td>
+                      <td class="px-3 py-2.5 font-medium text-ink">{{ m.name }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
           </div>
         }
       </div>

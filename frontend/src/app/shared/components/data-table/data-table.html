@@ -1,6 +1,6 @@
 @if (loading()) {
   <div class="bg-white rounded-card border border-line overflow-hidden">
-    <div class="overflow-x-auto">
+    <div class="sc-table-scroll">
     <table class="w-full">
       <thead>
         <tr class="border-b border-line bg-surface">
@@ -27,7 +27,7 @@
   <app-empty-state [title]="emptyTitle()" [message]="emptyMessage()" />
 } @else {
   <div class="bg-white rounded-card border border-line overflow-hidden">
-    <div class="overflow-x-auto">
+    <div class="sc-table-scroll">
     <table class="w-full">
       <thead>
         <tr class="border-b border-line bg-surface">
