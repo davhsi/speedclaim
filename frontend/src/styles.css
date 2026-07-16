@@ -73,6 +73,8 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    min-width: 320px;
+    overflow-x: clip;
   }
 
   body {
@@ -81,6 +83,13 @@
     font-family: var(--font-sans);
     color: var(--color-body);
     background: var(--color-surface);
+    overflow-x: clip;
+  }
+
+  img,
+  video,
+  canvas {
+    max-width: 100%;
   }
 
   input,
@@ -242,4 +251,47 @@
 .sc-reveal.is-visible {
   opacity: 1;
   transform: translateY(0);
+}
+
+/*
+ * Application-wide small-screen contract. Role layouts share #main-content,
+ * so pages retain their desktop density while grids, tables and action rows
+ * remain usable on phones without every feature duplicating breakpoint CSS.
+ */
+#main-content,
+#main-content > * {
+  min-width: 0;
+}
+
+.sc-table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 639px) {
+  #main-content {
+    padding: 1rem;
+  }
+
+  /* Stack any desktop grid inside application content on a phone. */
+  #main-content [class*="grid-cols-"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Let title/action rows wrap instead of forcing horizontal page scroll. */
+  #main-content [class*="justify-between"] {
+    flex-wrap: wrap;
+  }
+
+  /* Notification popovers stay inside a 320px viewport. */
+  [class*="w-[340px]"] {
+    width: min(340px, calc(100vw - 2rem));
+    max-width: calc(100vw - 2rem);
+  }
+
+  .sc-table-scroll > table {
+    min-width: 36rem;
+  }
 }

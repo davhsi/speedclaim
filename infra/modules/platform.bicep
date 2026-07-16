@@ -324,7 +324,12 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-09-01' = {
     agentPoolProfiles: [
       {
         name: 'system'
-        count: 1
+        // Keep two nodes available for the API/AI workloads and AKS add-ons;
+        // grow one further node when a pod cannot be scheduled.
+        count: 2
+        enableAutoScaling: true
+        minCount: 2
+        maxCount: 3
         vmSize: 'Standard_B2s_v2'
         osType: 'Linux'
         mode: 'System'
