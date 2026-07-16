@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -7,30 +8,33 @@ using SpeedClaim.Api.Interfaces;
 
 namespace SpeedClaim.Api.Controllers;
 
+[ApiController]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/policies/{policyId:guid}/assistant")]
 [Authorize(Roles = "Customer,Underwriter,Admin")]
 [EnableRateLimiting("policy-qa")]
-public sealed class PolicyAssistantController : BaseApiController
+public sealed class PolicyAssistantController : ControllerBase
 {
     private readonly IPolicyAssistantService _service;
     public PolicyAssistantController(IPolicyAssistantService service) => _service = service;
 
-    [HttpGet("{policyId}/assistant/availability")]
+    [HttpGet("availability")]
     public async Task<ActionResult<PolicyAssistantAvailabilityDto>> Availability(Guid policyId) =>
         Ok(await _service.GetAvailabilityAsync(policyId, ActorId(), User.IsInRole("Customer")));
 
-    [HttpGet("{policyId}/assistant/conversations")]
+    [HttpGet("conversations")]
     public async Task<ActionResult<IReadOnlyList<PolicyAssistantConversationDto>>> List(Guid policyId) =>
         Ok(await _service.ListAsync(policyId, ActorId(), User.IsInRole("Customer")));
 
-    [HttpPost("{policyId}/assistant/conversations")]
+    [HttpPost("conversations")]
     public async Task<ActionResult<PolicyAssistantConversationDto>> Create(Guid policyId, [FromBody] CreatePolicyAssistantConversationRequest request) =>
         Ok(await _service.CreateAsync(policyId, ActorId(), User.IsInRole("Customer")));
 
-    [HttpGet("{policyId}/assistant/conversations/{conversationId}")]
+    [HttpGet("conversations/{conversationId}")]
     public async Task<ActionResult<PolicyAssistantConversationDto>> Get(Guid policyId, Guid conversationId) =>
         Ok(await _service.GetAsync(policyId, conversationId, ActorId(), User.IsInRole("Customer")));
 
-    [HttpPost("{policyId}/assistant/conversations/{conversationId}/messages")]
+    [HttpPost("conversations/{conversationId}/messages")]
     public async Task<ActionResult<PolicyAssistantAnswerDto>> Send(Guid policyId, Guid conversationId, [FromBody] SendPolicyAssistantMessageRequest request, CancellationToken cancellationToken) =>
         Ok(await _service.SendAsync(policyId, conversationId, request.Question, ActorId(), User.IsInRole("Customer"), cancellationToken));
 
