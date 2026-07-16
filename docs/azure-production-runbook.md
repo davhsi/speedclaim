@@ -64,8 +64,10 @@ writing business records.
 Retrieve the `api-email-sender` SAS connection string and set it in Key Vault as
 `EmailDelivery--ServiceBusConnectionString`. The API deployment sets
 `EmailDelivery__Provider=ServiceBus` and `EmailDelivery__QueueName=email-dispatch`; Key Vault
-then supplies the connection string. The Function App already has the listener-only policy from
-Bicep and sends queued, non-attachment email through SMTP.
+then supplies the connection string. The Function App uses the separate
+`ServiceBusQueueName=email-dispatch` setting because Azure Functions binding expressions must
+resolve a direct application-setting name. It has the listener-only policy from Bicep and sends
+queued, non-attachment email through SMTP.
 
 ## 5. AKS bootstrap
 

@@ -4,7 +4,7 @@
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
     "ServiceBusConnection": "Endpoint=sb://replace.servicebus.windows.net/;SharedAccessKeyName=function-email-listener;SharedAccessKey=replace",
-    "EmailDelivery__QueueName": "email-dispatch",
+    "ServiceBusQueueName": "email-dispatch",
     "SmtpSettings__Host": "smtp.gmail.com",
     "SmtpSettings__Port": "587",
     "SmtpSettings__SenderName": "SpeedClaim",

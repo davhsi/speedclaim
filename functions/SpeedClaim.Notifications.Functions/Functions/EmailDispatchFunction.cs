@@ -19,7 +19,7 @@ public sealed class EmailDispatchFunction
 
     [Function(nameof(EmailDispatchFunction))]
     public async Task Run(
-        [ServiceBusTrigger("%EmailDelivery__QueueName%", Connection = "ServiceBusConnection")]
+        [ServiceBusTrigger("%ServiceBusQueueName%", Connection = "ServiceBusConnection")]
         string payload,
         CancellationToken cancellationToken)
     {
