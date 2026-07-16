@@ -27,10 +27,13 @@ public class UnitOfWork : IUnitOfWork
     public IRepository<Agent> Agents { get; }
     public IRepository<AgentCommission> AgentCommissions { get; }
     public IRepository<InsuranceProduct> InsuranceProducts { get; }
+    public IRepository<ProductBrochure> ProductBrochures { get; }
     public IRepository<PremiumRateTable> PremiumRateTables { get; }
     public IRepository<Proposal> Proposals { get; }
     public IRepository<ProposalMember> ProposalMembers { get; }
     public IRepository<PolicyMember> PolicyMembers { get; }
+    public IRepository<PolicyAssistantConversation> PolicyAssistantConversations { get; }
+    public IRepository<PolicyAssistantMessage> PolicyAssistantMessages { get; }
     public IRepository<Nominee> Nominees { get; }
     public IRepository<PolicyStatusHistory> PolicyStatusHistories { get; }
     public IRepository<Endorsement> Endorsements { get; }
@@ -74,10 +77,13 @@ public class UnitOfWork : IUnitOfWork
         Agents = new Repository<Agent>(_context);
         AgentCommissions = new Repository<AgentCommission>(_context);
         InsuranceProducts = new Repository<InsuranceProduct>(_context);
+        ProductBrochures = new Repository<ProductBrochure>(_context);
         PremiumRateTables = new Repository<PremiumRateTable>(_context);
         Proposals = new ProposalRepository(_context);
         ProposalMembers = new Repository<ProposalMember>(_context);
         PolicyMembers = new Repository<PolicyMember>(_context);
+        PolicyAssistantConversations = new Repository<PolicyAssistantConversation>(_context);
+        PolicyAssistantMessages = new Repository<PolicyAssistantMessage>(_context);
         Nominees = new Repository<Nominee>(_context);
         PolicyStatusHistories = new Repository<PolicyStatusHistory>(_context);
         Endorsements = new Repository<Endorsement>(_context);

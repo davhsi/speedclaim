@@ -1,0 +1,29 @@
+name: Validate infrastructure
+
+on:
+  pull_request:
+    paths:
+      - infra/**
+      - deploy/**
+      - .github/workflows/validate-infrastructure.yml
+  push:
+    branches: [main]
+    paths:
+      - infra/**
+      - deploy/**
+      - .github/workflows/validate-infrastructure.yml
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Build Bicep
+        uses: azure/cli@9f7ce6f37c31b777ec6c6b6d1dfe7db79f497956 # v2
+        with:
+          inlineScript: az bicep build --file infra/main.bicep
+      - name: Validate Kubernetes manifests with placeholders
+        run: |
+          docker run --rm -v "$PWD:/work" -w /work ghcr.io/yannh/kubeconform:latest -summary -ignore-missing-schemas deploy/k8s/*.yaml

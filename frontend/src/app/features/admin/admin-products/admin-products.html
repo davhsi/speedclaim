@@ -62,6 +62,9 @@
                   <button (click)="openEditDocsModal(p)" title="Document requirements" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                   </button>
+                  <a [href]="'/admin/brochures?productId=' + p.id" title="Manage brochures" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center hover:bg-surface" aria-label="Manage brochures">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0F6E8C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13h8M8 17h5"/></svg>
+                  </a>
                   <button (click)="toggleProductSaleAvailability(p)" [disabled]="saleUpdatingId() !== null || !p.isActive" [title]="p.isAvailableForSale ? 'Withdraw from sale' : 'Restore to sale'" class="w-7 h-7 rounded-md border bg-white flex items-center justify-center cursor-pointer hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white" [style.border-color]="p.isAvailableForSale ? '#FAD88A' : '#B2E4CE'">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" [attr.stroke]="p.isAvailableForSale ? '#D9920A' : '#1F9D6B'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M7 7V5a2 2 0 012-2h6a2 2 0 012 2v2"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
                   </button>

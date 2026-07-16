@@ -67,3 +67,21 @@ public class CreateProductRequestValidator : AbstractValidator<CreateProductRequ
         });
     }
 }
+
+public class UploadProductBrochureRequestValidator : AbstractValidator<UploadProductBrochureRequest>
+{
+    public UploadProductBrochureRequestValidator()
+    {
+        RuleFor(x => x.File)
+            .NotNull().WithMessage("A brochure PDF is required.")
+            .Must(file => file is { Length: > 0 }).WithMessage("The brochure PDF cannot be empty.");
+
+        RuleFor(x => x.EffectiveFrom)
+            .NotEmpty().WithMessage("Effective date is required.");
+
+        RuleFor(x => x.Version)
+            .Must(version => version == null ||
+                (int.TryParse(version, out var value) && value > 0 && value <= 999999))
+            .WithMessage("Version must be a positive whole number up to 999999.");
+    }
+}

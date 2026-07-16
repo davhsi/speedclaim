@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using SpeedClaim.Api.Context;
+using SpeedClaim.Api.Configuration;
 using SpeedClaim.Api.Hubs;
 using SpeedClaim.Api.Swagger;
 using SpeedClaim.Api.Exceptions;
@@ -165,6 +166,8 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProductService, SpeedClaim.Api.Services.ProductService>();
+builder.Services.AddScoped<IProductBrochureService, ProductBrochureService>();
+builder.Services.AddScoped<IPolicyAssistantService, PolicyAssistantService>();
 builder.Services.AddScoped<IPolicyService, PolicyService>();
 builder.Services.AddScoped<IClaimService, ClaimService>();
 builder.Services.AddScoped<IFinanceService, FinanceService>();
@@ -177,6 +180,10 @@ builder.Services.AddScoped<IStripeWrapper, StripeWrapper>();
 
 // Infrastructure Services
 builder.Services.AddSingleton<ISmtpClientFactory, SmtpClientFactory>();
+if (string.Equals(builder.Configuration["EmailDelivery:Provider"], "ServiceBus", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddSingleton<IEmailDispatchQueue, ServiceBusEmailDispatchQueue>();
+}
 builder.Services.AddTransient<IEmailService, EmailService>();
 builder.Services.AddScoped<IStorageService>(sp =>
 {
@@ -186,6 +193,14 @@ builder.Services.AddScoped<IStorageService>(sp =>
         ? ActivatorUtilities.CreateInstance<AzureBlobStorageService>(sp)
         : ActivatorUtilities.CreateInstance<LocalStorageService>(sp);
 });
+builder.Services.Configure<AiServiceOptions>(
+    builder.Configuration.GetSection(AiServiceOptions.SectionName));
+builder.Services.AddHttpClient<IBrochureIngestionClient, FastApiBrochureIngestionClient>()
+    .RedactLoggedHeaders(headerName =>
+        string.Equals(headerName, "X-Internal-Api-Key", StringComparison.OrdinalIgnoreCase));
+builder.Services.AddHttpClient<IPolicyQaClient, FastApiPolicyQaClient>()
+    .RedactLoggedHeaders(headerName =>
+        string.Equals(headerName, "X-Internal-Api-Key", StringComparison.OrdinalIgnoreCase));
 
 
 
@@ -295,6 +310,13 @@ builder.Services.AddRateLimiter(options =>
         limiterOptions.QueueLimit = 0;
     });
 
+    options.AddFixedWindowLimiter("policy-qa", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 20;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueLimit = 0;
+    });
+
     // Partition both policies by IP address
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
         RateLimitPartition.GetFixedWindowLimiter(
@@ -358,6 +380,8 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapGet("/health/live", () => Results.Ok(new { status = "ok" })).AllowAnonymous();
+app.MapGet("/health/ready", () => Results.Ok(new { status = "ready" })).AllowAnonymous();
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications");
 

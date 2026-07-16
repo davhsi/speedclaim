@@ -38,6 +38,10 @@ public class GlobalExceptionMiddleware
         var statusCode = exception switch
         {
             AppException ex => ex.StatusCode,
+            BrochureIngestionException { ErrorCode: "policy_qa_rate_limited" } => StatusCodes.Status429TooManyRequests,
+            BrochureIngestionException { ErrorCode: "policy_qa_timeout" } => StatusCodes.Status504GatewayTimeout,
+            BrochureIngestionException { ErrorCode: "policy_qa_unavailable" or "ai_configuration_invalid" } => StatusCodes.Status503ServiceUnavailable,
+            BrochureIngestionException => StatusCodes.Status422UnprocessableEntity,
             UnauthorizedAccessException => (int)HttpStatusCode.Unauthorized,
             KeyNotFoundException => (int)HttpStatusCode.NotFound,
             ArgumentException => (int)HttpStatusCode.BadRequest,
@@ -63,7 +67,7 @@ public class GlobalExceptionMiddleware
             type = $"https://httpstatuses.com/{statusCode}",
             title = exception.GetType().Name,
             status = statusCode,
-            detail = statusCode == 500 && !isDevelopment ? "An internal server error occurred." : (exception.InnerException != null ? $"{exception.Message} - Inner: {exception.InnerException.Message}" : exception.Message),
+            detail = statusCode >= 500 && !isDevelopment ? "The requested service is temporarily unavailable." : exception.Message,
             traceId = context.TraceIdentifier
         }, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 

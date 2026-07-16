@@ -769,3 +769,16 @@ export interface AgentAddCustomerRequest {
   occupation: string;
   annualIncome: number;
 }
+
+export interface ProductBrochureDto {
+  id: string; productId: string; version: string; originalFilename: string; blobPath: string; mimeType: string;
+  fileSizeKb: number; contentHash: string; status: 'Draft' | 'Processing' | 'Ready' | 'Published' | 'Failed' | 'Archived';
+  effectiveFrom: string; effectiveTo?: string; pageCount?: number; parentChunkCount?: number; childChunkCount?: number;
+  ingestionErrorCode?: string; createdAt: string; publishedAt?: string;
+}
+
+export interface PolicyAssistantCitationDto { index: number; pageNumber: number; sectionTitle?: string; clauseReference?: string; excerpt: string; }
+export interface PolicyAssistantMessageDto { id: string; role: 'User' | 'Assistant'; content: string; evidenceStatus?: string; citations: PolicyAssistantCitationDto[]; createdAt: string; }
+export interface PolicyAssistantConversationDto { id: string; policyId: string; brochureId: string; brochureVersion: string; createdAt: string; updatedAt: string; messages?: PolicyAssistantMessageDto[]; }
+export interface PolicyAssistantAvailabilityDto { available: boolean; state: string; brochureVersion?: string; effectiveFrom?: string; }
+export interface PolicyAssistantAnswerDto { requestId: string; conversationId: string; messageId: string; answer: string; evidenceStatus: string; brochureVersion: string; citations: PolicyAssistantCitationDto[]; }

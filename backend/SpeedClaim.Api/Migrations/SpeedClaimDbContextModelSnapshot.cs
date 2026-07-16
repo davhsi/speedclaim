@@ -1857,6 +1857,10 @@ namespace SpeedClaim.Api.Migrations
                         .HasColumnType("decimal(10,2)")
                         .HasColumnName("premium_amount");
 
+                    b.Property<Guid?>("ProductBrochureId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("product_brochure_id");
+
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uuid")
                         .HasColumnName("product_id");
@@ -1894,12 +1898,116 @@ namespace SpeedClaim.Api.Migrations
                         .IsUnique()
                         .HasDatabaseName("uq_policies_policy_number");
 
+                    b.HasIndex("ProductBrochureId");
+
                     b.HasIndex("ProductId");
 
                     b.HasIndex("ProposalId")
                         .IsUnique();
 
                     b.ToTable("policies");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.PolicyAssistantConversation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("BrochureId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("brochure_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by_user_id");
+
+                    b.Property<Guid>("PolicyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("policy_id");
+
+                    b.Property<DateTimeOffset>("RetainUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("retain_until");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("PK_policy_assistant_conversations");
+
+                    b.HasIndex("BrochureId");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("RetainUntil")
+                        .HasDatabaseName("ix_policy_assistant_conversations_retain_until");
+
+                    b.HasIndex("PolicyId", "CreatedByUserId", "UpdatedAt")
+                        .HasDatabaseName("ix_policy_assistant_conversations_policy_creator_updated");
+
+                    b.ToTable("policy_assistant_conversations");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.PolicyAssistantMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("CitationsJson")
+                        .HasColumnType("text")
+                        .HasColumnName("citations_json");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)")
+                        .HasColumnName("content");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("conversation_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("EvidenceStatus")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("evidence_status");
+
+                    b.Property<string>("Model")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("model");
+
+                    b.Property<string>("PromptVersion")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("prompt_version");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("role");
+
+                    b.HasKey("Id")
+                        .HasName("PK_policy_assistant_messages");
+
+                    b.HasIndex("ConversationId", "CreatedAt")
+                        .HasDatabaseName("ix_policy_assistant_messages_conversation_created");
+
+                    b.ToTable("policy_assistant_messages");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.PolicyMember", b =>
@@ -2236,6 +2344,135 @@ namespace SpeedClaim.Api.Migrations
                         .HasDatabaseName("uq_processed_webhook_events_stripe_event_id");
 
                     b.ToTable("processed_webhook_events");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.ProductBrochure", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("BlobPath")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)")
+                        .HasColumnName("blob_path");
+
+                    b.Property<int?>("ChildChunkCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("child_chunk_count");
+
+                    b.Property<string>("ContentHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("content_hash");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by_id");
+
+                    b.Property<DateOnly>("EffectiveFrom")
+                        .HasColumnType("date")
+                        .HasColumnName("effective_from");
+
+                    b.Property<DateOnly?>("EffectiveTo")
+                        .HasColumnType("date")
+                        .HasColumnName("effective_to");
+
+                    b.Property<int?>("EmbeddingDimension")
+                        .HasColumnType("integer")
+                        .HasColumnName("embedding_dimension");
+
+                    b.Property<string>("EmbeddingModel")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("embedding_model");
+
+                    b.Property<string>("EmbeddingProvider")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("embedding_provider");
+
+                    b.Property<int>("FileSizeKb")
+                        .HasColumnType("integer")
+                        .HasColumnName("file_size_kb");
+
+                    b.Property<string>("IngestionErrorCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("ingestion_error_code");
+
+                    b.Property<string>("MimeType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("mime_type");
+
+                    b.Property<string>("OriginalFilename")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("original_filename");
+
+                    b.Property<int?>("PageCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("page_count");
+
+                    b.Property<int?>("ParentChunkCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("parent_chunk_count");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("product_id");
+
+                    b.Property<DateTimeOffset?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("published_at");
+
+                    b.Property<Guid?>("PublishedById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("published_by_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id")
+                        .HasName("PK_product_brochures");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("ProductId")
+                        .IsUnique()
+                        .HasDatabaseName("uq_product_brochures_current_published")
+                        .HasFilter("\"status\" = 'Published'");
+
+                    b.HasIndex("PublishedById");
+
+                    b.HasIndex("ProductId", "ContentHash")
+                        .IsUnique()
+                        .HasDatabaseName("uq_product_brochures_product_content_hash");
+
+                    b.HasIndex("ProductId", "Version")
+                        .IsUnique()
+                        .HasDatabaseName("uq_product_brochures_product_version");
+
+                    b.ToTable("product_brochures");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.Proposal", b =>
@@ -3278,6 +3515,12 @@ namespace SpeedClaim.Api.Migrations
                         .IsRequired()
                         .HasConstraintName("FK_policies_customers_customer_id");
 
+                    b.HasOne("SpeedClaim.Api.Models.ProductBrochure", "ProductBrochure")
+                        .WithMany()
+                        .HasForeignKey("ProductBrochureId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("FK_policies_product_brochures_product_brochure_id");
+
                     b.HasOne("SpeedClaim.Api.Models.InsuranceProduct", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
@@ -3297,7 +3540,51 @@ namespace SpeedClaim.Api.Migrations
 
                     b.Navigation("Product");
 
+                    b.Navigation("ProductBrochure");
+
                     b.Navigation("Proposal");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.PolicyAssistantConversation", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.ProductBrochure", "Brochure")
+                        .WithMany()
+                        .HasForeignKey("BrochureId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_policy_assistant_conversations_product_brochures_brochure_id");
+
+                    b.HasOne("SpeedClaim.Api.Models.User", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_policy_assistant_conversations_users_created_by_id");
+
+                    b.HasOne("SpeedClaim.Api.Models.Policy", "Policy")
+                        .WithMany("AssistantConversations")
+                        .HasForeignKey("PolicyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_policy_assistant_conversations_policies_policy_id");
+
+                    b.Navigation("Brochure");
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("Policy");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.PolicyAssistantMessage", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.PolicyAssistantConversation", "Conversation")
+                        .WithMany("Messages")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_policy_assistant_messages_conversations_conversation_id");
+
+                    b.Navigation("Conversation");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.PolicyMember", b =>
@@ -3403,6 +3690,35 @@ namespace SpeedClaim.Api.Migrations
                     b.Navigation("Policy");
 
                     b.Navigation("Proposal");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.ProductBrochure", b =>
+                {
+                    b.HasOne("SpeedClaim.Api.Models.User", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_product_brochures_users_created_by_id");
+
+                    b.HasOne("SpeedClaim.Api.Models.InsuranceProduct", "Product")
+                        .WithMany("Brochures")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_product_brochures_products_product_id");
+
+                    b.HasOne("SpeedClaim.Api.Models.User", "PublishedBy")
+                        .WithMany()
+                        .HasForeignKey("PublishedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("FK_product_brochures_users_published_by_id");
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("Product");
+
+                    b.Navigation("PublishedBy");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.Proposal", b =>
@@ -3557,8 +3873,15 @@ namespace SpeedClaim.Api.Migrations
                     b.Navigation("Proposals");
                 });
 
+            modelBuilder.Entity("SpeedClaim.Api.Models.InsuranceProduct", b =>
+                {
+                    b.Navigation("Brochures");
+                });
+
             modelBuilder.Entity("SpeedClaim.Api.Models.Policy", b =>
                 {
+                    b.Navigation("AssistantConversations");
+
                     b.Navigation("Claims");
 
                     b.Navigation("Endorsements");
@@ -3578,6 +3901,11 @@ namespace SpeedClaim.Api.Migrations
                     b.Navigation("PremiumSchedules");
 
                     b.Navigation("StatusHistory");
+                });
+
+            modelBuilder.Entity("SpeedClaim.Api.Models.PolicyAssistantConversation", b =>
+                {
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("SpeedClaim.Api.Models.PremiumSchedule", b =>

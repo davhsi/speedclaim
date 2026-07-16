@@ -1,0 +1,54 @@
+name: Build and deploy AKS workloads
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - backend/**
+      - ai-service/**
+      - deploy/k8s/**
+      - .github/workflows/deploy-containers.yml
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    # Contributor access cannot create Azure RBAC assignments or GitHub OIDC federation here.
+    # Use the narrowly scoped Kubernetes kubeconfig secret until that restriction is lifted.
+    if: ${{ secrets.ACR_LOGIN_SERVER != '' && secrets.ACR_USERNAME != '' && secrets.ACR_PASSWORD != '' && secrets.AKS_DEPLOY_KUBECONFIG != '' && secrets.API_WORKLOAD_IDENTITY_CLIENT_ID != '' && secrets.KEY_VAULT_URI != '' && secrets.API_PUBLIC_HOST != '' && secrets.FRONTEND_ORIGIN != '' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
+      ACR_USERNAME: ${{ secrets.ACR_USERNAME }}
+      ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
+      API_WORKLOAD_IDENTITY_CLIENT_ID: ${{ secrets.API_WORKLOAD_IDENTITY_CLIENT_ID }}
+      KEY_VAULT_URI: ${{ secrets.KEY_VAULT_URI }}
+      API_HOST: ${{ secrets.API_PUBLIC_HOST }}
+      FRONTEND_ORIGIN: ${{ secrets.FRONTEND_ORIGIN }}
+      AKS_DEPLOY_KUBECONFIG: ${{ secrets.AKS_DEPLOY_KUBECONFIG }}
+      API_IMAGE_TAG: ${{ github.sha }}
+      AI_IMAGE_TAG: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3
+        with:
+          registry: ${{ secrets.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+      - name: Build and push API
+        run: |
+          docker build -f backend/SpeedClaim.Api/Dockerfile -t "$ACR_LOGIN_SERVER/speedclaim-api:$API_IMAGE_TAG" .
+          docker push "$ACR_LOGIN_SERVER/speedclaim-api:$API_IMAGE_TAG"
+      - name: Build and push AI service
+        run: |
+          docker build -t "$ACR_LOGIN_SERVER/speedclaim-ai:$AI_IMAGE_TAG" ai-service
+          docker push "$ACR_LOGIN_SERVER/speedclaim-ai:$AI_IMAGE_TAG"
+      - uses: azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede # v4
+      - name: Configure scoped Kubernetes access
+        run: |
+          mkdir -p "$HOME/.kube"
+          printf '%s' "$AKS_DEPLOY_KUBECONFIG" > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
+      - name: Apply workloads
+        run: bash deploy/scripts/apply-workloads.sh

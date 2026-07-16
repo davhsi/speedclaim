@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MimeKit;
 using MimeKit.Text;
+using SpeedClaim.Api.Contracts;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Models;
 
@@ -16,17 +17,20 @@ public class EmailService : IEmailService
     private readonly IConfiguration _configuration;
     private readonly ILogger<EmailService> _logger;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IEmailDispatchQueue? _emailDispatchQueue;
 
     public EmailService(
         ISmtpClientFactory smtpClientFactory,
         IConfiguration configuration,
         ILogger<EmailService> logger,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IEmailDispatchQueue? emailDispatchQueue = null)
     {
         _smtpClientFactory = smtpClientFactory;
         _configuration = configuration;
         _logger = logger;
         _unitOfWork = unitOfWork;
+        _emailDispatchQueue = emailDispatchQueue;
     }
 
     public async Task SendEmailAsync(string to, string subject, string body)
@@ -41,6 +45,30 @@ public class EmailService : IEmailService
 
     private async Task SendEmailCoreAsync(string to, string subject, string body, EmailAttachment? attachment)
     {
+        // Production uses Service Bus for ordinary HTML mail. Attachments remain direct because
+        // queueing KYC/claim documents would exceed message limits and weaken the trust boundary.
+        if (_emailDispatchQueue is not null && attachment is null)
+        {
+            try
+            {
+                await _emailDispatchQueue.EnqueueAsync(new EmailDispatchMessage(
+                    to,
+                    subject,
+                    body,
+                    DateTimeOffset.UtcNow));
+
+                await WriteEmailLogAsync(to, subject, "Queued", DateTimeOffset.UtcNow);
+                _logger.LogInformation("Email queued for asynchronous delivery to {To}", to);
+                return;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to queue email for {To}", to);
+                await WriteEmailLogAsync(to, subject, "QueueFailed", sentAt: null);
+                throw;
+            }
+        }
+
         try
         {
             var email = new MimeMessage();
@@ -77,34 +105,29 @@ public class EmailService : IEmailService
 
             _logger.LogInformation("Email sent successfully to {To}", to);
 
-            var emailLog = new EmailLog
-            {
-                Id = Guid.NewGuid(),
-                RecipientEmail = to,
-                Subject = subject,
-                SentAt = DateTimeOffset.UtcNow,
-                Status = "Sent",
-                CreatedAt = DateTimeOffset.UtcNow
-            };
-            await _unitOfWork.EmailLogs.AddAsync(emailLog);
-            await _unitOfWork.CompleteAsync();
+            await WriteEmailLogAsync(to, subject, "Sent", DateTimeOffset.UtcNow);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send email to {To}", to);
-            var emailLog = new EmailLog
-            {
-                Id = Guid.NewGuid(),
-                RecipientEmail = to,
-                Subject = subject,
-                SentAt = null,
-                Status = "Failed",
-                CreatedAt = DateTimeOffset.UtcNow
-            };
-            await _unitOfWork.EmailLogs.AddAsync(emailLog);
-            await _unitOfWork.CompleteAsync();
+            await WriteEmailLogAsync(to, subject, "Failed", sentAt: null);
             throw;
         }
+    }
+
+    private async Task WriteEmailLogAsync(string to, string subject, string status, DateTimeOffset? sentAt)
+    {
+        var emailLog = new EmailLog
+        {
+            Id = Guid.NewGuid(),
+            RecipientEmail = to,
+            Subject = subject,
+            SentAt = sentAt,
+            Status = status,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        await _unitOfWork.EmailLogs.AddAsync(emailLog);
+        await _unitOfWork.CompleteAsync();
     }
 
     public async Task SendTemplatedEmailAsync(string templateKey, Dictionary<string, string> variables, string to, EmailAttachment? attachment = null)
