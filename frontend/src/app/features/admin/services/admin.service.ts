@@ -8,6 +8,7 @@ import {
   PremiumRateDto, DocumentRequirementResponseDto, DocumentRequirementUpdateDto,
   AdminResetPasswordRequest, ManageEmailTemplateRequest, UpdateSystemConfigRequest,
   EmailTemplateDto, RegisterAgentRequest,
+  ProductBrochureDto,
 } from '../../../core/models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -115,6 +116,26 @@ export class AdminService {
 
   toggleProductSaleAvailability(productId: string, isAvailableForSale: boolean): Observable<ApiMessage> {
     return this.http.put<ApiMessage>(`/api/v1/products/${productId}/sale-availability`, isAvailableForSale);
+  }
+
+  getProductBrochures(productId: string): Observable<ProductBrochureDto[]> {
+    return this.http.get<ProductBrochureDto[]>(`/api/v1/products/${productId}/brochures`);
+  }
+
+  uploadProductBrochure(productId: string, file: File, effectiveFrom: string, version?: string): Observable<ProductBrochureDto> {
+    const form = new FormData(); form.append('file', file); form.append('effectiveFrom', effectiveFrom);
+    if (version?.trim()) form.append('version', version.trim());
+    return this.http.post<ProductBrochureDto>(`/api/v1/products/${productId}/brochures`, form);
+  }
+
+  publishProductBrochure(productId: string, brochureId: string): Observable<ProductBrochureDto> {
+    return this.http.put<ProductBrochureDto>(`/api/v1/products/${productId}/brochures/${brochureId}/publish`, {});
+  }
+  archiveProductBrochure(productId: string, brochureId: string): Observable<ProductBrochureDto> {
+    return this.http.put<ProductBrochureDto>(`/api/v1/products/${productId}/brochures/${brochureId}/archive`, {});
+  }
+  retryProductBrochure(productId: string, brochureId: string): Observable<ProductBrochureDto> {
+    return this.http.put<ProductBrochureDto>(`/api/v1/products/${productId}/brochures/${brochureId}/retry`, {});
   }
 
   // ── System ──
