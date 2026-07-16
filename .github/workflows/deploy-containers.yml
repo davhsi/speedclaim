@@ -14,7 +14,6 @@ jobs:
   deploy:
     # Contributor access cannot create Azure RBAC assignments or GitHub OIDC federation here.
     # Use the narrowly scoped Kubernetes kubeconfig secret until that restriction is lifted.
-    if: ${{ secrets.ACR_LOGIN_SERVER != '' && secrets.ACR_USERNAME != '' && secrets.ACR_PASSWORD != '' && secrets.AKS_DEPLOY_KUBECONFIG != '' && secrets.API_WORKLOAD_IDENTITY_CLIENT_ID != '' && secrets.KEY_VAULT_URI != '' && secrets.API_PUBLIC_HOST != '' && secrets.FRONTEND_ORIGIN != '' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -30,6 +29,18 @@ jobs:
       API_IMAGE_TAG: ${{ github.sha }}
       AI_IMAGE_TAG: ${{ github.sha }}
     steps:
+      - name: Verify deployment configuration
+        run: |
+          missing=()
+          for setting in ACR_LOGIN_SERVER ACR_USERNAME ACR_PASSWORD AKS_DEPLOY_KUBECONFIG API_WORKLOAD_IDENTITY_CLIENT_ID KEY_VAULT_URI API_HOST FRONTEND_ORIGIN; do
+            if [ -z "${!setting}" ]; then
+              missing+=("$setting")
+            fi
+          done
+          if [ "${#missing[@]}" -ne 0 ]; then
+            echo "Missing required GitHub repository secrets: ${missing[*]}" >&2
+            exit 1
+          fi
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3
         with:

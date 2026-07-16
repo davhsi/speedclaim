@@ -13,7 +13,7 @@ set -euo pipefail
 : "${AI_IMAGE_TAG:?}"
 : "${API_HOST:?}"
 
-kubectl apply -f deploy/k8s/namespace.yaml
+kubectl get namespace speedclaim >/dev/null
 kubectl -n speedclaim create secret docker-registry acr-pull \
   --docker-server="$ACR_LOGIN_SERVER" \
   --docker-username="$ACR_USERNAME" \
