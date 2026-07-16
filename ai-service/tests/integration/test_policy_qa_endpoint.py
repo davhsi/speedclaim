@@ -78,8 +78,10 @@ def test_policy_qa_endpoint_maps_grounded_contract(client: TestClient) -> None:
         "provider": "AnthropicGateway",
         "model": "claude-sonnet-4-6",
     }
-    assert service.commands[0].question == "What is the initial waiting period?"
-    assert service.commands[0].brochure_version == "1.0"
+    assert len(service.commands) == 1
+    command = service.commands[0]
+    assert command.question == "What is the initial waiting period?"
+    assert command.brochure_version == "1.0"
 
 
 def test_policy_qa_endpoint_requires_internal_auth(client: TestClient) -> None:

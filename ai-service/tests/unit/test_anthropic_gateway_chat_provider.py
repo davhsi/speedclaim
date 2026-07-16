@@ -390,8 +390,10 @@ async def test_gateway_removes_only_unsupported_grammar_bounds_without_mutating_
         )
         await provider.complete(request)
 
-    assert "minLength" not in captured_schema["properties"]["answerType"]
-    assert "maxLength" not in captured_schema["properties"]["answerType"]
+    assert captured_schema is not None
+    answer_type_schema = captured_schema["properties"]["answerType"]
+    assert "minLength" not in answer_type_schema
+    assert "maxLength" not in answer_type_schema
     assert request.response_schema["properties"]["answerType"]["minLength"] == 1
     assert request.response_schema["properties"]["answerType"]["maxLength"] == 40
 

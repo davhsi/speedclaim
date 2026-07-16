@@ -68,8 +68,10 @@ def test_ingestion_endpoint_maps_internal_contract(client: TestClient) -> None:
         "embeddingModel": DEFAULT_EMBEDDING_MODEL,
         "embeddingDimension": EMBEDDING_DIMENSION,
     }
-    assert service.commands[0].brochure_version == "1"
-    assert service.commands[0].blob_path == "products/brochure-v1.pdf"
+    assert len(service.commands) == 1
+    command = service.commands[0]
+    assert command.brochure_version == "1"
+    assert command.blob_path == "products/brochure-v1.pdf"
 
 
 def test_ingestion_failure_uses_global_error_contract(client: TestClient) -> None:
