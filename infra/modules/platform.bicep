@@ -100,6 +100,50 @@ resource uploadsContainer 'Microsoft.Storage/storageAccounts/blobServices/contai
   }
 }
 
+resource logsContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  parent: blobService
+  name: 'speedclaim-logs'
+  properties: {
+    publicAccess: 'None'
+  }
+}
+
+resource blobLifecyclePolicy 'Microsoft.Storage/storageAccounts/managementPolicies@2023-05-01' = {
+  parent: storageAccount
+  name: 'default'
+  properties: {
+    policy: {
+      rules: [
+        {
+          name: 'tier-speedclaim-api-logs'
+          enabled: true
+          type: 'Lifecycle'
+          definition: {
+            filters: {
+              blobTypes: [
+                'blockBlob'
+              ]
+              prefixMatch: [
+                'speedclaim-logs/api/'
+              ]
+            }
+            actions: {
+              baseBlob: {
+                tierToCool: {
+                  daysAfterModificationGreaterThan: 30
+                }
+                tierToArchive: {
+                  daysAfterModificationGreaterThan: 180
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+
 resource containerRegistry 'Microsoft.ContainerRegistry/registries@2023-07-01' = {
   name: registryName
   location: location

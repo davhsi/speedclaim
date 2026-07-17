@@ -32,19 +32,38 @@ if (!string.IsNullOrWhiteSpace(keyVaultUri))
     builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), new DefaultAzureCredential());
 }
 
+var blobLogOptions = builder.Configuration
+    .GetSection(BlobLogStorageOptions.SectionName)
+    .Get<BlobLogStorageOptions>() ?? new BlobLogStorageOptions();
+var blobLogConnectionString = blobLogOptions.ConnectionString
+    ?? builder.Configuration["AzureBlob:ConnectionString"];
+BlobLogBatchingSink? blobLogSink = null;
+if (blobLogOptions.Enabled && !string.IsNullOrWhiteSpace(blobLogConnectionString))
+{
+    blobLogSink = new BlobLogBatchingSink(blobLogOptions, blobLogConnectionString);
+    builder.Services.AddSingleton(blobLogSink);
+    builder.Services.AddHostedService<BlobLogBackgroundService>();
+}
+
 // 1. Configure Serilog
-Log.Logger = new LoggerConfiguration()
+var loggerConfiguration = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
-    .WriteTo.Console()
-    .WriteTo.File(
-        path: "logs/speedclaim-.log",
-        rollingInterval: RollingInterval.Day,
-        retainedFileCountLimit: 30,
-        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
-    .CreateLogger();
+    .WriteTo.Console();
+
+if (blobLogSink is not null)
+{
+    loggerConfiguration.WriteTo.Sink(blobLogSink);
+}
+
+Log.Logger = loggerConfiguration.CreateLogger();
 
 builder.Host.UseSerilog();
+
+if (blobLogOptions.Enabled && blobLogSink is null)
+{
+    Log.Warning("Blob logging is enabled but AzureBlob:ConnectionString is not configured; continuing with console logging only.");
+}
 
 // 2. Add Database Context
 builder.Services.AddDbContext<SpeedClaimDbContext>(options =>
