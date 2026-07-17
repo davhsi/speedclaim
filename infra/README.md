@@ -10,7 +10,9 @@ production resource group: `rg-speedclaim-prod` in South India.
   Contributor-only image-pull and GitHub CI workaround.
 - Azure Database for PostgreSQL Flexible Server 17 with separate `speedclaim` and
   `speedclaim_ai` databases.
-- A private Blob container named `speedclaim-uploads`.
+- Private Blob containers for uploads (`speedclaim-uploads`) and API logs (`speedclaim-logs`).
+  The log lifecycle policy moves API logs to Cool after 30 days and Archive after 180 days;
+  it does not delete them.
 - Key Vault using access policies, rather than Azure RBAC, so the deployment can work with
   Contributor access.
 - Standard Service Bus namespace and an `email-dispatch` queue.

@@ -153,3 +153,6 @@ images by default.
 - Brochure ingestion and a grounded policy question work through the private AI service.
 - A non-attachment transactional email enters `email-dispatch` and is delivered by the Function.
 - A deliberately bad email message reaches the Service Bus dead-letter queue after retries.
+- Generate an API request, then confirm a new NDJSON object appears under
+  `speedclaim-logs/api/<year>/<month>/<day>/` in the Storage account. The lifecycle policy
+  automatically moves these block blobs to Cool after 30 days and Archive after 180 days.

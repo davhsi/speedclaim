@@ -41,6 +41,10 @@ spec:
               value: "__FRONTEND_ORIGIN__"
             - name: Storage__Provider
               value: AzureBlob
+            - name: Logging__BlobStorage__Enabled
+              value: "true"
+            - name: Logging__BlobStorage__ContainerName
+              value: speedclaim-logs
             - name: AI__BaseUrl
               value: http://speedclaim-ai.speedclaim.svc.cluster.local:8000
             - name: EmailDelivery__Provider
