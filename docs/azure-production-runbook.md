@@ -55,9 +55,24 @@ The AI settings also accept the equivalent `AI__AnthropicBaseUrl` and
 
 ## 3. Database setup
 
-Enable `vector` in the `speedclaim_ai` database, then run Alembic against that database. Apply
-the .NET EF Core migrations against `speedclaim`. This separation prevents the AI service from
-writing business records.
+Enable `vector` in the `speedclaim_ai` database, then run Alembic against that database. The
+container deployment workflow runs a short-lived `speedclaim-db-migrate` Kubernetes Job before
+the API rollout. It runs `SpeedClaim.Api.dll --migrate` using the API workload identity and
+applies pending EF Core migrations to `speedclaim`. If it fails, the workflow stops before the
+new API image rolls out. This separation prevents the AI service from writing business records.
+
+Every schema change must include a committed EF Core migration. Create it locally with:
+
+```bash
+dotnet ef migrations add <MeaningfulName> \
+  --project backend/SpeedClaim.Api \
+  --startup-project backend/SpeedClaim.Api
+```
+
+Do not add automatic migration calls to ordinary API startup. The migration Job is the single
+controlled writer for schema changes during deployment. Keep migrations backward-compatible
+while the previous API pod is still serving traffic: add/backfill first, deploy code that uses
+the new shape, and remove old columns only in a later deployment.
 
 ## 4. Service Bus email setup
 
