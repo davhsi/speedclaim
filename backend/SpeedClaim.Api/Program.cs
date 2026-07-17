@@ -168,6 +168,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProductService, SpeedClaim.Api.Services.ProductService>();
 builder.Services.AddScoped<IProductBrochureService, ProductBrochureService>();
 builder.Services.AddScoped<IPolicyAssistantService, PolicyAssistantService>();
+builder.Services.AddScoped<ISpeedyAssistantService, SpeedyAssistantService>();
 builder.Services.AddScoped<IPolicyService, PolicyService>();
 builder.Services.AddScoped<IClaimService, ClaimService>();
 builder.Services.AddScoped<IFinanceService, FinanceService>();
@@ -199,6 +200,9 @@ builder.Services.AddHttpClient<IBrochureIngestionClient, FastApiBrochureIngestio
     .RedactLoggedHeaders(headerName =>
         string.Equals(headerName, "X-Internal-Api-Key", StringComparison.OrdinalIgnoreCase));
 builder.Services.AddHttpClient<IPolicyQaClient, FastApiPolicyQaClient>()
+    .RedactLoggedHeaders(headerName =>
+        string.Equals(headerName, "X-Internal-Api-Key", StringComparison.OrdinalIgnoreCase));
+builder.Services.AddHttpClient<ISpeedyAssistantClient, FastApiSpeedyAssistantClient>()
     .RedactLoggedHeaders(headerName =>
         string.Equals(headerName, "X-Internal-Api-Key", StringComparison.OrdinalIgnoreCase));
 
