@@ -17,7 +17,18 @@
   }
 
   @if (kyc()?.kycStatus === 'Pending') {
-    <div class="bg-warning-bg border border-warning-border rounded-card p-[18px] flex gap-3.5 items-center mb-5">
+    @if (kycIsIncomplete()) {
+      <div class="bg-warning-bg border border-warning-border rounded-card p-[18px] flex gap-3.5 items-center mb-5">
+        <div class="w-11 h-11 rounded-full bg-white flex items-center justify-center shrink-0">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D9920A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="10"/></svg>
+        </div>
+        <div>
+          <div class="text-[15px] font-bold text-[#AA7008]">One document still needed</div>
+          <div class="text-[13px] text-body mt-0.5">Upload the missing {{ kyc()!.aadhaarUploaded ? 'PAN' : 'Aadhaar' }} document below. Review begins only after both documents are uploaded.</div>
+        </div>
+      </div>
+    } @else {
+      <div class="bg-warning-bg border border-warning-border rounded-card p-[18px] flex gap-3.5 items-center mb-5">
       <div class="w-11 h-11 rounded-full bg-white flex items-center justify-center shrink-0">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D9920A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       </div>
@@ -25,7 +36,8 @@
         <div class="text-[15px] font-bold text-[#AA7008]">KYC under review</div>
         <div class="text-[13px] text-body mt-0.5">Your documents have been submitted and are being reviewed.</div>
       </div>
-    </div>
+      </div>
+    }
   }
 
   @if (kyc()?.kycStatus === 'Rejected') {
@@ -65,10 +77,14 @@
     </div>
   }
 
-  @if (!kyc() || kyc()!.kycStatus === 'Rejected') {
+  @if (canUploadAadhaar() || canUploadPan()) {
     <div class="bg-white border border-line rounded-card shadow-sm p-6 space-y-5">
-      <div class="text-[13px] font-semibold text-ink">Upload KYC documents</div>
+      <div>
+        <div class="text-[13px] font-semibold text-ink">{{ kycIsIncomplete() ? 'Complete your KYC' : 'Upload KYC documents' }}</div>
+        <div class="text-xs text-muted mt-1">Both Aadhaar and PAN are required. KYC review starts only after both are uploaded.</div>
+      </div>
 
+      @if (canUploadAadhaar()) {
       <div>
         <label for="kyc-aadhaar-number" class="block text-xs text-muted mb-1.5">Aadhaar number</label>
         <input id="kyc-aadhaar-number" type="text" [ngModel]="aadhaarNum()" (ngModelChange)="aadhaarNum.set($event)" inputmode="numeric" maxlength="12"
@@ -86,11 +102,13 @@
           @if (uploadingAadhaar()) {
             <span class="w-3 h-3 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
           }
-          {{ uploadingAadhaar() ? 'Uploading…' : 'Upload Aadhaar' }}
+          {{ uploadingAadhaar() ? 'Uploading…' : (kycIsIncomplete() ? 'Upload missing Aadhaar' : 'Upload Aadhaar') }}
         </button>
       </div>
+      }
 
-      <div class="pt-4 border-t border-line">
+      @if (canUploadPan()) {
+      <div [class]="canUploadAadhaar() ? 'pt-4 border-t border-line' : ''">
         <label for="kyc-pan-number" class="block text-xs text-muted mb-1.5">PAN number</label>
         <input id="kyc-pan-number" type="text" [ngModel]="panNum()" (ngModelChange)="panNum.set($event.toUpperCase())" maxlength="10"
                placeholder="e.g., ABCDE1234F" class="h-[42px] mb-1"
@@ -107,9 +125,10 @@
           @if (uploadingPan()) {
             <span class="w-3 h-3 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span>
           }
-          {{ uploadingPan() ? 'Uploading…' : 'Upload PAN' }}
+          {{ uploadingPan() ? 'Uploading…' : (kycIsIncomplete() ? 'Upload missing PAN' : 'Upload PAN') }}
         </button>
       </div>
+      }
     </div>
   }
 </div>

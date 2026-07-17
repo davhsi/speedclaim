@@ -80,40 +80,46 @@ describe('KycComponent', () => {
     });
   });
 
-  describe('canEditKyc', () => {
-    it('is true when there is no KYC record yet', () => {
+  describe('document-specific upload access', () => {
+    it('allows both documents when there is no KYC record yet', () => {
       const fixture = create(null);
-      expect(fixture.componentInstance.canEditKyc()).toBe(true);
+      expect(fixture.componentInstance.canUploadAadhaar()).toBe(true);
+      expect(fixture.componentInstance.canUploadPan()).toBe(true);
     });
 
-    it('is false while Pending review', () => {
-      const fixture = create({ id: 'k1', kycStatus: 'Pending' } as KycRecordDto);
-      expect(fixture.componentInstance.canEditKyc()).toBe(false);
+    it('keeps a missing PAN uploadable while Aadhaar is pending', () => {
+      const fixture = create({ id: 'k1', kycStatus: 'Pending', aadhaarUploaded: true, panUploaded: false } as KycRecordDto);
+      expect(fixture.componentInstance.canUploadAadhaar()).toBe(false);
+      expect(fixture.componentInstance.canUploadPan()).toBe(true);
+      expect(fixture.componentInstance.kycIsIncomplete()).toBe(true);
     });
 
-    it('is false once Approved', () => {
+    it('locks both documents once Approved', () => {
       const fixture = create({ id: 'k1', kycStatus: 'Approved' } as KycRecordDto);
-      expect(fixture.componentInstance.canEditKyc()).toBe(false);
+      expect(fixture.componentInstance.canUploadAadhaar()).toBe(false);
+      expect(fixture.componentInstance.canUploadPan()).toBe(false);
     });
 
-    it('is true once Rejected', () => {
+    it('allows both documents once Rejected', () => {
       const fixture = create({ id: 'k1', kycStatus: 'Rejected' } as KycRecordDto);
-      expect(fixture.componentInstance.canEditKyc()).toBe(true);
+      expect(fixture.componentInstance.canUploadAadhaar()).toBe(true);
+      expect(fixture.componentInstance.canUploadPan()).toBe(true);
     });
 
-    it('blocks uploadAadhaar/uploadPan while Pending, even with valid input', () => {
-      const fixture = create({ id: 'k1', kycStatus: 'Pending' } as KycRecordDto);
+    it('allows only the missing PAN upload while Aadhaar is pending', () => {
+      const fixture = create({ id: 'k1', kycStatus: 'Pending', aadhaarUploaded: true, panUploaded: false } as KycRecordDto);
       const c = fixture.componentInstance;
       c.aadhaarFile.set(new File(['x'], 'a.jpg'));
       c.aadhaarNum.set('123456789012');
       c.panFile.set(new File(['x'], 'p.jpg'));
       c.panNum.set('ABCDE1234F');
+      profileService.uploadPan.mockReturnValue(of({ id: 'k1', aadhaarUploaded: true, panUploaded: true } as KycRecordDto));
 
       c.uploadAadhaar();
       c.uploadPan();
 
       expect(profileService.uploadAadhaar).not.toHaveBeenCalled();
-      expect(profileService.uploadPan).not.toHaveBeenCalled();
+      expect(profileService.uploadPan).toHaveBeenCalledTimes(1);
     });
   });
 

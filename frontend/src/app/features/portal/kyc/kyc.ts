@@ -49,11 +49,21 @@ export class KycComponent implements OnInit, CanComponentDeactivate {
   aadhaarValid = computed(() => AADHAAR_PATTERN.test(this.aadhaarNum().trim()));
   panValid = computed(() => PAN_PATTERN.test(this.panNum().trim().toUpperCase()));
 
-  // Once submitted, KYC is locked while an Underwriter reviews it — only a Rejected
-  // record (or no record at all) can be (re)uploaded.
-  canEditKyc = computed(() => {
+  // A submitted document must not be changed while it is being reviewed, but an
+  // incomplete record must keep the missing document uploadable.
+  canUploadAadhaar = computed(() => {
     const k = this.kyc();
-    return !k || k.kycStatus === 'Rejected';
+    return !k || (k.kycStatus !== 'Approved' && (k.kycStatus === 'Rejected' || !k.aadhaarUploaded));
+  });
+
+  canUploadPan = computed(() => {
+    const k = this.kyc();
+    return !k || (k.kycStatus !== 'Approved' && (k.kycStatus === 'Rejected' || !k.panUploaded));
+  });
+
+  kycIsIncomplete = computed(() => {
+    const k = this.kyc();
+    return !!k && k.kycStatus === 'Pending' && (!k.aadhaarUploaded || !k.panUploaded);
   });
 
   hasUnsavedInput = computed(
@@ -93,7 +103,7 @@ export class KycComponent implements OnInit, CanComponentDeactivate {
   }
 
   uploadAadhaar(): void {
-    if (this.submitting() || !this.canEditKyc() || !this.aadhaarFile() || !this.aadhaarValid()) return;
+    if (this.submitting() || !this.canUploadAadhaar() || !this.aadhaarFile() || !this.aadhaarValid()) return;
     this.uploadTarget.set('aadhaar');
     this.profileService.uploadAadhaar(this.aadhaarFile()!, this.aadhaarNum().trim()).subscribe({
       next: k => {
@@ -108,7 +118,7 @@ export class KycComponent implements OnInit, CanComponentDeactivate {
   }
 
   uploadPan(): void {
-    if (this.submitting() || !this.canEditKyc() || !this.panFile() || !this.panValid()) return;
+    if (this.submitting() || !this.canUploadPan() || !this.panFile() || !this.panValid()) return;
     this.uploadTarget.set('pan');
     this.profileService.uploadPan(this.panFile()!, this.panNum().trim().toUpperCase()).subscribe({
       next: k => {
