@@ -31,6 +31,9 @@ render() {
     -e "s|__API_HOST__|${API_HOST}|g" "$1"
 }
 
+kubectl -n speedclaim delete job/speedclaim-db-migrate --ignore-not-found
+render deploy/k8s/db-migrate.yaml | kubectl apply -f -
+kubectl -n speedclaim wait --for=condition=complete job/speedclaim-db-migrate --timeout=10m
 render deploy/k8s/api.yaml | kubectl apply -f -
 render deploy/k8s/ai.yaml | kubectl apply -f -
 render deploy/k8s/ingress.yaml | kubectl apply -f -

@@ -332,6 +332,16 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
+if (args.Contains("--migrate", StringComparer.OrdinalIgnoreCase))
+{
+    Log.Information("Applying pending EF Core migrations");
+    await using var scope = app.Services.CreateAsyncScope();
+    var database = scope.ServiceProvider.GetRequiredService<SpeedClaimDbContext>();
+    await database.Database.MigrateAsync();
+    Log.Information("EF Core migrations completed successfully");
+    return;
+}
+
 StripeConfiguration.ApiKey = builder.Configuration.GetSection("Stripe")["SecretKey"];
 
 // Configure the HTTP request pipeline.
