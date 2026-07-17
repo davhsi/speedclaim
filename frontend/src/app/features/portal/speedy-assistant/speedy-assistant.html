@@ -1,14 +1,16 @@
 @if (open()) {
-  <section class="fixed z-40 inset-x-3 bottom-[76px] sm:inset-x-auto sm:right-6 sm:bottom-6 sm:w-[400px] bg-white rounded-[22px] border border-[#C9DCF6] shadow-[0_24px_70px_rgba(11,42,91,0.24)] overflow-hidden" role="dialog" aria-modal="false" aria-labelledby="speedy-title">
-    <header class="relative overflow-hidden px-5 py-4 bg-[#082A5B] text-white">
-      <div class="absolute inset-0 opacity-30" style="background: radial-gradient(circle at 92% 12%, #42A5FF 0, transparent 32%), radial-gradient(circle at 12% 95%, #F5A623 0, transparent 28%);"></div>
+  <section class="fixed z-40 inset-x-3 bottom-[76px] sm:inset-x-auto sm:right-6 sm:bottom-6 sm:w-[400px] bg-white rounded-[22px] border border-[#F0D197] shadow-[0_24px_70px_rgba(92,56,6,0.22)] overflow-hidden" role="dialog" aria-modal="false" aria-labelledby="speedy-title">
+    <header class="relative overflow-hidden px-5 py-4 bg-[#1B2738] text-white">
+      <div class="absolute inset-0 opacity-45" style="background: radial-gradient(circle at 93% 9%, #F5A623 0, transparent 31%), radial-gradient(circle at 8% 105%, #D4891A 0, transparent 34%);"></div>
       <div class="relative flex items-center gap-3">
-        <img src="assets/speedy/speedy.png" class="w-11 h-11 object-contain" alt="" />
+        <span class="w-11 h-11 shrink-0 rounded-2xl bg-[#FFF8EA] ring-1 ring-[#FAD78A] flex items-center justify-center overflow-hidden">
+          <img src="/speedy/speedy-amber.png" class="w-10 h-10 object-contain" alt="" />
+        </span>
         <div class="min-w-0 flex-1">
-          <p class="text-[11px] uppercase tracking-[0.16em] text-[#9CCAFF] font-bold">Your account guide</p>
+          <p class="text-[11px] uppercase tracking-[0.16em] text-[#FFE1A0] font-bold">Your account guide</p>
           <h2 id="speedy-title" class="text-lg leading-tight font-bold">Speedy</h2>
         </div>
-        <button type="button" class="w-8 h-8 rounded-full text-[#C9DCF6] hover:bg-white/15 focus:outline-2 focus:outline-white" (click)="close()" aria-label="Close Speedy">
+        <button type="button" class="w-8 h-8 rounded-full text-[#FFE1A0] hover:bg-white/15 focus:outline-2 focus:outline-white" (click)="close()" aria-label="Close Speedy">
           <svg class="mx-auto" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
       </div>
@@ -16,36 +18,36 @@
 
     <div class="max-h-[min(54vh,460px)] overflow-y-auto p-4 space-y-3" aria-live="polite">
       @if (!messages().length) {
-        <div class="rounded-2xl bg-[#EEF6FF] border border-[#D3E7FF] px-4 py-3 text-sm text-[#163B6D]">
+        <div class="rounded-2xl bg-[#FFF8EA] border border-[#FAD78A] px-4 py-3 text-sm text-[#553600]">
           Hi! I’m Speedy. I can help you understand your policies, upcoming premiums, and claims.
         </div>
         <div class="flex flex-wrap gap-2">
           @for (suggestion of suggestions; track suggestion) {
-            <button type="button" class="text-left px-3 py-2 rounded-full bg-white border border-[#C9DCF6] text-xs font-semibold text-[#164A87] hover:bg-[#EEF6FF] focus:outline-2 focus:outline-[#1B77D2]" (click)="ask(suggestion)">{{ suggestion }}</button>
+            <button type="button" class="text-left px-3 py-2 rounded-full bg-white border border-[#F0D197] text-xs font-semibold text-[#8A5700] hover:bg-[#FFF4DE] focus:outline-2 focus:outline-[#F5A623]" (click)="ask(suggestion)">{{ suggestion }}</button>
           }
         </div>
       }
       @for (message of messages(); track $index) {
-        <article class="max-w-[92%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap" [class]="message.role === 'user' ? 'ml-auto rounded-br-md bg-[#0D5DA8] text-white' : 'rounded-bl-md bg-[#F4F8FD] border border-[#E0EBF7] text-[#142B4A]'">{{ message.content }}</article>
+        <article class="max-w-[92%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap" [class]="message.role === 'user' ? 'ml-auto rounded-br-md bg-[#F5A623] text-white' : 'rounded-bl-md bg-[#FFF9EF] border border-[#F4D79E] text-[#352810]'">{{ message.content }}</article>
       }
       @if (sending()) {
-        <div class="flex items-center gap-2 text-sm text-[#4D6582] px-1"><span class="w-2 h-2 rounded-full bg-[#1B77D2] animate-pulse"></span> Speedy is checking your account…</div>
+        <div class="flex items-center gap-2 text-sm text-[#7A5A23] px-1"><span class="w-2 h-2 rounded-full bg-[#F5A623] animate-pulse"></span> Speedy is checking your account…</div>
       }
       @if (error()) { <p class="text-sm text-danger px-1">{{ error() }}</p> }
     </div>
 
-    <form class="border-t border-[#E1EAF4] p-3 flex gap-2 bg-[#FBFDFF]" (submit)="$event.preventDefault(); ask()">
+    <form class="border-t border-[#F0D197] p-3 flex gap-2 bg-[#FFFCF6]" (submit)="$event.preventDefault(); ask()">
       <label class="sr-only" for="speedy-question">Ask Speedy</label>
-      <input id="speedy-question" name="speedy-question" [ngModel]="question()" (ngModelChange)="question.set($event)" maxlength="2000" placeholder="Ask about your account…" class="min-w-0 flex-1 h-11 rounded-xl border border-[#C9DCF6] bg-white px-3 text-sm text-ink placeholder:text-[#72839A] focus:border-[#1B77D2] focus:outline-2 focus:outline-[#D3E7FF]" [disabled]="sending()" />
-      <button type="submit" class="h-11 w-11 shrink-0 rounded-xl bg-[#0D5DA8] text-white hover:bg-[#084985] focus:outline-2 focus:outline-[#1B77D2] disabled:opacity-50" [disabled]="sending() || !question().trim()" aria-label="Send question to Speedy">
+      <input id="speedy-question" name="speedy-question" [ngModel]="question()" (ngModelChange)="question.set($event)" maxlength="2000" placeholder="Ask about your account…" class="min-w-0 flex-1 h-11 rounded-xl border border-[#F0D197] bg-white px-3 text-sm text-ink placeholder:text-[#9B8154] focus:border-[#F5A623] focus:outline-2 focus:outline-[#FBE5B8]" [disabled]="sending()" />
+      <button type="submit" class="h-11 w-11 shrink-0 rounded-xl bg-[#F5A623] text-white hover:bg-[#D4891A] focus:outline-2 focus:outline-[#F5A623] disabled:opacity-50" [disabled]="sending() || !question().trim()" aria-label="Send question to Speedy">
         <svg class="mx-auto" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
       </button>
     </form>
-    <p class="px-4 pb-3 text-[10px] leading-snug text-[#6D7D92]">Speedy uses the information currently visible in your account. It cannot make changes or decisions.</p>
+    <p class="px-4 pb-3 text-[10px] leading-snug text-[#8B7350]">Speedy uses the information currently visible in your account. It cannot make changes or decisions.</p>
   </section>
 }
 
-<button type="button" (click)="toggle()" class="fixed z-40 right-4 bottom-[76px] sm:right-6 sm:bottom-6 group flex items-center gap-2 rounded-full bg-[#082A5B] pr-4 pl-1.5 py-1.5 text-white shadow-[0_14px_34px_rgba(8,42,91,0.34)] hover:-translate-y-0.5 hover:bg-[#0D5DA8] focus:outline-2 focus:outline-[#1B77D2] transition-all" [attr.aria-expanded]="open()" aria-controls="speedy-title" aria-label="Open Speedy, your account assistant">
-  <span class="w-11 h-11 rounded-full bg-white/95 flex items-center justify-center overflow-hidden"><img src="assets/speedy/speedy.png" class="w-10 h-10 object-contain" alt="" /></span>
+<button type="button" (click)="toggle()" class="fixed z-40 right-4 bottom-[76px] sm:right-6 sm:bottom-6 group flex items-center gap-2 rounded-full bg-[#F5A623] pr-4 pl-1.5 py-1.5 text-white shadow-[0_14px_34px_rgba(132,82,8,0.34)] hover:-translate-y-0.5 hover:bg-[#D4891A] focus:outline-2 focus:outline-[#F5A623] transition-all" [attr.aria-expanded]="open()" aria-controls="speedy-title" aria-label="Open Speedy, your account assistant">
+  <span class="w-11 h-11 rounded-full bg-[#FFF8EA] ring-1 ring-[#FFE1A0] flex items-center justify-center overflow-hidden"><img src="/speedy/speedy-amber.png" class="w-10 h-10 object-contain" alt="" /></span>
   <span class="text-sm font-bold">Ask Speedy</span>
 </button>
