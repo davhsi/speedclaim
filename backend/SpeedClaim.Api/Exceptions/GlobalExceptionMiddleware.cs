@@ -39,8 +39,10 @@ public class GlobalExceptionMiddleware
         {
             AppException ex => ex.StatusCode,
             BrochureIngestionException { ErrorCode: "policy_qa_rate_limited" } => StatusCodes.Status429TooManyRequests,
+            BrochureIngestionException { ErrorCode: "speedy_rate_limited" } => StatusCodes.Status429TooManyRequests,
             BrochureIngestionException { ErrorCode: "policy_qa_timeout" } => StatusCodes.Status504GatewayTimeout,
-            BrochureIngestionException { ErrorCode: "policy_qa_unavailable" or "ai_configuration_invalid" } => StatusCodes.Status503ServiceUnavailable,
+            BrochureIngestionException { ErrorCode: "speedy_timeout" } => StatusCodes.Status504GatewayTimeout,
+            BrochureIngestionException { ErrorCode: "policy_qa_unavailable" or "speedy_unavailable" or "ai_configuration_invalid" } => StatusCodes.Status503ServiceUnavailable,
             BrochureIngestionException => StatusCodes.Status422UnprocessableEntity,
             UnauthorizedAccessException => (int)HttpStatusCode.Unauthorized,
             KeyNotFoundException => (int)HttpStatusCode.NotFound,
@@ -65,7 +67,9 @@ public class GlobalExceptionMiddleware
         var result = JsonSerializer.Serialize(new
         {
             type = $"https://httpstatuses.com/{statusCode}",
-            title = exception.GetType().Name,
+            title = exception is BrochureIngestionException { ErrorCode: var code } && code.StartsWith("speedy_", StringComparison.Ordinal)
+                ? "SpeedyAssistantException"
+                : exception.GetType().Name,
             status = statusCode,
             detail = statusCode >= 500 && !isDevelopment ? "The requested service is temporarily unavailable." : exception.Message,
             traceId = context.TraceIdentifier
