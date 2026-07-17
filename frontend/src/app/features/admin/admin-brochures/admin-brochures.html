@@ -2,7 +2,37 @@
   <div class="flex items-start justify-between gap-4 mb-6"><div><button class="text-xs text-muted hover:text-ink mb-2" (click)="back()">← Product catalog</button><h1 class="text-2xl font-bold text-ink">Product brochures</h1><p class="text-sm text-muted mt-1">Versioned policy PDFs are separate from proposal document requirements.</p></div></div>
   @if (loading()) { <div class="h-48 rounded-card bg-surface animate-pulse"></div> } @else {
     <label class="block text-xs font-semibold text-muted mb-1.5" for="brochure-product">Product</label><select id="brochure-product" class="max-w-md mb-5" [ngModel]="selectedProductId()" (ngModelChange)="selectProduct($event)">@for (product of products(); track product.id) { <option [value]="product.id">{{ product.productName }} · {{ product.uin }}</option> }</select>
-    <section class="bg-white border border-line rounded-card p-5 mb-5"><h2 class="font-semibold text-ink">Upload a new immutable version</h2><div class="grid sm:grid-cols-3 gap-3 mt-4"><input type="file" accept="application/pdf,.pdf" (change)="onFile($event)" aria-label="Brochure PDF"><input type="date" [(ngModel)]="effectiveFrom" aria-label="Effective from"><input type="text" [(ngModel)]="version" placeholder="Optional version label" aria-label="Version label"></div><button class="mt-4 h-9 px-4 bg-primary text-white text-sm font-semibold rounded-control disabled:opacity-50" [disabled]="!selectedFile() || uploading()" (click)="upload()">{{ uploading() ? 'Uploading…' : 'Upload and ingest PDF' }}</button></section>
+    <section class="bg-white border border-line rounded-card shadow-sm overflow-hidden mb-5">
+      <div class="px-5 pt-5 pb-4 border-b border-line bg-gradient-to-r from-white to-accent-light/35">
+        <div class="flex items-start gap-3">
+          <div class="shrink-0 w-9 h-9 rounded-control bg-primary text-white flex items-center justify-center" aria-hidden="true">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 14h8M8 18h5"/></svg>
+          </div>
+          <div><h2 class="font-semibold text-ink">Add a brochure version</h2><p class="text-sm text-muted mt-0.5">Upload a text-based PDF. Published versions stay attached to existing policies.</p></div>
+        </div>
+      </div>
+
+      <div class="p-5 grid lg:grid-cols-12 gap-4 items-start">
+        <div class="lg:col-span-5">
+          <span class="block text-xs font-semibold text-muted mb-1.5">Policy PDF</span>
+          <input #brochureFileInput id="brochure-file" class="visually-hidden" type="file" accept="application/pdf,.pdf" (change)="onFile($event)">
+          <label for="brochure-file" class="min-h-28 px-4 py-3 rounded-control border-2 border-dashed cursor-pointer flex items-center gap-3 transition-colors" [class]="selectedFile() ? 'border-success-border bg-success-bg' : 'border-line bg-surface hover:border-primary-muted hover:bg-primary-light/45'">
+            <div class="w-10 h-10 rounded-control flex items-center justify-center shrink-0" [class]="selectedFile() ? 'bg-white text-success' : 'bg-white text-primary'" aria-hidden="true">
+              @if (selectedFile()) { <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4L19 6"/></svg> } @else { <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4m0 0L8 8m4-4 4 4M5 20h14"/></svg> }
+            </div>
+            <span class="min-w-0">@if (selectedFile(); as file) { <span class="block text-sm font-semibold text-ink truncate">{{ file.name }}</span><span class="block text-xs text-success mt-0.5">PDF selected · {{ fileSize(file.size) }} · Choose another to replace</span> } @else { <span class="block text-sm font-semibold text-ink">Choose a policy PDF</span><span class="block text-xs text-muted mt-0.5">PDF only · this version cannot be edited after publication</span> }</span>
+          </label>
+        </div>
+
+        <div class="lg:col-span-3"><label class="block text-xs font-semibold text-muted mb-1.5" for="brochure-effective-from">Effective from</label><input id="brochure-effective-from" type="date" [(ngModel)]="effectiveFrom"></div>
+        <div class="lg:col-span-4"><label class="block text-xs font-semibold text-muted mb-1.5" for="brochure-version">Version label <span class="font-normal">(optional)</span></label><input id="brochure-version" type="text" [(ngModel)]="version" placeholder="For example: 2026.07"></div>
+
+        <div class="lg:col-span-12 pt-4 mt-1 border-t border-line flex flex-wrap items-center justify-between gap-3">
+          <p class="text-xs text-muted">The document is indexed for policy Q&amp;A after upload.</p>
+          <button class="h-9 px-4 bg-primary text-white text-sm font-semibold rounded-control hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="!selectedFile() || uploading()" (click)="upload()">{{ uploading() ? 'Uploading and indexing…' : 'Upload and index PDF' }}</button>
+        </div>
+      </div>
+    </section>
     <section class="bg-white border border-line rounded-card overflow-hidden"><div class="px-5 py-4 border-b border-line"><h2 class="font-semibold text-ink">Version history</h2></div>@for (brochure of brochures(); track brochure.id) { <div class="p-5 border-b border-line last:border-0 flex flex-wrap gap-4 items-center"><div class="flex-1 min-w-[220px]"><div class="font-semibold text-ink">v{{ brochure.version }} · {{ brochure.originalFilename }}</div><div class="text-xs text-muted mt-1">Effective {{ brochure.effectiveFrom }} · {{ brochure.pageCount ?? '—' }} pages · {{ brochure.childChunkCount ?? '—' }} chunks</div>@if (brochure.status === 'Failed') { <p class="text-xs text-danger mt-1">Ingestion failed. Retry after confirming this is a text-based PDF.</p> }</div><span class="px-2 py-1 rounded-full text-xs font-semibold" [class]="statusClass(brochure.status)">{{ brochure.status }}</span><div class="flex gap-2">@if (brochure.status === 'Ready') { <button class="text-xs font-semibold text-primary" (click)="update('publish', brochure)">Publish</button> } @if (brochure.status === 'Failed') { <button class="text-xs font-semibold text-primary" (click)="update('retry', brochure)">Retry</button> } @if (brochure.status === 'Ready' || brochure.status === 'Published') { <button class="text-xs font-semibold text-danger" (click)="update('archive', brochure)">Archive</button> } @if (brochure.status === 'Published') { <span class="text-xs text-muted">Immutable</span> }</div></div> } @empty { <p class="p-8 text-sm text-muted text-center">No brochure versions have been uploaded for this product.</p> }</section>
   }
 </div>
