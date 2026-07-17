@@ -782,3 +782,5 @@ export interface PolicyAssistantMessageDto { id: string; role: 'User' | 'Assista
 export interface PolicyAssistantConversationDto { id: string; policyId: string; brochureId: string; brochureVersion: string; createdAt: string; updatedAt: string; messages?: PolicyAssistantMessageDto[]; }
 export interface PolicyAssistantAvailabilityDto { available: boolean; state: string; brochureVersion?: string; effectiveFrom?: string; }
 export interface PolicyAssistantAnswerDto { requestId: string; conversationId: string; messageId: string; answer: string; evidenceStatus: string; brochureVersion: string; citations: PolicyAssistantCitationDto[]; }
+
+export interface SpeedyAssistantResponse { requestId: string; answer: string; provider?: string | null; model?: string | null; }

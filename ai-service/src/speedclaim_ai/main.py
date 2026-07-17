@@ -7,6 +7,7 @@ from speedclaim_ai.api.dependencies import ServiceContainer
 from speedclaim_ai.api.health import router as health_router
 from speedclaim_ai.api.ingestion import router as ingestion_router
 from speedclaim_ai.api.policy_qa import router as policy_qa_router
+from speedclaim_ai.api.speedy import router as speedy_router
 from speedclaim_ai.config.logging import configure_logging
 from speedclaim_ai.config.settings import Settings, get_settings
 from speedclaim_ai.errors import register_exception_handlers
@@ -35,6 +36,7 @@ def build_app(settings: Settings) -> FastAPI:
     app.include_router(health_router)
     app.include_router(ingestion_router)
     app.include_router(policy_qa_router)
+    app.include_router(speedy_router)
 
     # Starlette executes the most recently added middleware first. Correlation IDs therefore
     # wrap every outcome, auth rejects before body buffering, and authorized bodies are capped.

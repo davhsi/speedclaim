@@ -19,6 +19,7 @@ from speedclaim_ai.rag.ingestion_service import BrochureIngestionService
 from speedclaim_ai.rag.pdf_parser import PdfParser
 from speedclaim_ai.rag.retrieval_service import RetrievalService
 from speedclaim_ai.repositories.pgvector_repository import PgVectorRepository
+from speedclaim_ai.speedy import SpeedyService
 
 
 class ServiceContainer:
@@ -32,6 +33,7 @@ class ServiceContainer:
         self._ingestion_service: BrochureIngestionService | None = None
         self._chat_provider: ChatProvider | None = None
         self._policy_qa_service: PolicyQaService | None = None
+        self._speedy_service: SpeedyService | None = None
 
     async def get_ingestion_service(self) -> BrochureIngestionService:
         if self._ingestion_service is not None:
@@ -107,17 +109,8 @@ class ServiceContainer:
                 self._ensure_vector_dependencies()
                 assert self._repository is not None
                 assert self._embedding_provider is not None
-                assert self._settings.anthropic_base_url is not None
-                assert self._settings.anthropic_auth_token is not None
-                self._chat_provider = AnthropicGatewayChatProvider(
-                    auth_token=self._settings.anthropic_auth_token.get_secret_value(),
-                    model=self._settings.anthropic_chat_model,
-                    base_url=self._settings.anthropic_base_url,
-                    output_mode=self._settings.anthropic_output_mode,
-                    timeout_seconds=self._settings.chat_timeout_seconds,
-                    max_attempts=self._settings.chat_max_attempts,
-                    max_output_tokens=self._settings.chat_max_output_tokens,
-                )
+                self._ensure_chat_provider()
+                assert self._chat_provider is not None
                 retrieval = RetrievalService(
                     embedding_provider=self._embedding_provider,
                     repository=self._repository,
@@ -138,6 +131,40 @@ class ServiceContainer:
                     prompt_version=self._settings.policy_qa_prompt_version,
                 )
         return self._policy_qa_service
+
+    async def get_speedy_service(self) -> SpeedyService:
+        if self._speedy_service is not None:
+            return self._speedy_service
+        if (
+            self._settings.anthropic_base_url is None
+            or self._settings.anthropic_auth_token is None
+        ):
+            raise AppError(
+                status_code=503,
+                code="chat_provider_not_configured",
+                message="The Speedy answer provider is not configured.",
+            )
+        async with self._lock:
+            if self._speedy_service is None:
+                self._ensure_chat_provider()
+                assert self._chat_provider is not None
+                self._speedy_service = SpeedyService(self._chat_provider)
+        return self._speedy_service
+
+    def _ensure_chat_provider(self) -> None:
+        if self._chat_provider is not None:
+            return
+        assert self._settings.anthropic_base_url is not None
+        assert self._settings.anthropic_auth_token is not None
+        self._chat_provider = AnthropicGatewayChatProvider(
+            auth_token=self._settings.anthropic_auth_token.get_secret_value(),
+            model=self._settings.anthropic_chat_model,
+            base_url=self._settings.anthropic_base_url,
+            output_mode=self._settings.anthropic_output_mode,
+            timeout_seconds=self._settings.chat_timeout_seconds,
+            max_attempts=self._settings.chat_max_attempts,
+            max_output_tokens=self._settings.chat_max_output_tokens,
+        )
 
     def _ensure_vector_dependencies(self) -> None:
         if self._repository is not None and self._embedding_provider is not None:
