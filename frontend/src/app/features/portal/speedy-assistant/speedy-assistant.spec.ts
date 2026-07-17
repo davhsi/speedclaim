@@ -31,4 +31,11 @@ describe('SpeedyAssistantComponent', () => {
       { role: 'assistant', content: 'You have one active policy.' },
     ]);
   });
+
+  it('renders Speedy Markdown while escaping unsafe HTML', () => {
+    const fixture = TestBed.createComponent(SpeedyAssistantComponent);
+
+    expect(fixture.componentInstance.renderMarkdown('**Family Shield**\n\n1. Active cover\n- Premium paid\n<script>alert(1)</script>'))
+      .toBe('<p><strong>Family Shield</strong></p><ol><li>Active cover</li></ol><ul><li>Premium paid</li></ul><p>&lt;script&gt;alert(1)&lt;/script&gt;</p>');
+  });
 });
