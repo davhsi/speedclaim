@@ -67,6 +67,19 @@ public class ProductsController : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>Admin — update a product's editable configuration. UIN and domain are immutable.</summary>
+    [Authorize(Roles = "Admin")]
+    [HttpPatch("{id}")]
+    [ProducesResponseType(typeof(ProductDto), 200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> UpdateProduct(string id, [FromBody] UpdateProductRequest request)
+    {
+        var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        if (adminId == null) return Unauthorized();
+        var result = await _productService.UpdateProductAsync(id, request, adminId);
+        return Ok(result);
+    }
+
     /// <summary>Admin — get the premium rate table for a product</summary>
     /// <param name="id">Product ID</param>
     [Authorize(Roles = "Admin")]

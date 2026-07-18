@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SpeedClaim.Api.Context;
@@ -11,9 +12,11 @@ using SpeedClaim.Api.Context;
 namespace SpeedClaim.Api.Migrations
 {
     [DbContext(typeof(SpeedClaimDbContext))]
-    partial class SpeedClaimDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260718065941_DomainAwareCoverage")]
+    partial class DomainAwareCoverage
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1365,10 +1368,9 @@ namespace SpeedClaim.Api.Migrations
                             MaxSumAssured = 5000000m,
                             MaxTenureYears = 30,
                             MinAge = 18,
-                            MinSumAssured = 500000m,
+                            MinSumAssured = 100000m,
                             MinTenureYears = 5,
                             ProductName = "Term Life Basic",
-                            SumAssuredIncrement = 100000m,
                             Uin = "UIN123",
                             WaitingPeriodDays = 0
                         },
@@ -1376,7 +1378,7 @@ namespace SpeedClaim.Api.Migrations
                         {
                             Id = new Guid("70000000-0000-0000-0000-000000000001"),
                             AllowsFamilyFloater = true,
-                            CoverageOptionsJson = "[300000,500000,1000000,1500000]",
+                            CoverageOptionsJson = "[]",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 6, 7, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Description = "Comprehensive health insurance with cashless hospitalisation across 5000+ network hospitals",
                             Domain = "HEALTH",
@@ -1384,10 +1386,10 @@ namespace SpeedClaim.Api.Migrations
                             IsAvailableForSale = true,
                             MaxAge = 65,
                             MaxFamilyMembers = 6,
-                            MaxSumAssured = 1500000m,
+                            MaxSumAssured = 5000000m,
                             MaxTenureYears = 10,
                             MinAge = 18,
-                            MinSumAssured = 300000m,
+                            MinSumAssured = 100000m,
                             MinTenureYears = 1,
                             ProductName = "SpeedCare Platinum Health",
                             Uin = "UIN-HC-DEMO-2026",

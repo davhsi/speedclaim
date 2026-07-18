@@ -37,11 +37,16 @@ public class ProposalService : IProposalService
         var product = await _unitOfWork.InsuranceProducts.GetByIdAsync(productId);
         if (product == null) throw new NotFoundException("Product not found");
         if (!product.IsActive || !product.IsAvailableForSale) throw new ConflictException("Product is not available for new quotes.");
-        ValidateProductEligibility(product, request.Age, request.SumAssured, request.TenureYears);
+        var sumAssured = IsAgeRatedDomain(product.Domain)
+            ? request.SumAssured
+            : request.VehicleMarketValue.HasValue && request.VehicleManufactureYear.HasValue
+                ? CalculateMotorIdv(request.VehicleMarketValue, request.VehicleManufactureYear)
+                : request.SumAssured;
+        ValidateProductEligibility(product, request.Age, sumAssured, request.TenureYears);
 
-        var premiumAmount = await CalculatePremiumAsync(product, request.Age, request.SumAssured);
+        var premiumAmount = await CalculatePremiumAsync(product, request.Age, sumAssured);
 
-        return new GenerateQuoteResponse(premiumAmount, request.SumAssured, request.TenureYears, "Monthly");
+        return new GenerateQuoteResponse(premiumAmount, sumAssured, request.TenureYears, "Monthly");
     }
 
     // Motor premiums are rated on IDV (sum assured) alone — a policyholder's age isn't an
@@ -60,11 +65,44 @@ public class ProposalService : IProposalService
                 throw new ValidationException($"Age must be between {product.MinAge} and {product.MaxAge} for this product.");
         }
 
-        if (sumAssured < product.MinSumAssured || sumAssured > product.MaxSumAssured)
-            throw new ValidationException($"Sum assured must be between {product.MinSumAssured} and {product.MaxSumAssured}.");
+        if (string.Equals(product.Domain, "Health", StringComparison.OrdinalIgnoreCase))
+        {
+            var options = ParseCoverageOptions(product.CoverageOptionsJson);
+            if (options.Count > 0 && !options.Contains(sumAssured))
+                throw new ValidationException("Select one of the available health cover options.");
+            if (options.Count == 0 && (sumAssured < product.MinSumAssured || sumAssured > product.MaxSumAssured))
+                throw new ValidationException($"Sum assured must be between {product.MinSumAssured} and {product.MaxSumAssured}.");
+        }
+        else if (string.Equals(product.Domain, "Life", StringComparison.OrdinalIgnoreCase))
+        {
+            if (sumAssured < product.MinSumAssured || sumAssured > product.MaxSumAssured)
+                throw new ValidationException($"Sum assured must be between {product.MinSumAssured} and {product.MaxSumAssured}.");
+            var increment = product.SumAssuredIncrement ?? 0;
+            if (increment > 0 && (sumAssured - product.MinSumAssured) % increment != 0)
+                throw new ValidationException($"Sum assured must increase in increments of {increment}.");
+        }
+        else if (sumAssured < product.MinSumAssured || sumAssured > product.MaxSumAssured)
+            throw new ValidationException("The calculated IDV is outside this motor product's permitted range.");
 
         if (tenureYears < product.MinTenureYears || tenureYears > product.MaxTenureYears)
             throw new ValidationException($"Tenure must be between {product.MinTenureYears} and {product.MaxTenureYears} years.");
+    }
+
+    private static List<decimal> ParseCoverageOptions(string? value)
+    {
+        try { return JsonSerializer.Deserialize<List<decimal>>(value ?? "[]") ?? []; }
+        catch (JsonException) { return []; }
+    }
+
+    private static decimal CalculateMotorIdv(decimal? marketValue, int? manufactureYear)
+    {
+        if (!marketValue.HasValue || marketValue.Value <= 0 || !manufactureYear.HasValue)
+            throw new ValidationException("Manufacturer-listed vehicle value and manufacture year are required to calculate IDV.");
+        var vehicleAge = DateTime.UtcNow.Year - manufactureYear.Value;
+        if (vehicleAge < 0 || vehicleAge > 30)
+            throw new ValidationException("Enter a valid vehicle manufacture year.");
+        var depreciation = vehicleAge switch { 0 => 0m, 1 => .15m, 2 => .20m, 3 => .30m, 4 => .40m, _ => .50m };
+        return Math.Round(marketValue.Value * (1 - depreciation), 2, MidpointRounding.AwayFromZero);
     }
 
     private async Task<decimal> CalculatePremiumAsync(InsuranceProduct product, int? age, decimal sumAssured)

@@ -21,6 +21,7 @@ public class ProductService : IProductService
 
     private static ProductDto MapProduct(InsuranceProduct product)
     {
+        var coverageOptions = ParseCoverageOptions(product.CoverageOptionsJson);
         return new ProductDto(
             product.Id,
             product.ProductName,
@@ -38,8 +39,45 @@ public class ProductService : IProductService
             product.MaxFamilyMembers,
             product.IsActive,
             product.IsAvailableForSale,
-            product.MotorVehicleType
+            product.MotorVehicleType,
+            coverageOptions,
+            product.SumAssuredIncrement
         );
+    }
+
+    private static List<decimal> ParseCoverageOptions(string? value)
+    {
+        try { return JsonSerializer.Deserialize<List<decimal>>(value ?? "[]") ?? []; }
+        catch (JsonException) { return []; }
+    }
+
+    private static List<decimal> NormalizeCoverageOptions(IEnumerable<decimal>? options)
+        => (options ?? [])
+            .Where(option => option > 0)
+            .Distinct()
+            .OrderBy(option => option)
+            .ToList();
+
+    private static void ValidateCoverageConfiguration(string domain, decimal min, decimal max, List<decimal> options, decimal? increment)
+    {
+        if (string.Equals(domain, "Health", StringComparison.OrdinalIgnoreCase))
+        {
+            if (options.Count == 0)
+                throw new ValidationException("Health products require at least one selectable cover option.");
+            return;
+        }
+
+        if (string.Equals(domain, "Life", StringComparison.OrdinalIgnoreCase))
+        {
+            if (min <= 0 || max < min)
+                throw new ValidationException("Life product cover limits are invalid.");
+            if (!increment.HasValue || increment.Value <= 0)
+                throw new ValidationException("Life products require a positive sum assured increment.");
+            return;
+        }
+
+        if (min <= 0 || max < min)
+            throw new ValidationException("Motor IDV guardrails are invalid.");
     }
 
     public async Task<IEnumerable<ProductDto>> GetAvailableProductsAsync()
@@ -75,6 +113,15 @@ public class ProductService : IProductService
 
     public async Task<ProductDto> CreateProductAsync(CreateProductRequest request, string adminId)
     {
+        var coverageOptions = NormalizeCoverageOptions(request.CoverageOptions);
+        var minSumAssured = string.Equals(request.Domain, "Health", StringComparison.OrdinalIgnoreCase)
+            ? coverageOptions.FirstOrDefault()
+            : request.MinSumAssured;
+        var maxSumAssured = string.Equals(request.Domain, "Health", StringComparison.OrdinalIgnoreCase)
+            ? coverageOptions.LastOrDefault()
+            : request.MaxSumAssured;
+        ValidateCoverageConfiguration(request.Domain, minSumAssured, maxSumAssured, coverageOptions, request.SumAssuredIncrement);
+
         var product = new InsuranceProduct
         {
             ProductName = request.ProductName,
@@ -83,8 +130,10 @@ public class ProductService : IProductService
             Description = request.Description,
             MinAge = request.MinAge,
             MaxAge = request.MaxAge,
-            MinSumAssured = request.MinSumAssured,
-            MaxSumAssured = request.MaxSumAssured,
+            MinSumAssured = minSumAssured,
+            MaxSumAssured = maxSumAssured,
+            CoverageOptionsJson = JsonSerializer.Serialize(coverageOptions),
+            SumAssuredIncrement = string.Equals(request.Domain, "Life", StringComparison.OrdinalIgnoreCase) ? request.SumAssuredIncrement : null,
             MinTenureYears = request.MinTenureYears,
             MaxTenureYears = request.MaxTenureYears,
             WaitingPeriodDays = request.WaitingPeriodDays,
@@ -103,6 +152,71 @@ public class ProductService : IProductService
             Id = Guid.NewGuid(), UserId = Guid.Parse(adminId), EntityType = "InsuranceProduct", EntityId = product.Id,
             Action = "ProductCreated",
             NewValue = JsonSerializer.Serialize(new { productName = product.ProductName, domain = product.Domain }),
+            CreatedAt = DateTime.UtcNow
+        });
+        await _unitOfWork.CompleteAsync();
+
+        return MapProduct(product);
+    }
+
+    public async Task<ProductDto> UpdateProductAsync(string productId, UpdateProductRequest request, string adminId)
+    {
+        var pId = Guid.Parse(productId);
+        var product = await _unitOfWork.InsuranceProducts.GetByIdAsync(pId);
+        if (product == null) throw new NotFoundException("Product not found");
+
+        if (string.IsNullOrWhiteSpace(request.ProductName) || string.IsNullOrWhiteSpace(request.Description))
+            throw new ValidationException("Product name and description are required.");
+        if (request.MinAge < 1 || request.MaxAge < request.MinAge)
+            throw new ValidationException("Product age range is invalid.");
+        var coverageOptions = NormalizeCoverageOptions(request.CoverageOptions);
+        var minSumAssured = string.Equals(product.Domain, "Health", StringComparison.OrdinalIgnoreCase)
+            ? coverageOptions.FirstOrDefault()
+            : request.MinSumAssured;
+        var maxSumAssured = string.Equals(product.Domain, "Health", StringComparison.OrdinalIgnoreCase)
+            ? coverageOptions.LastOrDefault()
+            : request.MaxSumAssured;
+        ValidateCoverageConfiguration(product.Domain, minSumAssured, maxSumAssured, coverageOptions, request.SumAssuredIncrement);
+        if (request.MinTenureYears <= 0 || request.MaxTenureYears < request.MinTenureYears)
+            throw new ValidationException("Product tenure range is invalid.");
+        if (request.WaitingPeriodDays < 0)
+            throw new ValidationException("Waiting period cannot be negative.");
+        if (request.AllowsFamilyFloater && request.MaxFamilyMembers < 2)
+            throw new ValidationException("Family floater products require at least two family members.");
+        if (string.Equals(product.Domain, "Motor", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(request.MotorVehicleType))
+            throw new ValidationException("Motor products require a vehicle type.");
+
+        var oldValue = JsonSerializer.Serialize(new
+        {
+            product.ProductName, product.Description, product.MinAge, product.MaxAge,
+            product.MinSumAssured, product.MaxSumAssured, product.CoverageOptionsJson, product.SumAssuredIncrement, product.MinTenureYears,
+            product.MaxTenureYears, product.WaitingPeriodDays, product.AllowsFamilyFloater,
+            product.MaxFamilyMembers, product.MotorVehicleType
+        });
+
+        product.ProductName = request.ProductName.Trim();
+        product.Description = request.Description.Trim();
+        product.MinAge = request.MinAge;
+        product.MaxAge = request.MaxAge;
+        product.MinSumAssured = minSumAssured;
+        product.MaxSumAssured = maxSumAssured;
+        product.CoverageOptionsJson = JsonSerializer.Serialize(coverageOptions);
+        product.SumAssuredIncrement = string.Equals(product.Domain, "Life", StringComparison.OrdinalIgnoreCase) ? request.SumAssuredIncrement : null;
+        product.MinTenureYears = request.MinTenureYears;
+        product.MaxTenureYears = request.MaxTenureYears;
+        product.WaitingPeriodDays = request.WaitingPeriodDays;
+        product.AllowsFamilyFloater = request.AllowsFamilyFloater;
+        product.MaxFamilyMembers = request.AllowsFamilyFloater ? request.MaxFamilyMembers : 1;
+        product.MotorVehicleType = string.Equals(product.Domain, "Motor", StringComparison.OrdinalIgnoreCase)
+            ? request.MotorVehicleType
+            : null;
+        product.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            Id = Guid.NewGuid(), UserId = Guid.Parse(adminId), EntityType = "InsuranceProduct", EntityId = pId,
+            Action = "ProductUpdated", OldValue = oldValue,
+            NewValue = JsonSerializer.Serialize(new { product.ProductName, product.MinAge, product.MaxAge, product.MinSumAssured, product.MaxSumAssured, coverageOptions, product.SumAssuredIncrement, product.WaitingPeriodDays }),
             CreatedAt = DateTime.UtcNow
         });
         await _unitOfWork.CompleteAsync();

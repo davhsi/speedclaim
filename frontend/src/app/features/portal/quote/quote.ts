@@ -79,8 +79,10 @@ export class QuoteComponent implements OnInit {
     const req: GenerateQuoteRequest = {
       productId: v.productId!,
       age: v.age ?? undefined,
-      sumAssured: v.sumAssured!,
+      sumAssured: v.sumAssured ?? 0,
       tenureYears: v.tenureYears!,
+      vehicleMarketValue: this.isMotor() ? v.insuredDeclaredValue ?? undefined : undefined,
+      vehicleManufactureYear: this.isMotor() ? v.manufactureYear ?? undefined : undefined,
     };
 
     this.submitting.set(true);
@@ -110,18 +112,31 @@ export class QuoteComponent implements OnInit {
           vehicleMake: this.form.value.vehicleMake,
           vehicleModel: this.form.value.vehicleModel,
           manufactureYear: this.form.value.manufactureYear,
-          insuredDeclaredValue: this.form.value.insuredDeclaredValue,
+          insuredDeclaredValue: quote.sumAssured,
         } : undefined,
       },
     });
   }
 
   private applyProductValidators(product: ProductDto): void {
-    this.form.controls.sumAssured.setValidators([
+    const isMotor = product.domain.toUpperCase() === 'MOTOR';
+    const isHealth = product.domain.toUpperCase() === 'HEALTH';
+    this.form.controls.sumAssured.setValidators(isMotor ? [] : [
       Validators.required,
       Validators.min(product.minSumAssured),
       Validators.max(product.maxSumAssured),
     ]);
+    if (isMotor) {
+      this.form.controls.sumAssured.setValue(0);
+      this.form.controls.sumAssured.disable();
+      this.form.controls.insuredDeclaredValue.setValidators([Validators.required, Validators.min(1)]);
+      this.form.controls.manufactureYear.setValidators([Validators.required, Validators.min(1996), Validators.max(new Date().getFullYear())]);
+    } else {
+      this.form.controls.sumAssured.enable();
+      this.form.controls.insuredDeclaredValue.clearValidators();
+      this.form.controls.manufactureYear.clearValidators();
+      if (isHealth && product.coverageOptions?.length) this.form.controls.sumAssured.setValue(product.coverageOptions[0]);
+    }
     this.form.controls.tenureYears.setValidators([
       Validators.required,
       Validators.min(product.minTenureYears),
@@ -129,7 +144,7 @@ export class QuoteComponent implements OnInit {
     ]);
     // Motor isn't age-rated — the driver/policyholder's age doesn't affect vehicle premium
     // here, so the Age field is hidden and not required for Motor products (see quote.html).
-    if (product.domain.toUpperCase() === 'MOTOR') {
+    if (isMotor) {
       this.form.controls.age.clearValidators();
       this.form.controls.age.setValue(null);
     } else {
@@ -142,5 +157,10 @@ export class QuoteComponent implements OnInit {
     this.form.controls.sumAssured.updateValueAndValidity();
     this.form.controls.tenureYears.updateValueAndValidity();
     this.form.controls.age.updateValueAndValidity();
+    this.form.controls.insuredDeclaredValue.updateValueAndValidity();
+    this.form.controls.manufactureYear.updateValueAndValidity();
   }
+
+  isMotor(): boolean { return this.selectedProduct()?.domain.toUpperCase() === 'MOTOR'; }
+  isHealth(): boolean { return this.selectedProduct()?.domain.toUpperCase() === 'HEALTH'; }
 }

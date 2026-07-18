@@ -41,8 +41,8 @@
           <div class="text-[13px] text-body leading-relaxed flex-1 mb-4 line-clamp-2">{{ product.description }}</div>
           <div class="flex justify-between items-center pt-3.5 border-t border-line">
             <div>
-              <div class="text-[11px] text-muted">From</div>
-              <div class="text-sm font-bold text-ink sc-numeric">{{ product.minSumAssured | money }}</div>
+              <div class="text-[11px] text-muted">{{ product.domain.toUpperCase() === 'MOTOR' ? 'Cover' : 'From' }}</div>
+              <div class="text-sm font-bold text-ink sc-numeric">{{ product.domain.toUpperCase() === 'MOTOR' ? 'IDV-based' : (coverStartingAt(product) | money) }}</div>
             </div>
             <span class="text-[13px] text-primary font-semibold">View details →</span>
           </div>

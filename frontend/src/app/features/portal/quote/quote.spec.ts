@@ -177,7 +177,8 @@ describe('QuoteComponent', () => {
       fixture.componentInstance.onSubmit();
 
       expect(quoteService.generateQuote).toHaveBeenCalledWith(expect.objectContaining({
-        productId: 'prod-motor', age: undefined, sumAssured: 900000, tenureYears: 1,
+        productId: 'prod-motor', age: undefined, sumAssured: 0, tenureYears: 1,
+        vehicleMarketValue: 900000, vehicleManufactureYear: 2022,
       }));
     });
   });

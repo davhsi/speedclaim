@@ -1,8 +1,7 @@
 namespace SpeedClaim.Api.Dtos.Catalog;
 
-public record CreateProductRequest(
+public record UpdateProductRequest(
     string ProductName,
-    string Domain,
     string Description,
     int MinAge,
     int MaxAge,

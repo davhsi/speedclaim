@@ -10,6 +10,7 @@ describe('AdminProductsComponent', () => {
   let adminService: {
     getAdminProducts: ReturnType<typeof vi.fn>;
     createProduct: ReturnType<typeof vi.fn>;
+    updateProduct: ReturnType<typeof vi.fn>;
     getProductRates: ReturnType<typeof vi.fn>;
     updateProductRates: ReturnType<typeof vi.fn>;
     getProductDocuments: ReturnType<typeof vi.fn>;
@@ -37,7 +38,7 @@ describe('AdminProductsComponent', () => {
 
   beforeEach(() => {
     adminService = {
-      getAdminProducts: vi.fn(), createProduct: vi.fn(), getProductRates: vi.fn(),
+      getAdminProducts: vi.fn(), createProduct: vi.fn(), updateProduct: vi.fn(), getProductRates: vi.fn(),
       updateProductRates: vi.fn(), getProductDocuments: vi.fn(), updateProductDocuments: vi.fn(),
       toggleProductStatus: vi.fn(), toggleProductSaleAvailability: vi.fn(),
     };
@@ -218,6 +219,41 @@ describe('AdminProductsComponent', () => {
 
       expect(toast.error).toHaveBeenCalledWith('Cannot deactivate this product because it has live policies.');
       expect(c.statusUpdatingId()).toBeNull();
+    });
+  });
+
+  describe('product details', () => {
+    it('opens details with the current values and saves the edited product', () => {
+      const fixture = create([product({ id: 'p1', productName: 'SpeedTest Health', minAge: 1, maxAge: 10, domain: 'Health' })]);
+      const c = fixture.componentInstance;
+      const updated = product({ id: 'p1', productName: 'SpeedTest Health', minAge: 18, maxAge: 65, domain: 'Health' });
+      adminService.updateProduct.mockReturnValue(of(updated));
+
+      c.openEditProductModal(product({ id: 'p1', productName: 'SpeedTest Health', minAge: 1, maxAge: 10, domain: 'Health' }));
+      c.editForm.minAge = 18;
+      c.editForm.maxAge = 65;
+      c.saveProductDetails();
+
+      expect(c.activeModal()).toBeNull();
+      expect(adminService.updateProduct).toHaveBeenCalledWith('p1', expect.objectContaining({ minAge: 18, maxAge: 65 }));
+      expect(c.products().find(p => p.id === 'p1')?.minAge).toBe(18);
+      expect(toast.success).toHaveBeenCalledWith('Product details updated');
+    });
+  });
+
+  describe('product action panel', () => {
+    it('opens a named product panel and routes configuration choices through the existing flows', () => {
+      const fixture = create([product({ id: 'p1', productName: 'Motor Plan' })]);
+      const c = fixture.componentInstance;
+      const selected = c.products()[0];
+      const detailsSpy = vi.spyOn(c, 'openEditProductModal');
+
+      c.openActionMenu(selected);
+      expect(c.actionMenuProduct()).toBe(selected);
+
+      c.manageProductDetails();
+      expect(c.actionMenuProduct()).toBeNull();
+      expect(detailsSpy).toHaveBeenCalledWith(selected);
     });
   });
 

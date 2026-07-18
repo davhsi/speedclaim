@@ -4,7 +4,7 @@ import { StatCardComponent } from '../../../shared/components/stat-card/stat-car
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge';
 import { AdminService } from '../services/admin.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
-import { ProductDto, DocumentRequirementResponseDto, PremiumRateDto } from '../../../core/models/api.models';
+import { ProductDto, DocumentRequirementResponseDto, PremiumRateDto, UpdateProductRequest } from '../../../core/models/api.models';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination';
 
 @Component({
@@ -21,11 +21,13 @@ export class AdminProductsComponent implements OnInit {
   loading = signal(true);
   searchQuery = signal('');
 
-  activeModal = signal<'create' | 'editRates' | 'editDocs' | null>(null);
+  activeModal = signal<'create' | 'editProduct' | 'editRates' | 'editDocs' | null>(null);
   selectedProduct = signal<ProductDto | null>(null);
+  actionMenuProduct = signal<ProductDto | null>(null);
   productDocs = signal<DocumentRequirementResponseDto[]>([]);
   rateBands = signal<PremiumRateDto[]>([]);
   createSubmitting = signal(false);
+  productUpdating = signal(false);
   ratesLoading = signal(false);
   ratesSubmitting = signal(false);
   docsSubmitting = signal(false);
@@ -42,6 +44,16 @@ export class AdminProductsComponent implements OnInit {
   };
 
   createForm = { productName: '', domain: 'Motor', description: '', ...this.domainDefaults['Motor'], allowsFamilyFloater: false, maxFamilyMembers: 1, motorVehicleType: 'TwoWheeler' as string | null };
+  coverageOptionsText = '300000, 500000, 1000000, 1500000';
+  lifeSumAssuredIncrement = 100000;
+  editCoverageOptionsText = '';
+  editLifeSumAssuredIncrement = 100000;
+  editForm: UpdateProductRequest = {
+    productName: '', description: '', minAge: 18, maxAge: 65,
+    minSumAssured: 100000, maxSumAssured: 5000000, minTenureYears: 1,
+    maxTenureYears: 10, waitingPeriodDays: 0, allowsFamilyFloater: false,
+    maxFamilyMembers: 1, motorVehicleType: null,
+  };
 
   currentPage = signal(1);
   readonly pageSize = 10;
@@ -102,11 +114,77 @@ export class AdminProductsComponent implements OnInit {
       this.createForm.allowsFamilyFloater = false;
       this.createForm.maxFamilyMembers = 1;
     }
+    if (domain === 'Health') this.coverageOptionsText = '300000, 500000, 1000000, 1500000';
+    if (domain === 'Life') this.lifeSumAssuredIncrement = 100000;
   }
 
   openCreateModal(): void {
     this.createForm = { productName: '', domain: 'Motor', description: '', ...this.domainDefaults['Motor'], allowsFamilyFloater: false, maxFamilyMembers: 1, motorVehicleType: 'TwoWheeler' };
     this.activeModal.set('create');
+  }
+
+  openActionMenu(product: ProductDto): void {
+    this.actionMenuProduct.set(product);
+  }
+
+  closeActionMenu(): void {
+    this.actionMenuProduct.set(null);
+  }
+
+  manageProductDetails(): void {
+    const product = this.actionMenuProduct();
+    if (!product) return;
+    this.closeActionMenu();
+    this.openEditProductModal(product);
+  }
+
+  manageProductRates(): void {
+    const product = this.actionMenuProduct();
+    if (!product) return;
+    this.closeActionMenu();
+    this.openEditRatesModal(product);
+  }
+
+  manageProductDocuments(): void {
+    const product = this.actionMenuProduct();
+    if (!product) return;
+    this.closeActionMenu();
+    this.openEditDocsModal(product);
+  }
+
+  manageProductSaleAvailability(): void {
+    const product = this.actionMenuProduct();
+    if (!product) return;
+    this.closeActionMenu();
+    this.toggleProductSaleAvailability(product);
+  }
+
+  manageProductStatus(): void {
+    const product = this.actionMenuProduct();
+    if (!product) return;
+    this.closeActionMenu();
+    this.toggleProductStatus(product);
+  }
+
+  openEditProductModal(product: ProductDto): void {
+    this.selectedProduct.set(product);
+    this.editForm = {
+      productName: product.productName,
+      description: product.description,
+      minAge: product.minAge,
+      maxAge: product.maxAge,
+      minSumAssured: product.minSumAssured,
+      maxSumAssured: product.maxSumAssured,
+      minTenureYears: product.minTenureYears,
+      maxTenureYears: product.maxTenureYears,
+      waitingPeriodDays: product.waitingPeriodDays,
+      allowsFamilyFloater: product.allowsFamilyFloater,
+      maxFamilyMembers: product.maxFamilyMembers,
+      motorVehicleType: product.motorVehicleType ?? null,
+    };
+    this.editCoverageOptionsText = (product.coverageOptions?.length ? product.coverageOptions : [product.minSumAssured, product.maxSumAssured]).join(', ');
+    this.editLifeSumAssuredIncrement = product.sumAssuredIncrement ?? 100000;
+    this.activeModal.set('editProduct');
   }
 
   openEditRatesModal(product: ProductDto): void {
@@ -137,7 +215,7 @@ export class AdminProductsComponent implements OnInit {
   }
 
   closeModal(): void {
-    if (this.createSubmitting() || this.ratesSubmitting() || this.docsSubmitting()) return;
+    if (this.createSubmitting() || this.productUpdating() || this.ratesSubmitting() || this.docsSubmitting()) return;
     this.activeModal.set(null);
   }
 
@@ -153,13 +231,19 @@ export class AdminProductsComponent implements OnInit {
       || f.maxTenureYears < f.minTenureYears
       || f.waitingPeriodDays < 0
       || (f.domain === 'Motor' && !f.motorVehicleType)
+      || (f.domain === 'Health' && this.parseCoverageOptions(this.coverageOptionsText).length === 0)
+      || (f.domain === 'Life' && this.lifeSumAssuredIncrement <= 0)
       || (f.allowsFamilyFloater && f.maxFamilyMembers < 2);
   }
 
   createProduct(): void {
     if (this.createSubmitting() || this.createProductInvalid()) return;
     this.createSubmitting.set(true);
-    this.adminService.createProduct(this.createForm as any).subscribe({
+    this.adminService.createProduct({
+      ...this.createForm,
+      coverageOptions: this.createForm.domain === 'Health' ? this.parseCoverageOptions(this.coverageOptionsText) : undefined,
+      sumAssuredIncrement: this.createForm.domain === 'Life' ? this.lifeSumAssuredIncrement : undefined,
+    } as any).subscribe({
       next: product => {
         this.createSubmitting.set(false);
         this.toastService.success(`Product created — ${product.uin}`);
@@ -171,6 +255,51 @@ export class AdminProductsComponent implements OnInit {
         this.toastService.error('Failed to create product');
       },
     });
+  }
+
+  editProductInvalid(): boolean {
+    const f = this.editForm;
+    const product = this.selectedProduct();
+    return !f.productName.trim()
+      || !f.description.trim()
+      || f.minAge < 1
+      || f.maxAge < f.minAge
+      || f.minSumAssured <= 0
+      || f.maxSumAssured < f.minSumAssured
+      || f.minTenureYears <= 0
+      || f.maxTenureYears < f.minTenureYears
+      || f.waitingPeriodDays < 0
+      || (product?.domain === 'Motor' && !f.motorVehicleType)
+      || (product?.domain === 'Health' && this.parseCoverageOptions(this.editCoverageOptionsText).length === 0)
+      || (product?.domain === 'Life' && this.editLifeSumAssuredIncrement <= 0)
+      || (f.allowsFamilyFloater && f.maxFamilyMembers < 2);
+  }
+
+  saveProductDetails(): void {
+    const product = this.selectedProduct();
+    if (!product || this.productUpdating() || this.editProductInvalid()) return;
+    this.productUpdating.set(true);
+    this.adminService.updateProduct(product.id, {
+      ...this.editForm,
+      coverageOptions: product.domain === 'Health' ? this.parseCoverageOptions(this.editCoverageOptionsText) : undefined,
+      sumAssuredIncrement: product.domain === 'Life' ? this.editLifeSumAssuredIncrement : undefined,
+    }).subscribe({
+      next: updated => {
+        this.products.update(list => list.map(p => p.id === updated.id ? updated : p));
+        this.selectedProduct.set(updated);
+        this.productUpdating.set(false);
+        this.toastService.success('Product details updated');
+        this.closeModal();
+      },
+      error: err => {
+        this.productUpdating.set(false);
+        this.toastService.error(err?.error?.title ?? err?.error?.message ?? 'Failed to update product details');
+      },
+    });
+  }
+
+  private parseCoverageOptions(value: string): number[] {
+    return value.split(',').map(option => Number(option.trim())).filter(option => Number.isFinite(option) && option > 0);
   }
 
   toggleProductStatus(product: ProductDto): void {
