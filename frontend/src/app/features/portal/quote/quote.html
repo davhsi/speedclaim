@@ -32,16 +32,21 @@
 
         @if (selectedProduct(); as sp) {
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-5">
-            <div>
-              <label for="quote-sum-assured" class="block text-[13px] font-medium mb-1.5">Sum assured (₹)</label>
-              <input id="quote-sum-assured" type="number" formControlName="sumAssured" [min]="sp.minSumAssured" [max]="sp.maxSumAssured" placeholder="e.g., 500000" class="h-[42px]"
-                     [class.border-danger]="form.get('sumAssured')?.invalid && form.get('sumAssured')?.touched">
-              @if (form.get('sumAssured')?.invalid && form.get('sumAssured')?.touched) {
-                <p class="text-xs text-danger mt-1">Enter an amount between {{ sp.minSumAssured | money }} and {{ sp.maxSumAssured | money }}.</p>
-              } @else {
-                <p class="text-xs text-muted mt-1">Range: {{ sp.minSumAssured | money }} - {{ sp.maxSumAssured | money }}</p>
-              }
-            </div>
+            @if (!isMotor()) {
+              <div>
+                <label for="quote-sum-assured" class="block text-[13px] font-medium mb-1.5">Sum assured (₹)</label>
+                @if (isHealth() && sp.coverageOptions?.length) {
+                  <select id="quote-sum-assured" formControlName="sumAssured" class="h-[42px]">
+                    @for (option of sp.coverageOptions; track option) { <option [ngValue]="option">{{ option | money }}</option> }
+                  </select>
+                  <p class="text-xs text-muted mt-1">Choose one of the product's approved cover amounts.</p>
+                } @else {
+                  <input id="quote-sum-assured" type="number" formControlName="sumAssured" [min]="sp.minSumAssured" [max]="sp.maxSumAssured" [step]="sp.sumAssuredIncrement ?? 1" placeholder="e.g., 500000" class="h-[42px]"
+                         [class.border-danger]="form.get('sumAssured')?.invalid && form.get('sumAssured')?.touched">
+                  <p class="text-xs text-muted mt-1">{{ sp.minSumAssured | money }} to {{ sp.maxSumAssured | money }} in {{ sp.sumAssuredIncrement | money }} increments</p>
+                }
+              </div>
+            }
             <div>
               <label for="quote-tenure-years" class="block text-[13px] font-medium mb-1.5">Tenure (years)</label>
               <input id="quote-tenure-years" type="number" formControlName="tenureYears" [min]="sp.minTenureYears" [max]="sp.maxTenureYears" placeholder="e.g., 5" class="h-[42px]"
@@ -91,8 +96,9 @@
                   <input id="quote-manufacture-year" type="number" formControlName="manufactureYear" placeholder="e.g., 2023" class="h-[42px] sc-numeric">
                 </div>
                 <div>
-                  <label for="quote-idv" class="block text-[13px] font-medium mb-1.5">IDV (₹)</label>
+                  <label for="quote-idv" class="block text-[13px] font-medium mb-1.5">Manufacturer-listed vehicle value (₹)</label>
                   <input id="quote-idv" type="number" formControlName="insuredDeclaredValue" placeholder="e.g., 600000" class="h-[42px] sc-numeric">
+                  <p class="text-xs text-muted mt-1">IDV is calculated from this value and vehicle age.</p>
                 </div>
               </div>
             </div>

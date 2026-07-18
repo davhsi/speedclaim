@@ -62,4 +62,9 @@ export class ProductListComponent implements OnInit {
     // svg is always one of the hardcoded literals above, never derived from user input.
     return this.sanitizer.bypassSecurityTrustHtml(svg);
   }
+
+  coverStartingAt(product: ProductDto): number | null {
+    if (product.domain.toUpperCase() === 'MOTOR') return null;
+    return product.domain.toUpperCase() === 'HEALTH' ? product.coverageOptions?.[0] ?? null : product.minSumAssured;
+  }
 }

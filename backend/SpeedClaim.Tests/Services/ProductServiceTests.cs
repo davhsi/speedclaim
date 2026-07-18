@@ -89,7 +89,7 @@ public class ProductServiceTests
     [Test]
     public async Task CreateProductAsync_ValidRequest_GeneratesUin()
     {
-        var request = new CreateProductRequest("Name", "Health", "Desc", 18, 65, 100000, 500000, 1, 10, 30, true, 4);
+        var request = new CreateProductRequest("Name", "Health", "Desc", 18, 65, 100000, 500000, 1, 10, 30, true, 4, CoverageOptions: new List<decimal> { 300000m, 500000m });
         var adminId = Guid.NewGuid();
 
         _mockProductRepo.Setup(r => r.AddAsync(It.IsAny<InsuranceProduct>())).Returns(Task.CompletedTask);
@@ -117,6 +117,56 @@ public class ProductServiceTests
         var result = await _productService.CreateProductAsync(request, Guid.NewGuid().ToString());
 
         Assert.That(result.Uin, Is.EqualTo($"UIN-MO-{year}-0008"));
+    }
+
+    [Test]
+    public async Task UpdateProductAsync_ValidRequest_UpdatesEditableFieldsAndWritesAudit()
+    {
+        var productId = Guid.NewGuid();
+        var product = new InsuranceProduct
+        {
+            Id = productId,
+            ProductName = "Old Health",
+            Description = "Old description",
+            Domain = "Health",
+            MinAge = 1,
+            MaxAge = 10,
+            MinSumAssured = 100000,
+            MaxSumAssured = 5000000,
+            MinTenureYears = 1,
+            MaxTenureYears = 10,
+            WaitingPeriodDays = 0,
+            AllowsFamilyFloater = false,
+            MaxFamilyMembers = 1
+        };
+        _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(product);
+        var request = new UpdateProductRequest(
+            "SpeedTest Health", "Updated description", 18, 65, 100000, 5000000,
+            1, 10, 0, true, 4, CoverageOptions: new List<decimal> { 300000m, 500000m, 1000000m });
+
+        var result = await _productService.UpdateProductAsync(productId.ToString(), request, Guid.NewGuid().ToString());
+
+        Assert.That(result.ProductName, Is.EqualTo("SpeedTest Health"));
+        Assert.That(result.MinAge, Is.EqualTo(18));
+        Assert.That(result.MaxAge, Is.EqualTo(65));
+        Assert.That(result.AllowsFamilyFloater, Is.True);
+        Assert.That(result.MaxFamilyMembers, Is.EqualTo(4));
+        _mockUnitOfWork.Verify(u => u.AuditLogs.AddAsync(It.Is<AuditLog>(a => a.Action == "ProductUpdated")), Times.Once);
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public void UpdateProductAsync_InvalidAgeRange_ThrowsValidationException()
+    {
+        var productId = Guid.NewGuid();
+        _mockProductRepo.Setup(r => r.GetByIdAsync(productId)).ReturnsAsync(new InsuranceProduct { Id = productId, Domain = "Health" });
+        var request = new UpdateProductRequest("Plan", "Description", 65, 18, 100000, 500000, 1, 10, 0, false, 1);
+
+        var ex = Assert.ThrowsAsync<ValidationException>(() =>
+            _productService.UpdateProductAsync(productId.ToString(), request, Guid.NewGuid().ToString()));
+
+        Assert.That(ex!.Message, Is.EqualTo("Product age range is invalid."));
+        _mockUnitOfWork.Verify(u => u.CompleteAsync(), Times.Never);
     }
 
     [Test]

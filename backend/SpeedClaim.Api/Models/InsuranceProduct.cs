@@ -15,6 +15,10 @@ public class InsuranceProduct
     public int MaxAge { get; set; }
     public decimal MinSumAssured { get; set; }
     public decimal MaxSumAssured { get; set; }
+    // Health products expose exact selectable cover amounts. Life products use the
+    // min/max envelope together with SumAssuredIncrement; Motor derives IDV at quote time.
+    public string CoverageOptionsJson { get; set; } = "[]";
+    public decimal? SumAssuredIncrement { get; set; }
     public int MinTenureYears { get; set; }
     public int MaxTenureYears { get; set; }
     public int WaitingPeriodDays { get; set; }

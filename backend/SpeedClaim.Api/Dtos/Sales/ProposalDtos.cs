@@ -7,7 +7,9 @@ public record GenerateQuoteRequest(
     string ProductId,
     int? Age,
     decimal SumAssured,
-    int TenureYears
+    int TenureYears,
+    decimal? VehicleMarketValue = null,
+    int? VehicleManufactureYear = null
 );
 
 public record GenerateQuoteResponse(

@@ -241,10 +241,12 @@ public partial class SpeedClaimDbContext : DbContext
             e.Property(x => x.Uin).HasMaxLength(50);
             e.Property(x => x.MinSumAssured).HasColumnType("decimal(15,2)");
             e.Property(x => x.MaxSumAssured).HasColumnType("decimal(15,2)");
+            e.Property(x => x.CoverageOptionsJson).HasColumnType("jsonb").HasDefaultValue("[]");
+            e.Property(x => x.SumAssuredIncrement).HasColumnType("decimal(15,2)");
 
             e.HasData(
-                new InsuranceProduct { Id = Guid.Parse("10000000-1111-1111-1111-111111111111"), ProductName = "Term Life Basic", Domain = "LIFE", Uin = "UIN123", Description = "Basic term life insurance", MinAge = 18, MaxAge = 60, MinSumAssured = 100000m, MaxSumAssured = 5000000m, MinTenureYears = 5, MaxTenureYears = 30, WaitingPeriodDays = 0, AllowsFamilyFloater = false, MaxFamilyMembers = 1, IsActive = true, CreatedAt = new DateTimeOffset(2026, 6, 7, 0, 0, 0, TimeSpan.Zero) },
-                new InsuranceProduct { Id = Guid.Parse("70000000-0000-0000-0000-000000000001"), ProductName = "SpeedCare Platinum Health", Domain = "HEALTH", Uin = "UIN-HC-DEMO-2026", Description = "Comprehensive health insurance with cashless hospitalisation across 5000+ network hospitals", MinAge = 18, MaxAge = 65, MinSumAssured = 100000m, MaxSumAssured = 5000000m, MinTenureYears = 1, MaxTenureYears = 10, WaitingPeriodDays = 30, AllowsFamilyFloater = true, MaxFamilyMembers = 6, IsActive = true, CreatedAt = new DateTimeOffset(2026, 6, 7, 0, 0, 0, TimeSpan.Zero) }
+                new InsuranceProduct { Id = Guid.Parse("10000000-1111-1111-1111-111111111111"), ProductName = "Term Life Basic", Domain = "LIFE", Uin = "UIN123", Description = "Basic term life insurance", MinAge = 18, MaxAge = 60, MinSumAssured = 500000m, MaxSumAssured = 5000000m, SumAssuredIncrement = 100000m, MinTenureYears = 5, MaxTenureYears = 30, WaitingPeriodDays = 0, AllowsFamilyFloater = false, MaxFamilyMembers = 1, IsActive = true, CreatedAt = new DateTimeOffset(2026, 6, 7, 0, 0, 0, TimeSpan.Zero) },
+                new InsuranceProduct { Id = Guid.Parse("70000000-0000-0000-0000-000000000001"), ProductName = "SpeedCare Platinum Health", Domain = "HEALTH", Uin = "UIN-HC-DEMO-2026", Description = "Comprehensive health insurance with cashless hospitalisation across 5000+ network hospitals", MinAge = 18, MaxAge = 65, MinSumAssured = 300000m, MaxSumAssured = 1500000m, CoverageOptionsJson = "[300000,500000,1000000,1500000]", MinTenureYears = 1, MaxTenureYears = 10, WaitingPeriodDays = 30, AllowsFamilyFloater = true, MaxFamilyMembers = 6, IsActive = true, CreatedAt = new DateTimeOffset(2026, 6, 7, 0, 0, 0, TimeSpan.Zero) }
             );
         });
 

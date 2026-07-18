@@ -181,6 +181,8 @@ export interface ProductDto {
   isActive: boolean;
   isAvailableForSale: boolean;
   motorVehicleType?: string | null;
+  coverageOptions?: number[];
+  sumAssuredIncrement?: number | null;
 }
 
 export interface DocumentRequirementDto {
@@ -196,6 +198,8 @@ export interface GenerateQuoteRequest {
   age?: number;
   sumAssured: number;
   tenureYears: number;
+  vehicleMarketValue?: number;
+  vehicleManufactureYear?: number;
 }
 
 export interface HealthQuoteDetail {
@@ -680,6 +684,25 @@ export interface CreateProductRequest {
   allowsFamilyFloater: boolean;
   maxFamilyMembers: number;
   motorVehicleType?: string | null;
+  coverageOptions?: number[];
+  sumAssuredIncrement?: number | null;
+}
+
+export interface UpdateProductRequest {
+  productName: string;
+  description: string;
+  minAge: number;
+  maxAge: number;
+  minSumAssured: number;
+  maxSumAssured: number;
+  minTenureYears: number;
+  maxTenureYears: number;
+  waitingPeriodDays: number;
+  allowsFamilyFloater: boolean;
+  maxFamilyMembers: number;
+  motorVehicleType?: string | null;
+  coverageOptions?: number[];
+  sumAssuredIncrement?: number | null;
 }
 
 export interface PremiumRateDto {

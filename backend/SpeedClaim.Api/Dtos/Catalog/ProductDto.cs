@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace SpeedClaim.Api.Dtos.Catalog;
 
@@ -19,5 +20,7 @@ public record ProductDto(
     int MaxFamilyMembers,
     bool IsActive,
     bool IsAvailableForSale,
-    string? MotorVehicleType = null
+    string? MotorVehicleType = null,
+    IReadOnlyList<decimal>? CoverageOptions = null,
+    decimal? SumAssuredIncrement = null
 );

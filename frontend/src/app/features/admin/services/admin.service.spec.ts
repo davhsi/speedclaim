@@ -209,6 +209,16 @@ describe('AdminService', () => {
       call.flush(response);
     });
 
+    it('updateProduct PATCHes editable product details', () => {
+      const request = { productName: 'SpeedTest Health', minAge: 18, maxAge: 65 } as never;
+      const response = { id: 'p1' };
+      service.updateProduct('p1', request).subscribe(res => expect(res).toEqual(response));
+      const call = httpMock.expectOne('/api/v1/products/p1');
+      expect(call.request.method).toBe('PATCH');
+      expect(call.request.body).toEqual(request);
+      call.flush(response);
+    });
+
     it('getProductDocuments GETs the document requirements for a product', () => {
       const response = [{ documentKey: 'RC' }];
       service.getProductDocuments('p1').subscribe(res => expect(res).toEqual(response));

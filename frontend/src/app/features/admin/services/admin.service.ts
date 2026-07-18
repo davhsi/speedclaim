@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import {
   UserDto, ProductDto, NotificationDto, ApiMessage, PagedResponse,
   SessionDto, SystemConfigDto, AuditLogDto, BranchDto, CreateBranchRequest,
-  UpdateAgentLicenseRequest, AgentProfileDto, CreateProductRequest,
+  UpdateAgentLicenseRequest, AgentProfileDto, CreateProductRequest, UpdateProductRequest,
   PremiumRateDto, DocumentRequirementResponseDto, DocumentRequirementUpdateDto,
   AdminResetPasswordRequest, ManageEmailTemplateRequest, UpdateSystemConfigRequest,
   EmailTemplateDto, RegisterAgentRequest,
@@ -92,6 +92,10 @@ export class AdminService {
 
   createProduct(req: CreateProductRequest): Observable<ProductDto> {
     return this.http.post<ProductDto>('/api/v1/products', req);
+  }
+
+  updateProduct(productId: string, req: UpdateProductRequest): Observable<ProductDto> {
+    return this.http.patch<ProductDto>(`/api/v1/products/${productId}`, req);
   }
 
   getProductRates(productId: string): Observable<PremiumRateDto[]> {

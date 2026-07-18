@@ -55,21 +55,10 @@
                 </span>
               </td>
               <td class="px-5 py-3">
-                <div class="flex items-center justify-end gap-1">
-                  <button (click)="openEditRatesModal(p)" title="Edit rates" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-                  </button>
-                  <button (click)="openEditDocsModal(p)" title="Document requirements" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center cursor-pointer hover:bg-surface">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B7685" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                  </button>
-                  <a [href]="'/admin/brochures?productId=' + p.id" title="Manage brochures" class="w-7 h-7 rounded-md border border-line bg-white flex items-center justify-center hover:bg-surface" aria-label="Manage brochures">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0F6E8C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13h8M8 17h5"/></svg>
-                  </a>
-                  <button (click)="toggleProductSaleAvailability(p)" [disabled]="saleUpdatingId() !== null || !p.isActive" [title]="p.isAvailableForSale ? 'Withdraw from sale' : 'Restore to sale'" class="w-7 h-7 rounded-md border bg-white flex items-center justify-center cursor-pointer hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white" [style.border-color]="p.isAvailableForSale ? '#FAD88A' : '#B2E4CE'">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" [attr.stroke]="p.isAvailableForSale ? '#D9920A' : '#1F9D6B'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M7 7V5a2 2 0 012-2h6a2 2 0 012 2v2"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
-                  </button>
-                  <button (click)="toggleProductStatus(p)" [disabled]="statusUpdatingId() !== null" [title]="p.isActive ? 'Deactivate' : 'Activate'" class="w-7 h-7 rounded-md border bg-white flex items-center justify-center cursor-pointer hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white" [style.border-color]="p.isActive ? '#F5B4B4' : '#B2E4CE'">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" [attr.stroke]="p.isActive ? '#D14343' : '#1F9D6B'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 11-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+                <div class="flex justify-end">
+                  <button type="button" (click)="openActionMenu(p)" class="h-8 px-3 rounded-lg border border-line bg-white text-[12px] font-semibold text-body cursor-pointer hover:border-primary hover:text-primary hover:bg-primary-light/40 transition-colors inline-flex items-center gap-1.5" [attr.aria-label]="'Manage ' + p.productName">
+                    Manage
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
                   </button>
                 </div>
               </td>
@@ -84,6 +73,55 @@
       </div>
     </div>
   </div>
+
+  <!-- Product action panel: labels make high-impact actions legible before they are used. -->
+  @if (actionMenuProduct(); as product) {
+    <div class="fixed inset-0 z-[350] flex items-center justify-center p-4" role="dialog" aria-modal="true" [attr.aria-labelledby]="'product-actions-title-' + product.id">
+      <button type="button" aria-label="Close product actions" (click)="closeActionMenu()" class="absolute inset-0 bg-ink/35 border-none cursor-default"></button>
+      <section class="relative w-full max-w-md overflow-hidden rounded-card border border-line bg-white shadow-lg animate-[sc-modal_.2s_ease-out]">
+        <header class="flex items-start justify-between gap-4 px-6 py-5 border-b border-line">
+          <div>
+            <p class="text-[10px] font-bold tracking-[0.14em] text-primary uppercase">Product controls</p>
+            <h3 [id]="'product-actions-title-' + product.id" class="mt-1 text-[16px] font-semibold text-ink">Manage {{ product.productName }}</h3>
+            <p class="mt-1 text-[12px] text-muted">{{ product.uin }} · {{ product.domain }}</p>
+          </div>
+          <button type="button" (click)="closeActionMenu()" class="p-1 text-muted bg-transparent border-none cursor-pointer hover:text-ink" aria-label="Close product actions">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </header>
+        <div class="p-3">
+          <p class="px-3 pt-1 pb-2 text-[10px] font-bold tracking-[0.12em] text-muted uppercase">Configure</p>
+          <button type="button" (click)="manageProductDetails()" class="w-full flex items-center justify-between gap-4 rounded-lg px-3 py-3 text-left border-none bg-transparent cursor-pointer hover:bg-surface">
+            <span><span class="block text-[13px] font-semibold text-ink">Product details</span><span class="block mt-0.5 text-[11px] text-muted">Name, cover limits, eligibility and settings</span></span>
+            <svg class="shrink-0 text-muted" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+          <button type="button" (click)="manageProductRates()" class="w-full flex items-center justify-between gap-4 rounded-lg px-3 py-3 text-left border-none bg-transparent cursor-pointer hover:bg-surface">
+            <span><span class="block text-[13px] font-semibold text-ink">Premium rates</span><span class="block mt-0.5 text-[11px] text-muted">Update rate bands and annual premiums</span></span>
+            <svg class="shrink-0 text-muted" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+          <button type="button" (click)="manageProductDocuments()" class="w-full flex items-center justify-between gap-4 rounded-lg px-3 py-3 text-left border-none bg-transparent cursor-pointer hover:bg-surface">
+            <span><span class="block text-[13px] font-semibold text-ink">Required documents</span><span class="block mt-0.5 text-[11px] text-muted">Set documents customers must provide</span></span>
+            <svg class="shrink-0 text-muted" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+          <a [href]="'/admin/brochures?productId=' + product.id" class="w-full flex items-center justify-between gap-4 rounded-lg px-3 py-3 text-left no-underline hover:bg-surface">
+            <span><span class="block text-[13px] font-semibold text-ink">Customer brochures</span><span class="block mt-0.5 text-[11px] text-muted">Create and manage product brochures</span></span>
+            <svg class="shrink-0 text-muted" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </a>
+        </div>
+        <div class="border-t border-line p-3">
+          <p class="px-3 pt-1 pb-2 text-[10px] font-bold tracking-[0.12em] text-muted uppercase">Availability</p>
+          <button type="button" (click)="manageProductSaleAvailability()" [disabled]="saleUpdatingId() !== null || !product.isActive" class="w-full flex items-center justify-between gap-4 rounded-lg px-3 py-3 text-left border-none bg-transparent cursor-pointer hover:bg-warning-bg disabled:opacity-45 disabled:cursor-not-allowed">
+            <span><span class="block text-[13px] font-semibold text-ink">{{ product.isAvailableForSale ? 'Withdraw from sale' : 'Make available for sale' }}</span><span class="block mt-0.5 text-[11px] text-muted">{{ product.isActive ? 'Controls whether new customers can select it' : 'Activate this product before changing sale availability' }}</span></span>
+            <span class="text-[11px] font-bold" [class]="product.isAvailableForSale ? 'text-warning' : 'text-success'">{{ product.isAvailableForSale ? 'On sale' : 'Withdrawn' }}</span>
+          </button>
+          <button type="button" (click)="manageProductStatus()" [disabled]="statusUpdatingId() !== null" class="w-full flex items-center justify-between gap-4 rounded-lg px-3 py-3 text-left border-none bg-transparent cursor-pointer hover:bg-danger-bg disabled:opacity-45 disabled:cursor-not-allowed">
+            <span><span class="block text-[13px] font-semibold" [class]="product.isActive ? 'text-danger' : 'text-success'">{{ product.isActive ? 'Deactivate product' : 'Activate product' }}</span><span class="block mt-0.5 text-[11px] text-muted">{{ product.isActive ? 'Stops this product from being offered' : 'Restores this product for administration and sale' }}</span></span>
+            <span class="text-[11px] font-bold" [class]="product.isActive ? 'text-danger' : 'text-success'">{{ product.isActive ? 'Active' : 'Inactive' }}</span>
+          </button>
+        </div>
+      </section>
+    </div>
+  }
 
   <!-- Create Product Modal -->
   @if (activeModal() === 'create') {
@@ -124,16 +162,32 @@
               <input type="number" id="create-product-max-age" [(ngModel)]="createForm.maxAge" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
             </div>
           </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label for="create-product-min-sum-assured" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Min Sum Assured</label>
-              <input type="number" id="create-product-min-sum-assured" [(ngModel)]="createForm.minSumAssured" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+          @if (createForm.domain !== 'Health') {
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label for="create-product-min-sum-assured" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">{{ createForm.domain === 'Motor' ? 'Min IDV guardrail' : 'Min Sum Assured' }}</label>
+                <input type="number" id="create-product-min-sum-assured" [(ngModel)]="createForm.minSumAssured" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+              </div>
+              <div>
+                <label for="create-product-max-sum-assured" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">{{ createForm.domain === 'Motor' ? 'Max IDV guardrail' : 'Max Sum Assured' }}</label>
+                <input type="number" id="create-product-max-sum-assured" [(ngModel)]="createForm.maxSumAssured" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+              </div>
             </div>
+          }
+          @if (createForm.domain === 'Health') {
             <div>
-              <label for="create-product-max-sum-assured" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Max Sum Assured</label>
-              <input type="number" id="create-product-max-sum-assured" [(ngModel)]="createForm.maxSumAssured" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+              <label for="create-product-coverage-options" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Available cover amounts</label>
+              <input type="text" id="create-product-coverage-options" [(ngModel)]="coverageOptionsText" placeholder="e.g. 300000, 500000, 1000000" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+              <p class="mt-1 text-[11px] text-muted">Customers select one approved amount. The range above is derived from these options.</p>
             </div>
-          </div>
+          }
+          @if (createForm.domain === 'Life') {
+            <div>
+              <label for="create-product-sum-increment" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Cover increment</label>
+              <input type="number" id="create-product-sum-increment" [(ngModel)]="lifeSumAssuredIncrement" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+              <p class="mt-1 text-[11px] text-muted">Customers can choose between the limits only in this increment.</p>
+            </div>
+          }
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label for="create-product-min-tenure" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Min Tenure (years)</label>
@@ -178,6 +232,74 @@
         <div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-line">
           <button (click)="closeModal()" [disabled]="createSubmitting()" class="h-9 px-4 bg-white text-body text-[13px] font-medium rounded-lg border border-line cursor-pointer hover:bg-surface disabled:opacity-50 disabled:cursor-wait">Cancel</button>
           <button (click)="createProduct()" [disabled]="createProductInvalid() || createSubmitting()" class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-lg border-none cursor-pointer hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed">{{ createSubmitting() ? 'Creating...' : 'Create product' }}</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- View / Edit Product Modal -->
+  @if (activeModal() === 'editProduct') {
+    <div class="fixed inset-0 z-[400] flex items-center justify-center p-4">
+      <button type="button" aria-label="Close dialog" (click)="closeModal()" class="absolute inset-0 bg-black/40 border-none cursor-default"></button>
+      <div class="relative bg-white rounded-card shadow-lg max-w-lg w-full max-h-[85vh] overflow-y-auto animate-[sc-modal_.2s_ease-out]">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-line">
+          <div>
+            <h3 class="text-[15px] font-semibold text-ink">Product details</h3>
+            <p class="mt-0.5 text-[11px] text-muted">UIN and domain are immutable after creation.</p>
+          </div>
+          <button (click)="closeModal()" [disabled]="productUpdating()" class="text-muted bg-transparent border-none cursor-pointer p-1 disabled:opacity-50 disabled:cursor-wait">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="px-6 py-5 space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div><div class="text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">UIN</div><div class="h-9 px-3 flex items-center rounded-lg bg-surface text-[13px] text-body">{{ selectedProduct()?.uin }}</div></div>
+            <div><div class="text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Domain</div><div class="h-9 px-3 flex items-center rounded-lg bg-surface text-[13px] text-body">{{ selectedProduct()?.domain }}</div></div>
+          </div>
+          <div>
+            <label for="edit-product-name" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Product name</label>
+            <input type="text" id="edit-product-name" [(ngModel)]="editForm.productName" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" />
+          </div>
+          <div>
+            <label for="edit-product-description" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Description</label>
+            <textarea id="edit-product-description" [(ngModel)]="editForm.description" rows="2" class="w-full px-3 py-2 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary resize-none"></textarea>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div><label for="edit-product-min-age" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Min age</label><input type="number" id="edit-product-min-age" [(ngModel)]="editForm.minAge" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" /></div>
+            <div><label for="edit-product-max-age" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Max age</label><input type="number" id="edit-product-max-age" [(ngModel)]="editForm.maxAge" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" /></div>
+          </div>
+          @if (selectedProduct()?.domain !== 'Health') {
+            <div class="grid grid-cols-2 gap-4">
+              <div><label for="edit-product-min-sum" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">{{ selectedProduct()?.domain === 'Motor' ? 'Min IDV guardrail' : 'Min sum assured' }}</label><input type="number" id="edit-product-min-sum" [(ngModel)]="editForm.minSumAssured" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" /></div>
+              <div><label for="edit-product-max-sum" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">{{ selectedProduct()?.domain === 'Motor' ? 'Max IDV guardrail' : 'Max sum assured' }}</label><input type="number" id="edit-product-max-sum" [(ngModel)]="editForm.maxSumAssured" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" /></div>
+            </div>
+          }
+          @if (selectedProduct()?.domain === 'Health') {
+            <div><label for="edit-product-coverage-options" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Available cover amounts</label><input type="text" id="edit-product-coverage-options" [(ngModel)]="editCoverageOptionsText" placeholder="e.g. 300000, 500000, 1000000" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" /><p class="mt-1 text-[11px] text-muted">Comma-separated approved amounts; customers cannot enter another value.</p></div>
+          }
+          @if (selectedProduct()?.domain === 'Life') {
+            <div><label for="edit-product-sum-increment" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Cover increment</label><input type="number" id="edit-product-sum-increment" [(ngModel)]="editLifeSumAssuredIncrement" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" /></div>
+          }
+          <div class="grid grid-cols-2 gap-4">
+            <div><label for="edit-product-min-tenure" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Min tenure (years)</label><input type="number" id="edit-product-min-tenure" [(ngModel)]="editForm.minTenureYears" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" /></div>
+            <div><label for="edit-product-max-tenure" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Max tenure (years)</label><input type="number" id="edit-product-max-tenure" [(ngModel)]="editForm.maxTenureYears" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" /></div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div><label for="edit-product-waiting" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Waiting period (days)</label><input type="number" id="edit-product-waiting" [(ngModel)]="editForm.waitingPeriodDays" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" /></div>
+            @if (selectedProduct()?.domain === 'Motor') {
+              <div><label for="edit-product-vehicle-type" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Vehicle type</label><select id="edit-product-vehicle-type" [(ngModel)]="editForm.motorVehicleType" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary"><option value="TwoWheeler">Two wheeler</option><option value="PrivateCar">Private car</option><option value="CommercialVehicle">Commercial vehicle</option></select></div>
+            }
+            @if (selectedProduct()?.domain === 'Health') {
+              <div class="flex items-end pb-1.5"><label class="flex items-center gap-2 cursor-pointer text-[13px] text-ink"><input type="checkbox" [(ngModel)]="editForm.allowsFamilyFloater" class="w-4 h-4 accent-primary" />Family floater</label></div>
+            }
+          </div>
+          @if (editForm.allowsFamilyFloater) {
+            <div><label for="edit-product-max-family" class="block text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">Max family members</label><input type="number" id="edit-product-max-family" [(ngModel)]="editForm.maxFamilyMembers" class="w-full h-9 px-3 border border-line rounded-lg text-[13px] text-ink outline-none focus:border-primary" /></div>
+          }
+        </div>
+        <div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-line">
+          <button (click)="closeModal()" [disabled]="productUpdating()" class="h-9 px-4 bg-white text-body text-[13px] font-medium rounded-lg border border-line cursor-pointer hover:bg-surface disabled:opacity-50 disabled:cursor-wait">Cancel</button>
+          <button (click)="saveProductDetails()" [disabled]="editProductInvalid() || productUpdating()" class="h-9 px-4 bg-primary text-white text-[13px] font-semibold rounded-lg border-none cursor-pointer hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed">{{ productUpdating() ? 'Saving...' : 'Save details' }}</button>
         </div>
       </div>
     </div>
