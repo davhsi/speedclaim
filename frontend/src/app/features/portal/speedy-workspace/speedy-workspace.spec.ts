@@ -42,4 +42,11 @@ describe('SpeedyWorkspaceComponent', () => {
 
     expect(fixture.componentInstance.showKyc()).toBe(true);
   });
+
+  it('renders Speedy Markdown while escaping unsafe HTML', () => {
+    const fixture = TestBed.createComponent(SpeedyWorkspaceComponent);
+
+    expect(fixture.componentInstance.renderMarkdown('**Health cover**\n\n1. Compare products\n- Check waiting period\n<script>alert(1)</script>'))
+      .toBe('<p><strong>Health cover</strong></p><ol><li>Compare products</li></ol><ul><li>Check waiting period</li></ul><p>&lt;script&gt;alert(1)&lt;/script&gt;</p>');
+  });
 });
