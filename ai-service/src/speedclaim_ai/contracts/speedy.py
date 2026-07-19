@@ -81,6 +81,16 @@ class SpeedyKycSnapshot(BaseModel):
     pan_uploaded: bool = Field(alias="panUploaded")
 
 
+class SpeedyGrievanceSnapshot(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    grievance_number: str = Field(alias="grievanceNumber", min_length=1, max_length=80)
+    category: str = Field(min_length=1, max_length=80)
+    status: str = Field(min_length=1, max_length=40)
+    created_at: datetime = Field(alias="createdAt")
+    resolved_at: datetime | None = Field(alias="resolvedAt", default=None)
+
+
 class SpeedyAccountSnapshot(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
@@ -90,6 +100,7 @@ class SpeedyAccountSnapshot(BaseModel):
     policies: list[SpeedyPolicySnapshot] = Field(default_factory=list, max_length=20)
     upcoming_premiums: list[SpeedyPremiumSnapshot] = Field(alias="upcomingPremiums", default_factory=list, max_length=5)
     claims: list[SpeedyClaimSnapshot] = Field(default_factory=list, max_length=5)
+    grievances: list[SpeedyGrievanceSnapshot] = Field(default_factory=list, max_length=5)
     kyc: SpeedyKycSnapshot | None = None
 
 
