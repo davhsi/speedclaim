@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { concatMap } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
-import { SpeedyWorkspaceAction, SpeedyWorkspaceConversation } from '../../../core/models/api.models';
+import { KycRecordDto, SpeedyWorkspaceAction, SpeedyWorkspaceConversation } from '../../../core/models/api.models';
 import { ProfileService } from '../profile/services/profile.service';
 import { SpeedyAssistantService } from '../services/speedy-assistant.service';
 
@@ -62,6 +62,8 @@ export class SpeedyWorkspaceComponent {
   readonly showKyc = signal(false);
   readonly kycSubmitting = signal(false);
   readonly kycError = signal<string | null>(null);
+  readonly kycRecord = signal<KycRecordDto | null>(null);
+  readonly kycLoaded = signal(false);
   readonly aadhaarNumber = signal('');
   readonly panNumber = signal('');
   readonly aadhaarFile = signal<File | null>(null);
@@ -80,6 +82,11 @@ export class SpeedyWorkspaceComponent {
   });
   readonly kycReady = computed(() => AADHAAR_PATTERN.test(this.aadhaarNumber().trim())
     && PAN_PATTERN.test(this.panNumber().trim().toUpperCase()) && !!this.aadhaarFile() && !!this.panFile());
+  readonly kycUnderReviewOrVerified = computed(() => {
+    const kyc = this.kycRecord();
+    return !!kyc && kyc.aadhaarUploaded && kyc.panUploaded
+      && ['Pending', 'UnderReview', 'Approved'].includes(kyc.kycStatus);
+  });
 
   readonly suggestions = computed(() => this.signedIn()
     ? ['Which policy may help with a hospital admission?', 'Help me complete KYC', 'When is my next premium due?', 'I need to raise a grievance']
@@ -97,6 +104,9 @@ export class SpeedyWorkspaceComponent {
   constructor() {
     effect(() => {
       if (this.signedIn() && !this.historyLoaded()) this.loadConversations();
+    });
+    effect(() => {
+      if (this.signedIn() && !this.kycLoaded()) this.loadKyc();
     });
   }
 
@@ -171,6 +181,15 @@ export class SpeedyWorkspaceComponent {
 
   runAction(action: SpeedyWorkspaceAction): void {
     if (action.kind === 'guided_kyc') {
+      if (this.kycUnderReviewOrVerified()) {
+        const status = this.kycRecord()!.kycStatus;
+        const message = status === 'Approved'
+          ? 'Your KYC is already verified. You do not need to submit documents again.'
+          : 'Your Aadhaar and PAN are already submitted and awaiting underwriter review. You do not need to submit them again. We will notify you in SpeedClaim and by email once review is complete.';
+        this.messages.update(messages => [...messages, { role: 'assistant', content: message }]);
+        this.announce(message);
+        return;
+      }
       this.showKyc.set(true);
       this.announce('I’ve opened the secure KYC checklist. Attach both labelled documents before continuing.');
       return;
@@ -199,11 +218,14 @@ export class SpeedyWorkspaceComponent {
     this.profile.uploadAadhaar(this.aadhaarFile()!, this.aadhaarNumber().trim()).pipe(
       concatMap(() => this.profile.uploadPan(this.panFile()!, this.panNumber().trim().toUpperCase())),
     ).subscribe({
-      next: () => {
+      next: kyc => {
         this.kycSubmitting.set(false);
+        this.kycRecord.set(kyc);
         this.showKyc.set(false);
-        this.messages.update(messages => [...messages, { role: 'assistant', content: 'Your Aadhaar and PAN were sent for review. KYC approval remains a human review step.' }]);
-        this.announce('Your KYC documents were sent for review.');
+        this.resetKycForm();
+        const message = 'Your Aadhaar and PAN have been submitted and are awaiting underwriter review. You do not need to submit them again. We will notify you in SpeedClaim and by email once review is complete.';
+        this.messages.update(messages => [...messages, { role: 'assistant', content: message }]);
+        this.announce(message);
       },
       error: () => {
         this.kycSubmitting.set(false);
@@ -276,6 +298,24 @@ export class SpeedyWorkspaceComponent {
     if (file.size > KYC_MAX_FILE_SIZE_BYTES) return 'File exceeds 5 MB limit.';
     const extension = `.${file.name.split('.').pop()?.toLowerCase() ?? ''}`;
     return KYC_ALLOWED_EXTENSIONS.includes(extension) ? '' : 'Choose a PDF, JPG, JPEG, or PNG file.';
+  }
+
+  private loadKyc(): void {
+    this.kycLoaded.set(true);
+    this.profile.getKyc().subscribe({
+      next: kyc => this.kycRecord.set(kyc),
+      error: () => this.kycRecord.set(null),
+    });
+  }
+
+  private resetKycForm(): void {
+    this.aadhaarNumber.set('');
+    this.panNumber.set('');
+    this.aadhaarFile.set(null);
+    this.panFile.set(null);
+    this.aadhaarFileError.set('');
+    this.panFileError.set('');
+    this.kycError.set(null);
   }
 
   private escapeHtml(value: string): string {

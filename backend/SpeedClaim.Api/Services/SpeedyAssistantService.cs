@@ -36,6 +36,7 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
 
         Customer? customer = null;
         User? user = null;
+        KycRecord? kyc = null;
         var policies = new List<Policy>();
         if (customerUserId.HasValue)
         {
@@ -43,6 +44,7 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
                 ?? throw new ForbiddenException("Customer profile is not available.");
             user = await _unitOfWork.Users.GetByIdAsync(customerUserId.Value)
                 ?? throw new ForbiddenException("Customer profile is not available.");
+            kyc = await _unitOfWork.KycRecords.FirstOrDefaultAsync(k => k.UserId == customerUserId.Value);
             policies = (await _unitOfWork.Policies.FindAsync(p => p.CustomerId == customer.Id)).ToList();
         }
 
@@ -73,7 +75,8 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
                 claims.Select(c => new SpeedyClaimSnapshot(
                     c.ClaimNumber,
                     policyNumbers.TryGetValue(c.PolicyId, out var number) ? number : "Policy",
-                    c.Status.ToString(), c.IntimationDate)).ToList()),
+                    c.Status.ToString(), c.IntimationDate)).ToList(),
+                ToKycSnapshot(kyc)),
             new SpeedyCatalogSnapshot(catalog));
 
         var response = await _client.AnswerAsync(request, cancellationToken);
@@ -110,6 +113,7 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
 
         Customer? customer = null;
         User? user = null;
+        KycRecord? kyc = null;
         var policies = new List<Policy>();
         if (customerUserId.HasValue)
         {
@@ -117,6 +121,7 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
                 ?? throw new ForbiddenException("Customer profile is not available.");
             user = await _unitOfWork.Users.GetByIdAsync(customerUserId.Value)
                 ?? throw new ForbiddenException("Customer profile is not available.");
+            kyc = await _unitOfWork.KycRecords.FirstOrDefaultAsync(k => k.UserId == customerUserId.Value);
             policies = (await _unitOfWork.Policies.FindAsync(p => p.CustomerId == customer.Id)).ToList();
         }
 
@@ -147,7 +152,8 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
                 claims.Select(c => new SpeedyClaimSnapshot(
                     c.ClaimNumber,
                     policyNumbers.TryGetValue(c.PolicyId, out var number) ? number : "Policy",
-                    c.Status.ToString(), c.IntimationDate)).ToList()),
+                    c.Status.ToString(), c.IntimationDate)).ToList(),
+                ToKycSnapshot(kyc)),
             new SpeedyCatalogSnapshot(catalog));
 
         var response = await _workspaceClient.AnswerAsync(request, cancellationToken);
@@ -218,6 +224,13 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
 
     private static SpeedyWorkspaceConversationDto ToWorkspaceConversationDto(SpeedyWorkspaceConversation conversation, IReadOnlyList<SpeedyWorkspaceMessageDto>? messages = null) =>
         new(conversation.Id, conversation.Title, conversation.CreatedAt, conversation.UpdatedAt, messages);
+
+    private static SpeedyKycSnapshot? ToKycSnapshot(KycRecord? kyc) => kyc is null
+        ? null
+        : new SpeedyKycSnapshot(
+            kyc.KycStatus.ToString(),
+            !string.IsNullOrWhiteSpace(kyc.AadhaarDocumentKey),
+            !string.IsNullOrWhiteSpace(kyc.PanDocumentKey));
 
     private static SpeedyWorkspaceMessageDto ToWorkspaceMessageDto(SpeedyWorkspaceMessage message)
     {
