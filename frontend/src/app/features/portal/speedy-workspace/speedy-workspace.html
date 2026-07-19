@@ -1,95 +1,115 @@
-<main class="min-h-screen bg-[#F5F7FA] text-[#172033] px-4 py-5 md:px-8 md:py-8">
-  <div class="mx-auto max-w-6xl">
-    <header class="mb-5 flex items-center justify-between gap-4">
-      <a routerLink="/" class="inline-flex items-center gap-2 text-sm font-semibold text-[#42526A] hover:text-[#1B2738]">← Back to SpeedClaim</a>
-      <span class="rounded-full border border-[#F0D197] bg-[#FFF8EA] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#8A5700]">Supervised insurance assistant</span>
+<main class="flex min-h-[100dvh] bg-[#101722] text-[#E7ECF3]">
+  <aside class="hidden w-[292px] shrink-0 flex-col border-r border-white/8 bg-[#121A26] lg:flex">
+    <div class="border-b border-white/8 p-4">
+      <a routerLink="/" class="group flex items-center gap-3 rounded-xl px-2 py-2 transition hover:bg-white/5">
+        <img src="/speedy/speedy-amber.png" class="h-9 w-9 rounded-lg bg-[#FFF8EA] object-contain p-0.5" alt="Speedy" />
+        <span><span class="block text-sm font-bold tracking-tight text-white">Speedy</span><span class="block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9AA9BD]">Insurance workspace</span></span>
+      </a>
+    </div>
+
+    <div class="p-3">
+      <button type="button" (click)="startNewChat()" class="flex w-full items-center gap-3 rounded-xl border border-[#F5A623]/35 bg-[#F5A623]/10 px-3 py-3 text-left text-sm font-semibold text-[#FFE4AB] transition hover:bg-[#F5A623]/18 focus:outline-none focus:ring-2 focus:ring-[#F5A623]">
+        <span class="flex h-5 w-5 items-center justify-center rounded-md border border-current text-base leading-none">+</span>
+        New conversation
+      </button>
+    </div>
+
+    <nav class="min-h-0 flex-1 overflow-y-auto px-3 pb-4" aria-label="Speedy conversations">
+      @if (signedIn()) {
+        <p class="px-2 pb-2 pt-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#718197]">Recent conversations</p>
+        @if (conversations().length) {
+          <div class="space-y-1">
+            @for (conversation of conversations(); track conversation.id) {
+              <button type="button" (click)="openConversation(conversation.id)" [class]="conversation.id === conversationId() ? 'group relative w-full overflow-hidden rounded-lg bg-white/9 px-3 py-2.5 text-left text-sm text-white before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:bg-[#F5A623]' : 'group w-full rounded-lg px-3 py-2.5 text-left text-sm text-[#B7C2D0] transition hover:bg-white/5 hover:text-white'">
+                <span class="block truncate font-medium">{{ conversation.title }}</span>
+                <span class="mt-1 block text-[11px] text-[#7F8EA2]">{{ conversation.updatedAt | date:'MMM d' }}</span>
+              </button>
+            }
+          </div>
+        } @else if (!historyError()) {
+          <p class="px-2 py-3 text-xs leading-relaxed text-[#8392A5]">Your previous conversations will appear here.</p>
+        } @else {
+          <p class="px-2 py-3 text-xs leading-relaxed text-[#D9A9A9]">Conversation history is unavailable right now.</p>
+        }
+      } @else {
+        <p class="px-2 pb-2 pt-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#718197]">Explore with Speedy</p>
+        <div class="space-y-1">
+          <button type="button" (click)="ask('Which products are available?')" class="w-full rounded-lg px-3 py-2.5 text-left text-sm text-[#B7C2D0] transition hover:bg-white/5 hover:text-white">Browse products</button>
+          <button type="button" (click)="ask('How do I start a quote?')" class="w-full rounded-lg px-3 py-2.5 text-left text-sm text-[#B7C2D0] transition hover:bg-white/5 hover:text-white">Start a quote</button>
+          <button type="button" (click)="ask('Compare family health cover')" class="w-full rounded-lg px-3 py-2.5 text-left text-sm text-[#B7C2D0] transition hover:bg-white/5 hover:text-white">Compare cover</button>
+        </div>
+      }
+    </nav>
+
+    <div class="border-t border-white/8 p-4">
+      <p class="text-[11px] leading-relaxed text-[#8291A5]">Speedy explains options. Claims, payments and KYC decisions always remain under human control.</p>
+    </div>
+  </aside>
+
+  <section class="flex min-w-0 flex-1 flex-col bg-[#F8FAFC] text-[#172033]">
+    <header class="flex h-16 shrink-0 items-center justify-between border-b border-[#E5EAF0] bg-white px-4 md:px-6">
+      <div class="flex min-w-0 items-center gap-3">
+        <a routerLink="/" class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#526176] transition hover:bg-[#F1F4F7] lg:hidden" aria-label="Back to SpeedClaim">←</a>
+        <div class="min-w-0"><h1 class="truncate text-sm font-bold text-[#1B2738]">{{ conversationId() ? 'Conversation with Speedy' : 'New conversation' }}</h1><p class="hidden text-xs text-[#738197] sm:block">Guided insurance support</p></div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="hidden rounded-full border border-[#F2D9A5] bg-[#FFF9EF] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#8A5700] sm:inline">Supervised AI</span>
+        <button type="button" (click)="startNewChat()" class="rounded-lg px-3 py-2 text-xs font-bold text-[#42526A] transition hover:bg-[#F1F4F7]">New chat</button>
+      </div>
     </header>
 
-    <section class="overflow-hidden rounded-[28px] border border-[#DFE5EC] bg-white shadow-[0_24px_80px_rgba(33,49,73,0.10)]">
-      <div class="relative overflow-hidden bg-[#1B2738] px-6 py-7 text-white md:px-9">
-        <div class="absolute inset-0 opacity-60" style="background: radial-gradient(circle at 90% 5%, #F5A623 0, transparent 25%), radial-gradient(circle at 7% 120%, #276D8F 0, transparent 37%);"></div>
-        <div class="relative flex items-start gap-4">
-          <img src="/speedy/speedy-amber.png" class="h-14 w-14 rounded-2xl bg-[#FFF8EA] object-contain p-1 ring-1 ring-[#FAD78A]" alt="Speedy" />
-          <div>
-            <p class="text-xs font-bold uppercase tracking-[0.16em] text-[#FFE1A0]">SpeedClaim workspace</p>
-            <h1 class="mt-1 text-2xl font-bold tracking-tight md:text-3xl">Tell Speedy what you need to do.</h1>
-            <p class="mt-2 max-w-2xl text-sm leading-relaxed text-[#DDE6EF]">Explore cover, understand your policy, prepare a claim or grievance, and complete guided KYC—without losing the final say.</p>
-          </div>
+    <div class="min-h-0 flex-1 overflow-y-auto" aria-live="polite">
+      <div class="mx-auto flex min-h-full w-full max-w-4xl flex-col px-4 py-8 sm:px-8 md:py-12">
+        @if (!messages().length) {
+          <section class="m-auto w-full max-w-2xl pb-16">
+            <div class="flex items-center gap-4"><img src="/speedy/speedy-amber.png" class="h-12 w-12 rounded-xl bg-[#FFF8EA] object-contain p-1 ring-1 ring-[#F4D08A]" alt="" /><div><p class="text-xs font-bold uppercase tracking-[0.16em] text-[#A66A00]">SpeedClaim assistant</p><h2 class="mt-1 text-2xl font-bold tracking-tight text-[#172033] md:text-3xl">What can I help you understand?</h2></div></div>
+            <p class="mt-5 max-w-xl text-sm leading-6 text-[#5D6C80]">Ask about products, cover, policies, premiums, claims, grievances, or guided KYC. I’ll show you the next step; you remain in control.</p>
+            <div class="mt-8 grid gap-3 sm:grid-cols-2">
+              @for (suggestion of suggestions(); track suggestion) {
+                <button type="button" (click)="ask(suggestion)" class="group rounded-xl border border-[#DCE4EC] bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-[#F5A623] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#F5A623]"><span class="block text-sm font-semibold text-[#27364A]">{{ suggestion }}</span><span class="mt-2 block text-xs text-[#7A8798] group-hover:text-[#A66A00]">Ask Speedy →</span></button>
+              }
+            </div>
+          </section>
+        }
+
+        <div class="space-y-7">
+          @for (message of messages(); track $index) {
+            <article [class]="message.role === 'user' ? 'ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-[#1B2738] px-4 py-3 text-sm leading-relaxed text-white shadow-sm' : 'max-w-[94%] text-sm leading-relaxed text-[#27364A] md:text-[15px]'">
+              @if (message.role === 'assistant') {
+                <div class="flex gap-3"><img src="/speedy/speedy-amber.png" class="mt-0.5 h-7 w-7 shrink-0 rounded-lg bg-[#FFF8EA] object-contain p-0.5" alt="Speedy" /><div class="min-w-0 flex-1 [&_p]:mb-3 [&_p:last-child]:mb-0 [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:my-3 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:my-1 [&_strong]:font-bold [&_code]:rounded [&_code]:bg-[#EEF2F6] [&_code]:px-1 [&_code]:py-0.5" [innerHTML]="renderMarkdown(message.content)"></div></div>
+              } @else { <p class="whitespace-pre-wrap">{{ message.content }}</p> }
+              @if (message.actions?.length) {
+                <div class="mt-4 flex flex-wrap gap-2 pl-10">
+                  @for (action of message.actions; track action.label) { <button type="button" (click)="runAction(action)" class="rounded-lg bg-[#F5A623] px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-[#D4891A]">{{ action.label }}</button> }
+                </div>
+              }
+            </article>
+          }
+          @if (sending()) { <div class="flex items-center gap-3 text-sm text-[#748398]"><img src="/speedy/speedy-amber.png" class="h-7 w-7 rounded-lg bg-[#FFF8EA] object-contain p-0.5" alt="" /><span class="animate-pulse">Speedy is checking the available information…</span></div> }
+          @if (error()) { <p class="rounded-xl border border-[#F5C4C4] bg-[#FFF4F4] p-3 text-sm text-[#A83535]">{{ error() }}</p> }
         </div>
       </div>
+    </div>
 
-      <div class="grid min-h-[560px] lg:grid-cols-[minmax(0,1fr)_300px]">
-        <section class="flex min-h-[560px] flex-col border-b border-[#E5EAF0] lg:border-b-0 lg:border-r">
-          <div class="flex-1 space-y-4 overflow-y-auto p-5 md:p-7" aria-live="polite">
-            @if (!messages().length) {
-              <div class="max-w-xl rounded-2xl border border-[#F2D9A5] bg-[#FFF9EF] p-5 text-sm leading-relaxed text-[#4C3713]">
-                I’m Speedy. I can guide you through the next step, but I never approve KYC, decide claims, promise cover, or submit important actions without your review.
-              </div>
-              <div class="flex flex-wrap gap-2">
-                @for (suggestion of suggestions(); track suggestion) {
-                  <button type="button" (click)="ask(suggestion)" class="rounded-full border border-[#DCE4EC] bg-white px-3 py-2 text-left text-xs font-semibold text-[#334155] transition hover:border-[#F5A623] hover:bg-[#FFF8EA]">{{ suggestion }}</button>
-                }
-              </div>
-            }
-            @for (message of messages(); track $index) {
-              <article [class]="message.role === 'user' ? 'ml-auto max-w-[88%] rounded-2xl rounded-br-md bg-[#1B2738] px-4 py-3 text-sm text-white' : 'max-w-[92%] rounded-2xl rounded-bl-md border border-[#E5EAF0] bg-[#FAFBFC] px-4 py-3 text-sm leading-relaxed text-[#253246]'">
-                @if (message.role === 'assistant') {
-                  <div class="[&_p]:mb-3 [&_p:last-child]:mb-0 [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:my-3 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:my-1 [&_strong]:font-bold [&_code]:rounded [&_code]:bg-[#EEF2F6] [&_code]:px-1 [&_code]:py-0.5" [innerHTML]="renderMarkdown(message.content)"></div>
-                } @else {
-                  <p class="whitespace-pre-wrap">{{ message.content }}</p>
-                }
-                @if (message.actions?.length) {
-                  <div class="mt-3 flex flex-wrap gap-2 border-t border-[#E1E7EE] pt-3">
-                    @for (action of message.actions; track action.label) {
-                      <button type="button" (click)="runAction(action)" class="rounded-xl bg-[#F5A623] px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-[#D4891A]">{{ action.label }}</button>
-                    }
-                  </div>
-                }
-              </article>
-            }
-            @if (sending()) { <p class="text-sm text-[#7B8798]">Speedy is checking the information that is available to you…</p> }
-            @if (error()) { <p class="rounded-xl bg-[#FFF0F0] p-3 text-sm text-[#A83535]">{{ error() }}</p> }
-          </div>
-
-          <form class="border-t border-[#E5EAF0] bg-[#FCFDFE] p-4 md:p-5" (submit)="$event.preventDefault(); ask()">
-            <div class="flex gap-2">
-              @if (voiceAvailable()) {
-                <button type="button" (click)="toggleVoice()" [attr.aria-label]="listening() ? 'Listening' : 'Speak your question'" class="h-12 w-12 shrink-0 rounded-xl border border-[#D9E1EA] text-[#42526A] hover:bg-[#FFF8EA]">{{ listening() ? '●' : '◉' }}</button>
-              }
-              <label class="sr-only" for="speedy-workspace-question">Ask Speedy</label>
-              <input id="speedy-workspace-question" [ngModel]="question()" (ngModelChange)="question.set($event)" name="question" maxlength="2000" placeholder="For example: I was admitted to hospital—what should I do?" class="h-12 min-w-0 flex-1 rounded-xl border border-[#CBD5E1] bg-white px-4 text-sm outline-none ring-[#F5A623] focus:ring-2" [disabled]="sending()" />
-              <button type="submit" [disabled]="sending() || !question().trim()" class="h-12 rounded-xl bg-[#F5A623] px-5 text-sm font-bold text-white disabled:opacity-40">Send</button>
-            </div>
-            <p class="mt-2 text-[11px] text-[#758195]">Voice transcription stays in your browser until you send it. Speedy uses only the information provided by SpeedClaim for this conversation.</p>
-          </form>
-        </section>
-
-        <aside class="bg-[#FAFBFC] p-5 md:p-6">
-          <p class="text-[11px] font-bold uppercase tracking-[0.14em] text-[#7A8798]">Your control</p>
-          <h2 class="mt-2 text-lg font-bold text-[#1B2738]">AI guides. You decide.</h2>
-          <ul class="mt-4 space-y-3 text-sm leading-relaxed text-[#566579]">
-            <li>• Product advice reflects the current catalog.</li>
-            <li>• Claims remain subject to review and policy terms.</li>
-            <li>• KYC requires labelled Aadhaar and PAN uploads.</li>
-            <li>• Submission and payment actions always need your confirmation.</li>
-          </ul>
-        </aside>
-      </div>
-    </section>
-  </div>
+    <div class="shrink-0 border-t border-[#E5EAF0] bg-gradient-to-t from-white via-white to-white/90 px-4 pb-4 pt-3 sm:px-8">
+      <form class="mx-auto max-w-4xl" (submit)="$event.preventDefault(); ask()">
+        <div class="flex items-end gap-2 rounded-2xl border border-[#CBD5E1] bg-white p-2 shadow-[0_8px_28px_rgba(33,49,73,0.09)] transition focus-within:border-[#F5A623] focus-within:ring-2 focus-within:ring-[#F5A623]/20">
+          @if (voiceAvailable()) { <button type="button" (click)="toggleVoice()" [attr.aria-label]="listening() ? 'Listening' : 'Speak your question'" class="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[#526176] transition hover:bg-[#FFF8EA] hover:text-[#A66A00]">{{ listening() ? '●' : '◉' }}</button> }
+          <label class="sr-only" for="speedy-workspace-question">Message Speedy</label>
+          <textarea id="speedy-workspace-question" [ngModel]="question()" (ngModelChange)="question.set($event)" name="question" maxlength="2000" rows="1" placeholder="Message Speedy…" class="max-h-32 min-h-10 flex-1 resize-none border-0 bg-transparent px-2 py-2 text-sm leading-5 outline-none placeholder:text-[#8A98AA]" [disabled]="sending()"></textarea>
+          <button type="submit" [disabled]="sending() || !question().trim()" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#1B2738] text-lg text-white transition hover:bg-[#314158] disabled:bg-[#D9E1EA] disabled:text-[#93A0B0]" aria-label="Send message">↑</button>
+        </div>
+        <p class="mt-2 text-center text-[11px] text-[#8190A4]">Speedy can make mistakes. Verify policy terms before acting. Voice transcription stays in your browser until you send it.</p>
+      </form>
+    </div>
+  </section>
 
   @if (showKyc()) {
     <div class="fixed inset-0 z-50 flex items-end bg-[#172033]/55 p-0 md:items-center md:justify-center md:p-6" role="dialog" aria-modal="true" aria-labelledby="guided-kyc-title">
       <section class="w-full max-w-xl rounded-t-[28px] bg-white p-6 shadow-2xl md:rounded-[28px]">
-        <div class="flex items-start justify-between gap-4">
-          <div><p class="text-xs font-bold uppercase tracking-[0.14em] text-[#A66A00]">Secure KYC checklist</p><h2 id="guided-kyc-title" class="mt-1 text-xl font-bold text-[#1B2738]">Attach Aadhaar and PAN</h2></div>
-          <button type="button" (click)="showKyc.set(false)" class="text-sm font-semibold text-[#526176]">Close</button>
-        </div>
+        <div class="flex items-start justify-between gap-4"><div><p class="text-xs font-bold uppercase tracking-[0.14em] text-[#A66A00]">Secure KYC checklist</p><h2 id="guided-kyc-title" class="mt-1 text-xl font-bold text-[#1B2738]">Attach Aadhaar and PAN</h2></div><button type="button" (click)="showKyc.set(false)" class="text-sm font-semibold text-[#526176]">Close</button></div>
         <p class="mt-3 text-sm leading-relaxed text-[#58677A]">Speedy does not read or classify these documents. You choose each labelled slot, then submit both together for human review.</p>
-        <div class="mt-5 grid gap-4 sm:grid-cols-2">
-          <label class="rounded-2xl border border-[#DCE4EC] p-4"><span class="text-sm font-bold text-[#1B2738]">Aadhaar</span><input [ngModel]="aadhaarNumber()" (ngModelChange)="aadhaarNumber.set($event)" name="aadhaar" inputmode="numeric" maxlength="12" placeholder="12-digit number" class="mt-3 h-10 w-full rounded-lg border border-[#CBD5E1] px-3 text-sm" /><input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" class="mt-3 w-full text-xs" (change)="chooseFile('aadhaar', $event)" /><span class="mt-2 block text-xs text-[#66758A]">{{ aadhaarFile()?.name || 'No file selected' }}</span></label>
-          <label class="rounded-2xl border border-[#DCE4EC] p-4"><span class="text-sm font-bold text-[#1B2738]">PAN</span><input [ngModel]="panNumber()" (ngModelChange)="panNumber.set($event.toUpperCase())" name="pan" maxlength="10" placeholder="ABCDE1234F" class="mt-3 h-10 w-full rounded-lg border border-[#CBD5E1] px-3 text-sm" /><input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" class="mt-3 w-full text-xs" (change)="chooseFile('pan', $event)" /><span class="mt-2 block text-xs text-[#66758A]">{{ panFile()?.name || 'No file selected' }}</span></label>
-        </div>
+        <div class="mt-5 grid gap-4 sm:grid-cols-2"><label class="rounded-2xl border border-[#DCE4EC] p-4"><span class="text-sm font-bold text-[#1B2738]">Aadhaar</span><input [ngModel]="aadhaarNumber()" (ngModelChange)="aadhaarNumber.set($event)" name="aadhaar" inputmode="numeric" maxlength="12" placeholder="12-digit number" class="mt-3 h-10 w-full rounded-lg border border-[#CBD5E1] px-3 text-sm" /><input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" class="mt-3 w-full text-xs" (change)="chooseFile('aadhaar', $event)" /><span class="mt-2 block text-xs text-[#66758A]">{{ aadhaarFile()?.name || 'No file selected' }}</span></label><label class="rounded-2xl border border-[#DCE4EC] p-4"><span class="text-sm font-bold text-[#1B2738]">PAN</span><input [ngModel]="panNumber()" (ngModelChange)="panNumber.set($event.toUpperCase())" name="pan" maxlength="10" placeholder="ABCDE1234F" class="mt-3 h-10 w-full rounded-lg border border-[#CBD5E1] px-3 text-sm" /><input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" class="mt-3 w-full text-xs" (change)="chooseFile('pan', $event)" /><span class="mt-2 block text-xs text-[#66758A]">{{ panFile()?.name || 'No file selected' }}</span></label></div>
         @if (kycError()) { <p class="mt-3 rounded-xl bg-[#FFF0F0] p-3 text-sm text-[#A83535]">{{ kycError() }}</p> }
         <button type="button" (click)="submitKyc()" [disabled]="!kycReady() || kycSubmitting()" class="mt-5 h-11 w-full rounded-xl bg-[#F5A623] text-sm font-bold text-white disabled:opacity-40">{{ kycSubmitting() ? 'Uploading securely…' : 'Submit both documents for review' }}</button>
       </section>

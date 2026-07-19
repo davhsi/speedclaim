@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { SpeedyAssistantResponse, SpeedyWorkspaceResponse } from '../../../core/models/api.models';
+import { SpeedyAssistantResponse, SpeedyWorkspaceConversation, SpeedyWorkspaceResponse } from '../../../core/models/api.models';
 
 @Injectable({ providedIn: 'root' })
 export class SpeedyAssistantService {
@@ -13,5 +13,13 @@ export class SpeedyAssistantService {
 
   askWorkspace(question: string, conversationId?: string | null): Observable<SpeedyWorkspaceResponse> {
     return this.http.post<SpeedyWorkspaceResponse>('/api/v1/assistant/workspace/messages', { question, conversationId: conversationId ?? null });
+  }
+
+  listWorkspaceConversations(): Observable<SpeedyWorkspaceConversation[]> {
+    return this.http.get<SpeedyWorkspaceConversation[]>('/api/v1/assistant/workspace/conversations');
+  }
+
+  getWorkspaceConversation(conversationId: string): Observable<SpeedyWorkspaceConversation> {
+    return this.http.get<SpeedyWorkspaceConversation>(`/api/v1/assistant/workspace/conversations/${conversationId}`);
   }
 }
