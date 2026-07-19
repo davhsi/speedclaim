@@ -107,7 +107,7 @@ export class SpeedyWorkspaceComponent {
       next: conversation => {
         this.conversationId.set(conversation.id);
         this.messages.set((conversation.messages ?? []).map(message => ({
-          role: message.role,
+          role: message.role.toLowerCase() as WorkspaceMessage['role'],
           content: message.content,
           actions: message.actions,
         })));
