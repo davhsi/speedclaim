@@ -1,6 +1,6 @@
 <main class="flex h-[100dvh] max-h-[100dvh] overflow-hidden bg-[#101722] text-[#E7ECF3]">
   <aside class="hidden h-full w-[300px] shrink-0 flex-col overflow-hidden border-r border-white/10 bg-[#16191D] lg:flex">
-    <header class="flex items-center justify-between px-5 py-6"><a routerLink="/" class="flex items-center gap-2 text-lg font-bold tracking-tight text-white"><img src="/speedy/speedy-amber.png" class="h-8 w-8 rounded-lg bg-[#FFF8EA] object-contain p-0.5" alt="" /> Speedy</a><span class="text-xl text-[#AAB1BC]">⌕</span></header>
+    <header class="flex items-center justify-between px-5 py-6"><button type="button" (click)="backToSpeedClaim()" class="flex items-center gap-2 text-lg font-bold tracking-tight text-white"><img src="/speedy/speedy-amber.png" class="h-8 w-8 rounded-lg bg-[#FFF8EA] object-contain p-0.5" alt="" /> Speedy</button><span class="text-xl text-[#AAB1BC]">⌕</span></header>
     <div class="px-4"><button type="button" (click)="startNewChat()" class="flex w-full items-center justify-center gap-2 rounded-full bg-[#4A4B51] px-4 py-3.5 text-base font-semibold text-white transition hover:bg-[#5B5C64]"><span class="text-xl leading-none">⊕</span> New chat</button></div>
     <nav class="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-7" aria-label="Conversation history">
       @if (signedIn()) {
@@ -9,13 +9,13 @@
         @if (!conversations().length && !historyError()) { <p class="px-2 text-sm leading-relaxed text-[#9EA4AE]">Your saved conversations will appear here.</p> } @else if (historyError()) { <p class="px-2 text-sm leading-relaxed text-[#E0A5A5]">Conversation history is unavailable right now.</p> }
       } @else { <p class="px-2 text-sm leading-relaxed text-[#AAB1BC]">Sign in to keep and reopen your conversations.</p><a routerLink="/auth/login" class="mt-4 block rounded-xl bg-[#6FA0FF] px-3 py-2.5 text-center text-sm font-bold text-[#101722] transition hover:bg-[#8BB3FF]">Sign in</a> }
     </nav>
-    <footer class="border-t border-white/8 p-4"><a routerLink="/" class="flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-[#DDE2E9] transition hover:bg-white/[0.06]"><span aria-hidden="true">←</span> Back to SpeedClaim</a><p class="mt-2 px-2 text-[11px] leading-relaxed text-[#89919D]">AI guides; you remain in control of every insurance action.</p></footer>
+    <footer class="border-t border-white/8 p-4"><button type="button" (click)="backToSpeedClaim()" class="flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-[#DDE2E9] transition hover:bg-white/[0.06]"><span aria-hidden="true">←</span> Back to SpeedClaim</button><p class="mt-2 px-2 text-[11px] leading-relaxed text-[#89919D]">AI guides; you remain in control of every insurance action.</p></footer>
   </aside>
 
   <section class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[#F8FAFC] text-[#172033]">
     <header class="flex h-16 shrink-0 items-center justify-between border-b border-[#E5EAF0] bg-white px-4 md:px-6">
       <div class="flex min-w-0 items-center gap-3">
-        <a routerLink="/" class="inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-bold text-[#526176] transition hover:bg-[#F1F4F7]" aria-label="Back to SpeedClaim"><span aria-hidden="true">←</span><span class="hidden sm:inline">Back to SpeedClaim</span></a>
+        <button type="button" (click)="backToSpeedClaim()" class="inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-bold text-[#526176] transition hover:bg-[#F1F4F7]" aria-label="Back to SpeedClaim"><span aria-hidden="true">←</span><span class="hidden sm:inline">Back to SpeedClaim</span></button>
         <div class="min-w-0"><h1 class="truncate text-sm font-bold text-[#1B2738]">{{ conversationId() ? 'Conversation with Speedy' : 'New conversation' }}</h1><p class="hidden text-xs text-[#738197] sm:block">Guided insurance support</p></div>
       </div>
       <div class="flex items-center gap-2">
