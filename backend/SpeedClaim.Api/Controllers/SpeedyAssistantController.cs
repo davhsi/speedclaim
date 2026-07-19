@@ -26,4 +26,26 @@ public sealed class SpeedyAssistantController : ControllerBase
             : null;
         return Ok(await _service.AnswerAsync(customerUserId, request.Question, cancellationToken));
     }
+
+    [HttpPost("workspace/messages")]
+    [AllowAnonymous]
+    public async Task<ActionResult<SpeedyWorkspaceResponse>> AskWorkspace([FromBody] AskSpeedyWorkspaceRequest request, CancellationToken cancellationToken)
+    {
+        Guid? customerUserId = User.IsInRole("Customer") && Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)
+            ? userId
+            : null;
+        return Ok(await _service.AnswerWorkspaceAsync(customerUserId, request.ConversationId, request.Question, cancellationToken));
+    }
+
+    [HttpGet("workspace/conversations")]
+    [Authorize(Roles = "Customer")]
+    public async Task<ActionResult<IReadOnlyList<SpeedyWorkspaceConversationDto>>> ListWorkspaceConversations() =>
+        Ok(await _service.ListWorkspaceConversationsAsync(ActorId()));
+
+    [HttpGet("workspace/conversations/{conversationId:guid}")]
+    [Authorize(Roles = "Customer")]
+    public async Task<ActionResult<SpeedyWorkspaceConversationDto>> GetWorkspaceConversation(Guid conversationId) =>
+        Ok(await _service.GetWorkspaceConversationAsync(ActorId(), conversationId));
+
+    private Guid ActorId() => Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : throw new UnauthorizedAccessException();
 }

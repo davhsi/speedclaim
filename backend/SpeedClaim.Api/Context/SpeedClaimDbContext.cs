@@ -32,6 +32,8 @@ public partial class SpeedClaimDbContext : DbContext
     public DbSet<Policy> Policies { get; set; } = null!;
     public DbSet<PolicyAssistantConversation> PolicyAssistantConversations { get; set; } = null!;
     public DbSet<PolicyAssistantMessage> PolicyAssistantMessages { get; set; } = null!;
+    public DbSet<SpeedyWorkspaceConversation> SpeedyWorkspaceConversations { get; set; } = null!;
+    public DbSet<SpeedyWorkspaceMessage> SpeedyWorkspaceMessages { get; set; } = null!;
     public DbSet<PolicyMember> PolicyMembers { get; set; } = null!;
     public DbSet<Nominee> Nominees { get; set; } = null!;
     public DbSet<PolicyStatusHistory> PolicyStatusHistories { get; set; } = null!;
@@ -314,6 +316,29 @@ public partial class SpeedClaimDbContext : DbContext
             e.Property(x => x.PromptVersion).HasMaxLength(100);
             e.HasOne(x => x.Conversation).WithMany(x => x.Messages).HasForeignKey(x => x.ConversationId)
                 .HasConstraintName("FK_policy_assistant_messages_conversations_conversation_id").OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SpeedyWorkspaceConversation>(e =>
+        {
+            e.HasKey(x => x.Id).HasName("PK_speedy_workspace_conversations");
+            e.Property(x => x.Title).IsRequired().HasMaxLength(120);
+            e.HasIndex(x => new { x.CreatedByUserId, x.UpdatedAt }).HasDatabaseName("ix_speedy_workspace_conversations_creator_updated");
+            e.HasIndex(x => x.RetainUntil).HasDatabaseName("ix_speedy_workspace_conversations_retain_until");
+            e.HasOne(x => x.CreatedBy).WithMany().HasForeignKey(x => x.CreatedByUserId)
+                .HasConstraintName("FK_speedy_workspace_conversations_users_created_by_id").OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<SpeedyWorkspaceMessage>(e =>
+        {
+            e.HasKey(x => x.Id).HasName("PK_speedy_workspace_messages");
+            e.Property(x => x.Role).HasMaxLength(16).HasConversion<string>();
+            e.Property(x => x.Content).IsRequired().HasMaxLength(8000);
+            e.Property(x => x.Intent).HasMaxLength(64);
+            e.Property(x => x.Risk).HasMaxLength(32);
+            e.Property(x => x.Model).HasMaxLength(255);
+            e.HasIndex(x => new { x.ConversationId, x.CreatedAt }).HasDatabaseName("ix_speedy_workspace_messages_conversation_created");
+            e.HasOne(x => x.Conversation).WithMany(x => x.Messages).HasForeignKey(x => x.ConversationId)
+                .HasConstraintName("FK_speedy_workspace_messages_conversations_conversation_id").OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<PremiumRateTable>(e =>

@@ -46,4 +46,30 @@ public class SpeedyAssistantServiceTests
         Assert.That(captured.Catalog.Products[0].ProductName, Is.EqualTo("Family Shield"));
         unitOfWork.Verify(x => x.CompleteAsync(), Times.Never);
     }
+
+    [Test]
+    public async Task AnswerWorkspaceAsync_Guest_UsesTheWorkspaceClientWithoutCreatingAnAuditRecord()
+    {
+        var products = new Mock<IRepository<InsuranceProduct>>();
+        products.Setup(x => x.FindAsync(It.IsAny<Expression<Func<InsuranceProduct, bool>>>() ))
+            .ReturnsAsync(Array.Empty<InsuranceProduct>());
+        var unitOfWork = new Mock<IUnitOfWork>();
+        unitOfWork.SetupGet(x => x.InsuranceProducts).Returns(products.Object);
+        unitOfWork.SetupGet(x => x.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
+
+        SpeedyWorkspaceRequest? captured = null;
+        var speedyClient = new Mock<ISpeedyAssistantClient>();
+        var workspaceClient = new Mock<ISpeedyWorkspaceClient>();
+        workspaceClient.Setup(x => x.AnswerAsync(It.IsAny<SpeedyWorkspaceRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<SpeedyWorkspaceRequest, CancellationToken>((request, _) => captured = request)
+            .ReturnsAsync(new SpeedyWorkspaceResponse(Guid.NewGuid(), "Explore our products.", "product_discovery", "low", [], "Fake", "fake-model"));
+        var service = new SpeedyAssistantService(unitOfWork.Object, speedyClient.Object, workspaceClient.Object);
+
+        var response = await service.AnswerWorkspaceAsync(null, "Which plans are available?");
+
+        Assert.That(captured, Is.Not.Null);
+        Assert.That(captured!.Account.IsAuthenticated, Is.False);
+        Assert.That(response.Intent, Is.EqualTo("product_discovery"));
+        unitOfWork.Verify(x => x.CompleteAsync(), Times.Never);
+    }
 }

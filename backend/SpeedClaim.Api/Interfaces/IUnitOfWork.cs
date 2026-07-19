@@ -30,6 +30,8 @@ public interface IUnitOfWork : IDisposable
     IRepository<PolicyMember> PolicyMembers { get; }
     IRepository<PolicyAssistantConversation> PolicyAssistantConversations { get; }
     IRepository<PolicyAssistantMessage> PolicyAssistantMessages { get; }
+    IRepository<SpeedyWorkspaceConversation> SpeedyWorkspaceConversations { get; }
+    IRepository<SpeedyWorkspaceMessage> SpeedyWorkspaceMessages { get; }
     IRepository<Nominee> Nominees { get; }
     IRepository<PolicyStatusHistory> PolicyStatusHistories { get; }
     IRepository<Endorsement> Endorsements { get; }

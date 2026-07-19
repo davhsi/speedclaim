@@ -34,6 +34,8 @@ public class UnitOfWork : IUnitOfWork
     public IRepository<PolicyMember> PolicyMembers { get; }
     public IRepository<PolicyAssistantConversation> PolicyAssistantConversations { get; }
     public IRepository<PolicyAssistantMessage> PolicyAssistantMessages { get; }
+    public IRepository<SpeedyWorkspaceConversation> SpeedyWorkspaceConversations { get; }
+    public IRepository<SpeedyWorkspaceMessage> SpeedyWorkspaceMessages { get; }
     public IRepository<Nominee> Nominees { get; }
     public IRepository<PolicyStatusHistory> PolicyStatusHistories { get; }
     public IRepository<Endorsement> Endorsements { get; }
@@ -84,6 +86,8 @@ public class UnitOfWork : IUnitOfWork
         PolicyMembers = new Repository<PolicyMember>(_context);
         PolicyAssistantConversations = new Repository<PolicyAssistantConversation>(_context);
         PolicyAssistantMessages = new Repository<PolicyAssistantMessage>(_context);
+        SpeedyWorkspaceConversations = new Repository<SpeedyWorkspaceConversation>(_context);
+        SpeedyWorkspaceMessages = new Repository<SpeedyWorkspaceMessage>(_context);
         Nominees = new Repository<Nominee>(_context);
         PolicyStatusHistories = new Repository<PolicyStatusHistory>(_context);
         Endorsements = new Repository<Endorsement>(_context);

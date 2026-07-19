@@ -1,10 +1,16 @@
 # SpeedClaim AI service
 
-Phases R1–R4 provide the private FastAPI foundation, local embedding adapter, isolated
-pgvector persistence, text-PDF ingestion, exact-brochure retrieval, and grounded policy answer
-generation. R4 includes a provider-neutral chat interface backed exclusively by the
-Anthropic-compatible corporate gateway adapter, but no Redis,
-persistent conversations, .NET, Angular, pre-purchase Q&A, or grievance-AI integration.
+Phases R1–R5 provide the private FastAPI foundation, local embedding adapter, isolated
+pgvector persistence, text-PDF ingestion, exact-brochure retrieval, grounded policy answer
+generation, and a customer workspace integration. R4 includes a provider-neutral chat interface
+backed exclusively by the Anthropic-compatible corporate gateway adapter. Persistent customer
+conversation records, autonomous domain writes, and staff-side AI workflows remain deliberately
+out of scope.
+
+R5 adds the internal, LangGraph-powered Speedy workspace endpoint. The graph uses a small
+Haiku route-classification step followed by a Sonnet answer step, but it has no domain-write
+tools: it produces validated guidance and typed actions only. The .NET API owns customer
+authorization, audit logging, and every actual business action.
 
 ## Prerequisites
 
@@ -68,6 +74,7 @@ Health endpoints are unauthenticated for container/orchestrator probes. All path
 | `ANTHROPIC_BASE_URL` | with `AnthropicGateway` | none | corporate HTTPS gateway origin/path |
 | `ANTHROPIC_AUTH_TOKEN` | with `AnthropicGateway` | none | secret bearer token; never logged |
 | `AI__AnthropicChatModel` | no | `claude-sonnet-4-6` | lowercase gateway model identifier |
+| `AI__AnthropicRouterModel` | no | `claude-haiku-4-5-20251001` | fast intent-classification gateway model |
 | `AI__ChatTimeoutSeconds` | no | `15` | 1–60 seconds |
 | `AI__ChatMaxAttempts` | no | `2` | 1–3 bounded transport attempts |
 | `AI__ChatMaxOutputTokens` | no | `700` | 128–2048 tokens |

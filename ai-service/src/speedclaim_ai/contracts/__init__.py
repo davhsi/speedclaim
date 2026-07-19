@@ -6,5 +6,6 @@ from speedclaim_ai.contracts.policy_qa import (
     PolicyQaResponse,
 )
 from speedclaim_ai.contracts.speedy import SpeedyRequest, SpeedyResponse
+from speedclaim_ai.contracts.workspace import WorkspaceRequest, WorkspaceResponse
 
-__all__ = ["PolicyQaCitation", "PolicyQaRequest", "PolicyQaResponse", "SpeedyRequest", "SpeedyResponse"]
+__all__ = ["PolicyQaCitation", "PolicyQaRequest", "PolicyQaResponse", "SpeedyRequest", "SpeedyResponse", "WorkspaceRequest", "WorkspaceResponse"]
