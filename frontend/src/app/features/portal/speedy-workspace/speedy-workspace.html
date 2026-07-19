@@ -1,51 +1,29 @@
 <main class="flex h-[100dvh] max-h-[100dvh] overflow-hidden bg-[#101722] text-[#E7ECF3] lg:flex-row-reverse">
-  <aside class="hidden h-full w-[292px] shrink-0 flex-col overflow-hidden border-l border-white/8 bg-[#121A26] lg:flex">
-    <div class="border-b border-white/8 p-4">
-      <a routerLink="/" class="group flex items-center gap-3 rounded-xl px-2 py-2 transition hover:bg-white/5">
-        <img src="/speedy/speedy-amber.png" class="h-9 w-9 rounded-lg bg-[#FFF8EA] object-contain p-0.5" alt="Speedy" />
-        <span><span class="block text-sm font-bold tracking-tight text-white">Speedy</span><span class="block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9AA9BD]">Insurance workspace</span></span>
-      </a>
-    </div>
+  <aside class="relative hidden h-full w-14 shrink-0 border-l border-white/10 bg-[#16191D] lg:flex">
+    <button type="button" (click)="toggleHistory()" class="group flex h-full w-full flex-col items-center justify-center gap-5 text-[#777B80] transition hover:bg-white/[0.03] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#6FA0FF]" [attr.aria-expanded]="historyOpen()" aria-label="Open conversation navigator">
+      <span class="h-1 w-4 rounded-full bg-current/55"></span><span class="h-1 w-4 rounded-full bg-current/55"></span><span class="h-1 w-4 rounded-full bg-current/55"></span><span class="h-1 w-4 rounded-full bg-current/55"></span><span class="h-1 w-4 rounded-full bg-current/55"></span><span [class]="historyOpen() ? 'h-1 w-6 rounded-full bg-[#6FA0FF]' : 'h-1 w-4 rounded-full bg-[#6FA0FF]'" aria-hidden="true"></span>
+      <span class="sr-only">Conversation navigator</span>
+    </button>
 
-    <div class="p-3">
-      <button type="button" (click)="startNewChat()" class="flex w-full items-center gap-3 rounded-xl border border-[#F5A623]/35 bg-[#F5A623]/10 px-3 py-3 text-left text-sm font-semibold text-[#FFE4AB] transition hover:bg-[#F5A623]/18 focus:outline-none focus:ring-2 focus:ring-[#F5A623]">
-        <span class="flex h-5 w-5 items-center justify-center rounded-md border border-current text-base leading-none">+</span>
-        New conversation
-      </button>
-    </div>
-
-    <nav class="min-h-0 flex-1 overflow-y-auto px-3 pb-4" aria-label="Speedy conversations">
-      @if (signedIn()) {
-        <p class="px-2 pb-2 pt-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#718197]">Recent conversations</p>
-        @if (conversations().length) {
-          <div class="space-y-1">
-            @for (conversation of conversations(); track conversation.id) {
-              <button type="button" (click)="openConversation(conversation.id)" [class]="conversation.id === conversationId() ? 'group relative w-full overflow-hidden rounded-lg bg-white/9 px-3 py-2.5 text-left text-sm text-white before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:bg-[#F5A623]' : 'group w-full rounded-lg px-3 py-2.5 text-left text-sm text-[#B7C2D0] transition hover:bg-white/5 hover:text-white'">
-                <span class="block truncate font-medium">{{ conversation.title }}</span>
-                <span class="mt-1 block text-[11px] text-[#7F8EA2]">{{ conversation.updatedAt | date:'MMM d' }}</span>
-              </button>
-            }
-          </div>
-        } @else if (!historyError()) {
-          <p class="px-2 py-3 text-xs leading-relaxed text-[#8392A5]">Your previous conversations will appear here.</p>
-        } @else {
-          <p class="px-2 py-3 text-xs leading-relaxed text-[#D9A9A9]">Conversation history is unavailable right now.</p>
-        }
-      } @else {
-        <p class="px-2 pb-2 pt-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#718197]">Explore with Speedy</p>
-        <div class="space-y-1">
-          <button type="button" (click)="ask('Which products are available?')" class="w-full rounded-lg px-3 py-2.5 text-left text-sm text-[#B7C2D0] transition hover:bg-white/5 hover:text-white">Browse products</button>
-          <button type="button" (click)="ask('How do I start a quote?')" class="w-full rounded-lg px-3 py-2.5 text-left text-sm text-[#B7C2D0] transition hover:bg-white/5 hover:text-white">Start a quote</button>
-          <button type="button" (click)="ask('Compare family health cover')" class="w-full rounded-lg px-3 py-2.5 text-left text-sm text-[#B7C2D0] transition hover:bg-white/5 hover:text-white">Compare cover</button>
-        </div>
-        <a routerLink="/auth/login" class="mt-5 block rounded-lg border border-white/10 px-3 py-2.5 text-center text-xs font-bold text-[#D6DFEA] transition hover:bg-white/5 hover:text-white">Sign in for saved chats</a>
-      }
-    </nav>
-
-    <div class="border-t border-white/8 p-4">
-      <a routerLink="/" class="mb-3 flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-[#D6DFEA] transition hover:bg-white/5 hover:text-white"><span aria-hidden="true">←</span> Back to SpeedClaim</a>
-      <p class="text-[11px] leading-relaxed text-[#8291A5]">Speedy explains options. Claims, payments and KYC decisions always remain under human control.</p>
-    </div>
+    @if (historyOpen()) {
+      <section class="absolute right-3 top-1/2 z-40 flex h-[min(72vh,590px)] w-[340px] -translate-y-1/2 flex-col overflow-hidden rounded-[26px] border border-white/10 bg-[#25272B] shadow-[0_24px_70px_rgba(0,0,0,0.42)]" aria-label="Conversation navigator">
+        <header class="flex items-center justify-between border-b border-white/8 px-5 py-4"><div><p class="text-[10px] font-bold uppercase tracking-[0.16em] text-[#9EA4AE]">Speedy</p><h2 class="mt-1 text-base font-bold text-white">Conversation navigator</h2></div><button type="button" (click)="toggleHistory()" class="flex h-8 w-8 items-center justify-center rounded-lg text-[#AAB1BC] transition hover:bg-white/8 hover:text-white" aria-label="Close conversation navigator">×</button></header>
+        <div class="p-3"><button type="button" (click)="startNewChat()" class="flex w-full items-center gap-2 rounded-xl bg-white/[0.07] px-3 py-3 text-left text-sm font-semibold text-[#F3F5F8] transition hover:bg-white/[0.12]"><span class="text-lg leading-none text-[#6FA0FF]">+</span> New conversation</button></div>
+        <nav class="min-h-0 flex-1 overflow-y-auto px-3 pb-3" aria-label="Speedy conversations">
+          @if (signedIn()) {
+            @if (conversations().length) {
+              <div class="space-y-1">
+                @for (conversation of conversations(); track conversation.id) { <button type="button" (click)="openConversation(conversation.id)" [class]="conversation.id === conversationId() ? 'relative w-full rounded-xl bg-white/[0.09] px-3 py-3 text-left text-sm text-white before:absolute before:inset-y-3 before:right-2 before:w-4 before:rounded-full before:bg-[#6FA0FF]' : 'w-full rounded-xl px-3 py-3 text-left text-sm text-[#BEC4CD] transition hover:bg-white/[0.06] hover:text-white'"><span class="block truncate pr-6 font-medium">{{ conversation.title }}</span><span class="mt-1 block text-[11px] text-[#808791]">{{ conversation.updatedAt | date:'MMM d' }}</span></button> }
+              </div>
+            } @else if (!historyError()) { <p class="px-3 py-5 text-sm leading-relaxed text-[#9CA3AD]">Your saved conversations will appear here.</p> } @else { <p class="px-3 py-5 text-sm leading-relaxed text-[#E0A5A5]">Conversation history is unavailable right now.</p> }
+          } @else {
+            <p class="px-3 py-2 text-sm leading-relaxed text-[#AAB1BC]">Sign in to keep and reopen your conversations.</p>
+            <a routerLink="/auth/login" class="mx-3 mt-2 block rounded-xl bg-[#6FA0FF] px-3 py-2.5 text-center text-sm font-bold text-[#101722] transition hover:bg-[#8BB3FF]">Sign in</a>
+          }
+        </nav>
+        <footer class="border-t border-white/8 p-4"><a routerLink="/" class="flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-[#DDE2E9] transition hover:bg-white/[0.06]"><span aria-hidden="true">←</span> Back to SpeedClaim</a><p class="mt-2 px-2 text-[11px] leading-relaxed text-[#89919D]">AI guides; you remain in control of every insurance action.</p></footer>
+      </section>
+    }
   </aside>
 
   <section class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[#F8FAFC] text-[#172033]">

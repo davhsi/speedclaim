@@ -45,6 +45,7 @@ export class SpeedyWorkspaceComponent {
   readonly messages = signal<WorkspaceMessage[]>([]);
   readonly conversationId = signal<string | null>(null);
   readonly conversations = signal<SpeedyWorkspaceConversation[]>([]);
+  readonly historyOpen = signal(false);
   readonly historyLoaded = signal(false);
   readonly historyError = signal(false);
   readonly sending = signal(false);
@@ -94,6 +95,7 @@ export class SpeedyWorkspaceComponent {
 
   startNewChat(): void {
     if (this.sending()) return;
+    this.historyOpen.set(false);
     this.conversationId.set(null);
     this.messages.set([]);
     this.question.set('');
@@ -105,6 +107,7 @@ export class SpeedyWorkspaceComponent {
     this.error.set(null);
     this.speedy.getWorkspaceConversation(conversationId).subscribe({
       next: conversation => {
+        this.historyOpen.set(false);
         this.conversationId.set(conversation.id);
         this.messages.set((conversation.messages ?? []).map(message => ({
           role: message.role.toLowerCase() as WorkspaceMessage['role'],
@@ -114,6 +117,10 @@ export class SpeedyWorkspaceComponent {
       },
       error: () => this.error.set('That conversation could not be opened. Please try again.'),
     });
+  }
+
+  toggleHistory(): void {
+    this.historyOpen.update(open => !open);
   }
 
   runAction(action: SpeedyWorkspaceAction): void {

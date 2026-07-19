@@ -62,4 +62,14 @@ describe('SpeedyWorkspaceComponent', () => {
     expect(fixture.componentInstance.conversationId()).toBeNull();
     expect(fixture.componentInstance.messages()).toEqual([]);
   });
+
+  it('opens and closes the compact conversation navigator', () => {
+    const fixture = TestBed.createComponent(SpeedyWorkspaceComponent);
+
+    fixture.componentInstance.toggleHistory();
+    expect(fixture.componentInstance.historyOpen()).toBe(true);
+
+    fixture.componentInstance.toggleHistory();
+    expect(fixture.componentInstance.historyOpen()).toBe(false);
+  });
 });
