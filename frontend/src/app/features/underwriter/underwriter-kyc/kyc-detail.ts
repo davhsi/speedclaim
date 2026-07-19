@@ -7,6 +7,7 @@ import { UnderwriterService, UnderwriterKycDto, KycIdentityRevealDto } from '../
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { FormsModule } from '@angular/forms';
 import { DocumentPreviewComponent, PreviewDoc } from '../../../shared/components/document-preview/document-preview';
+import { resolveBackendUrl } from '../../../core/config/backend-url.config';
 
 @Component({
   selector: 'app-uw-kyc-detail',
@@ -117,7 +118,8 @@ export class KycDetailComponent implements OnInit {
   }
 
   openPreview(path: string, label: string): void {
-    this.previewDoc.set({ url: '/' + path, label });
+    const relativeUploadPath = path.startsWith('/') ? path : `/${path}`;
+    this.previewDoc.set({ url: resolveBackendUrl(relativeUploadPath), label });
   }
   closePreview(): void { this.previewDoc.set(null); }
 }
