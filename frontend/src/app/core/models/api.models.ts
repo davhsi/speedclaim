@@ -801,3 +801,10 @@ export interface ProductBrochureDto {
 }
 
 export interface SpeedyAssistantResponse { requestId: string; answer: string; provider?: string | null; model?: string | null; }
+export interface SpeedyWorkspaceAction {
+  kind: 'navigate' | 'guided_kyc' | 'none'; label: string; route?: string | null; detail: string; requiresConfirmation: boolean;
+}
+export interface SpeedyWorkspaceResponse {
+  requestId: string; answer: string; intent: string; risk: 'low' | 'regulated'; actions: SpeedyWorkspaceAction[];
+  provider?: string | null; model?: string | null; conversationId?: string | null;
+}

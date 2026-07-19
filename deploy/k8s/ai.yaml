@@ -38,6 +38,8 @@ spec:
               value: speedclaim-uploads
             - name: AI__AnthropicChatModel
               value: claude-sonnet-4-6
+            - name: AI__AnthropicRouterModel
+              value: claude-haiku-4-5-20251001
           envFrom:
             - secretRef:
                 name: speedclaim-ai-secrets
@@ -73,3 +75,26 @@ spec:
     - name: http
       port: 8000
       targetPort: http
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: speedclaim-ai
+  namespace: speedclaim
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: speedclaim-ai
+  minReplicas: 1
+  maxReplicas: 3
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

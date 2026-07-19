@@ -22,6 +22,10 @@ export const routes: Routes = [
     loadChildren: () => import('./features/auth/auth.routes').then(m => m.authRoutes),
   },
   {
+    path: 'speedy',
+    loadComponent: () => import('./features/portal/speedy-workspace/speedy-workspace').then(m => m.SpeedyWorkspaceComponent),
+  },
+  {
     path: 'agent',
     canActivate: [authGuard, agentGuard],
     loadChildren: () => import('./features/agent/agent.routes').then(m => m.agentRoutes),

@@ -181,6 +181,13 @@ class Settings(BaseSettings):
             "AI__ANTHROPIC_CHAT_MODEL",
         ),
     )
+    anthropic_router_model: str = Field(
+        default="claude-haiku-4-5-20251001",
+        validation_alias=AliasChoices(
+            "AI__AnthropicRouterModel",
+            "AI__ANTHROPIC_ROUTER_MODEL",
+        ),
+    )
     anthropic_output_mode: str = Field(
         default=DEFAULT_ANTHROPIC_OUTPUT_MODE,
         validation_alias=AliasChoices(

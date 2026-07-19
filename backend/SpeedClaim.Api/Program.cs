@@ -224,6 +224,9 @@ builder.Services.AddHttpClient<IPolicyQaClient, FastApiPolicyQaClient>()
 builder.Services.AddHttpClient<ISpeedyAssistantClient, FastApiSpeedyAssistantClient>()
     .RedactLoggedHeaders(headerName =>
         string.Equals(headerName, "X-Internal-Api-Key", StringComparison.OrdinalIgnoreCase));
+builder.Services.AddHttpClient<ISpeedyWorkspaceClient, FastApiSpeedyWorkspaceClient>()
+    .RedactLoggedHeaders(headerName =>
+        string.Equals(headerName, "X-Internal-Api-Key", StringComparison.OrdinalIgnoreCase));
 
 
 

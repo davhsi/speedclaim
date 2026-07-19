@@ -8,6 +8,7 @@ public sealed class AiServiceOptions
     public string InternalApiKey { get; set; } = string.Empty;
     public int IngestionTimeoutSeconds { get; set; } = 60;
     public int PolicyQaTimeoutSeconds { get; set; } = 45;
+    public int WorkspaceTimeoutSeconds { get; set; } = 45;
     public int PolicyQaMaxQuestionCharacters { get; set; } = 2000;
     public int BrochureMaxFileSizeBytes { get; set; } = 5 * 1024 * 1024;
 }
