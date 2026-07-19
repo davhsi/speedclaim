@@ -1,5 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { NavigationEnd, Router } from '@angular/router';
+import { filter } from 'rxjs';
 import { SpeedyAssistantService } from '../services/speedy-assistant.service';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -17,16 +19,18 @@ interface SpeedyMessage {
 export class SpeedyAssistantComponent {
   private readonly speedy = inject(SpeedyAssistantService);
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
 
   open = signal(false);
   sending = signal(false);
   question = signal('');
   error = signal<string | null>(null);
   messages = signal<SpeedyMessage[]>([]);
+  private readonly inWorkspace = signal(this.router.url.startsWith('/speedy'));
   readonly isSignedInCustomer = computed(() => this.auth.currentUser()?.role === 'Customer');
   readonly visible = computed(() => {
     const user = this.auth.currentUser();
-    return !user || user.role === 'Customer';
+    return (!user || user.role === 'Customer') && !this.inWorkspace();
   });
 
   readonly suggestions = computed(() => this.isSignedInCustomer()
@@ -38,6 +42,14 @@ export class SpeedyAssistantComponent {
     : 'I can help you explore SpeedClaim products, eligibility, cover ranges, and waiting periods.');
 
   readonly assistantLabel = computed(() => this.isSignedInCustomer() ? 'Product & account guide' : 'Product guide');
+
+  constructor() {
+    this.router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)).subscribe(event => {
+      const isWorkspace = event.urlAfterRedirects.startsWith('/speedy');
+      this.inWorkspace.set(isWorkspace);
+      if (isWorkspace) this.close();
+    });
+  }
 
   toggle(): void {
     this.open.update(value => !value);

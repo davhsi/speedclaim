@@ -1,5 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
 import { SpeedyAssistantComponent } from './speedy-assistant';
@@ -14,6 +15,7 @@ describe('SpeedyAssistantComponent', () => {
     TestBed.configureTestingModule({
       imports: [SpeedyAssistantComponent],
       providers: [
+        provideRouter([]),
         { provide: SpeedyAssistantService, useValue: speedy },
         { provide: AuthService, useValue: { currentUser: signal(null) } },
       ],
