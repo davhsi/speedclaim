@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { concatMap } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
-import { ClaimDto, CreatePaymentIntentResponse, DocumentRequirementDto, GenerateQuoteResponse, KycRecordDto, PolicyDto, PremiumScheduleDto, ProductDto, ProposalDto, SpeedyWorkspaceAction, SpeedyWorkspaceConversation, SubmitProposalRequest, UserDto } from '../../../core/models/api.models';
+import { ClaimDto, CreatePaymentIntentResponse, DocumentRequirementDto, GenerateQuoteResponse, GrievanceDto, KycRecordDto, PolicyDto, PremiumScheduleDto, ProductDto, ProposalDto, SpeedyWorkspaceAction, SpeedyWorkspaceConversation, SubmitProposalRequest, UserDto } from '../../../core/models/api.models';
 import { ProfileService } from '../profile/services/profile.service';
 import { SpeedyAssistantService } from '../services/speedy-assistant.service';
 import { ProductService } from '../products/services/product.service';
@@ -14,6 +14,7 @@ import { ClaimService } from '../claims/services/claim.service';
 import { PolicyService } from '../policies/services/policy.service';
 import { ProposalService } from '../proposals/services/proposal.service';
 import { PaymentService } from '../payments/services/payment.service';
+import { GrievanceService } from '../grievances/services/grievance.service';
 
 declare const Stripe: any;
 
@@ -62,6 +63,7 @@ export class SpeedyWorkspaceComponent {
   private readonly proposals = inject(ProposalService);
   private readonly http = inject(HttpClient);
   private readonly payments = inject(PaymentService);
+  private readonly grievances = inject(GrievanceService);
 
   readonly signedIn = computed(() => this.auth.currentUser()?.role === 'Customer');
   readonly today = new Date().toISOString().slice(0, 10);
@@ -88,13 +90,14 @@ export class SpeedyWorkspaceComponent {
   readonly panFile = signal<File | null>(null);
   readonly aadhaarFileError = signal('');
   readonly panFileError = signal('');
-  readonly workspaceTask = signal<'quote' | 'proposal' | 'claim' | 'claimStatus' | 'policyStatus' | 'payment' | null>(null);
+  readonly workspaceTask = signal<'quote' | 'proposal' | 'claim' | 'claimStatus' | 'grievanceStatus' | 'policyStatus' | 'payment' | null>(null);
   readonly taskLoading = signal(false);
   readonly taskSubmitting = signal(false);
   readonly taskError = signal<string | null>(null);
   readonly taskProducts = signal<ProductDto[]>([]);
   readonly taskPolicies = signal<PolicyDto[]>([]);
   readonly taskClaims = signal<ClaimDto[]>([]);
+  readonly taskGrievances = signal<GrievanceDto[]>([]);
   readonly taskProposals = signal<ProposalDto[]>([]);
   readonly quoteProductId = signal('');
   readonly quoteProductNumber = signal<number | null>(null);
@@ -281,19 +284,20 @@ export class SpeedyWorkspaceComponent {
       this.announce('I’ve opened the secure KYC checklist. Attach both labelled documents before continuing.');
       return;
     }
-    if (!this.signedIn() && ['guided_quote', 'guided_claim', 'claim_status', 'policy_status', 'claim_documents', 'guided_application', 'payment'].includes(action.kind)) {
-      this.error.set('Sign in to calculate a quote or securely access policy, claim, and document actions.');
+    if (!this.signedIn() && ['guided_quote', 'guided_claim', 'claim_status', 'grievance_status', 'policy_status', 'claim_documents', 'guided_application', 'payment'].includes(action.kind)) {
+      this.error.set('Sign in to calculate a quote or securely access policy, claim, grievance, and document actions.');
       return;
     }
     if (action.kind === 'guided_quote') { this.openTask('quote'); return; }
     if (action.kind === 'guided_claim') { this.openTask('claim'); return; }
     if (action.kind === 'claim_status') { this.openTask('claimStatus'); return; }
+    if (action.kind === 'grievance_status') { this.openTask('grievanceStatus'); return; }
     if (action.kind === 'policy_status') { this.openTask('policyStatus'); return; }
     if (action.kind === 'payment') { this.openTask('payment'); return; }
     if (action.kind === 'navigate' && action.route) this.router.navigateByUrl(action.route);
   }
 
-  openTask(task: 'quote' | 'claim' | 'claimStatus' | 'policyStatus' | 'payment'): void {
+  openTask(task: 'quote' | 'claim' | 'claimStatus' | 'grievanceStatus' | 'policyStatus' | 'payment'): void {
     this.workspaceTask.set(task);
     this.taskError.set(null);
     this.taskLoading.set(true);
@@ -309,6 +313,10 @@ export class SpeedyWorkspaceComponent {
     }
     if (task === 'claimStatus') {
       this.claims.getMyClaims().subscribe({ next: claims => { this.taskClaims.set(claims); this.taskLoading.set(false); }, error: () => this.taskFailed('Your claims could not be loaded.') });
+      return;
+    }
+    if (task === 'grievanceStatus') {
+      this.grievances.getMyGrievances().subscribe({ next: grievances => { this.taskGrievances.set(grievances); this.taskLoading.set(false); }, error: () => this.taskFailed('Your grievances could not be loaded.') });
       return;
     }
     if (task === 'payment') {

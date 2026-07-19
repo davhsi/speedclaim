@@ -52,6 +52,7 @@ public record SpeedyAccountSnapshot(
     IReadOnlyList<SpeedyPolicySnapshot> Policies,
     IReadOnlyList<SpeedyPremiumSnapshot> UpcomingPremiums,
     IReadOnlyList<SpeedyClaimSnapshot> Claims,
+    IReadOnlyList<SpeedyGrievanceSnapshot> Grievances,
     SpeedyKycSnapshot? Kyc = null);
 
 // This contains only workflow state. Identity numbers, document paths, and review
@@ -89,6 +90,15 @@ public record SpeedyClaimSnapshot(
     string PolicyNumber,
     string Status,
     DateTime IntimationDate);
+
+// Customer-visible workflow state only. Descriptions, attachments, assignment,
+// and internal resolution notes are deliberately excluded from the AI snapshot.
+public record SpeedyGrievanceSnapshot(
+    string GrievanceNumber,
+    string Category,
+    string Status,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? ResolvedAt);
 
 // Saleable catalog data is safe for guest questions. Account data remains empty for guests.
 public record SpeedyCatalogSnapshot(IReadOnlyList<SpeedyProductSnapshot> Products);

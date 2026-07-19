@@ -61,6 +61,10 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
             ? []
             : (await _unitOfWork.Claims.FindAsync(c => c.CustomerId == customer.Id))
                 .OrderByDescending(c => c.IntimationDate).Take(5).ToList();
+        List<Grievance> grievances = customer is null
+            ? []
+            : (await _unitOfWork.Grievances.FindAsync(g => g.CustomerId == customer.Id))
+                .OrderByDescending(g => g.CreatedAt).Take(5).ToList();
         var policyNumbers = policies.ToDictionary(p => p.Id, p => p.PolicyNumber);
 
         var request = new SpeedyAssistantRequest(
@@ -81,6 +85,8 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
                     c.ClaimNumber,
                     policyNumbers.TryGetValue(c.PolicyId, out var number) ? number : "Policy",
                     c.Status.ToString(), c.IntimationDate)).ToList(),
+                grievances.Select(g => new SpeedyGrievanceSnapshot(
+                    g.GrievanceNumber, g.Category.ToString(), g.Status.ToString(), g.CreatedAt, g.ResolvedAt)).ToList(),
                 ToKycSnapshot(kyc)),
             new SpeedyCatalogSnapshot(catalog));
 
@@ -143,6 +149,10 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
             ? []
             : (await _unitOfWork.Claims.FindAsync(c => c.CustomerId == customer.Id))
                 .OrderByDescending(c => c.IntimationDate).Take(5).ToList();
+        List<Grievance> grievances = customer is null
+            ? []
+            : (await _unitOfWork.Grievances.FindAsync(g => g.CustomerId == customer.Id))
+                .OrderByDescending(g => g.CreatedAt).Take(5).ToList();
         var policyNumbers = policies.ToDictionary(p => p.Id, p => p.PolicyNumber);
 
         var request = new SpeedyWorkspaceRequest(
@@ -163,6 +173,8 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
                     c.ClaimNumber,
                     policyNumbers.TryGetValue(c.PolicyId, out var number) ? number : "Policy",
                     c.Status.ToString(), c.IntimationDate)).ToList(),
+                grievances.Select(g => new SpeedyGrievanceSnapshot(
+                    g.GrievanceNumber, g.Category.ToString(), g.Status.ToString(), g.CreatedAt, g.ResolvedAt)).ToList(),
                 ToKycSnapshot(kyc)),
             new SpeedyCatalogSnapshot(catalog));
 
