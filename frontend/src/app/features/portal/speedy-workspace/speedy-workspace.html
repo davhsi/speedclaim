@@ -42,6 +42,7 @@
     </nav>
 
     <div class="border-t border-white/8 p-4">
+      <a routerLink="/" class="mb-3 flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-[#D6DFEA] transition hover:bg-white/5 hover:text-white"><span aria-hidden="true">←</span> Back to SpeedClaim</a>
       <p class="text-[11px] leading-relaxed text-[#8291A5]">Speedy explains options. Claims, payments and KYC decisions always remain under human control.</p>
     </div>
   </aside>
@@ -49,7 +50,7 @@
   <section class="flex min-w-0 flex-1 flex-col bg-[#F8FAFC] text-[#172033]">
     <header class="flex h-16 shrink-0 items-center justify-between border-b border-[#E5EAF0] bg-white px-4 md:px-6">
       <div class="flex min-w-0 items-center gap-3">
-        <a routerLink="/" class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#526176] transition hover:bg-[#F1F4F7] lg:hidden" aria-label="Back to SpeedClaim">←</a>
+        <a routerLink="/" class="inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-bold text-[#526176] transition hover:bg-[#F1F4F7]" aria-label="Back to SpeedClaim"><span aria-hidden="true">←</span><span class="hidden sm:inline">Back to SpeedClaim</span></a>
         <div class="min-w-0"><h1 class="truncate text-sm font-bold text-[#1B2738]">{{ conversationId() ? 'Conversation with Speedy' : 'New conversation' }}</h1><p class="hidden text-xs text-[#738197] sm:block">Guided insurance support</p></div>
       </div>
       <div class="flex items-center gap-2">
