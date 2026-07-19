@@ -9,10 +9,12 @@ public record SpeedyAssistantResponse(Guid RequestId, string Answer, string? Pro
 public record SpeedyAssistantRequest(
     Guid RequestId,
     string Question,
-    SpeedyAccountSnapshot Account);
+    SpeedyAccountSnapshot Account,
+    SpeedyCatalogSnapshot Catalog);
 
 public record SpeedyAccountSnapshot(
     string FirstName,
+    bool IsAuthenticated,
     IReadOnlyList<SpeedyPolicySnapshot> Policies,
     IReadOnlyList<SpeedyPremiumSnapshot> UpcomingPremiums,
     IReadOnlyList<SpeedyClaimSnapshot> Claims);
@@ -37,3 +39,21 @@ public record SpeedyClaimSnapshot(
     string PolicyNumber,
     string Status,
     DateTime IntimationDate);
+
+// Saleable catalog data is safe for guest questions. Account data remains empty for guests.
+public record SpeedyCatalogSnapshot(IReadOnlyList<SpeedyProductSnapshot> Products);
+
+public record SpeedyProductSnapshot(
+    string ProductName,
+    string Domain,
+    string Description,
+    int MinAge,
+    int MaxAge,
+    decimal MinSumAssured,
+    decimal MaxSumAssured,
+    int MinTenureYears,
+    int MaxTenureYears,
+    int WaitingPeriodDays,
+    bool AllowsFamilyFloater,
+    int MaxFamilyMembers,
+    string? MotorVehicleType);

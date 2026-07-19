@@ -221,13 +221,25 @@ public class GrievanceService : IGrievanceService
         if (IsTerminal(grievance.Status))
             throw new ConflictException("Attachments cannot be added to a resolved or closed grievance.");
 
+        var previousAttachmentPath = grievance.AttachmentPath;
         await using var stream = file.OpenReadStream();
         var path = await _storageService.UploadFileAsync(stream, file.FileName, $"grievances/{grievanceId}");
 
         grievance.AttachmentPath = path;
         grievance.UpdatedAt = DateTimeOffset.UtcNow;
         _unitOfWork.Grievances.Update(grievance);
-        await _unitOfWork.CompleteAsync();
+        try
+        {
+            await _unitOfWork.CompleteAsync();
+        }
+        catch
+        {
+            await _storageService.DeleteFileAsync(path);
+            throw;
+        }
+
+        if (!string.IsNullOrWhiteSpace(previousAttachmentPath) && previousAttachmentPath != path)
+            await _storageService.DeleteFileAsync(previousAttachmentPath);
 
         return path;
     }

@@ -543,6 +543,33 @@ public class UserServiceTests
     }
 
     [Test]
+    public async Task UploadAadhaarAsync_ExistingDocument_DeletesPreviousBlobAfterSavingNewReference()
+    {
+        var customerId = Guid.NewGuid();
+        var existing = new KycRecord
+        {
+            Id = Guid.NewGuid(), UserId = customerId, KycStatus = KycStatus.Pending,
+            AadhaarNumber = "OLD", AadhaarDocumentKey = "uploads/kyc/old-aadhaar.pdf"
+        };
+        _mockKycRepository.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>()))
+            .ReturnsAsync(existing);
+
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.FileName).Returns("front.pdf");
+        mockFile.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
+        var storage = new Mock<IStorageService>();
+        storage.Setup(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), "front.pdf", It.IsAny<string>()))
+            .ReturnsAsync("uploads/kyc/new-aadhaar.pdf");
+        var service = new UserService(_mockUnitOfWork.Object, storage.Object, _mockEncryptionService.Object,
+            _mockNotificationService.Object, new Mock<IEmailService>().Object);
+
+        await service.UploadAadhaarAsync(customerId.ToString(), new AadhaarUploadRequest(null, "123456789012", mockFile.Object));
+
+        Assert.That(existing.AadhaarDocumentKey, Is.EqualTo("uploads/kyc/new-aadhaar.pdf"));
+        storage.Verify(s => s.DeleteFileAsync("uploads/kyc/old-aadhaar.pdf"), Times.Once);
+    }
+
+    [Test]
     public void ApproveRejectKycAsync_MissingAadhaarOrPan_ThrowsValidationException()
     {
         var customerId = Guid.NewGuid();

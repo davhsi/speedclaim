@@ -19,23 +19,8 @@ public class LocalStorageService : IStorageService
 
     public async Task<string> UploadFileAsync(Stream fileStream, string fileName, string folderPath)
     {
-        if (fileStream == null || fileStream.Length == 0)
-        {
-            throw new ValidationException("No file provided");
-        }
-
-        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp", ".pdf" };
         var extension = Path.GetExtension(fileName).ToLowerInvariant();
-        
-        if (!allowedExtensions.Contains(extension))
-        {
-            throw new ValidationException("Invalid file type. Only JPG, PNG, WebP, and PDF are allowed.");
-        }
-
-        if (fileStream.Length > 5 * 1024 * 1024) // 5 MB limit
-        {
-            throw new ValidationException("File size exceeds the 5MB limit.");
-        }
+        FileUploadValidator.Validate(fileStream, fileName);
 
         // Relative path starting from wwwroot
         var relativeFolderPath = Path.Combine("uploads", folderPath);
@@ -49,6 +34,7 @@ public class LocalStorageService : IStorageService
         var uniqueFileName = $"{Guid.NewGuid()}{extension}";
         var absoluteFilePath = Path.Combine(absoluteFolderPath, uniqueFileName);
 
+        fileStream.Position = 0;
         using (var stream = new FileStream(absoluteFilePath, FileMode.Create))
         {
             await fileStream.CopyToAsync(stream);

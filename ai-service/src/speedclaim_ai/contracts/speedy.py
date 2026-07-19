@@ -68,9 +68,34 @@ class SpeedyAccountSnapshot(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     first_name: str = Field(alias="firstName", min_length=1, max_length=80)
+    is_authenticated: bool = Field(alias="isAuthenticated", default=False)
     policies: list[SpeedyPolicySnapshot] = Field(default_factory=list, max_length=20)
     upcoming_premiums: list[SpeedyPremiumSnapshot] = Field(alias="upcomingPremiums", default_factory=list, max_length=5)
     claims: list[SpeedyClaimSnapshot] = Field(default_factory=list, max_length=5)
+
+
+class SpeedyProductSnapshot(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    product_name: str = Field(alias="productName", min_length=1, max_length=160)
+    domain: str = Field(min_length=1, max_length=40)
+    description: str = Field(min_length=1, max_length=4_000)
+    min_age: int = Field(alias="minAge", ge=0, le=120)
+    max_age: int = Field(alias="maxAge", ge=0, le=120)
+    min_sum_assured: float = Field(alias="minSumAssured", ge=0)
+    max_sum_assured: float = Field(alias="maxSumAssured", ge=0)
+    min_tenure_years: int = Field(alias="minTenureYears", ge=0)
+    max_tenure_years: int = Field(alias="maxTenureYears", ge=0)
+    waiting_period_days: int = Field(alias="waitingPeriodDays", ge=0)
+    allows_family_floater: bool = Field(alias="allowsFamilyFloater")
+    max_family_members: int = Field(alias="maxFamilyMembers", ge=0)
+    motor_vehicle_type: str | None = Field(alias="motorVehicleType", default=None, max_length=100)
+
+
+class SpeedyCatalogSnapshot(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    products: list[SpeedyProductSnapshot] = Field(default_factory=list, max_length=50)
 
 
 class SpeedyRequest(BaseModel):
@@ -79,6 +104,7 @@ class SpeedyRequest(BaseModel):
     request_id: UUID = Field(alias="requestId")
     question: str = Field(min_length=1, max_length=2_000)
     account: SpeedyAccountSnapshot
+    catalog: SpeedyCatalogSnapshot
 
     @field_validator("question")
     @classmethod

@@ -70,6 +70,34 @@ public class GrievanceServiceTests
     }
 
     [Test]
+    public async Task AttachDocumentAsync_ReplacesAttachmentAndDeletesPreviousBlobAfterSaving()
+    {
+        var customerId = Guid.NewGuid();
+        var grievanceId = Guid.NewGuid();
+        var grievance = new Grievance
+        {
+            Id = grievanceId, CustomerId = customerId, Status = GrievanceStatus.Open,
+            AttachmentPath = "uploads/grievances/old.pdf"
+        };
+        _mockGrievanceRepo.Setup(r => r.GetByIdAsync(grievanceId)).ReturnsAsync(grievance);
+        _mockCustomerRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>()))
+            .ReturnsAsync(new Customer { Id = customerId, UserId = customerId });
+
+        var file = new Mock<IFormFile>();
+        file.Setup(f => f.FileName).Returns("new.pdf");
+        file.Setup(f => f.OpenReadStream()).Returns(new System.IO.MemoryStream());
+        var storage = new Mock<IStorageService>();
+        storage.Setup(s => s.UploadFileAsync(It.IsAny<System.IO.Stream>(), "new.pdf", $"grievances/{grievanceId}"))
+            .ReturnsAsync("uploads/grievances/new.pdf");
+        var service = new GrievanceService(_mockUnitOfWork.Object, new Mock<IEmailService>().Object, storage.Object);
+
+        await service.AttachDocumentAsync(grievanceId, customerId, file.Object);
+
+        Assert.That(grievance.AttachmentPath, Is.EqualTo("uploads/grievances/new.pdf"));
+        storage.Verify(s => s.DeleteFileAsync("uploads/grievances/old.pdf"), Times.Once);
+    }
+
+    [Test]
     public void RaiseGrievanceAsync_WithInvalidCustomer_ThrowsException()
     {
         // Arrange
