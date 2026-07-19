@@ -34,6 +34,9 @@ describe('DocumentPreviewComponent', () => {
 
     const withDoc = create({ url: '/uploads/claims/x.pdf', label: 'x.pdf' });
     expect(withDoc.safePreviewUrl()).not.toBeNull();
+
+    const withProductionDoc = create({ url: 'https://api.speedclaim.example/uploads/kyc/x.pdf', label: 'x.pdf' });
+    expect(withProductionDoc.safePreviewUrl()).not.toBeNull();
   });
 
   it('emits closed when close() is called', () => {

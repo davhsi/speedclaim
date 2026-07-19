@@ -3,6 +3,7 @@ import json
 from pydantic import BaseModel, Field
 
 from speedclaim_ai.contracts.speedy import SpeedyRequest, SpeedyResponse
+from speedclaim_ai.kyc_workflow import kyc_status_answer
 from speedclaim_ai.providers.chat.base import (
     ChatProvider,
     ChatProviderError,
@@ -45,6 +46,15 @@ class SpeedyService:
         self._chat_provider = chat_provider
 
     async def answer(self, request: SpeedyRequest) -> SpeedyResponse:
+        if _is_kyc_question(request.question):
+            kyc_answer = kyc_status_answer(request.account)
+            if kyc_answer is not None:
+                return SpeedyResponse(
+                    requestId=request.request_id,
+                    answer=kyc_answer,
+                    provider="SpeedClaim",
+                    model="kyc-status-workflow",
+                )
         payload = {
             "QUESTION_DATA": request.question,
             "ACCOUNT_DATA": request.account.model_dump(mode="json", by_alias=True),
@@ -70,3 +80,8 @@ class SpeedyService:
             provider=completion.provider,
             model=completion.model,
         )
+
+
+def _is_kyc_question(question: str) -> bool:
+    normalized = question.lower()
+    return any(term in normalized for term in ("kyc", "aadhaar", "aadhar", "pan"))

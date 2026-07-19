@@ -12,6 +12,7 @@ const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif']);
 
 // Matches LocalStorageService's own output shape: uploads/<folder>/<guid>.<allowlisted-ext>
 const SERVER_UPLOAD_PATH = /^\/uploads\/[\w-]+(?:\/[\w-]+)*\/[\w-]+\.(?:jpe?g|png|webp|pdf)$/i;
+const ABSOLUTE_SERVER_UPLOAD_URL = /^https?:\/\/[^/?#]+(\/uploads\/[\w-]+(?:\/[\w-]+)*\/[\w-]+\.(?:jpe?g|png|webp|pdf))$/i;
 
 @Component({
   selector: 'app-document-preview',
@@ -30,7 +31,7 @@ export class DocumentPreviewComponent {
 
   safePreviewUrl = computed<SafeResourceUrl | null>(() => {
     const doc = this.doc();
-    if (!doc || !SERVER_UPLOAD_PATH.test(doc.url)) {
+    if (!doc || !(SERVER_UPLOAD_PATH.test(doc.url) || ABSOLUTE_SERVER_UPLOAD_URL.test(doc.url))) {
       return null;
     }
     return this.sanitizer.bypassSecurityTrustResourceUrl(doc.url);

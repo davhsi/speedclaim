@@ -7,6 +7,7 @@ from speedclaim_ai.contracts.speedy import (
     SpeedyAccountSnapshot,
     SpeedyCatalogSnapshot,
     SpeedyClaimSnapshot,
+    SpeedyKycSnapshot,
     SpeedyPolicySnapshot,
     SpeedyPremiumSnapshot,
     SpeedyRequest,
@@ -53,6 +54,28 @@ async def test_speedy_uses_only_the_server_supplied_account_snapshot():
     assert response.request_id == request.request_id
     assert response.answer == "You have one active policy."
     assert response.provider == "Fake"
+
+
+async def test_speedy_returns_the_same_deterministic_kyc_status_as_the_workspace():
+    request = SpeedyRequest(
+        requestId=uuid4(),
+        question="What is my KYC status?",
+        account=SpeedyAccountSnapshot(
+            firstName="Asha",
+            isAuthenticated=True,
+            policies=[],
+            upcomingPremiums=[],
+            claims=[],
+            kyc=SpeedyKycSnapshot(status="Pending", aadhaarUploaded=True, panUploaded=True),
+        ),
+        catalog=SpeedyCatalogSnapshot(products=[]),
+    )
+
+    response = await SpeedyService(FakeChatProvider()).answer(request)
+
+    assert "⏳" in response.answer
+    assert "awaiting underwriter review" in response.answer
+    assert response.model == "kyc-status-workflow"
 
 
 def test_speedy_snapshot_accepts_dotnet_datetime_values_from_imported_data():

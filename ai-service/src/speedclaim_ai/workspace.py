@@ -16,6 +16,7 @@ from speedclaim_ai.contracts.workspace import (
     WorkspaceRequest,
     WorkspaceResponse,
 )
+from speedclaim_ai.kyc_workflow import kyc_is_under_review_or_approved, kyc_status_answer
 from speedclaim_ai.providers.chat.base import ChatProvider, ChatRequest
 
 _INTENTS = Literal[
@@ -99,13 +100,12 @@ class WorkspaceService:
     def _prepare_actions(state: _WorkspaceState) -> dict[str, Any]:
         request = state["request"]
         intent = state["intent"]
-        authenticated = request.account.is_authenticated
-        action = _action_for(intent, authenticated, request.account.kyc)
+        action = _action_for(intent, request.account)
         return {"actions": [action] if action is not None else []}
 
     async def _answer(self, state: _WorkspaceState) -> dict[str, Any]:
         request = state["request"]
-        kyc_answer = _kyc_status_answer(state["intent"], request)
+        kyc_answer = kyc_status_answer(request.account) if state["intent"] == "kyc" else None
         if kyc_answer is not None:
             return {
                 "response": WorkspaceResponse(
@@ -149,7 +149,7 @@ class WorkspaceService:
         }
 
 
-def _action_for(intent: str, authenticated: bool, kyc: Any | None = None) -> WorkspaceAction | None:
+def _action_for(intent: str, account: Any) -> WorkspaceAction | None:
     public_actions: dict[str, WorkspaceAction] = {
         "product_discovery": WorkspaceAction(kind="navigate", label="Explore products", route="/products", detail="Compare current SpeedClaim products.", requiresConfirmation=False),
         "proposal": WorkspaceAction(kind="navigate", label="Start a quote", route="/quote", detail="Review your details before submitting a proposal.", requiresConfirmation=True),
@@ -164,38 +164,6 @@ def _action_for(intent: str, authenticated: bool, kyc: Any | None = None) -> Wor
     }
     if intent in public_actions:
         return public_actions[intent]
-    if intent == "kyc" and _kyc_is_under_review_or_approved(kyc):
+    if intent == "kyc" and kyc_is_under_review_or_approved(account):
         return None
-    return customer_actions.get(intent) if authenticated else None
-
-
-def _kyc_is_under_review_or_approved(kyc: Any | None) -> bool:
-    return bool(
-        kyc
-        and kyc.aadhaar_uploaded
-        and kyc.pan_uploaded
-        and kyc.status in {"Pending", "UnderReview", "Approved"}
-    )
-
-
-def _kyc_status_answer(intent: str, request: WorkspaceRequest) -> str | None:
-    if intent != "kyc" or not request.account.is_authenticated:
-        return None
-    kyc = request.account.kyc
-    if kyc is None:
-        return None
-    if kyc.aadhaar_uploaded and kyc.pan_uploaded and kyc.status in {"Pending", "UnderReview"}:
-        return (
-            "Your Aadhaar and PAN have already been submitted and are awaiting underwriter review. "
-            "You do not need to submit them again. We will notify you in SpeedClaim and by email once the review is complete."
-        )
-    if kyc.aadhaar_uploaded and kyc.pan_uploaded and kyc.status == "Approved":
-        return "Your KYC is verified. You do not need to submit any documents again."
-    if kyc.status == "Rejected":
-        return "Your KYC needs updated documents before it can be reviewed again. Please re-upload Aadhaar and PAN in their labelled slots."
-    missing = []
-    if not kyc.aadhaar_uploaded:
-        missing.append("Aadhaar")
-    if not kyc.pan_uploaded:
-        missing.append("PAN")
-    return f"Your KYC is incomplete. Please attach the missing {' and '.join(missing)} document{'s' if len(missing) > 1 else ''} in the labelled slot{'s' if len(missing) > 1 else ''}."
+    return customer_actions.get(intent) if account.is_authenticated else None
