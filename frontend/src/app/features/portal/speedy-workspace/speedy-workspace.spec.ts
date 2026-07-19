@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
 import { AuthService } from '../../../core/services/auth.service';
@@ -61,6 +61,18 @@ describe('SpeedyWorkspaceComponent', () => {
 
     expect(fixture.componentInstance.conversationId()).toBeNull();
     expect(fixture.componentInstance.messages()).toEqual([]);
+  });
+
+  it('returns a signed-in customer to the customer dashboard', () => {
+    const fixture = TestBed.createComponent(SpeedyWorkspaceComponent);
+    const auth = TestBed.inject(AuthService) as unknown as { currentUser: { set: (value: unknown) => void } };
+    const router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+    auth.currentUser.set({ role: 'Customer' });
+
+    fixture.componentInstance.backToSpeedClaim();
+
+    expect(navigate).toHaveBeenCalledWith('/dashboard');
   });
 
   it('opens and closes the compact section navigator', () => {

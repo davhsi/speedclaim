@@ -232,6 +232,10 @@ export class SpeedyWorkspaceComponent {
     this.error.set(null);
   }
 
+  backToSpeedClaim(): void {
+    void this.router.navigateByUrl(this.signedIn() ? '/dashboard' : '/');
+  }
+
   openConversation(conversationId: string): void {
     if (this.sending() || this.conversationId() === conversationId) return;
     this.error.set(null);
