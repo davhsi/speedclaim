@@ -48,6 +48,7 @@ public record SpeedyWorkspaceRequest(
 public record SpeedyAccountSnapshot(
     string FirstName,
     bool IsAuthenticated,
+    IReadOnlyList<SpeedyProposalSnapshot> Proposals,
     IReadOnlyList<SpeedyPolicySnapshot> Policies,
     IReadOnlyList<SpeedyPremiumSnapshot> UpcomingPremiums,
     IReadOnlyList<SpeedyClaimSnapshot> Claims,
@@ -59,6 +60,14 @@ public record SpeedyKycSnapshot(
     string Status,
     bool AadhaarUploaded,
     bool PanUploaded);
+
+// Proposal status is workflow metadata only. No underwriting notes, identity fields,
+// documents, or decision rationale are ever sent to the AI service.
+public record SpeedyProposalSnapshot(
+    string ProposalNumber,
+    string ProductName,
+    string Status,
+    DateTimeOffset SubmittedAt);
 
 public record SpeedyPolicySnapshot(
     string PolicyNumber,

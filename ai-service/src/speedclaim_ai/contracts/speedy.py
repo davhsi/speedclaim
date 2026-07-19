@@ -36,6 +36,15 @@ class SpeedyPolicySnapshot(BaseModel):
         return _coerce_dotnet_datetime_to_date(value)
 
 
+class SpeedyProposalSnapshot(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    proposal_number: str = Field(alias="proposalNumber", min_length=1, max_length=80)
+    product_name: str = Field(alias="productName", min_length=1, max_length=160)
+    status: str = Field(min_length=1, max_length=40)
+    submitted_at: datetime = Field(alias="submittedAt")
+
+
 class SpeedyPremiumSnapshot(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
@@ -77,6 +86,7 @@ class SpeedyAccountSnapshot(BaseModel):
 
     first_name: str = Field(alias="firstName", min_length=1, max_length=80)
     is_authenticated: bool = Field(alias="isAuthenticated", default=False)
+    proposals: list[SpeedyProposalSnapshot] = Field(default_factory=list, max_length=10)
     policies: list[SpeedyPolicySnapshot] = Field(default_factory=list, max_length=20)
     upcoming_premiums: list[SpeedyPremiumSnapshot] = Field(alias="upcomingPremiums", default_factory=list, max_length=5)
     claims: list[SpeedyClaimSnapshot] = Field(default_factory=list, max_length=5)

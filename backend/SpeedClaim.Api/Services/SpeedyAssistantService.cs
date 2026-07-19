@@ -38,6 +38,7 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
         User? user = null;
         KycRecord? kyc = null;
         var policies = new List<Policy>();
+        var proposals = new List<Proposal>();
         if (customerUserId.HasValue)
         {
             customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == customerUserId.Value)
@@ -46,6 +47,8 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
                 ?? throw new ForbiddenException("Customer profile is not available.");
             kyc = await _unitOfWork.KycRecords.FirstOrDefaultAsync(k => k.UserId == customerUserId.Value);
             policies = (await _unitOfWork.Policies.FindAsync(p => p.CustomerId == customer.Id)).ToList();
+            proposals = (await _unitOfWork.Proposals.FindAsync(p => p.CustomerId == customer.Id))
+                .OrderByDescending(p => p.CreatedAt).Take(10).ToList();
         }
 
         var policyIds = policies.Select(p => p.Id).ToHashSet();
@@ -66,6 +69,8 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
             new SpeedyAccountSnapshot(
                 user?.FirstName ?? "Guest",
                 customerUserId.HasValue,
+                proposals.Select(p => new SpeedyProposalSnapshot(
+                    p.ProposalNumber, p.Product?.ProductName ?? "Insurance proposal", p.Status.ToString(), p.SubmittedAt ?? p.CreatedAt)).ToList(),
                 policies.Select(p => new SpeedyPolicySnapshot(
                     p.PolicyNumber, p.Product?.ProductName ?? "Insurance policy", p.Status.ToString(), p.SumAssured,
                     p.PremiumAmount, p.PaymentFrequency, p.EndDate)).ToList(),
@@ -115,6 +120,7 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
         User? user = null;
         KycRecord? kyc = null;
         var policies = new List<Policy>();
+        var proposals = new List<Proposal>();
         if (customerUserId.HasValue)
         {
             customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == customerUserId.Value)
@@ -123,6 +129,8 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
                 ?? throw new ForbiddenException("Customer profile is not available.");
             kyc = await _unitOfWork.KycRecords.FirstOrDefaultAsync(k => k.UserId == customerUserId.Value);
             policies = (await _unitOfWork.Policies.FindAsync(p => p.CustomerId == customer.Id)).ToList();
+            proposals = (await _unitOfWork.Proposals.FindAsync(p => p.CustomerId == customer.Id))
+                .OrderByDescending(p => p.CreatedAt).Take(10).ToList();
         }
 
         var policyIds = policies.Select(p => p.Id).ToHashSet();
@@ -143,6 +151,8 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
             new SpeedyAccountSnapshot(
                 user?.FirstName ?? "Guest",
                 customerUserId.HasValue,
+                proposals.Select(p => new SpeedyProposalSnapshot(
+                    p.ProposalNumber, p.Product?.ProductName ?? "Insurance proposal", p.Status.ToString(), p.SubmittedAt ?? p.CreatedAt)).ToList(),
                 policies.Select(p => new SpeedyPolicySnapshot(
                     p.PolicyNumber, p.Product?.ProductName ?? "Insurance policy", p.Status.ToString(), p.SumAssured,
                     p.PremiumAmount, p.PaymentFrequency, p.EndDate)).ToList(),
