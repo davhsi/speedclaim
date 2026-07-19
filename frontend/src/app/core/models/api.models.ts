@@ -802,7 +802,7 @@ export interface ProductBrochureDto {
 
 export interface SpeedyAssistantResponse { requestId: string; answer: string; provider?: string | null; model?: string | null; }
 export interface SpeedyWorkspaceAction {
-  kind: 'navigate' | 'guided_kyc' | 'none'; label: string; route?: string | null; detail: string; requiresConfirmation: boolean;
+  kind: 'navigate' | 'guided_kyc' | 'guided_quote' | 'guided_application' | 'guided_claim' | 'claim_status' | 'policy_status' | 'claim_documents' | 'payment' | 'none'; label: string; route?: string | null; detail: string; requiresConfirmation: boolean;
 }
 export interface SpeedyWorkspaceResponse {
   requestId: string; answer: string; intent: string; risk: 'low' | 'regulated'; actions: SpeedyWorkspaceAction[];

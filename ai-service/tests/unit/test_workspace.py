@@ -5,7 +5,7 @@ import pytest
 from speedclaim_ai.contracts.speedy import SpeedyAccountSnapshot, SpeedyCatalogSnapshot, SpeedyKycSnapshot
 from speedclaim_ai.contracts.workspace import WorkspaceRequest
 from speedclaim_ai.providers.chat.base import ChatCompletion
-from speedclaim_ai.workspace import WorkspaceService
+from speedclaim_ai.workspace import WorkspaceService, _action_for
 
 
 class FakeRouterProvider:
@@ -110,3 +110,18 @@ async def test_workspace_does_not_offer_resubmission_when_kyc_is_under_review():
     assert response.actions == []
     assert "awaiting underwriter review" in response.answer
     assert "do not need to submit them again" in response.answer
+
+
+def test_workspace_routes_customer_tasks_to_typed_in_workspace_actions():
+    account = SpeedyAccountSnapshot(
+        firstName="Asha",
+        isAuthenticated=True,
+        policies=[],
+        upcomingPremiums=[],
+        claims=[],
+    )
+
+    assert _action_for("product_discovery", account).kind == "guided_quote"
+    assert _action_for("claim_guidance", account).kind == "guided_claim"
+    assert _action_for("claim_status", account).kind == "claim_status"
+    assert _action_for("policy_help", account).kind == "policy_status"

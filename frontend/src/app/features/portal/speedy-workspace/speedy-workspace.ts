@@ -1,11 +1,21 @@
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, effect, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { concatMap } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
-import { KycRecordDto, SpeedyWorkspaceAction, SpeedyWorkspaceConversation } from '../../../core/models/api.models';
+import { ClaimDto, CreatePaymentIntentResponse, DocumentRequirementDto, GenerateQuoteResponse, KycRecordDto, PolicyDto, PremiumScheduleDto, ProductDto, ProposalDto, SpeedyWorkspaceAction, SpeedyWorkspaceConversation, SubmitProposalRequest, UserDto } from '../../../core/models/api.models';
 import { ProfileService } from '../profile/services/profile.service';
 import { SpeedyAssistantService } from '../services/speedy-assistant.service';
+import { ProductService } from '../products/services/product.service';
+import { QuoteService } from '../quote/services/quote.service';
+import { ClaimService } from '../claims/services/claim.service';
+import { PolicyService } from '../policies/services/policy.service';
+import { ProposalService } from '../proposals/services/proposal.service';
+import { PaymentService } from '../payments/services/payment.service';
+
+declare const Stripe: any;
 
 interface WorkspaceMessage {
   role: 'user' | 'assistant';
@@ -37,7 +47,7 @@ interface BrowserSpeechRecognition {
 @Component({
   selector: 'app-speedy-workspace',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, DatePipe, DecimalPipe],
   templateUrl: './speedy-workspace.html',
 })
 export class SpeedyWorkspaceComponent {
@@ -45,8 +55,16 @@ export class SpeedyWorkspaceComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly profile = inject(ProfileService);
+  private readonly products = inject(ProductService);
+  private readonly quotes = inject(QuoteService);
+  private readonly claims = inject(ClaimService);
+  private readonly policies = inject(PolicyService);
+  private readonly proposals = inject(ProposalService);
+  private readonly http = inject(HttpClient);
+  private readonly payments = inject(PaymentService);
 
   readonly signedIn = computed(() => this.auth.currentUser()?.role === 'Customer');
+  readonly today = new Date().toISOString().slice(0, 10);
   readonly question = signal('');
   readonly messages = signal<WorkspaceMessage[]>([]);
   readonly conversationId = signal<string | null>(null);
@@ -70,6 +88,49 @@ export class SpeedyWorkspaceComponent {
   readonly panFile = signal<File | null>(null);
   readonly aadhaarFileError = signal('');
   readonly panFileError = signal('');
+  readonly workspaceTask = signal<'quote' | 'proposal' | 'claim' | 'claimStatus' | 'policyStatus' | 'payment' | null>(null);
+  readonly taskLoading = signal(false);
+  readonly taskSubmitting = signal(false);
+  readonly taskError = signal<string | null>(null);
+  readonly taskProducts = signal<ProductDto[]>([]);
+  readonly taskPolicies = signal<PolicyDto[]>([]);
+  readonly taskClaims = signal<ClaimDto[]>([]);
+  readonly taskProposals = signal<ProposalDto[]>([]);
+  readonly quoteProductId = signal('');
+  readonly quoteProductNumber = signal<number | null>(null);
+  readonly quoteAge = signal<number | null>(null);
+  readonly quoteCoverage = signal<number | null>(null);
+  readonly quoteTenure = signal<number | null>(null);
+  readonly quoteVehicleMarketValue = signal<number | null>(null);
+  readonly quoteVehicleYear = signal<number | null>(null);
+  readonly quoteResult = signal<GenerateQuoteResponse | null>(null);
+  readonly claimPolicyId = signal('');
+  readonly claimAmount = signal<number | null>(null);
+  readonly claimDate = signal('');
+  readonly claimDescription = signal('');
+  readonly claimFiles = signal<File[]>([]);
+  readonly proposalCustomer = signal<UserDto | null>(null);
+  readonly proposalDocuments = signal<DocumentRequirementDto[]>([]);
+  readonly proposalFiles = signal<Record<string, File>>({});
+  readonly nomineeName = signal('');
+  readonly nomineeRelationship = signal('Spouse');
+  readonly nomineeDateOfBirth = signal('');
+  readonly motorVehicleNumber = signal('');
+  readonly motorMake = signal('');
+  readonly motorModel = signal('');
+  readonly motorYear = signal<number | null>(null);
+  readonly motorEngine = signal('');
+  readonly motorChassis = signal('');
+  readonly paymentSchedules = signal<PremiumScheduleDto[]>([]);
+  readonly paymentPolicy = signal<PolicyDto | null>(null);
+  readonly paymentOpening = signal(false);
+  readonly paymentConfirming = signal(false);
+  readonly paymentSuccess = signal(false);
+  readonly paymentClientSecret = signal<string | null>(null);
+  readonly paymentReady = signal(false);
+  readonly paymentAmount = signal<number | null>(null);
+  private stripeInstance: any = null;
+  private stripeElements: any = null;
   readonly aadhaarError = computed(() => {
     const value = this.aadhaarNumber().trim();
     if (!value) return '';
@@ -86,6 +147,32 @@ export class SpeedyWorkspaceComponent {
     const kyc = this.kycRecord();
     return !!kyc && kyc.aadhaarUploaded && kyc.panUploaded
       && ['Pending', 'UnderReview', 'Approved'].includes(kyc.kycStatus);
+  });
+  readonly selectedQuoteProduct = computed(() => this.taskProducts().find(product => product.id === this.quoteProductId()) ?? null);
+  readonly selectedClaimPolicy = computed(() => this.taskPolicies().find(policy => policy.id === this.claimPolicyId()) ?? null);
+  readonly quoteReady = computed(() => {
+    const product = this.selectedQuoteProduct();
+    if (!product || !this.quoteTenure() || this.quoteTenure()! < product.minTenureYears || this.quoteTenure()! > product.maxTenureYears) return false;
+    if (product.domain.toUpperCase() === 'MOTOR') return !!this.quoteVehicleMarketValue() && !!this.quoteVehicleYear()
+      && this.quoteVehicleYear()! >= 1900 && this.quoteVehicleYear()! <= new Date().getFullYear();
+    return !!this.quoteAge() && this.quoteAge()! >= product.minAge && this.quoteAge()! <= product.maxAge
+      && !!this.quoteCoverage() && this.quoteCoverage()! >= product.minSumAssured && this.quoteCoverage()! <= product.maxSumAssured;
+  });
+  readonly claimReady = computed(() => {
+    const policy = this.selectedClaimPolicy();
+    return !!policy && !!this.claimAmount() && this.claimAmount()! >= 500 && this.claimAmount()! <= policy.coverageAmount
+      && !!this.claimDate() && this.claimDate() <= new Date().toISOString().slice(0, 10)
+      && this.claimDescription().trim().length >= 10;
+  });
+  readonly proposalReady = computed(() => {
+    const product = this.selectedQuoteProduct();
+    const quote = this.quoteResult();
+    if (!product || !quote || !this.proposalCustomer()?.customerId) return false;
+    if (!this.proposalDocuments().filter(document => document.isMandatory).every(document => !!this.proposalFiles()[document.documentKey])) return false;
+    if (product.domain.toUpperCase() === 'LIFE') return !!this.nomineeName().trim() && !!this.nomineeDateOfBirth();
+    if (product.domain.toUpperCase() === 'MOTOR') return !!this.motorVehicleNumber().trim() && !!this.motorMake().trim() && !!this.motorModel().trim()
+      && !!this.motorYear() && !!this.motorEngine().trim() && !!this.motorChassis().trim();
+    return true;
   });
 
   readonly suggestions = computed(() => this.signedIn()
@@ -194,8 +281,236 @@ export class SpeedyWorkspaceComponent {
       this.announce('I’ve opened the secure KYC checklist. Attach both labelled documents before continuing.');
       return;
     }
+    if (!this.signedIn() && ['guided_quote', 'guided_claim', 'claim_status', 'policy_status', 'claim_documents', 'guided_application', 'payment'].includes(action.kind)) {
+      this.error.set('Sign in to calculate a quote or securely access policy, claim, and document actions.');
+      return;
+    }
+    if (action.kind === 'guided_quote') { this.openTask('quote'); return; }
+    if (action.kind === 'guided_claim') { this.openTask('claim'); return; }
+    if (action.kind === 'claim_status') { this.openTask('claimStatus'); return; }
+    if (action.kind === 'policy_status') { this.openTask('policyStatus'); return; }
+    if (action.kind === 'payment') { this.openTask('payment'); return; }
     if (action.kind === 'navigate' && action.route) this.router.navigateByUrl(action.route);
   }
+
+  openTask(task: 'quote' | 'claim' | 'claimStatus' | 'policyStatus' | 'payment'): void {
+    this.workspaceTask.set(task);
+    this.taskError.set(null);
+    this.taskLoading.set(true);
+    if (task === 'quote') {
+      this.quoteResult.set(null);
+      this.products.getAll().subscribe({ next: products => { this.taskProducts.set(products.filter(product => product.isAvailableForSale)); this.taskLoading.set(false); }, error: () => this.taskFailed('Products could not be loaded. Please try again.') });
+      return;
+    }
+    if (task === 'claim') {
+      this.claimFiles.set([]);
+      this.policies.getMyPolicies('Active').subscribe({ next: policies => { this.taskPolicies.set(policies); this.taskLoading.set(false); }, error: () => this.taskFailed('Your active policies could not be loaded.') });
+      return;
+    }
+    if (task === 'claimStatus') {
+      this.claims.getMyClaims().subscribe({ next: claims => { this.taskClaims.set(claims); this.taskLoading.set(false); }, error: () => this.taskFailed('Your claims could not be loaded.') });
+      return;
+    }
+    if (task === 'payment') {
+      this.paymentPolicy.set(null);
+      this.paymentSchedules.set([]);
+      this.paymentClientSecret.set(null);
+      this.paymentSuccess.set(false);
+      this.policies.getMyPolicies().subscribe({ next: policies => { this.taskPolicies.set(policies.filter(policy => policy.status === 'Pending' || policy.status === 'Active')); this.taskLoading.set(false); }, error: () => this.taskFailed('Your policies could not be loaded.') });
+      return;
+    }
+    this.proposals.getMyProposals().subscribe({ next: proposals => this.taskProposals.set(proposals), error: () => this.taskProposals.set([]) });
+    this.policies.getMyPolicies().subscribe({ next: policies => { this.taskPolicies.set(policies); this.taskLoading.set(false); }, error: () => this.taskFailed('Your policies could not be loaded.') });
+  }
+
+  openPaymentSchedule(policy: PolicyDto): void {
+    this.paymentPolicy.set(policy);
+    this.taskError.set(null);
+    this.taskLoading.set(true);
+    this.payments.getSchedule(policy.id).subscribe({ next: schedules => { this.paymentSchedules.set(schedules); this.taskLoading.set(false); }, error: () => this.taskFailed('The premium schedule could not be loaded.') });
+  }
+
+  openStripeCheckout(schedule: PremiumScheduleDto): void {
+    const policy = this.paymentPolicy();
+    if (!policy || this.paymentOpening()) return;
+    this.paymentOpening.set(true);
+    this.taskError.set(null);
+    this.payments.createPaymentIntent(schedule.id, { policyId: policy.id }).subscribe({
+      next: response => this.initializeStripeCheckout(response, schedule.amountDue),
+      error: failure => { this.paymentOpening.set(false); this.taskError.set(failure?.error?.title ?? 'The payment could not be started.'); },
+    });
+  }
+
+  private initializeStripeCheckout(response: CreatePaymentIntentResponse, amount: number): void {
+    this.paymentOpening.set(false);
+    if (!response.publishableKey || !response.clientSecret || typeof Stripe === 'undefined') {
+      this.taskError.set('Secure payment is not ready yet. Please try again in a moment.');
+      return;
+    }
+    this.paymentAmount.set(amount);
+    this.paymentReady.set(false);
+    this.stripeInstance = Stripe(response.publishableKey);
+    this.stripeElements = this.stripeInstance.elements({ clientSecret: response.clientSecret, appearance: { theme: 'stripe', variables: { colorPrimary: '#D48B13', borderRadius: '10px' } } });
+    this.paymentClientSecret.set(response.clientSecret);
+    setTimeout(() => {
+      const mount = document.getElementById('speedy-stripe-payment-element');
+      if (!mount || !this.stripeElements) return;
+      const element = this.stripeElements.create('payment');
+      element.mount('#speedy-stripe-payment-element');
+      element.on('ready', () => this.paymentReady.set(true));
+    }, 0);
+  }
+
+  async confirmWorkspacePayment(): Promise<void> {
+    if (!this.stripeInstance || !this.stripeElements || this.paymentConfirming()) return;
+    this.paymentConfirming.set(true);
+    this.taskError.set(null);
+    const { error } = await this.stripeInstance.confirmPayment({ elements: this.stripeElements, confirmParams: { return_url: `${globalThis.location.origin}/speedy` }, redirect: 'if_required' });
+    this.paymentConfirming.set(false);
+    if (error) { this.taskError.set(error.message ?? 'Payment could not be completed.'); return; }
+    this.paymentSuccess.set(true);
+  }
+
+  selectQuoteProduct(id: string): void {
+    this.quoteProductId.set(id);
+    const product = this.selectedQuoteProduct();
+    this.quoteCoverage.set(product?.coverageOptions?.[0] ?? null);
+    this.quoteTenure.set(product?.minTenureYears ?? null);
+    this.quoteAge.set(null);
+    this.quoteVehicleMarketValue.set(null);
+    this.quoteVehicleYear.set(null);
+    this.quoteResult.set(null);
+  }
+
+  selectQuoteProductNumber(value: number | null): void {
+    this.quoteProductNumber.set(value);
+    const product = value && value > 0 ? this.taskProducts()[value - 1] : null;
+    this.selectQuoteProduct(product?.id ?? '');
+  }
+
+  calculateWorkspaceQuote(): void {
+    const product = this.selectedQuoteProduct();
+    if (!product || !this.quoteReady() || this.taskSubmitting()) return;
+    this.taskSubmitting.set(true);
+    this.taskError.set(null);
+    this.quotes.generateQuote({ productId: product.id, age: product.domain.toUpperCase() === 'MOTOR' ? undefined : this.quoteAge()!, sumAssured: product.domain.toUpperCase() === 'MOTOR' ? this.quoteVehicleMarketValue()! : this.quoteCoverage()!, tenureYears: this.quoteTenure()!, vehicleMarketValue: product.domain.toUpperCase() === 'MOTOR' ? this.quoteVehicleMarketValue()! : undefined, vehicleManufactureYear: product.domain.toUpperCase() === 'MOTOR' ? this.quoteVehicleYear()! : undefined }).subscribe({
+      next: quote => { this.quoteResult.set(quote); this.taskSubmitting.set(false); },
+      error: failure => { this.taskSubmitting.set(false); this.taskError.set(failure?.error?.title ?? 'The quote could not be calculated.'); },
+    });
+  }
+
+  continueToApplication(): void {
+    const product = this.selectedQuoteProduct();
+    const quote = this.quoteResult();
+    if (!product || !quote) return;
+    this.workspaceTask.set('proposal');
+    this.taskError.set(null);
+    this.taskLoading.set(true);
+    this.proposalFiles.set({});
+    this.profile.getProfile().subscribe({
+      next: profile => {
+        this.proposalCustomer.set(profile);
+        this.http.get<DocumentRequirementDto[]>(`/api/v1/products/${product.id}/documents`).subscribe({
+          next: documents => { this.proposalDocuments.set(documents); this.taskLoading.set(false); },
+          error: () => this.taskFailed('Required proposal documents could not be loaded.'),
+        });
+      },
+      error: () => this.taskFailed('Your customer profile could not be loaded.'),
+    });
+  }
+
+  chooseProposalFile(documentKey: string, event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.item(0) ?? null;
+    if (!file) return;
+    const validation = this.kycFileError(file);
+    if (validation) { this.taskError.set(validation); return; }
+    this.proposalFiles.update(files => ({ ...files, [documentKey]: file }));
+  }
+
+  submitWorkspaceProposal(): void {
+    const product = this.selectedQuoteProduct();
+    const quote = this.quoteResult();
+    const customer = this.proposalCustomer();
+    if (!product || !quote || !customer?.customerId || !this.proposalReady() || this.taskSubmitting()) return;
+    const domain = product.domain.toUpperCase();
+    const request: SubmitProposalRequest = {
+      customerId: customer.customerId,
+      productId: product.id,
+      sumAssured: quote.sumAssured,
+      tenureYears: quote.tenureYears,
+      premiumAmount: quote.premiumAmount,
+      paymentFrequency: quote.paymentFrequency as any,
+      customerMemberIds: [],
+      nominees: domain === 'LIFE' ? [{ fullName: this.nomineeName().trim(), relationship: this.nomineeRelationship() as any, sharePercentage: 100, dateOfBirth: this.nomineeDateOfBirth(), isMinor: false }] : [],
+      motorDetail: domain === 'MOTOR' ? { vehicleNumber: this.motorVehicleNumber().trim(), vehicleMake: this.motorMake().trim(), vehicleModel: this.motorModel().trim(), manufactureYear: this.motorYear()!, vehicleType: product.motorVehicleType ?? 'PrivateCar', idv: quote.sumAssured, engineNumber: this.motorEngine().trim(), chassisNumber: this.motorChassis().trim(), coverType: 'Comprehensive' } : undefined,
+    };
+    this.taskSubmitting.set(true);
+    this.taskError.set(null);
+    this.proposals.submit(request).subscribe({
+      next: proposal => this.uploadProposalFiles(proposal.id, Object.entries(this.proposalFiles()), 0, proposal.proposalNumber),
+      error: failure => { this.taskSubmitting.set(false); this.taskError.set(failure?.error?.title ?? 'The proposal could not be submitted.'); },
+    });
+  }
+
+  private uploadProposalFiles(proposalId: string, files: [string, File][], index: number, proposalNumber: string): void {
+    if (index >= files.length) {
+      this.taskSubmitting.set(false);
+      this.workspaceTask.set(null);
+      const message = `Your proposal ${proposalNumber} has been submitted for underwriter review. We will notify you in SpeedClaim and by email when its status changes. Once approved, Speedy will show your first premium payment.`;
+      this.messages.update(messages => [...messages, { role: 'assistant', content: message }]);
+      this.announce(message);
+      return;
+    }
+    const [key, file] = files[index];
+    this.proposals.uploadDocument(proposalId, key, file).subscribe({
+      next: () => this.uploadProposalFiles(proposalId, files, index + 1, proposalNumber),
+      error: () => { this.taskSubmitting.set(false); this.taskError.set('Your proposal was submitted, but a document could not be uploaded. Open the proposal from the customer portal to retry it safely.'); },
+    });
+  }
+
+  selectClaimPolicy(id: string): void {
+    this.claimPolicyId.set(id);
+    this.claimAmount.set(null);
+  }
+
+  chooseClaimFiles(event: Event): void {
+    const files = Array.from((event.target as HTMLInputElement).files ?? []);
+    const valid = files.filter(file => file.size <= KYC_MAX_FILE_SIZE_BYTES && KYC_ALLOWED_EXTENSIONS.includes(`.${file.name.split('.').pop()?.toLowerCase() ?? ''}`));
+    if (valid.length !== files.length) this.taskError.set('Only PDF, JPG, JPEG, or PNG files up to 5 MB can be attached.');
+    this.claimFiles.set(valid.slice(0, 5));
+  }
+
+  submitWorkspaceClaim(): void {
+    const policy = this.selectedClaimPolicy();
+    if (!policy || !this.claimReady() || this.taskSubmitting()) return;
+    const typeByDomain: Record<string, string> = { HEALTH: 'Health', LIFE: 'Death', MOTOR: 'Accident' };
+    this.taskSubmitting.set(true);
+    this.taskError.set(null);
+    this.claims.intimate({ policyId: policy.id, claimType: (typeByDomain[policy.domain.toUpperCase()] ?? 'Health') as any, claimAmountRequested: this.claimAmount()!, incidentDate: this.claimDate(), incidentDescription: this.claimDescription().trim(), isCashless: false }).subscribe({
+      next: claim => this.uploadWorkspaceClaimFiles(claim.id, 0),
+      error: failure => { this.taskSubmitting.set(false); this.taskError.set(failure?.error?.title ?? 'The claim could not be submitted.'); },
+    });
+  }
+
+  private uploadWorkspaceClaimFiles(claimId: string, index: number): void {
+    const files = this.claimFiles();
+    if (index >= files.length) {
+      this.taskSubmitting.set(false);
+      this.workspaceTask.set(null);
+      const message = files.length ? 'Your claim and supporting documents have been submitted for review. You can track its live status here at any time.' : 'Your claim has been submitted. You can add supporting documents and track its live status here at any time.';
+      this.messages.update(messages => [...messages, { role: 'assistant', content: message }]);
+      this.announce(message);
+      return;
+    }
+    const file = files[index];
+    const key = `SUPPORTING_DOCUMENT_${index + 1}`;
+    this.claims.uploadDocument(claimId, key, file).subscribe({
+      next: () => this.uploadWorkspaceClaimFiles(claimId, index + 1),
+      error: () => { this.taskSubmitting.set(false); this.taskError.set('Your claim was submitted, but one or more documents could not be uploaded. Use “Track my claims” to retry safely.'); },
+    });
+  }
+
+  private taskFailed(message: string): void { this.taskLoading.set(false); this.taskError.set(message); }
 
   chooseFile(kind: 'aadhaar' | 'pan', event: Event): void {
     const input = event.target as HTMLInputElement;
