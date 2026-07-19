@@ -808,3 +808,10 @@ export interface SpeedyWorkspaceResponse {
   requestId: string; answer: string; intent: string; risk: 'low' | 'regulated'; actions: SpeedyWorkspaceAction[];
   provider?: string | null; model?: string | null; conversationId?: string | null;
 }
+export interface SpeedyWorkspaceMessage {
+  id: string; role: 'user' | 'assistant'; content: string; intent?: string | null; risk?: 'low' | 'regulated' | null;
+  actions: SpeedyWorkspaceAction[]; createdAt: string;
+}
+export interface SpeedyWorkspaceConversation {
+  id: string; title: string; createdAt: string; updatedAt: string; messages?: SpeedyWorkspaceMessage[] | null;
+}

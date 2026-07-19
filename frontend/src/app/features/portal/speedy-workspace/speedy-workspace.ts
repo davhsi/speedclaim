@@ -1,9 +1,10 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { concatMap } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
-import { SpeedyWorkspaceAction } from '../../../core/models/api.models';
+import { SpeedyWorkspaceAction, SpeedyWorkspaceConversation } from '../../../core/models/api.models';
 import { ProfileService } from '../profile/services/profile.service';
 import { SpeedyAssistantService } from '../services/speedy-assistant.service';
 
@@ -30,7 +31,7 @@ interface BrowserSpeechRecognition {
 @Component({
   selector: 'app-speedy-workspace',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [DatePipe, FormsModule, RouterLink],
   templateUrl: './speedy-workspace.html',
 })
 export class SpeedyWorkspaceComponent {
@@ -43,6 +44,9 @@ export class SpeedyWorkspaceComponent {
   readonly question = signal('');
   readonly messages = signal<WorkspaceMessage[]>([]);
   readonly conversationId = signal<string | null>(null);
+  readonly conversations = signal<SpeedyWorkspaceConversation[]>([]);
+  readonly historyLoaded = signal(false);
+  readonly historyError = signal(false);
   readonly sending = signal(false);
   readonly error = signal<string | null>(null);
   readonly voiceAvailable = signal(typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window));
@@ -61,6 +65,12 @@ export class SpeedyWorkspaceComponent {
     ? ['Which policy may help with a hospital admission?', 'Help me complete KYC', 'When is my next premium due?', 'I need to raise a grievance']
     : ['Compare family health cover', 'Which products are available?', 'How do I start a quote?']);
 
+  constructor() {
+    effect(() => {
+      if (this.signedIn() && !this.historyLoaded()) this.loadConversations();
+    });
+  }
+
   ask(value?: string): void {
     const question = (value ?? this.question()).trim();
     if (!question || this.sending()) return;
@@ -73,11 +83,36 @@ export class SpeedyWorkspaceComponent {
         if (response.conversationId) this.conversationId.set(response.conversationId);
         this.messages.update(messages => [...messages, { role: 'assistant', content: response.answer, actions: response.actions }]);
         this.sending.set(false);
+        if (this.signedIn()) this.refreshConversations();
       },
       error: failure => {
         this.sending.set(false);
         this.error.set(failure?.status === 401 ? 'Sign in to use account-specific help.' : 'Speedy is temporarily unavailable. Please try again.');
       },
+    });
+  }
+
+  startNewChat(): void {
+    if (this.sending()) return;
+    this.conversationId.set(null);
+    this.messages.set([]);
+    this.question.set('');
+    this.error.set(null);
+  }
+
+  openConversation(conversationId: string): void {
+    if (this.sending() || this.conversationId() === conversationId) return;
+    this.error.set(null);
+    this.speedy.getWorkspaceConversation(conversationId).subscribe({
+      next: conversation => {
+        this.conversationId.set(conversation.id);
+        this.messages.set((conversation.messages ?? []).map(message => ({
+          role: message.role,
+          content: message.content,
+          actions: message.actions,
+        })));
+      },
+      error: () => this.error.set('That conversation could not be opened. Please try again.'),
     });
   }
 
@@ -184,5 +219,20 @@ export class SpeedyWorkspaceComponent {
 
   private announce(text: string): void {
     if ('speechSynthesis' in window) window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+  }
+
+  private loadConversations(): void {
+    this.historyLoaded.set(true);
+    this.refreshConversations();
+  }
+
+  private refreshConversations(): void {
+    this.speedy.listWorkspaceConversations().subscribe({
+      next: conversations => {
+        this.conversations.set(conversations);
+        this.historyError.set(false);
+      },
+      error: () => this.historyError.set(true),
+    });
   }
 }
