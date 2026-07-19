@@ -75,6 +75,20 @@ describe('SpeedyWorkspaceComponent', () => {
     expect(navigate).toHaveBeenCalledWith('/dashboard');
   });
 
+  it('allows payment only for the earliest unpaid installment', () => {
+    const fixture = TestBed.createComponent(SpeedyWorkspaceComponent);
+    fixture.componentInstance.paymentSchedules.set([
+      { id: 'schedule-2', policyId: 'policy-1', installmentNumber: 2, amountDue: 6800, dueDate: '2026-08-19', status: 'Upcoming' },
+      { id: 'schedule-1', policyId: 'policy-1', installmentNumber: 1, amountDue: 6800, dueDate: '2026-07-19', status: 'Upcoming' },
+      { id: 'schedule-3', policyId: 'policy-1', installmentNumber: 3, amountDue: 6800, dueDate: '2026-09-19', status: 'Upcoming' },
+    ]);
+
+    expect(fixture.componentInstance.canPaySchedule(fixture.componentInstance.paymentSchedules()[1])).toBe(true);
+    expect(fixture.componentInstance.canPaySchedule(fixture.componentInstance.paymentSchedules()[0])).toBe(false);
+    expect(fixture.componentInstance.paymentAvailabilityMessage(fixture.componentInstance.paymentSchedules()[0]))
+      .toBe('Available after installment #1 is paid');
+  });
+
   it('opens and closes the compact section navigator', () => {
     const fixture = TestBed.createComponent(SpeedyWorkspaceComponent);
 

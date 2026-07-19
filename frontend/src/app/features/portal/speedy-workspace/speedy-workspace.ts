@@ -132,6 +132,9 @@ export class SpeedyWorkspaceComponent {
   readonly paymentClientSecret = signal<string | null>(null);
   readonly paymentReady = signal(false);
   readonly paymentAmount = signal<number | null>(null);
+  readonly nextPayableSchedule = computed(() => this.paymentSchedules()
+    .filter(schedule => this.isUnpaidSchedule(schedule))
+    .sort((left, right) => left.installmentNumber - right.installmentNumber)[0] ?? null);
   private stripeInstance: any = null;
   private stripeElements: any = null;
   readonly aadhaarError = computed(() => {
@@ -345,12 +348,40 @@ export class SpeedyWorkspaceComponent {
   openStripeCheckout(schedule: PremiumScheduleDto): void {
     const policy = this.paymentPolicy();
     if (!policy || this.paymentOpening()) return;
+    if (!this.canPaySchedule(schedule)) {
+      const next = this.nextPayableSchedule();
+      this.taskError.set(next
+        ? `Installment #${next.installmentNumber} must be paid before installment #${schedule.installmentNumber}.`
+        : 'This installment is not currently available for payment.');
+      return;
+    }
     this.paymentOpening.set(true);
     this.taskError.set(null);
     this.payments.createPaymentIntent(schedule.id, { policyId: policy.id }).subscribe({
       next: response => this.initializeStripeCheckout(response, schedule.amountDue),
-      error: failure => { this.paymentOpening.set(false); this.taskError.set(failure?.error?.title ?? 'The payment could not be started.'); },
+      error: failure => {
+        this.paymentOpening.set(false);
+        const next = this.nextPayableSchedule();
+        this.taskError.set(failure?.status === 409 && next
+          ? `Installment #${next.installmentNumber} must be paid first. Please select that installment to continue.`
+          : failure?.error?.detail ?? failure?.error?.title ?? 'The payment could not be started.');
+      },
     });
+  }
+
+  canPaySchedule(schedule: PremiumScheduleDto): boolean {
+    return this.nextPayableSchedule()?.id === schedule.id;
+  }
+
+  paymentAvailabilityMessage(schedule: PremiumScheduleDto): string {
+    const next = this.nextPayableSchedule();
+    return next
+      ? `Available after installment #${next.installmentNumber} is paid`
+      : 'Not currently payable';
+  }
+
+  private isUnpaidSchedule(schedule: PremiumScheduleDto): boolean {
+    return schedule.status === 'Upcoming' || schedule.status === 'Due' || schedule.status === 'Overdue';
   }
 
   private initializeStripeCheckout(response: CreatePaymentIntentResponse, amount: number): void {
