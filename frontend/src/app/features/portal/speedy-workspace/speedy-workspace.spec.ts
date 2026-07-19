@@ -94,4 +94,14 @@ describe('SpeedyWorkspaceComponent', () => {
     fixture.componentInstance.moveSection(-1);
     expect(fixture.componentInstance.activeSectionIndex()).toBe(0);
   });
+
+  it('uses the regular customer KYC validation messages in the guided composer', () => {
+    const fixture = TestBed.createComponent(SpeedyWorkspaceComponent);
+    fixture.componentInstance.aadhaarNumber.set('12345678901');
+    fixture.componentInstance.panNumber.set('ABCDE1234');
+
+    expect(fixture.componentInstance.aadhaarError()).toBe('Aadhaar must be exactly 12 digits.');
+    expect(fixture.componentInstance.panError()).toBe('PAN must be in the format ABCDE1234F.');
+    expect(fixture.componentInstance.kycReady()).toBe(false);
+  });
 });

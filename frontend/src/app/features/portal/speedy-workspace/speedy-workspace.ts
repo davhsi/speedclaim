@@ -20,6 +20,8 @@ interface ConversationSection {
 
 const AADHAAR_PATTERN = /^\d{12}$/;
 const PAN_PATTERN = /^[A-Z]{5}\d{4}[A-Z]$/;
+const KYC_ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png'];
+const KYC_MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
 interface BrowserSpeechRecognition {
   lang: string;
@@ -64,6 +66,18 @@ export class SpeedyWorkspaceComponent {
   readonly panNumber = signal('');
   readonly aadhaarFile = signal<File | null>(null);
   readonly panFile = signal<File | null>(null);
+  readonly aadhaarFileError = signal('');
+  readonly panFileError = signal('');
+  readonly aadhaarError = computed(() => {
+    const value = this.aadhaarNumber().trim();
+    if (!value) return '';
+    return AADHAAR_PATTERN.test(value) ? '' : 'Aadhaar must be exactly 12 digits.';
+  });
+  readonly panError = computed(() => {
+    const value = this.panNumber().trim().toUpperCase();
+    if (!value) return '';
+    return PAN_PATTERN.test(value) ? '' : 'PAN must be in the format ABCDE1234F.';
+  });
   readonly kycReady = computed(() => AADHAAR_PATTERN.test(this.aadhaarNumber().trim())
     && PAN_PATTERN.test(this.panNumber().trim().toUpperCase()) && !!this.aadhaarFile() && !!this.panFile());
 
@@ -165,9 +179,17 @@ export class SpeedyWorkspaceComponent {
   }
 
   chooseFile(kind: 'aadhaar' | 'pan', event: Event): void {
-    const file = (event.target as HTMLInputElement).files?.item(0) ?? null;
-    if (kind === 'aadhaar') this.aadhaarFile.set(file);
-    else this.panFile.set(file);
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.item(0) ?? null;
+    const error = file ? this.kycFileError(file) : '';
+    if (kind === 'aadhaar') {
+      this.aadhaarFileError.set(error);
+      this.aadhaarFile.set(error ? null : file);
+    } else {
+      this.panFileError.set(error);
+      this.panFile.set(error ? null : file);
+    }
+    if (error) input.value = '';
   }
 
   submitKyc(): void {
@@ -248,6 +270,12 @@ export class SpeedyWorkspaceComponent {
     return this.escapeHtml(value)
       .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
       .replace(/`([^`]+)`/g, '<code>$1</code>');
+  }
+
+  private kycFileError(file: File): string {
+    if (file.size > KYC_MAX_FILE_SIZE_BYTES) return 'File exceeds 5 MB limit.';
+    const extension = `.${file.name.split('.').pop()?.toLowerCase() ?? ''}`;
+    return KYC_ALLOWED_EXTENSIONS.includes(extension) ? '' : 'Choose a PDF, JPG, JPEG, or PNG file.';
   }
 
   private escapeHtml(value: string): string {
