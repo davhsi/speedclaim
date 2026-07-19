@@ -293,6 +293,15 @@ builder.Services.AddSwaggerGen(options =>
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
     ?? new[] { "http://localhost:4200" };
 
+// Uploaded documents are rendered inside the trusted SpeedClaim portals. Keep this
+// list derived from the same explicit origins used by CORS rather than allowing an
+// arbitrary site to embed an identity document.
+var uploadFrameAncestors = string.Join(" ", allowedOrigins
+    .Select(origin => origin.TrimEnd('/'))
+    .Where(origin => Uri.TryCreate(origin, UriKind.Absolute, out var uri)
+        && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp))
+    .Distinct(StringComparer.OrdinalIgnoreCase));
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("SpeedClaimPolicy", policy =>
@@ -388,12 +397,20 @@ app.UseStaticFiles();
 
 app.MapGet("/uploads/{**fileId}", [AllowAnonymous] async (
     string fileId,
-    IStorageService storageService) =>
+    IStorageService storageService,
+    HttpContext context) =>
 {
     var storageKey = $"uploads/{fileId}";
     var provider = new FileExtensionContentTypeProvider();
     if (!provider.TryGetContentType(storageKey, out var contentType))
         contentType = "application/octet-stream";
+
+    // PDF viewers honour CSP frame-ancestors and would otherwise reject our
+    // cross-origin Static Web App. X-Frame-Options cannot express an allowlist,
+    // so CSP is the authoritative, origin-specific control for upload previews.
+    context.Response.Headers.Remove("X-Frame-Options");
+    context.Response.Headers["Content-Security-Policy"] =
+        $"default-src 'none'; frame-ancestors 'self' {uploadFrameAncestors}";
 
     var stream = await storageService.GetFileAsync(storageKey);
     return Results.File(stream, contentType);
@@ -403,11 +420,18 @@ app.MapGet("/uploads/{**fileId}", [AllowAnonymous] async (
 app.Use(async (context, next) =>
 {
     context.Response.Headers["X-Content-Type-Options"] = "nosniff";
-    context.Response.Headers["X-Frame-Options"] = "DENY";
     context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
     context.Response.Headers["X-XSS-Protection"] = "0";
-    context.Response.Headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'";
     context.Response.Headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()";
+
+    // Upload endpoints replace these values with a CSP allowlist that permits
+    // only configured SpeedClaim frontends to embed an in-app document preview.
+    if (!context.Request.Path.StartsWithSegments("/uploads", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.Headers["X-Frame-Options"] = "DENY";
+        context.Response.Headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'";
+    }
+
     await next();
 });
 
