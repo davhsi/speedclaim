@@ -72,4 +72,52 @@ public class SpeedyAssistantServiceTests
         Assert.That(response.Intent, Is.EqualTo("product_discovery"));
         unitOfWork.Verify(x => x.CompleteAsync(), Times.Never);
     }
+
+    [Test]
+    public async Task AnswerWorkspaceAsync_NewCustomerConversation_DoesNotRemarkTheNewParentAsUpdated()
+    {
+        var userId = Guid.NewGuid();
+        var customer = new Customer { Id = Guid.NewGuid(), UserId = userId };
+        var products = new Mock<IRepository<InsuranceProduct>>();
+        products.Setup(x => x.FindAsync(It.IsAny<Expression<Func<InsuranceProduct, bool>>>() ))
+            .ReturnsAsync(Array.Empty<InsuranceProduct>());
+        var customers = new Mock<IRepository<Customer>>();
+        customers.Setup(x => x.FirstOrDefaultAsync(It.IsAny<Expression<Func<Customer, bool>>>() ))
+            .ReturnsAsync(customer);
+        var policies = new Mock<IPolicyRepository>();
+        policies.Setup(x => x.FindAsync(It.IsAny<Expression<Func<Policy, bool>>>() ))
+            .ReturnsAsync(Array.Empty<Policy>());
+        var claims = new Mock<IClaimRepository>();
+        claims.Setup(x => x.FindAsync(It.IsAny<Expression<Func<Claim, bool>>>() ))
+            .ReturnsAsync(Array.Empty<Claim>());
+        var conversations = new Mock<IRepository<SpeedyWorkspaceConversation>>();
+        var messages = new Mock<IRepository<SpeedyWorkspaceMessage>>();
+        var auditLogs = new Mock<IRepository<AuditLog>>();
+        var users = new Mock<IUserRepository>();
+        users.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync(new User { Id = userId, FirstName = "Asha" });
+
+        var unitOfWork = new Mock<IUnitOfWork>();
+        unitOfWork.SetupGet(x => x.InsuranceProducts).Returns(products.Object);
+        unitOfWork.SetupGet(x => x.Customers).Returns(customers.Object);
+        unitOfWork.SetupGet(x => x.Users).Returns(users.Object);
+        unitOfWork.SetupGet(x => x.Policies).Returns(policies.Object);
+        unitOfWork.SetupGet(x => x.Claims).Returns(claims.Object);
+        unitOfWork.SetupGet(x => x.SpeedyWorkspaceConversations).Returns(conversations.Object);
+        unitOfWork.SetupGet(x => x.SpeedyWorkspaceMessages).Returns(messages.Object);
+        unitOfWork.SetupGet(x => x.AuditLogs).Returns(auditLogs.Object);
+        unitOfWork.Setup(x => x.CompleteAsync()).ReturnsAsync(1);
+
+        var workspaceClient = new Mock<ISpeedyWorkspaceClient>();
+        workspaceClient.Setup(x => x.AnswerAsync(It.IsAny<SpeedyWorkspaceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SpeedyWorkspaceResponse(Guid.NewGuid(), "Start with your Aadhaar and PAN.", "kyc", "regulated", [], "Fake", "fake-model"));
+        var service = new SpeedyAssistantService(unitOfWork.Object, new Mock<ISpeedyAssistantClient>().Object, workspaceClient.Object);
+
+        var response = await service.AnswerWorkspaceAsync(userId, "Help me complete KYC");
+
+        Assert.That(response.ConversationId, Is.Not.Null);
+        conversations.Verify(x => x.AddAsync(It.IsAny<SpeedyWorkspaceConversation>()), Times.Once);
+        conversations.Verify(x => x.Update(It.IsAny<SpeedyWorkspaceConversation>()), Times.Never);
+        messages.Verify(x => x.AddRangeAsync(It.Is<IEnumerable<SpeedyWorkspaceMessage>>(added => added.Count() == 2)), Times.Once);
+        unitOfWork.Verify(x => x.CompleteAsync(), Times.Once);
+    }
 }

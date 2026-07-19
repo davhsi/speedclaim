@@ -169,7 +169,9 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
             ]);
             conversation.UpdatedAt = DateTimeOffset.UtcNow;
             conversation.RetainUntil = conversation.UpdatedAt.AddDays(30);
-            _unitOfWork.SpeedyWorkspaceConversations.Update(conversation);
+            // The repository query returns tracked existing conversations and AddAsync
+            // tracks a new one as Added. Calling Update here changes a new conversation
+            // to Modified, preventing its INSERT and breaking the message foreign key.
             await _unitOfWork.AuditLogs.AddAsync(new AuditLog
             {
                 Id = Guid.NewGuid(), UserId = customerUserId.Value, EntityType = "Customer", EntityId = customer.Id,
