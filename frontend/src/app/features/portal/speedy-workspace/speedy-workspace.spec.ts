@@ -72,4 +72,26 @@ describe('SpeedyWorkspaceComponent', () => {
     fixture.componentInstance.toggleSectionNavigator();
     expect(fixture.componentInstance.sectionNavigatorOpen()).toBe(false);
   });
+
+  it('builds a navigator entry for every user question and moves between entries', () => {
+    const fixture = TestBed.createComponent(SpeedyWorkspaceComponent);
+    fixture.componentInstance.messages.set([
+      { role: 'user', content: 'Which products are available?' },
+      { role: 'assistant', content: 'Here are the products.' },
+      { role: 'user', content: 'How do I complete KYC?' },
+      { role: 'assistant', content: 'Attach Aadhaar and PAN.' },
+    ]);
+
+    expect(fixture.componentInstance.conversationSections()).toEqual([
+      { messageIndex: 0, label: 'Which products are available?' },
+      { messageIndex: 2, label: 'How do I complete KYC?' },
+    ]);
+
+    fixture.componentInstance.jumpToMessage(0);
+    fixture.componentInstance.moveSection(1);
+    expect(fixture.componentInstance.activeSectionIndex()).toBe(2);
+
+    fixture.componentInstance.moveSection(-1);
+    expect(fixture.componentInstance.activeSectionIndex()).toBe(0);
+  });
 });

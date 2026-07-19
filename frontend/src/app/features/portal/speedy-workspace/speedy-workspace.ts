@@ -13,6 +13,11 @@ interface WorkspaceMessage {
   actions?: SpeedyWorkspaceAction[];
 }
 
+interface ConversationSection {
+  messageIndex: number;
+  label: string;
+}
+
 const AADHAAR_PATTERN = /^\d{12}$/;
 const PAN_PATTERN = /^[A-Z]{5}\d{4}[A-Z]$/;
 
@@ -45,6 +50,7 @@ export class SpeedyWorkspaceComponent {
   readonly conversationId = signal<string | null>(null);
   readonly conversations = signal<SpeedyWorkspaceConversation[]>([]);
   readonly sectionNavigatorOpen = signal(false);
+  readonly activeSectionIndex = signal<number | null>(null);
   readonly historyLoaded = signal(false);
   readonly historyError = signal(false);
   readonly sending = signal(false);
@@ -69,6 +75,10 @@ export class SpeedyWorkspaceComponent {
     const days = this.ageInDays(conversation.updatedAt);
     return days > 7 && days <= 30;
   }));
+  readonly conversationSections = computed<ConversationSection[]>(() => this.messages()
+    .map((message, messageIndex) => ({ message, messageIndex }))
+    .filter(({ message }) => message.role === 'user')
+    .map(({ message, messageIndex }) => ({ messageIndex, label: message.content })));
 
   constructor() {
     effect(() => {
@@ -82,6 +92,7 @@ export class SpeedyWorkspaceComponent {
     this.question.set('');
     this.error.set(null);
     this.messages.update(messages => [...messages, { role: 'user', content: question }]);
+    this.activeSectionIndex.set(this.messages().length - 1);
     this.sending.set(true);
     this.speedy.askWorkspace(question, this.conversationId()).subscribe({
       next: response => {
@@ -102,6 +113,7 @@ export class SpeedyWorkspaceComponent {
     this.sectionNavigatorOpen.set(false);
     this.conversationId.set(null);
     this.messages.set([]);
+    this.activeSectionIndex.set(null);
     this.question.set('');
     this.error.set(null);
   }
@@ -118,6 +130,8 @@ export class SpeedyWorkspaceComponent {
           content: message.content,
           actions: message.actions,
         })));
+        this.activeSectionIndex.set([...this.messages()].map((message, index) => ({ message, index }))
+          .filter(({ message }) => message.role === 'user').at(-1)?.index ?? null);
       },
       error: () => this.error.set('That conversation could not be opened. Please try again.'),
     });
@@ -129,7 +143,16 @@ export class SpeedyWorkspaceComponent {
 
   jumpToMessage(index: number): void {
     if (typeof document !== 'undefined') document.getElementById(`speedy-message-${index}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    this.sectionNavigatorOpen.set(false);
+    this.activeSectionIndex.set(index);
+  }
+
+  moveSection(direction: -1 | 1): void {
+    const sections = this.conversationSections();
+    if (!sections.length) return;
+    const current = sections.findIndex(section => section.messageIndex === this.activeSectionIndex());
+    const base = current < 0 ? (direction === 1 ? -1 : sections.length) : current;
+    const target = sections[Math.max(0, Math.min(sections.length - 1, base + direction))];
+    this.jumpToMessage(target.messageIndex);
   }
 
   runAction(action: SpeedyWorkspaceAction): void {
