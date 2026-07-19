@@ -151,14 +151,14 @@ class WorkspaceService:
 
 def _action_for(intent: str, account: Any) -> WorkspaceAction | None:
     public_actions: dict[str, WorkspaceAction] = {
-        "product_discovery": WorkspaceAction(kind="navigate", label="Explore products", route="/products", detail="Compare current SpeedClaim products.", requiresConfirmation=False),
-        "proposal": WorkspaceAction(kind="navigate", label="Start a quote", route="/quote", detail="Review your details before submitting a proposal.", requiresConfirmation=True),
+        "product_discovery": WorkspaceAction(kind="guided_quote", label="Build a quote", route=None, detail="Choose a product and review an indicative premium in this workspace.", requiresConfirmation=False),
+        "proposal": WorkspaceAction(kind="guided_quote", label="Build a quote", route=None, detail="Choose a product and review an indicative premium in this workspace.", requiresConfirmation=False),
     }
     customer_actions: dict[str, WorkspaceAction] = {
-        "policy_help": WorkspaceAction(kind="navigate", label="View my policies", route="/policies", detail="Open your policy list and policy documents.", requiresConfirmation=False),
-        "premium_help": WorkspaceAction(kind="navigate", label="View payments", route="/payments", detail="Review upcoming premiums and payment history.", requiresConfirmation=False),
-        "claim_guidance": WorkspaceAction(kind="navigate", label="Start a claim", route="/claims/new", detail="You will review the claim details before submitting them.", requiresConfirmation=True),
-        "claim_status": WorkspaceAction(kind="navigate", label="View my claims", route="/claims", detail="Review the current status and next steps for your claims.", requiresConfirmation=False),
+        "policy_help": WorkspaceAction(kind="policy_status", label="Check policy status", route=None, detail="Review your live policy status in this workspace.", requiresConfirmation=False),
+        "premium_help": WorkspaceAction(kind="payment", label="Pay a premium", route=None, detail="Review the next payable installment before opening secure Stripe checkout.", requiresConfirmation=True),
+        "claim_guidance": WorkspaceAction(kind="guided_claim", label="Start a claim", route=None, detail="Complete the claim details and explicitly confirm before submitting.", requiresConfirmation=True),
+        "claim_status": WorkspaceAction(kind="claim_status", label="Track my claims", route=None, detail="Review the current status and next steps for your claims.", requiresConfirmation=False),
         "kyc": WorkspaceAction(kind="guided_kyc", label="Complete KYC", route=None, detail="Attach Aadhaar and PAN in their labelled slots before continuing.", requiresConfirmation=True),
         "grievance": WorkspaceAction(kind="navigate", label="Raise a grievance", route="/grievances/new", detail="Prepare the grievance and review it before filing.", requiresConfirmation=True),
     }

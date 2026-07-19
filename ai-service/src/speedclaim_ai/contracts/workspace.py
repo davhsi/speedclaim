@@ -19,7 +19,10 @@ class WorkspaceRequest(BaseModel):
 class WorkspaceAction(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    kind: Literal["navigate", "guided_kyc", "none"]
+    kind: Literal[
+        "navigate", "guided_kyc", "guided_quote", "guided_application",
+        "guided_claim", "claim_status", "policy_status", "claim_documents", "payment", "none",
+    ]
     label: str = Field(min_length=1, max_length=80)
     route: str | None = Field(default=None, max_length=160)
     detail: str = Field(min_length=1, max_length=300)
