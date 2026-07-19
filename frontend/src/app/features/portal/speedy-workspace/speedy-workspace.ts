@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -31,7 +30,7 @@ interface BrowserSpeechRecognition {
 @Component({
   selector: 'app-speedy-workspace',
   standalone: true,
-  imports: [DatePipe, FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink],
   templateUrl: './speedy-workspace.html',
 })
 export class SpeedyWorkspaceComponent {
@@ -45,7 +44,7 @@ export class SpeedyWorkspaceComponent {
   readonly messages = signal<WorkspaceMessage[]>([]);
   readonly conversationId = signal<string | null>(null);
   readonly conversations = signal<SpeedyWorkspaceConversation[]>([]);
-  readonly historyOpen = signal(false);
+  readonly sectionNavigatorOpen = signal(false);
   readonly historyLoaded = signal(false);
   readonly historyError = signal(false);
   readonly sending = signal(false);
@@ -65,6 +64,11 @@ export class SpeedyWorkspaceComponent {
   readonly suggestions = computed(() => this.signedIn()
     ? ['Which policy may help with a hospital admission?', 'Help me complete KYC', 'When is my next premium due?', 'I need to raise a grievance']
     : ['Compare family health cover', 'Which products are available?', 'How do I start a quote?']);
+  readonly recentConversations = computed(() => this.conversations().filter(conversation => this.ageInDays(conversation.updatedAt) <= 7));
+  readonly previousConversations = computed(() => this.conversations().filter(conversation => {
+    const days = this.ageInDays(conversation.updatedAt);
+    return days > 7 && days <= 30;
+  }));
 
   constructor() {
     effect(() => {
@@ -95,7 +99,7 @@ export class SpeedyWorkspaceComponent {
 
   startNewChat(): void {
     if (this.sending()) return;
-    this.historyOpen.set(false);
+    this.sectionNavigatorOpen.set(false);
     this.conversationId.set(null);
     this.messages.set([]);
     this.question.set('');
@@ -107,7 +111,7 @@ export class SpeedyWorkspaceComponent {
     this.error.set(null);
     this.speedy.getWorkspaceConversation(conversationId).subscribe({
       next: conversation => {
-        this.historyOpen.set(false);
+        this.sectionNavigatorOpen.set(false);
         this.conversationId.set(conversation.id);
         this.messages.set((conversation.messages ?? []).map(message => ({
           role: message.role.toLowerCase() as WorkspaceMessage['role'],
@@ -119,8 +123,13 @@ export class SpeedyWorkspaceComponent {
     });
   }
 
-  toggleHistory(): void {
-    this.historyOpen.update(open => !open);
+  toggleSectionNavigator(): void {
+    this.sectionNavigatorOpen.update(open => !open);
+  }
+
+  jumpToMessage(index: number): void {
+    if (typeof document !== 'undefined') document.getElementById(`speedy-message-${index}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    this.sectionNavigatorOpen.set(false);
   }
 
   runAction(action: SpeedyWorkspaceAction): void {
@@ -241,5 +250,9 @@ export class SpeedyWorkspaceComponent {
       },
       error: () => this.historyError.set(true),
     });
+  }
+
+  private ageInDays(value: string): number {
+    return Math.max(0, (Date.now() - new Date(value).getTime()) / 86_400_000);
   }
 }

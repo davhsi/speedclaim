@@ -63,13 +63,13 @@ describe('SpeedyWorkspaceComponent', () => {
     expect(fixture.componentInstance.messages()).toEqual([]);
   });
 
-  it('opens and closes the compact conversation navigator', () => {
+  it('opens and closes the compact section navigator', () => {
     const fixture = TestBed.createComponent(SpeedyWorkspaceComponent);
 
-    fixture.componentInstance.toggleHistory();
-    expect(fixture.componentInstance.historyOpen()).toBe(true);
+    fixture.componentInstance.toggleSectionNavigator();
+    expect(fixture.componentInstance.sectionNavigatorOpen()).toBe(true);
 
-    fixture.componentInstance.toggleHistory();
-    expect(fixture.componentInstance.historyOpen()).toBe(false);
+    fixture.componentInstance.toggleSectionNavigator();
+    expect(fixture.componentInstance.sectionNavigatorOpen()).toBe(false);
   });
 });
