@@ -135,6 +135,53 @@ export class SpeedyWorkspaceComponent {
     recognition.start();
   }
 
+  /**
+   * Speedy returns a deliberately small Markdown subset. Escape first so model
+   * output cannot introduce executable HTML, then add only presentation tags.
+   */
+  renderMarkdown(content: string): string {
+    const lines = content.replace(/\r\n?/g, '\n').split('\n');
+    const output: string[] = [];
+    let openList: 'ol' | 'ul' | null = null;
+
+    const closeList = (): void => {
+      if (openList) output.push(`</${openList}>`);
+      openList = null;
+    };
+
+    for (const line of lines) {
+      const numbered = /^\s*\d+[.)]\s+(.+)$/.exec(line);
+      const bullet = /^\s*[-*+]\s+(.+)$/.exec(line);
+      const listType = numbered ? 'ol' : bullet ? 'ul' : null;
+      if (listType) {
+        if (openList && openList !== listType) closeList();
+        if (!openList) {
+          output.push(`<${listType}>`);
+          openList = listType;
+        }
+        output.push(`<li>${this.renderInlineMarkdown((numbered ?? bullet)![1])}</li>`);
+        continue;
+      }
+      closeList();
+      if (!line.trim()) continue;
+      output.push(`<p>${this.renderInlineMarkdown(line)}</p>`);
+    }
+    closeList();
+    return output.join('');
+  }
+
+  private renderInlineMarkdown(value: string): string {
+    return this.escapeHtml(value)
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>');
+  }
+
+  private escapeHtml(value: string): string {
+    return value.replace(/[&<>"']/g, character => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    })[character]!);
+  }
+
   private announce(text: string): void {
     if ('speechSynthesis' in window) window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
   }
