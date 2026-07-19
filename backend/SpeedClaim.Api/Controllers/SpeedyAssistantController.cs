@@ -11,7 +11,6 @@ namespace SpeedClaim.Api.Controllers;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/assistant")]
-[Authorize(Roles = "Customer")]
 [EnableRateLimiting("policy-qa")]
 public sealed class SpeedyAssistantController : ControllerBase
 {
@@ -19,9 +18,12 @@ public sealed class SpeedyAssistantController : ControllerBase
     public SpeedyAssistantController(ISpeedyAssistantService service) => _service = service;
 
     [HttpPost("messages")]
+    [AllowAnonymous]
     public async Task<ActionResult<SpeedyAssistantResponse>> Ask([FromBody] AskSpeedyRequest request, CancellationToken cancellationToken)
     {
-        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)) return Unauthorized();
-        return Ok(await _service.AnswerAsync(userId, request.Question, cancellationToken));
+        Guid? customerUserId = User.IsInRole("Customer") && Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)
+            ? userId
+            : null;
+        return Ok(await _service.AnswerAsync(customerUserId, request.Question, cancellationToken));
     }
 }

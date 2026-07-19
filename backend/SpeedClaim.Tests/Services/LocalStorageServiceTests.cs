@@ -44,7 +44,7 @@ public class LocalStorageServiceTests
     public async Task UploadFileAsync_ValidFile_SavesFileAndReturnsRelativePath()
     {
         // Arrange
-        var content = "This is a test document";
+        var content = "%PDF-1.4\nThis is a test document";
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
         var fileName = "test.pdf";
         var folderPath = "kyc/123";
@@ -99,6 +99,30 @@ public class LocalStorageServiceTests
             await _storageService.UploadFileAsync(stream, "test.exe", "folder"));
         
         Assert.That(ex.Message, Does.Contain("Invalid file type"));
+    }
+
+    [TestCase("test.pdf", new byte[] { 0x25, 0x50, 0x44, 0x46, 0x2D })]
+    [TestCase("test.jpg", new byte[] { 0xFF, 0xD8, 0xFF, 0x00 })]
+    [TestCase("test.png", new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A })]
+    [TestCase("test.webp", new byte[] { 0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50 })]
+    public async Task UploadFileAsync_RecognizedSignature_SavesFile(string fileName, byte[] content)
+    {
+        using var stream = new MemoryStream(content);
+
+        var path = await _storageService.UploadFileAsync(stream, fileName, "test");
+
+        Assert.That(File.Exists(Path.Combine(_tempDirectory, path)), Is.True);
+    }
+
+    [Test]
+    public void UploadFileAsync_MismatchedContent_ThrowsValidationException()
+    {
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes("not a PDF"));
+
+        var ex = Assert.ThrowsAsync<SpeedClaim.Api.Exceptions.ValidationException>(async () =>
+            await _storageService.UploadFileAsync(stream, "test.pdf", "test"));
+
+        Assert.That(ex!.Message, Does.Contain("does not match"));
     }
 
     [Test]

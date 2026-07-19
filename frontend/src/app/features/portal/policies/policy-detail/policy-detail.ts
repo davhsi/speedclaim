@@ -13,14 +13,13 @@ import { DateFormatPipe } from '../../../../shared/pipes/date-format.pipe';
 import { SafeHtmlPipe } from '../../../../shared/pipes/safe-html.pipe';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
 import { ProductService } from '../../products/services/product.service';
-import { PolicyGuideComponent } from '../policy-guide/policy-guide';
 
 type ScheduleFilter = 'All' | 'Paid' | 'Upcoming' | 'Due' | 'Overdue';
 
 @Component({
   selector: 'app-policy-detail',
   standalone: true,
-  imports: [StatusBadgeComponent, TimelineComponent, ConfirmDialogComponent, PaginationComponent, MoneyPipe, DateFormatPipe, SafeHtmlPipe, ReactiveFormsModule, PolicyGuideComponent],
+  imports: [StatusBadgeComponent, TimelineComponent, ConfirmDialogComponent, PaginationComponent, MoneyPipe, DateFormatPipe, SafeHtmlPipe, ReactiveFormsModule],
   templateUrl: './policy-detail.html',
 })
 export class PolicyDetailComponent implements OnInit {
@@ -47,7 +46,7 @@ export class PolicyDetailComponent implements OnInit {
   showEndorsementForm = signal(false);
   submittingEndorsement = signal(false);
   cancelling = signal(false);
-  tabs = ['Overview', 'Nominees', 'Endorsements', 'Schedule', 'History', 'Policy Guide'];
+  tabs = ['Overview', 'Nominees', 'Endorsements', 'Schedule', 'History'];
   readonly schedulePageSize = 10;
   readonly scheduleFilters: ScheduleFilter[] = ['All', 'Paid', 'Upcoming', 'Due', 'Overdue'];
   scheduleFilter = signal<ScheduleFilter>('All');

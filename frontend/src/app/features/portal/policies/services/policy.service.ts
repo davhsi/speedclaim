@@ -4,7 +4,6 @@ import { Observable } from 'rxjs';
 import {
   PolicyDto, PolicyStatusHistoryDto, EndorsementDto, PolicyNomineeDto,
   RequestEndorsementRequest, UpdateNomineeRequest, ApiMessage, PremiumScheduleDto,
-  PolicyAssistantAvailabilityDto, PolicyAssistantConversationDto, PolicyAssistantAnswerDto,
 } from '../../../../core/models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -54,9 +53,4 @@ export class PolicyService {
     return this.http.get(`${this.api}/${id}/download`, { responseType: 'blob' });
   }
 
-  getAssistantAvailability(id: string): Observable<PolicyAssistantAvailabilityDto> { return this.http.get<PolicyAssistantAvailabilityDto>(`${this.api}/${id}/assistant/availability`); }
-  getAssistantConversations(id: string): Observable<PolicyAssistantConversationDto[]> { return this.http.get<PolicyAssistantConversationDto[]>(`${this.api}/${id}/assistant/conversations`); }
-  createAssistantConversation(id: string): Observable<PolicyAssistantConversationDto> { return this.http.post<PolicyAssistantConversationDto>(`${this.api}/${id}/assistant/conversations`, {}); }
-  getAssistantConversation(id: string, conversationId: string): Observable<PolicyAssistantConversationDto> { return this.http.get<PolicyAssistantConversationDto>(`${this.api}/${id}/assistant/conversations/${conversationId}`); }
-  sendAssistantMessage(id: string, conversationId: string, question: string): Observable<PolicyAssistantAnswerDto> { return this.http.post<PolicyAssistantAnswerDto>(`${this.api}/${id}/assistant/conversations/${conversationId}/messages`, { question }); }
 }

@@ -1,4 +1,4 @@
-@if (open()) {
+@if (visible() && open()) {
   <section class="fixed z-40 inset-x-3 bottom-[76px] sm:inset-x-auto sm:right-6 sm:bottom-6 sm:w-[400px] bg-white rounded-[22px] border border-[#F0D197] shadow-[0_24px_70px_rgba(92,56,6,0.22)] overflow-hidden" role="dialog" aria-modal="false" aria-labelledby="speedy-title">
     <header class="relative overflow-hidden px-5 py-4 bg-[#1B2738] text-white">
       <div class="absolute inset-0 opacity-45" style="background: radial-gradient(circle at 93% 9%, #F5A623 0, transparent 31%), radial-gradient(circle at 8% 105%, #D4891A 0, transparent 34%);"></div>
@@ -7,7 +7,7 @@
           <img src="/speedy/speedy-amber.png" class="w-10 h-10 object-contain" alt="" />
         </span>
         <div class="min-w-0 flex-1">
-          <p class="text-[11px] uppercase tracking-[0.16em] text-[#FFE1A0] font-bold">Your account guide</p>
+          <p class="text-[11px] uppercase tracking-[0.16em] text-[#FFE1A0] font-bold">{{ assistantLabel() }}</p>
           <h2 id="speedy-title" class="text-lg leading-tight font-bold">Speedy</h2>
         </div>
         <button type="button" class="w-8 h-8 rounded-full text-[#FFE1A0] hover:bg-white/15 focus:outline-2 focus:outline-white" (click)="close()" aria-label="Close Speedy">
@@ -19,10 +19,10 @@
     <div class="max-h-[min(54vh,460px)] overflow-y-auto p-4 space-y-3" aria-live="polite">
       @if (!messages().length) {
         <div class="rounded-2xl bg-[#FFF8EA] border border-[#FAD78A] px-4 py-3 text-sm text-[#553600]">
-          Hi! I’m Speedy. I can help you understand your policies, upcoming premiums, and claims.
+          Hi! I’m Speedy. {{ greeting() }}
         </div>
         <div class="flex flex-wrap gap-2">
-          @for (suggestion of suggestions; track suggestion) {
+          @for (suggestion of suggestions(); track suggestion) {
             <button type="button" class="text-left px-3 py-2 rounded-full bg-white border border-[#F0D197] text-xs font-semibold text-[#8A5700] hover:bg-[#FFF4DE] focus:outline-2 focus:outline-[#F5A623]" (click)="ask(suggestion)">{{ suggestion }}</button>
           }
         </div>
@@ -44,16 +44,18 @@
 
     <form class="border-t border-[#F0D197] p-3 flex gap-2 bg-[#FFFCF6]" (submit)="$event.preventDefault(); ask()">
       <label class="sr-only" for="speedy-question">Ask Speedy</label>
-      <input id="speedy-question" name="speedy-question" [ngModel]="question()" (ngModelChange)="question.set($event)" maxlength="2000" placeholder="Ask about your account…" class="min-w-0 flex-1 h-11 rounded-xl border border-[#F0D197] bg-white px-3 text-sm text-ink placeholder:text-[#9B8154] focus:border-[#F5A623] focus:outline-2 focus:outline-[#FBE5B8]" [disabled]="sending()" />
+      <input id="speedy-question" name="speedy-question" [ngModel]="question()" (ngModelChange)="question.set($event)" maxlength="2000" [placeholder]="isSignedInCustomer() ? 'Ask about a product or your account…' : 'Ask about SpeedClaim products…'" class="min-w-0 flex-1 h-11 rounded-xl border border-[#F0D197] bg-white px-3 text-sm text-ink placeholder:text-[#9B8154] focus:border-[#F5A623] focus:outline-2 focus:outline-[#FBE5B8]" [disabled]="sending()" />
       <button type="submit" class="h-11 w-11 shrink-0 rounded-xl bg-[#F5A623] text-white hover:bg-[#D4891A] focus:outline-2 focus:outline-[#F5A623] disabled:opacity-50" [disabled]="sending() || !question().trim()" aria-label="Send question to Speedy">
         <svg class="mx-auto" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
       </button>
     </form>
-    <p class="px-4 pb-3 text-[10px] leading-snug text-[#8B7350]">Speedy uses the information currently visible in your account. It cannot make changes or decisions.</p>
+    <p class="px-4 pb-3 text-[10px] leading-snug text-[#8B7350]">Speedy explains available information and cannot make changes, decide claims, or provide binding advice.</p>
   </section>
 }
 
-<button type="button" (click)="toggle()" class="fixed z-40 right-4 bottom-[76px] sm:right-6 sm:bottom-6 group flex items-center gap-2 rounded-full bg-[#F5A623] pr-4 pl-1.5 py-1.5 text-white shadow-[0_14px_34px_rgba(132,82,8,0.34)] hover:-translate-y-0.5 hover:bg-[#D4891A] focus:outline-2 focus:outline-[#F5A623] transition-all" [attr.aria-expanded]="open()" aria-controls="speedy-title" aria-label="Open Speedy, your account assistant">
+@if (visible()) {
+<button type="button" (click)="toggle()" class="fixed z-40 right-4 bottom-[76px] sm:right-6 sm:bottom-6 group flex items-center gap-2 rounded-full bg-[#F5A623] pr-4 pl-1.5 py-1.5 text-white shadow-[0_14px_34px_rgba(132,82,8,0.34)] hover:-translate-y-0.5 hover:bg-[#D4891A] focus:outline-2 focus:outline-[#F5A623] transition-all" [attr.aria-expanded]="open()" aria-controls="speedy-title" aria-label="Open Speedy, your product and account guide">
   <span class="w-11 h-11 rounded-full bg-[#FFF8EA] ring-1 ring-[#FFE1A0] flex items-center justify-center overflow-hidden"><img src="/speedy/speedy-amber.png" class="w-10 h-10 object-contain" alt="" /></span>
   <span class="text-sm font-bold">Ask Speedy</span>
 </button>
+}

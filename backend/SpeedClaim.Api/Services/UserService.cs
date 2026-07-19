@@ -174,11 +174,9 @@ public class UserService : IUserService
         var user = await _unitOfWork.Users.GetByIdAsync(uid);
         if (user == null) throw new NotFoundException("User not found");
 
-        if (user.AvatarUrl != null)
-            await _storageService.DeleteFileAsync(user.AvatarUrl);
-
         using var stream = file.OpenReadStream();
         var relativePath = await _storageService.UploadFileAsync(stream, file.FileName, "avatars");
+        var previousAvatarUrl = user.AvatarUrl;
 
         user.AvatarUrl = relativePath;
         user.UpdatedAt = DateTimeOffset.UtcNow;
@@ -194,7 +192,18 @@ public class UserService : IUserService
             CreatedAt = DateTime.UtcNow
         });
 
-        await _unitOfWork.CompleteAsync();
+        try
+        {
+            await _unitOfWork.CompleteAsync();
+        }
+        catch
+        {
+            await _storageService.DeleteFileAsync(relativePath);
+            throw;
+        }
+
+        if (!string.IsNullOrWhiteSpace(previousAvatarUrl))
+            await _storageService.DeleteFileAsync(previousAvatarUrl);
 
         return $"/{relativePath}";
     }
@@ -281,6 +290,7 @@ public class UserService : IUserService
         record.KycStatus = KycStatus.Pending;
         record.UpdatedAt = DateTimeOffset.UtcNow;
 
+        var previousDocumentKey = record.AadhaarDocumentKey;
         var folder = $"kyc/{uid}/aadhaar";
         using var stream = request.Document.OpenReadStream();
         record.AadhaarDocumentKey = await _storageService.UploadFileAsync(stream, request.Document.FileName, folder);
@@ -290,7 +300,18 @@ public class UserService : IUserService
             Id = Guid.NewGuid(), UserId = uid, EntityType = "KycRecord", EntityId = record.Id,
             Action = "AadhaarUploaded", CreatedAt = DateTime.UtcNow
         });
-        await _unitOfWork.CompleteAsync();
+        try
+        {
+            await _unitOfWork.CompleteAsync();
+        }
+        catch
+        {
+            await _storageService.DeleteFileAsync(record.AadhaarDocumentKey);
+            throw;
+        }
+
+        if (!string.IsNullOrWhiteSpace(previousDocumentKey) && previousDocumentKey != record.AadhaarDocumentKey)
+            await _storageService.DeleteFileAsync(previousDocumentKey);
 
         // Only notify when both documents are present (avoid double-email when Aadhaar is submitted first)
         if (record.AadhaarNumber != null && record.PanNumber != null)
@@ -321,6 +342,7 @@ public class UserService : IUserService
         record.KycStatus = KycStatus.Pending;
         record.UpdatedAt = DateTimeOffset.UtcNow;
 
+        var previousDocumentKey = record.PanDocumentKey;
         var folder = $"kyc/{uid}/pan";
         using var stream = request.Document.OpenReadStream();
         record.PanDocumentKey = await _storageService.UploadFileAsync(stream, request.Document.FileName, folder);
@@ -330,7 +352,18 @@ public class UserService : IUserService
             Id = Guid.NewGuid(), UserId = uid, EntityType = "KycRecord", EntityId = record.Id,
             Action = "PanUploaded", CreatedAt = DateTime.UtcNow
         });
-        await _unitOfWork.CompleteAsync();
+        try
+        {
+            await _unitOfWork.CompleteAsync();
+        }
+        catch
+        {
+            await _storageService.DeleteFileAsync(record.PanDocumentKey);
+            throw;
+        }
+
+        if (!string.IsNullOrWhiteSpace(previousDocumentKey) && previousDocumentKey != record.PanDocumentKey)
+            await _storageService.DeleteFileAsync(previousDocumentKey);
 
         // Only notify when both documents are present (avoid double-email when PAN is submitted first)
         if (record.AadhaarNumber != null && record.PanNumber != null)

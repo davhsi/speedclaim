@@ -5,12 +5,11 @@ import { SidebarComponent } from '../sidebar/sidebar';
 import { TopbarComponent } from '../topbar/topbar';
 import { NotificationService } from '../../../core/services/notification.service';
 import { SafeHtmlPipe } from '../../../shared/pipes/safe-html.pipe';
-import { SpeedyAssistantComponent } from '../speedy-assistant/speedy-assistant';
 
 @Component({
   selector: 'app-portal-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, SidebarComponent, TopbarComponent, SafeHtmlPipe, SpeedyAssistantComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, SidebarComponent, TopbarComponent, SafeHtmlPipe],
   templateUrl: './portal-layout.html',
 })
 export class PortalLayoutComponent implements OnInit {

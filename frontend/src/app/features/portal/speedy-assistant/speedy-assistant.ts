@@ -1,6 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SpeedyAssistantService } from '../services/speedy-assistant.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 interface SpeedyMessage {
   role: 'user' | 'assistant';
@@ -15,18 +16,28 @@ interface SpeedyMessage {
 })
 export class SpeedyAssistantComponent {
   private readonly speedy = inject(SpeedyAssistantService);
+  private readonly auth = inject(AuthService);
 
   open = signal(false);
   sending = signal(false);
   question = signal('');
   error = signal<string | null>(null);
   messages = signal<SpeedyMessage[]>([]);
+  readonly isSignedInCustomer = computed(() => this.auth.currentUser()?.role === 'Customer');
+  readonly visible = computed(() => {
+    const user = this.auth.currentUser();
+    return !user || user.role === 'Customer';
+  });
 
-  readonly suggestions = [
-    'What policies do I have?',
-    'When is my next premium due?',
-    'What is the status of my claims?',
-  ];
+  readonly suggestions = computed(() => this.isSignedInCustomer()
+    ? ['What policies do I have?', 'When is my next premium due?', 'Which product best suits a family?']
+    : ['Which plans are available?', 'Which plans allow family cover?', 'What are the waiting periods?']);
+
+  readonly greeting = computed(() => this.isSignedInCustomer()
+    ? 'I can help you compare products and understand your policies, premiums, and claims.'
+    : 'I can help you explore SpeedClaim products, eligibility, cover ranges, and waiting periods.');
+
+  readonly assistantLabel = computed(() => this.isSignedInCustomer() ? 'Product & account guide' : 'Product guide');
 
   toggle(): void {
     this.open.update(value => !value);

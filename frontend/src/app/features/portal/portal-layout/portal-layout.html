@@ -6,8 +6,6 @@
     <main id="main-content" class="flex-1 p-4 md:p-6 pb-20 lg:pb-6">
       <router-outlet />
     </main>
-    <app-speedy-assistant />
-
     <!-- Mobile Bottom Nav -->
     <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-line flex h-[60px] z-20 lg:hidden">
       @for (item of bottomNav; track item.route) {

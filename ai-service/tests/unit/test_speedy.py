@@ -5,6 +5,7 @@ import pytest
 
 from speedclaim_ai.contracts.speedy import (
     SpeedyAccountSnapshot,
+    SpeedyCatalogSnapshot,
     SpeedyClaimSnapshot,
     SpeedyPolicySnapshot,
     SpeedyPremiumSnapshot,
@@ -20,6 +21,7 @@ class FakeChatProvider:
 
     async def complete(self, request):
         assert "ACCOUNT_DATA" in request.user_prompt
+        assert "CATALOG_DATA" in request.user_prompt
         assert "What policies" in request.user_prompt
         return ChatCompletion(
             content='{"answer":"You have one active policy."}',
@@ -42,7 +44,8 @@ async def test_speedy_uses_only_the_server_supplied_account_snapshot():
     request = SpeedyRequest(
         requestId=uuid4(),
         question="What policies do I have?",
-        account=SpeedyAccountSnapshot(firstName="Asha", policies=[], upcomingPremiums=[], claims=[]),
+        account=SpeedyAccountSnapshot(firstName="Asha", isAuthenticated=True, policies=[], upcomingPremiums=[], claims=[]),
+        catalog=SpeedyCatalogSnapshot(products=[]),
     )
 
     response = await SpeedyService(FakeChatProvider()).answer(request)

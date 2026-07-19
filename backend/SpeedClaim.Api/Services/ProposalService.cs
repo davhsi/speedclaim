@@ -433,9 +433,12 @@ public class ProposalService : IProposalService
 
         var existing = await _unitOfWork.SubmittedDocuments.FindAsync(
             d => d.EntityId == pId && d.DocumentKey == documentType);
+        var previousPaths = existing
+            .Select(d => d.FilePath)
+            .Where(path => !string.IsNullOrWhiteSpace(path))
+            .ToList();
         foreach (var old in existing)
         {
-            await _storageService.DeleteFileAsync(old.FilePath);
             _unitOfWork.SubmittedDocuments.Delete(old);
         }
 
@@ -472,7 +475,19 @@ public class ProposalService : IProposalService
             }
         }
 
-        await _unitOfWork.CompleteAsync();
+        try
+        {
+            await _unitOfWork.CompleteAsync();
+        }
+        catch
+        {
+            await _storageService.DeleteFileAsync(storedPath);
+            throw;
+        }
+
+        foreach (var previousPath in previousPaths.Where(path => path != storedPath))
+            await _storageService.DeleteFileAsync(previousPath);
+
         return storedPath;
     }
 

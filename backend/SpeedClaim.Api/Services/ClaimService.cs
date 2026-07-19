@@ -295,10 +295,12 @@ public class ClaimService : IClaimService
 
         var existing = await _unitOfWork.SubmittedDocuments.FindAsync(
             d => d.EntityId == claimId && d.DocumentKey == documentKey);
+        var previousPaths = existing
+            .Select(d => d.FilePath)
+            .Where(path => !string.IsNullOrWhiteSpace(path))
+            .ToList();
         foreach (var old in existing)
         {
-            if (!string.IsNullOrWhiteSpace(old.FilePath))
-                await _storageService.DeleteFileAsync(old.FilePath);
             _unitOfWork.SubmittedDocuments.Delete(old);
         }
 
@@ -317,14 +319,25 @@ public class ClaimService : IClaimService
 
         await _unitOfWork.SubmittedDocuments.AddAsync(doc);
         
-        if (claim.Status == ClaimStatus.Intimated || claim.Status == ClaimStatus.DocumentsPending)
+        try
         {
-            await UpdateClaimStatusInternalAsync(claim, ClaimStatus.UnderReview, customerId, "Documents uploaded, moving to review.");
+            if (claim.Status == ClaimStatus.Intimated || claim.Status == ClaimStatus.DocumentsPending)
+            {
+                await UpdateClaimStatusInternalAsync(claim, ClaimStatus.UnderReview, customerId, "Documents uploaded, moving to review.");
+            }
+            else
+            {
+                await _unitOfWork.CompleteAsync();
+            }
         }
-        else
+        catch
         {
-            await _unitOfWork.CompleteAsync();
+            await _storageService.DeleteFileAsync(storedPath);
+            throw;
         }
+
+        foreach (var previousPath in previousPaths.Where(path => path != storedPath))
+            await _storageService.DeleteFileAsync(previousPath);
 
         return doc.FilePath;
     }

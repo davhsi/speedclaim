@@ -1,8 +1,10 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
 import { SpeedyAssistantComponent } from './speedy-assistant';
 import { SpeedyAssistantService } from '../services/speedy-assistant.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 describe('SpeedyAssistantComponent', () => {
   let speedy: { ask: ReturnType<typeof vi.fn> };
@@ -11,7 +13,10 @@ describe('SpeedyAssistantComponent', () => {
     speedy = { ask: vi.fn(() => of({ requestId: 'request-1', answer: 'You have one active policy.' })) };
     TestBed.configureTestingModule({
       imports: [SpeedyAssistantComponent],
-      providers: [{ provide: SpeedyAssistantService, useValue: speedy }],
+      providers: [
+        { provide: SpeedyAssistantService, useValue: speedy },
+        { provide: AuthService, useValue: { currentUser: signal(null) } },
+      ],
     });
   });
 

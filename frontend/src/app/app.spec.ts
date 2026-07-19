@@ -1,12 +1,19 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { App } from './app';
+import { AuthService } from './core/services/auth.service';
+import { SpeedyAssistantService } from './features/portal/services/speedy-assistant.service';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        { provide: AuthService, useValue: { currentUser: signal(null) } },
+        { provide: SpeedyAssistantService, useValue: { ask: () => { throw new Error('Not used in App tests.'); } } },
+      ],
     }).compileComponents();
   });
 

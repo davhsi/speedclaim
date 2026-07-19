@@ -7,15 +7,6 @@ namespace SpeedClaim.Api.Services;
 
 public class AzureBlobStorageService : IStorageService
 {
-    private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ".jpg",
-        ".jpeg",
-        ".png",
-        ".webp",
-        ".pdf"
-    };
-
     private readonly BlobContainerClient _container;
 
     public AzureBlobStorageService(IConfiguration configuration)
@@ -72,15 +63,7 @@ public class AzureBlobStorageService : IStorageService
 
     private static void ValidateFile(Stream fileStream, string fileName)
     {
-        if (fileStream == null || fileStream.Length == 0)
-            throw new ValidationException("No file provided");
-
-        var extension = Path.GetExtension(fileName).ToLowerInvariant();
-        if (!AllowedExtensions.Contains(extension))
-            throw new ValidationException("Invalid file type. Only JPG, PNG, WebP, and PDF are allowed.");
-
-        if (fileStream.Length > 5 * 1024 * 1024)
-            throw new ValidationException("File size exceeds the 5MB limit.");
+        FileUploadValidator.Validate(fileStream, fileName);
     }
 
     private static string BuildBlobName(string folderPath, string extension)
