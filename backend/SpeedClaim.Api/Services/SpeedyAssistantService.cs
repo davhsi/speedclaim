@@ -54,7 +54,7 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
         var policyIds = policies.Select(p => p.Id).ToHashSet();
         var schedules = policyIds.Count == 0
             ? []
-            : (await _unitOfWork.PremiumSchedules.FindAsync(s => s.PolicyId.HasValue && policyIds.Contains(s.PolicyId.GetValueOrDefault())))
+            : (await _unitOfWork.PremiumSchedules.FindAsync(s => s.PolicyId.HasValue && policyIds.Contains(s.PolicyId.Value)))
                 .Where(s => s.Status is PremiumScheduleStatus.Upcoming or PremiumScheduleStatus.Due or PremiumScheduleStatus.Overdue)
                 .OrderBy(s => s.DueDate).Take(5).ToList();
         List<Claim> claims = customer is null
@@ -142,7 +142,7 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
         var policyIds = policies.Select(p => p.Id).ToHashSet();
         var schedules = policyIds.Count == 0
             ? []
-            : (await _unitOfWork.PremiumSchedules.FindAsync(s => s.PolicyId.HasValue && policyIds.Contains(s.PolicyId.GetValueOrDefault())))
+            : (await _unitOfWork.PremiumSchedules.FindAsync(s => s.PolicyId.HasValue && policyIds.Contains(s.PolicyId.Value)))
                 .Where(s => s.Status is PremiumScheduleStatus.Upcoming or PremiumScheduleStatus.Due or PremiumScheduleStatus.Overdue)
                 .OrderBy(s => s.DueDate).Take(5).ToList();
         List<Claim> claims = customer is null

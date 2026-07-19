@@ -90,6 +90,12 @@ public class SpeedyAssistantServiceTests
         var claims = new Mock<IClaimRepository>();
         claims.Setup(x => x.FindAsync(It.IsAny<Expression<Func<Claim, bool>>>() ))
             .ReturnsAsync(Array.Empty<Claim>());
+        var proposals = new Mock<IRepository<Proposal>>();
+        proposals.Setup(x => x.FindAsync(It.IsAny<Expression<Func<Proposal, bool>>>() ))
+            .ReturnsAsync(Array.Empty<Proposal>());
+        var grievances = new Mock<IRepository<Grievance>>();
+        grievances.Setup(x => x.FindAsync(It.IsAny<Expression<Func<Grievance, bool>>>() ))
+            .ReturnsAsync(Array.Empty<Grievance>());
         var conversations = new Mock<IRepository<SpeedyWorkspaceConversation>>();
         var messages = new Mock<IRepository<SpeedyWorkspaceMessage>>();
         var kycs = new Mock<IRepository<KycRecord>>();
@@ -109,6 +115,8 @@ public class SpeedyAssistantServiceTests
         unitOfWork.SetupGet(x => x.Users).Returns(users.Object);
         unitOfWork.SetupGet(x => x.Policies).Returns(policies.Object);
         unitOfWork.SetupGet(x => x.Claims).Returns(claims.Object);
+        unitOfWork.SetupGet(x => x.Proposals).Returns(proposals.Object);
+        unitOfWork.SetupGet(x => x.Grievances).Returns(grievances.Object);
         unitOfWork.SetupGet(x => x.SpeedyWorkspaceConversations).Returns(conversations.Object);
         unitOfWork.SetupGet(x => x.SpeedyWorkspaceMessages).Returns(messages.Object);
         unitOfWork.SetupGet(x => x.KycRecords).Returns(kycs.Object);
