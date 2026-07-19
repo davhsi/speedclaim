@@ -1,5 +1,5 @@
-<main class="flex min-h-[100dvh] bg-[#101722] text-[#E7ECF3]">
-  <aside class="hidden w-[292px] shrink-0 flex-col border-r border-white/8 bg-[#121A26] lg:flex">
+<main class="flex h-[100dvh] max-h-[100dvh] overflow-hidden bg-[#101722] text-[#E7ECF3]">
+  <aside class="hidden h-full w-[292px] shrink-0 flex-col overflow-hidden border-r border-white/8 bg-[#121A26] lg:flex">
     <div class="border-b border-white/8 p-4">
       <a routerLink="/" class="group flex items-center gap-3 rounded-xl px-2 py-2 transition hover:bg-white/5">
         <img src="/speedy/speedy-amber.png" class="h-9 w-9 rounded-lg bg-[#FFF8EA] object-contain p-0.5" alt="Speedy" />
@@ -47,7 +47,7 @@
     </div>
   </aside>
 
-  <section class="flex min-w-0 flex-1 flex-col bg-[#F8FAFC] text-[#172033]">
+  <section class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[#F8FAFC] text-[#172033]">
     <header class="flex h-16 shrink-0 items-center justify-between border-b border-[#E5EAF0] bg-white px-4 md:px-6">
       <div class="flex min-w-0 items-center gap-3">
         <a routerLink="/" class="inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-bold text-[#526176] transition hover:bg-[#F1F4F7]" aria-label="Back to SpeedClaim"><span aria-hidden="true">←</span><span class="hidden sm:inline">Back to SpeedClaim</span></a>
@@ -59,7 +59,7 @@
       </div>
     </header>
 
-    <div class="min-h-0 flex-1 overflow-y-auto" aria-live="polite">
+    <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain" aria-live="polite">
       <div class="mx-auto flex min-h-full w-full max-w-4xl flex-col px-4 py-8 sm:px-8 md:py-12">
         @if (!messages().length) {
           <section class="m-auto w-full max-w-2xl pb-16">
