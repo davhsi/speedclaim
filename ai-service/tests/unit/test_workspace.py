@@ -2,7 +2,7 @@ from uuid import uuid4
 
 import pytest
 
-from speedclaim_ai.contracts.speedy import SpeedyAccountSnapshot, SpeedyCatalogSnapshot
+from speedclaim_ai.contracts.speedy import SpeedyAccountSnapshot, SpeedyCatalogSnapshot, SpeedyKycSnapshot
 from speedclaim_ai.contracts.workspace import WorkspaceRequest
 from speedclaim_ai.providers.chat.base import ChatCompletion
 from speedclaim_ai.workspace import WorkspaceService
@@ -88,3 +88,25 @@ async def test_workspace_does_not_offer_signed_in_actions_to_a_guest():
     response = await WorkspaceService(FakeAnswerProvider(), FakeRouterProvider()).answer(request)
 
     assert response.actions == []
+
+
+async def test_workspace_does_not_offer_resubmission_when_kyc_is_under_review():
+    request = WorkspaceRequest(
+        requestId=str(uuid4()),
+        question="What is my KYC status?",
+        account=SpeedyAccountSnapshot(
+            firstName="Asha",
+            isAuthenticated=True,
+            policies=[],
+            upcomingPremiums=[],
+            claims=[],
+            kyc=SpeedyKycSnapshot(status="Pending", aadhaarUploaded=True, panUploaded=True),
+        ),
+        catalog=SpeedyCatalogSnapshot(products=[]),
+    )
+
+    response = await WorkspaceService(FakeAnswerProvider(), FakeRouterProvider()).answer(request)
+
+    assert response.actions == []
+    assert "awaiting underwriter review" in response.answer
+    assert "do not need to submit them again" in response.answer

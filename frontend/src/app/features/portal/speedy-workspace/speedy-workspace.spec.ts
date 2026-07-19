@@ -24,7 +24,7 @@ describe('SpeedyWorkspaceComponent', () => {
       providers: [
         provideRouter([]),
         { provide: SpeedyAssistantService, useValue: speedy },
-        { provide: ProfileService, useValue: { uploadAadhaar: vi.fn(), uploadPan: vi.fn() } },
+        { provide: ProfileService, useValue: { getKyc: vi.fn(), uploadAadhaar: vi.fn(), uploadPan: vi.fn() } },
         { provide: AuthService, useValue: { currentUser: signal(null) } },
       ],
     });
@@ -103,5 +103,18 @@ describe('SpeedyWorkspaceComponent', () => {
     expect(fixture.componentInstance.aadhaarError()).toBe('Aadhaar must be exactly 12 digits.');
     expect(fixture.componentInstance.panError()).toBe('PAN must be in the format ABCDE1234F.');
     expect(fixture.componentInstance.kycReady()).toBe(false);
+  });
+
+  it('does not reopen the KYC composer after both documents have been submitted', () => {
+    const fixture = TestBed.createComponent(SpeedyWorkspaceComponent);
+    fixture.componentInstance.kycRecord.set({
+      id: 'kyc-1', userId: 'user-1', kycStatus: 'Pending', aadhaarUploaded: true, panUploaded: true,
+      createdAt: '',
+    });
+
+    fixture.componentInstance.runAction({ kind: 'guided_kyc', label: 'Complete KYC', route: null, detail: '', requiresConfirmation: true });
+
+    expect(fixture.componentInstance.showKyc()).toBe(false);
+    expect(fixture.componentInstance.messages().at(-1)?.content).toContain('awaiting underwriter review');
   });
 });

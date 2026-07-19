@@ -92,6 +92,13 @@ public class SpeedyAssistantServiceTests
             .ReturnsAsync(Array.Empty<Claim>());
         var conversations = new Mock<IRepository<SpeedyWorkspaceConversation>>();
         var messages = new Mock<IRepository<SpeedyWorkspaceMessage>>();
+        var kycs = new Mock<IRepository<KycRecord>>();
+        kycs.Setup(x => x.FirstOrDefaultAsync(It.IsAny<Expression<Func<KycRecord, bool>>>() ))
+            .ReturnsAsync(new KycRecord
+            {
+                UserId = userId, KycStatus = SpeedClaim.Api.Models.Enums.KycStatus.Pending,
+                AadhaarDocumentKey = "uploads/kyc/aadhaar.pdf", PanDocumentKey = "uploads/kyc/pan.pdf"
+            });
         var auditLogs = new Mock<IRepository<AuditLog>>();
         var users = new Mock<IUserRepository>();
         users.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync(new User { Id = userId, FirstName = "Asha" });
@@ -104,11 +111,14 @@ public class SpeedyAssistantServiceTests
         unitOfWork.SetupGet(x => x.Claims).Returns(claims.Object);
         unitOfWork.SetupGet(x => x.SpeedyWorkspaceConversations).Returns(conversations.Object);
         unitOfWork.SetupGet(x => x.SpeedyWorkspaceMessages).Returns(messages.Object);
+        unitOfWork.SetupGet(x => x.KycRecords).Returns(kycs.Object);
         unitOfWork.SetupGet(x => x.AuditLogs).Returns(auditLogs.Object);
         unitOfWork.Setup(x => x.CompleteAsync()).ReturnsAsync(1);
 
         var workspaceClient = new Mock<ISpeedyWorkspaceClient>();
+        SpeedyWorkspaceRequest? captured = null;
         workspaceClient.Setup(x => x.AnswerAsync(It.IsAny<SpeedyWorkspaceRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<SpeedyWorkspaceRequest, CancellationToken>((request, _) => captured = request)
             .ReturnsAsync(new SpeedyWorkspaceResponse(Guid.NewGuid(), "Start with your Aadhaar and PAN.", "kyc", "regulated", [], "Fake", "fake-model"));
         var service = new SpeedyAssistantService(unitOfWork.Object, new Mock<ISpeedyAssistantClient>().Object, workspaceClient.Object);
 
@@ -119,5 +129,8 @@ public class SpeedyAssistantServiceTests
         conversations.Verify(x => x.Update(It.IsAny<SpeedyWorkspaceConversation>()), Times.Never);
         messages.Verify(x => x.AddRangeAsync(It.Is<IEnumerable<SpeedyWorkspaceMessage>>(added => added.Count() == 2)), Times.Once);
         unitOfWork.Verify(x => x.CompleteAsync(), Times.Once);
+        Assert.That(captured!.Account.Kyc, Is.Not.Null);
+        Assert.That(captured.Account.Kyc!.Status, Is.EqualTo("Pending"));
+        Assert.That(captured.Account.Kyc.AadhaarUploaded && captured.Account.Kyc.PanUploaded, Is.True);
     }
 }

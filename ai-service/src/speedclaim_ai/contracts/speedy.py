@@ -64,6 +64,14 @@ class SpeedyClaimSnapshot(BaseModel):
         return _coerce_dotnet_datetime_to_date(value)
 
 
+class SpeedyKycSnapshot(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    status: str = Field(min_length=1, max_length=40)
+    aadhaar_uploaded: bool = Field(alias="aadhaarUploaded")
+    pan_uploaded: bool = Field(alias="panUploaded")
+
+
 class SpeedyAccountSnapshot(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
@@ -72,6 +80,7 @@ class SpeedyAccountSnapshot(BaseModel):
     policies: list[SpeedyPolicySnapshot] = Field(default_factory=list, max_length=20)
     upcoming_premiums: list[SpeedyPremiumSnapshot] = Field(alias="upcomingPremiums", default_factory=list, max_length=5)
     claims: list[SpeedyClaimSnapshot] = Field(default_factory=list, max_length=5)
+    kyc: SpeedyKycSnapshot | None = None
 
 
 class SpeedyProductSnapshot(BaseModel):

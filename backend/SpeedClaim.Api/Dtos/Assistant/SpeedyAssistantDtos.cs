@@ -50,7 +50,15 @@ public record SpeedyAccountSnapshot(
     bool IsAuthenticated,
     IReadOnlyList<SpeedyPolicySnapshot> Policies,
     IReadOnlyList<SpeedyPremiumSnapshot> UpcomingPremiums,
-    IReadOnlyList<SpeedyClaimSnapshot> Claims);
+    IReadOnlyList<SpeedyClaimSnapshot> Claims,
+    SpeedyKycSnapshot? Kyc = null);
+
+// This contains only workflow state. Identity numbers, document paths, and review
+// notes never leave the API for the AI service.
+public record SpeedyKycSnapshot(
+    string Status,
+    bool AadhaarUploaded,
+    bool PanUploaded);
 
 public record SpeedyPolicySnapshot(
     string PolicyNumber,
