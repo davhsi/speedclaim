@@ -22,6 +22,7 @@ def _coerce_dotnet_datetime_to_date(value: object) -> object:
 class SpeedyPolicySnapshot(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
+    policy_id: UUID = Field(alias="policyId")
     policy_number: str = Field(alias="policyNumber", min_length=1, max_length=80)
     product_name: str = Field(alias="productName", min_length=1, max_length=160)
     status: str = Field(min_length=1, max_length=40)

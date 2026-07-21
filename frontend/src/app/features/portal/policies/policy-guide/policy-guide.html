@@ -1,0 +1,55 @@
+<div class="mx-auto max-w-[900px] animate-sc-fade">
+  <button type="button" class="mb-4 inline-flex items-center gap-1.5 bg-transparent p-0 text-[13px] font-medium text-muted hover:text-ink" (click)="router.navigate(['/policies', policyId])">
+    <span aria-hidden="true">←</span> Back to policy
+  </button>
+
+  <section class="overflow-hidden rounded-card border border-[#E9C979] bg-[#FFF9ED] shadow-sm">
+    <div class="border-b border-[#F0D197] bg-[#1B2738] px-6 py-5 text-white">
+      <p class="text-[11px] font-bold uppercase tracking-[0.14em] text-[#FFE1A0]">Brochure-grounded answers</p>
+      <h1 class="mt-1 text-2xl font-bold">Policy Guide</h1>
+      <p class="mt-1 text-sm text-[#D8E1EC]">{{ policy()?.productName ?? 'Your policy' }} · {{ policy()?.policyNumber ?? 'Loading policy…' }}</p>
+    </div>
+
+    @if (loading()) {
+      <div class="p-6 text-sm text-muted">Checking whether the brochure is ready…</div>
+    } @else if (!isReady()) {
+      <div class="p-6">
+        <p class="font-semibold text-ink">A brochure-backed guide is not available for this policy yet.</p>
+        <p class="mt-2 text-sm leading-6 text-body">This can happen for a legacy policy or while its brochure is being prepared. Use your policy certificate for now, or contact support for detailed terms.</p>
+      </div>
+    } @else {
+      <div class="p-6">
+        <p class="text-sm leading-6 text-body">Ask about cover, exclusions, waiting periods, sub-limits, claim documents, or other policy terms. Every answer is checked against this policy’s brochure and includes the supporting page excerpts.</p>
+        @if (availability()?.brochureVersion) {
+          <p class="mt-2 text-xs font-medium text-muted">Brochure version {{ availability()!.brochureVersion }}</p>
+        }
+
+        <div class="mt-6 space-y-6">
+          @for (exchange of exchanges(); track $index) {
+            <div>
+              <div class="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-[#1B2738] px-4 py-3 text-sm text-white">{{ exchange.question }}</div>
+              <div class="mt-3 rounded-xl border border-line bg-white p-4 text-sm leading-6 text-body whitespace-pre-wrap">{{ exchange.answer }}</div>
+              @if (exchange.citations.length) {
+                <div class="mt-3 space-y-2">
+                  <p class="text-xs font-bold uppercase tracking-wide text-muted">Brochure evidence</p>
+                  @for (citation of exchange.citations; track citation.index) {
+                    <article class="rounded-lg border border-[#F0D197] bg-[#FFF9ED] px-3 py-2.5 text-xs leading-5 text-[#5F4B28]">
+                      <p class="font-bold">Page {{ citation.pageNumber }}@if (citation.sectionTitle) { · {{ citation.sectionTitle }} }@if (citation.clauseReference) { · {{ citation.clauseReference }} }</p>
+                      <p class="mt-1">{{ citation.excerpt }}</p>
+                    </article>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        @if (error()) { <p class="mt-4 text-sm text-danger" role="alert">{{ error() }}</p> }
+        <div class="mt-6 flex gap-3 rounded-xl border border-[#F0D197] bg-white p-3">
+          <textarea aria-label="Ask a policy question" [ngModel]="question()" (ngModelChange)="question.set($event)" (keydown)="onKeydown($event)" maxlength="2000" rows="2" placeholder="For example: What is the waiting period for this policy?" class="min-h-12 flex-1 resize-none border-0 bg-transparent px-2 py-1 text-sm outline-none" [disabled]="sending()"></textarea>
+          <button type="button" (click)="ask()" [disabled]="sending() || !question().trim()" class="self-end rounded-lg bg-[#F5A623] px-4 py-2 text-sm font-bold text-white hover:bg-[#D4891A] disabled:cursor-not-allowed disabled:opacity-50">{{ sending() ? 'Checking…' : 'Ask guide' }}</button>
+        </div>
+      </div>
+    }
+  </section>
+</div>

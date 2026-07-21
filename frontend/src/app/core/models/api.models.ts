@@ -800,6 +800,14 @@ export interface ProductBrochureDto {
   ingestionErrorCode?: string; createdAt: string; publishedAt?: string;
 }
 
+export interface PolicyAssistantAvailability { available: boolean; state: string; brochureVersion?: string | null; effectiveFrom?: string | null; }
+export interface PolicyAssistantCitation { index: number; pageNumber: number; sectionTitle?: string | null; clauseReference?: string | null; excerpt: string; }
+export interface PolicyAssistantAnswer {
+  requestId: string; conversationId: string; messageId: string; answer: string; evidenceStatus: 'Grounded' | 'InsufficientEvidence' | 'Rejected'; brochureVersion: string; citations: PolicyAssistantCitation[];
+}
+export interface PolicyAssistantMessage { id: string; role: 'User' | 'Assistant'; content: string; evidenceStatus?: string | null; citations: PolicyAssistantCitation[]; createdAt: string; }
+export interface PolicyAssistantConversation { id: string; policyId: string; brochureId: string; brochureVersion: string; createdAt: string; updatedAt: string; messages?: PolicyAssistantMessage[] | null; }
+
 export interface SpeedyAssistantResponse { requestId: string; answer: string; provider?: string | null; model?: string | null; }
 export interface SpeedyWorkspaceAction {
   kind: 'navigate' | 'guided_kyc' | 'guided_quote' | 'guided_application' | 'guided_claim' | 'claim_status' | 'grievance_status' | 'policy_status' | 'claim_documents' | 'payment' | 'none'; label: string; route?: string | null; detail: string; requiresConfirmation: boolean;

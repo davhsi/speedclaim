@@ -76,7 +76,7 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
                 proposals.Select(p => new SpeedyProposalSnapshot(
                     p.ProposalNumber, p.Product?.ProductName ?? "Insurance proposal", p.Status.ToString(), p.SubmittedAt ?? p.CreatedAt)).ToList(),
                 policies.Select(p => new SpeedyPolicySnapshot(
-                    p.PolicyNumber, p.Product?.ProductName ?? "Insurance policy", p.Status.ToString(), p.SumAssured,
+                    p.Id, p.PolicyNumber, p.Product?.ProductName ?? "Insurance policy", p.Status.ToString(), p.SumAssured,
                     p.PremiumAmount, p.PaymentFrequency, p.EndDate)).ToList(),
                 schedules.Select(s => new SpeedyPremiumSnapshot(
                     s.PolicyId.HasValue && policyNumbers.TryGetValue(s.PolicyId.Value, out var number) ? number : "Policy",
@@ -164,7 +164,7 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
                 proposals.Select(p => new SpeedyProposalSnapshot(
                     p.ProposalNumber, p.Product?.ProductName ?? "Insurance proposal", p.Status.ToString(), p.SubmittedAt ?? p.CreatedAt)).ToList(),
                 policies.Select(p => new SpeedyPolicySnapshot(
-                    p.PolicyNumber, p.Product?.ProductName ?? "Insurance policy", p.Status.ToString(), p.SumAssured,
+                    p.Id, p.PolicyNumber, p.Product?.ProductName ?? "Insurance policy", p.Status.ToString(), p.SumAssured,
                     p.PremiumAmount, p.PaymentFrequency, p.EndDate)).ToList(),
                 schedules.Select(s => new SpeedyPremiumSnapshot(
                     s.PolicyId.HasValue && policyNumbers.TryGetValue(s.PolicyId.Value, out var number) ? number : "Policy",

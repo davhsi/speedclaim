@@ -71,6 +71,7 @@ public record SpeedyProposalSnapshot(
     DateTimeOffset SubmittedAt);
 
 public record SpeedyPolicySnapshot(
+    Guid PolicyId,
     string PolicyNumber,
     string ProductName,
     string Status,
