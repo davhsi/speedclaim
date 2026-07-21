@@ -8,6 +8,7 @@ from speedclaim_ai.providers.chat.base import (
     ChatProviderTimeout,
     ChatProviderUnavailable,
 )
+from speedclaim_ai.rag.errors import PolicyQaFailure
 from speedclaim_ai.workspace import WorkspaceService
 
 router = APIRouter(prefix="/internal/v1", tags=["workspace"])
@@ -27,3 +28,6 @@ async def ask_workspace(request: WorkspaceRequest, http_request: Request) -> Wor
         raise AppError(503, "workspace_timeout", "Speedy took too long to reply. Please try again.") from failure
     except (ChatProviderUnavailable, ChatProviderError) as failure:
         raise AppError(503, "workspace_unavailable", "Speedy is temporarily unavailable.") from failure
+    except PolicyQaFailure as failure:
+        headers = {"Retry-After": str(failure.retry_after_seconds)} if failure.retry_after_seconds else None
+        raise AppError(failure.status_code, failure.code, failure.message, headers=headers) from failure

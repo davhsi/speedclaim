@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { concatMap } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
-import { ClaimDto, CreatePaymentIntentResponse, DocumentRequirementDto, GenerateQuoteResponse, GrievanceDto, KycRecordDto, PolicyDto, PremiumScheduleDto, ProductDto, ProposalDto, SpeedyWorkspaceAction, SpeedyWorkspaceConversation, SubmitProposalRequest, UserDto } from '../../../core/models/api.models';
+import { ClaimDto, CreatePaymentIntentResponse, DocumentRequirementDto, GenerateQuoteResponse, GrievanceDto, KycRecordDto, PolicyDto, PremiumScheduleDto, ProductDto, ProposalDto, SpeedyWorkspaceAction, SpeedyWorkspaceConversation, SpeedyWorkspaceSource, SubmitProposalRequest, UserDto } from '../../../core/models/api.models';
 import { ProfileService } from '../profile/services/profile.service';
 import { SpeedyAssistantService } from '../services/speedy-assistant.service';
 import { ProductService } from '../products/services/product.service';
@@ -22,6 +22,8 @@ interface WorkspaceMessage {
   role: 'user' | 'assistant';
   content: string;
   actions?: SpeedyWorkspaceAction[];
+  sources?: SpeedyWorkspaceSource[];
+  suggestedQuestions?: string[];
 }
 
 interface ConversationSection {
@@ -230,7 +232,7 @@ export class SpeedyWorkspaceComponent {
     this.speedy.askWorkspace(question, this.conversationId()).subscribe({
       next: response => {
         if (response.conversationId) this.conversationId.set(response.conversationId);
-        this.messages.update(messages => [...messages, { role: 'assistant', content: response.answer, actions: response.actions }]);
+        this.messages.update(messages => [...messages, { role: 'assistant', content: response.answer, actions: response.actions, sources: response.sources, suggestedQuestions: response.suggestedQuestions }]);
         this.sending.set(false);
         if (this.signedIn()) this.refreshConversations();
       },
@@ -284,6 +286,8 @@ export class SpeedyWorkspaceComponent {
           role: message.role.toLowerCase() as WorkspaceMessage['role'],
           content: message.content,
           actions: message.actions,
+          sources: message.sources,
+          suggestedQuestions: message.suggestedQuestions,
         })));
         this.activeSectionIndex.set([...this.messages()].map((message, index) => ({ message, index }))
           .filter(({ message }) => message.role === 'user').at(-1)?.index ?? null);

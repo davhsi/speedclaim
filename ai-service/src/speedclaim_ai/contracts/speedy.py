@@ -127,6 +127,16 @@ class SpeedyCatalogSnapshot(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     products: list[SpeedyProductSnapshot] = Field(default_factory=list, max_length=50)
+    brochures: list["SpeedyBrochureSnapshot"] = Field(default_factory=list, max_length=50)
+
+
+class SpeedyBrochureSnapshot(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    brochure_id: UUID = Field(alias="brochureId")
+    product_id: UUID = Field(alias="productId")
+    product_name: str = Field(alias="productName", min_length=1, max_length=160)
+    version: str = Field(min_length=1, max_length=128)
 
 
 class SpeedyRequest(BaseModel):

@@ -12,6 +12,8 @@ public record SpeedyWorkspaceResponse(
     string Intent,
     string Risk,
     IReadOnlyList<SpeedyWorkspaceAction> Actions,
+    IReadOnlyList<SpeedyWorkspaceSource> Sources,
+    IReadOnlyList<string> SuggestedQuestions,
     string? Provider,
     string? Model,
     Guid? ConversationId = null);
@@ -22,7 +24,8 @@ public record SpeedyWorkspaceConversationDto(
 
 public record SpeedyWorkspaceMessageDto(
     Guid Id, string Role, string Content, string? Intent, string? Risk,
-    IReadOnlyList<SpeedyWorkspaceAction> Actions, DateTimeOffset CreatedAt);
+    IReadOnlyList<SpeedyWorkspaceAction> Actions, IReadOnlyList<SpeedyWorkspaceSource> Sources,
+    IReadOnlyList<string> SuggestedQuestions, DateTimeOffset CreatedAt);
 
 public record SpeedyWorkspaceAction(
     string Kind,
@@ -30,6 +33,12 @@ public record SpeedyWorkspaceAction(
     string? Route,
     string Detail,
     bool RequiresConfirmation);
+
+public record SpeedyWorkspaceCitation(
+    int Index, int PageNumber, string? SectionTitle, string? ClauseReference, string Excerpt);
+
+public record SpeedyWorkspaceSource(
+    string ProductName, string BrochureVersion, IReadOnlyList<SpeedyWorkspaceCitation> Citations);
 
 // This is deliberately a minimal, read-only projection. The AI service never receives
 // database credentials, identities, payment methods, KYC data, or data for another customer.
@@ -102,7 +111,17 @@ public record SpeedyGrievanceSnapshot(
     DateTimeOffset? ResolvedAt);
 
 // Saleable catalog data is safe for guest questions. Account data remains empty for guests.
-public record SpeedyCatalogSnapshot(IReadOnlyList<SpeedyProductSnapshot> Products);
+public record SpeedyCatalogSnapshot(
+    IReadOnlyList<SpeedyProductSnapshot> Products,
+    IReadOnlyList<SpeedyBrochureSnapshot> Brochures);
+
+// Published brochure metadata is public product information. The AI service receives no
+// document bytes or storage paths; it can only request a server-authorized RAG answer.
+public record SpeedyBrochureSnapshot(
+    Guid BrochureId,
+    Guid ProductId,
+    string ProductName,
+    string Version);
 
 public record SpeedyProductSnapshot(
     string ProductName,
