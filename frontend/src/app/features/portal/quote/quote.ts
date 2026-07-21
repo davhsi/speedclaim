@@ -75,6 +75,10 @@ export class QuoteComponent implements OnInit {
       this.toast.warning('Please select a product before calculating premium.');
       return;
     }
+    if (!this.hasValidMotorIdv()) {
+      this.toast.warning('The calculated IDV is outside this product\'s permitted range. Please adjust the vehicle market value.');
+      return;
+    }
 
     const req: GenerateQuoteRequest = {
       productId: v.productId!,
@@ -163,4 +167,28 @@ export class QuoteComponent implements OnInit {
 
   isMotor(): boolean { return this.selectedProduct()?.domain.toUpperCase() === 'MOTOR'; }
   isHealth(): boolean { return this.selectedProduct()?.domain.toUpperCase() === 'HEALTH'; }
+
+  motorIdvPreview(): { idv: number; minMarketValue: number; maxMarketValue: number; isWithinProductRange: boolean } | null {
+    const product = this.selectedProduct();
+    const marketValue = this.form.controls.insuredDeclaredValue.value;
+    const manufactureYear = this.form.controls.manufactureYear.value;
+    if (!product || !this.isMotor() || !marketValue || !manufactureYear) return null;
+
+    const vehicleAge = new Date().getFullYear() - manufactureYear;
+    if (vehicleAge < 0 || vehicleAge > 30) return null;
+    const depreciation = vehicleAge === 0 ? 0 : vehicleAge === 1 ? 0.15 : vehicleAge === 2 ? 0.20
+      : vehicleAge === 3 ? 0.30 : vehicleAge === 4 ? 0.40 : 0.50;
+    const retainedValue = 1 - depreciation;
+    const idv = Math.round(marketValue * retainedValue * 100) / 100;
+    return {
+      idv,
+      minMarketValue: Math.ceil(product.minSumAssured / retainedValue),
+      maxMarketValue: Math.floor(product.maxSumAssured / retainedValue),
+      isWithinProductRange: idv >= product.minSumAssured && idv <= product.maxSumAssured,
+    };
+  }
+
+  hasValidMotorIdv(): boolean {
+    return !this.isMotor() || this.motorIdvPreview()?.isWithinProductRange === true;
+  }
 }

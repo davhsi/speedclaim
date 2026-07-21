@@ -98,9 +98,14 @@
                 <div>
                   <label for="quote-idv" class="block text-[13px] font-medium mb-1.5">Manufacturer-listed vehicle value (₹)</label>
                   <input id="quote-idv" type="number" formControlName="insuredDeclaredValue" placeholder="e.g., 600000" class="h-[42px] sc-numeric">
-                  <p class="text-xs text-muted mt-1">IDV is calculated from this value and vehicle age.</p>
+                  <p class="text-xs text-muted mt-1">This product accepts a calculated IDV from {{ sp.minSumAssured | money }} to {{ sp.maxSumAssured | money }}.</p>
                 </div>
               </div>
+              @if (motorIdvPreview(); as preview) {
+                <p class="mt-3 rounded-lg p-3 text-xs" [class]="preview.isWithinProductRange ? 'bg-success-bg text-success' : 'bg-danger-bg text-danger'">
+                  Estimated IDV: {{ preview.idv | money }}. For a {{ form.controls.manufactureYear.value }} vehicle, enter a market value from {{ preview.minMarketValue | money }} to {{ preview.maxMarketValue | money }}.
+                </p>
+              }
             </div>
           }
 
@@ -125,7 +130,7 @@
 
         <button
           type="submit"
-          [disabled]="form.invalid || submitting()"
+          [disabled]="form.invalid || !hasValidMotorIdv() || submitting()"
           class="w-full h-11 bg-primary text-white rounded-control text-[14px] font-semibold hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           @if (submitting()) {

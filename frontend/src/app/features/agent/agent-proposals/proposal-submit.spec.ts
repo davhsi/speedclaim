@@ -276,13 +276,15 @@ describe('AgentProposalSubmitComponent', () => {
       const fixture = create();
       fixture.componentInstance.selectedType = 'Motor';
       fixture.componentInstance.selectedProductId = 'prod-motor';
-      fixture.componentInstance.motorForm.idv = '9,00,000';
+      fixture.componentInstance.motorForm.marketValue = '9,00,000';
+      fixture.componentInstance.motorForm.regYear = new Date().getFullYear() - 4;
       agentService.generateQuote.mockReturnValue(of({ premiumAmount: 18000 }));
 
       fixture.componentInstance.calculateQuote();
 
       expect(agentService.generateQuote).toHaveBeenCalledWith({
-        productId: 'prod-motor', age: undefined, sumAssured: 900000, tenureYears: 1,
+        productId: 'prod-motor', age: undefined, sumAssured: 540000, tenureYears: 1,
+        vehicleMarketValue: 900000, vehicleManufactureYear: new Date().getFullYear() - 4,
       });
     });
 
@@ -290,14 +292,29 @@ describe('AgentProposalSubmitComponent', () => {
       const fixture = create();
       fixture.componentInstance.selectedType = 'Motor';
       fixture.componentInstance.selectedProductId = 'prod-motor-comprehensive';
-      fixture.componentInstance.motorForm.idv = '12,00,000';
+      fixture.componentInstance.motorForm.marketValue = '12,00,000';
+      fixture.componentInstance.motorForm.regYear = new Date().getFullYear() - 4;
       agentService.generateQuote.mockReturnValue(of({ premiumAmount: 24000 }));
 
       fixture.componentInstance.calculateQuote();
 
       expect(agentService.generateQuote).toHaveBeenCalledWith({
-        productId: 'prod-motor-comprehensive', age: undefined, sumAssured: 1200000, tenureYears: 1,
+        productId: 'prod-motor-comprehensive', age: undefined, sumAssured: 720000, tenureYears: 1,
+        vehicleMarketValue: 1200000, vehicleManufactureYear: new Date().getFullYear() - 4,
       });
+    });
+
+    it('blocks an out-of-range calculated motor IDV before calling the API', () => {
+      const fixture = create();
+      fixture.componentInstance.selectedType = 'Motor';
+      fixture.componentInstance.selectedProductId = 'prod-motor';
+      fixture.componentInstance.motorForm.regYear = new Date().getFullYear() - 7;
+      fixture.componentInstance.motorForm.marketValue = '1,00,000';
+
+      fixture.componentInstance.calculateQuote();
+
+      expect(toast.warning).toHaveBeenCalledWith(expect.stringContaining('outside this product'));
+      expect(agentService.generateQuote).not.toHaveBeenCalled();
     });
 
     it('computes age/sumAssured/tenure for Health and calls generateQuote', () => {
