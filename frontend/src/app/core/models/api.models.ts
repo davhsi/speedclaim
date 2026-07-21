@@ -812,13 +812,16 @@ export interface SpeedyAssistantResponse { requestId: string; answer: string; pr
 export interface SpeedyWorkspaceAction {
   kind: 'navigate' | 'guided_kyc' | 'guided_quote' | 'guided_application' | 'guided_claim' | 'claim_status' | 'grievance_status' | 'policy_status' | 'claim_documents' | 'payment' | 'none'; label: string; route?: string | null; detail: string; requiresConfirmation: boolean;
 }
+export interface SpeedyWorkspaceCitation { index: number; pageNumber: number; sectionTitle?: string | null; clauseReference?: string | null; excerpt: string; }
+export interface SpeedyWorkspaceSource { productName: string; brochureVersion: string; citations: SpeedyWorkspaceCitation[]; }
 export interface SpeedyWorkspaceResponse {
   requestId: string; answer: string; intent: string; risk: 'low' | 'regulated'; actions: SpeedyWorkspaceAction[];
+  sources: SpeedyWorkspaceSource[]; suggestedQuestions: string[];
   provider?: string | null; model?: string | null; conversationId?: string | null;
 }
 export interface SpeedyWorkspaceMessage {
   id: string; role: 'user' | 'assistant'; content: string; intent?: string | null; risk?: 'low' | 'regulated' | null;
-  actions: SpeedyWorkspaceAction[]; createdAt: string;
+  actions: SpeedyWorkspaceAction[]; sources: SpeedyWorkspaceSource[]; suggestedQuestions: string[]; createdAt: string;
 }
 export interface SpeedyWorkspaceConversation {
   id: string; title: string; createdAt: string; updatedAt: string; messages?: SpeedyWorkspaceMessage[] | null;
