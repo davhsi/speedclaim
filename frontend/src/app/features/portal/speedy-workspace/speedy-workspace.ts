@@ -165,11 +165,33 @@ export class SpeedyWorkspaceComponent {
   });
   readonly selectedQuoteProduct = computed(() => this.taskProducts().find(product => product.id === this.quoteProductId()) ?? null);
   readonly selectedClaimPolicy = computed(() => this.taskPolicies().find(policy => policy.id === this.claimPolicyId()) ?? null);
+  readonly motorQuotePreview = computed(() => {
+    const product = this.selectedQuoteProduct();
+    const marketValue = this.quoteVehicleMarketValue();
+    const manufactureYear = this.quoteVehicleYear();
+    if (!product || product.domain.toUpperCase() !== 'MOTOR' || !marketValue || !manufactureYear) return null;
+
+    const vehicleAge = new Date().getFullYear() - manufactureYear;
+    if (vehicleAge < 0 || vehicleAge > 30) return null;
+
+    const depreciation = vehicleAge === 0 ? 0 : vehicleAge === 1 ? 0.15 : vehicleAge === 2 ? 0.20
+      : vehicleAge === 3 ? 0.30 : vehicleAge === 4 ? 0.40 : 0.50;
+    const retainedValue = 1 - depreciation;
+    const idv = Math.round(marketValue * retainedValue * 100) / 100;
+
+    return {
+      idv,
+      minMarketValue: Math.ceil(product.minSumAssured / retainedValue),
+      maxMarketValue: Math.floor(product.maxSumAssured / retainedValue),
+      isWithinProductRange: idv >= product.minSumAssured && idv <= product.maxSumAssured,
+    };
+  });
   readonly quoteReady = computed(() => {
     const product = this.selectedQuoteProduct();
     if (!product || !this.quoteTenure() || this.quoteTenure()! < product.minTenureYears || this.quoteTenure()! > product.maxTenureYears) return false;
     if (product.domain.toUpperCase() === 'MOTOR') return !!this.quoteVehicleMarketValue() && !!this.quoteVehicleYear()
-      && this.quoteVehicleYear()! >= 1900 && this.quoteVehicleYear()! <= new Date().getFullYear();
+      && this.quoteVehicleYear()! >= 1900 && this.quoteVehicleYear()! <= new Date().getFullYear()
+      && this.motorQuotePreview()?.isWithinProductRange === true;
     return !!this.quoteAge() && this.quoteAge()! >= product.minAge && this.quoteAge()! <= product.maxAge
       && !!this.quoteCoverage() && this.quoteCoverage()! >= product.minSumAssured && this.quoteCoverage()! <= product.maxSumAssured;
   });

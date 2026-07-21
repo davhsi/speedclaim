@@ -154,4 +154,19 @@ describe('SpeedyWorkspaceComponent', () => {
     expect(fixture.componentInstance.showKyc()).toBe(false);
     expect(fixture.componentInstance.messages().at(-1)?.content).toContain('awaiting underwriter review');
   });
+
+  it('prevents an out-of-range motor IDV and explains the required market-value range', () => {
+    const fixture = TestBed.createComponent(SpeedyWorkspaceComponent);
+    const component = fixture.componentInstance;
+    component.taskProducts.set([{
+      id: 'motor-1', productName: 'DriveSure Comprehensive', domain: 'Motor', minSumAssured: 100000,
+      maxSumAssured: 2000000, minTenureYears: 1, maxTenureYears: 1,
+    } as any]);
+    component.selectQuoteProduct('motor-1');
+    component.quoteVehicleMarketValue.set(100000);
+    component.quoteVehicleYear.set(new Date().getFullYear() - 7);
+
+    expect(component.motorQuotePreview()).toMatchObject({ idv: 50000, minMarketValue: 200000, maxMarketValue: 4000000, isWithinProductRange: false });
+    expect(component.quoteReady()).toBe(false);
+  });
 });
