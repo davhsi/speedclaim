@@ -1,59 +1,44 @@
-# Frontend
+# SpeedClaim frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.7.
+The SpeedClaim customer and staff portal is an Angular 21.2 standalone-component application
+styled with Tailwind CSS 4. It includes role-specific insurance workflows for customers, agents,
+underwriters, claims, finance, and administration.
 
-## Development server
+The customer portal includes the **Speedy** guided-support workspace. Speedy keeps conversation
+history in the customer session, presents grounded brochure evidence in a side panel, offers
+safe read/prepare assistance, and leaves every business-changing action to the normal portal
+flow. The workspace rail includes conversation search, a single return-to-portal control, and a
+compact account link.
 
-To start a local development server, run:
+## Local development
 
-```bash
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+Run the .NET API at `http://localhost:5062` first, then:
 
 ```bash
-ng generate component component-name
+npm ci
+npm start
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Open `http://localhost:4200`. The development proxy forwards only `/api`, `/uploads`, and
+`/hubs` to the local API. Customer route names must not be added to the proxy.
+
+## Verification
 
 ```bash
-ng generate --help
+npm test -- --watch=false
+npm run build -- --configuration development
+npm run build -- --configuration production
 ```
 
-## Building
+Use an Angular build rather than TypeScript alone when checking changes: the Angular compiler
+also validates templates.
 
-To build the project run:
+## Configuration
 
-```bash
-ng build
-```
+Backend origins are compile-time environment configuration, not secrets. Development uses
+relative API URLs through the proxy; production points at the deployed backend origin. Access
+tokens remain memory-only, while refresh-token persistence follows the user’s remember-me
+choice.
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+For the full platform setup, API configuration, and deployment information, see the repository
+[README](../README.md) and [docs](../docs/).

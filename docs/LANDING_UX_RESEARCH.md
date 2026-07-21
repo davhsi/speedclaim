@@ -1,5 +1,8 @@
 # SpeedClaim Landing Page — UX Research Brief
 
+> **Historical UX research.** This is a design brief, not a statement of the current production
+> UI. Verify present landing-page behavior in the Angular source before using any recommendation.
+
 **Author:** Product Design Research  
 **Date:** June 2026  
 **Purpose:** Diagnose why the current landing page feels generic and build the redesign brief.  

@@ -1,10 +1,6 @@
 # SpeedClaim AI Features — Architecture and Implementation Plan
 
-**Status:** Planning approved in principle; implementation not started  
-**Plan date:** 2026-07-15  
-**Expected document-checklist handoff:** Sunday, 2026-07-19, from SivaSabari  
-**AI inference provider for development:** Groq Cloud  
-**Production inference provider:** Configurable; management will supply the final API key/provider  
+> **Historical planning record.** The private FastAPI service, brochure RAG, and Speedy customer workspace now exist. The current operational source is [the AI-service README](../ai-service/README.md); the external MCP connector remains disabled and is governed by [the MCP architecture](mcp-architecture.md). References below to Groq, handoff dates, and unfinished phases describe the original proposal, not the deployed/current configuration.
 
 > **Execution update — 2026-07-15:** Policy brochure RAG is now the complete first
 > implementation milestone. Grievance AI is deferred until brochure RAG is finished. The

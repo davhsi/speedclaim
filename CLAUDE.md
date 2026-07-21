@@ -13,7 +13,7 @@ Persistent context for AI sessions. Read this before touching any code.
 - **Payments**: Stripe (backend PaymentIntents + frontend Stripe Elements checkout)
 - **Email**: MailKit over SMTP (Gmail App Password); templates stored in DB (see §12)
 - **Auth**: JWT Bearer tokens, validated per-request against session + user state (see §13)
-- **Tests**: backend NUnit 4 + Moq (NOT xUnit — attributes are `[TestFixture]`/`[Test]`, asserts are `Assert.That`), 473 tests, all passing; frontend Vitest via `ng test`
+- **Tests**: backend NUnit + Moq (NOT xUnit — attributes are `[TestFixture]`/`[Test]`, asserts are `Assert.That`); frontend Vitest via `ng test`. Use fresh command output rather than a hard-coded test count.
 
 ---
 
@@ -672,7 +672,7 @@ Aadhaar and PAN uploads now enforce uniqueness across users:
 
 - [ ] Postman workspace with all endpoints preloaded + auth pre-request script
 - [ ] DB seeded with realistic data covering all scenarios
-- [ ] 100% service layer test coverage (currently 473 tests, all passing)
+- [ ] 100% service layer test coverage (use fresh test output when measuring progress)
 - [ ] No unhandled exceptions (GlobalExceptionMiddleware covers all routes)
 - [ ] Clean git commits with descriptive messages (see Commit Message Rules — no AI attribution)
 - [ ] All EF migrations applied (`dotnet ef database update`) — DB-seeded email templates are load-bearing

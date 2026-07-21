@@ -1,5 +1,8 @@
 # Image Strategy for SpeedClaim Landing Page
 
+> **Design reference.** This document proposes imagery for a landing-page redesign; it is not a
+> current UI asset inventory or a requirement for the authenticated portal.
+
 Research brief on how images work, why they beat text for emotional pull, and what we should actually do.
 
 ---

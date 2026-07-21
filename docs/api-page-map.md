@@ -1,9 +1,9 @@
 # SpeedClaim — API Page Map & Endpoint Coverage
 
-> Every page a real user would open in the Angular frontend, what it needs from the API, and whether that endpoint exists.
+> Historical API-coverage snapshot. Use controllers and generated OpenAPI/Swagger for the current endpoint contract; do not use this document's endpoint count as a live inventory.
 >
 > **Base URL:** all routes are versioned — `{{baseUrl}}/api/v1/...` (from `BaseApiController` → `api/v{version:apiVersion}/[controller]`).
-> **Total: 110 endpoints** across 10 controllers (auth, users, agents, products, proposals, policies, payments, claims, grievances, system).
+> The Angular portal, including the Speedy workspace, evolves independently of this static map.
 
 ---
 

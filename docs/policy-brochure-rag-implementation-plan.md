@@ -1,9 +1,9 @@
 # SpeedClaim Policy Brochure RAG — Detailed Implementation Plan
 
-**Status:** Brainstorming and implementation planning  
+> **Historical implementation plan.** The private FastAPI brochure-RAG service and the Speedy workspace are now implemented. For the current configuration, safety boundary, and verification commands, use [the AI-service README](../ai-service/README.md). The external MCP connector is intentionally disabled; see [the MCP architecture](mcp-architecture.md). Groq-specific examples below are not current configuration.
+
 **Plan date:** 2026-07-15  
-**Milestone:** AI Milestone 1 — complete before grievance AI  
-**Development inference provider:** Groq Cloud  
+**Original milestone:** AI Milestone 1 — complete before grievance AI
 **Vector store:** Separate `speedclaim_ai` PostgreSQL database using pgvector  
 **Brochure format:** Text-based PDF only  
 **Synthetic fixture:** `output/pdf/speedclaim-arogya-shield-plus-synthetic-brochure-v1.pdf`  

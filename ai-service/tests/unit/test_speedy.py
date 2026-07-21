@@ -81,6 +81,7 @@ async def test_speedy_returns_the_same_deterministic_kyc_status_as_the_workspace
 def test_speedy_snapshot_accepts_dotnet_datetime_values_from_imported_data():
     policy = SpeedyPolicySnapshot.model_validate(
         {
+            "policyId": str(uuid4()),
             "policyNumber": "POL-100",
             "productName": "Family Shield",
             "status": "Active",
