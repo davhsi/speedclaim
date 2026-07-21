@@ -5,7 +5,7 @@ import pytest
 from speedclaim_ai.contracts.speedy import SpeedyAccountSnapshot, SpeedyCatalogSnapshot, SpeedyKycSnapshot, SpeedyPolicySnapshot
 from speedclaim_ai.contracts.workspace import WorkspaceRequest
 from speedclaim_ai.providers.chat.base import ChatCompletion
-from speedclaim_ai.workspace import WorkspaceService, _action_for
+from speedclaim_ai.workspace import WorkspaceService, _action_for, _follow_ups_for
 
 
 class FakeRouterProvider:
@@ -130,6 +130,14 @@ def test_workspace_routes_customer_tasks_to_typed_in_workspace_actions():
     policy_action = _action_for("policy_help", account)
     assert policy_action.kind == "navigate"
     assert policy_action.route == "/policies"
+
+
+def test_workspace_generates_relevant_follow_ups_for_each_intent():
+    account = SpeedyAccountSnapshot(firstName="Asha", isAuthenticated=True, policies=[], upcomingPremiums=[], claims=[])
+
+    assert len(_follow_ups_for("general_help", account)) == 3
+    assert "How can I pay my premium?" in _follow_ups_for("premium_help", account)
+    assert "What exclusions apply to Family Shield?" in _follow_ups_for("brochure_qa", account, "Family Shield")
 
 
 def test_workspace_keeps_policy_help_in_the_workspace():

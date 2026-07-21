@@ -145,7 +145,7 @@ class WorkspaceService:
                     intent=state["intent"],
                     risk=state["risk"],
                     actions=state["actions"],
-                    suggestedQuestions=_kyc_follow_ups(request.account),
+                    suggestedQuestions=_follow_ups_for(state["intent"], request.account),
                     provider="SpeedClaim",
                     model="kyc-status-workflow",
                 )
@@ -161,6 +161,7 @@ class WorkspaceService:
                         "you can return here to build your quote and application."
                     ),
                     intent=state["intent"], risk=state["risk"], actions=state["actions"],
+                    suggestedQuestions=_follow_ups_for(state["intent"], request.account),
                     provider="SpeedClaim", model="kyc-proposal-gate",
                 )
             }
@@ -189,6 +190,7 @@ class WorkspaceService:
                 intent=state["intent"],
                 risk=state["risk"],
                 actions=state["actions"],
+                suggestedQuestions=_follow_ups_for(state["intent"], request.account),
                 provider=completion.provider,
                 model=completion.model,
             )
@@ -207,7 +209,7 @@ class WorkspaceService:
             )
             return {"response": WorkspaceResponse(
                 requestId=request.request_id, answer=answer, intent=state["intent"], risk=state["risk"],
-                actions=[], provider="SpeedClaim", model="brochure-selection",
+                actions=[], suggestedQuestions=_follow_ups_for(state["intent"], request.account), provider="SpeedClaim", model="brochure-selection",
             )}
         if self._policy_qa_service is None:
             raise RuntimeError("Policy QA service is not configured")
@@ -224,14 +226,9 @@ class WorkspaceService:
                 for item in result.citations
             ],
         )
-        suggestions = [
-            f"What is covered by {brochure.product_name}?",
-            f"What exclusions apply to {brochure.product_name}?",
-            f"What waiting periods apply to {brochure.product_name}?",
-        ]
         return {"response": WorkspaceResponse(
             requestId=request.request_id, answer=result.answer, intent=state["intent"], risk=state["risk"],
-            actions=[], sources=[source], suggestedQuestions=suggestions,
+            actions=[], sources=[source], suggestedQuestions=_follow_ups_for(state["intent"], request.account, brochure.product_name),
             provider=result.provider or "SpeedClaim", model=result.model or "policy-rag",
         )}
 
@@ -260,15 +257,33 @@ def _action_for(intent: str, account: Any) -> WorkspaceAction | None:
     return customer_actions.get(intent) if account.is_authenticated else None
 
 
-def _kyc_follow_ups(account: Any) -> list[str]:
-    if account.kyc and account.kyc.status == "Approved":
+def _follow_ups_for(intent: str, account: Any, product_name: str | None = None) -> list[str]:
+    if intent == "brochure_qa" and product_name:
         return [
+            f"What is covered by {product_name}?",
+            f"What exclusions apply to {product_name}?",
+            f"What waiting periods apply to {product_name}?",
+        ]
+    if intent in {"policy_help", "premium_help"}:
+        return ["What is my next premium schedule?", "How can I pay my premium?", "What does my policy cover?"]
+    if intent in {"claim_guidance", "claim_status"}:
+        return ["What documents do I need for a claim?", "Help me track my claim.", "What does my policy cover?"]
+    if intent in {"proposal", "proposal_status"}:
+        return ["What insurance products are available for me?", "How do I get an indicative quote?", "What documents will I need to apply?"]
+    if intent == "kyc":
+        if account.kyc and account.kyc.status == "Approved":
+            return [
+                "What insurance products are available for me?",
+                "Help me choose the right health cover.",
+                "How do I get an indicative quote?",
+            ]
+        return [
+            "What can I do while my KYC is under review?",
             "What insurance products are available for me?",
-            "Help me choose the right health cover.",
             "How do I get an indicative quote?",
         ]
     return [
-        "What can I do while my KYC is under review?",
         "What insurance products are available for me?",
+        "Help me choose the right cover.",
         "How do I get an indicative quote?",
     ]

@@ -308,20 +308,20 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
             var clarification = candidates.Count > 1
                 ? "I can check the exact brochure terms, but you have more than one active policy. Please include the policy number or product name so I can use the right policy document."
                 : "I can check brochure-grounded policy terms once an active policy with an available brochure is selected.";
-            return new(Guid.NewGuid(), clarification, "policy_terms_clarification", "regulated", [], [], [], null, null);
+            return new(Guid.NewGuid(), clarification, "policy_terms_clarification", "regulated", [], [], PolicyTermFollowUps(), null, null);
         }
 
         var policy = candidates[0];
         var brochure = await _unitOfWork.ProductBrochures.GetByIdAsync(policy.ProductBrochureId!.Value);
         if (brochure is null || brochure.Status is not (ProductBrochureStatus.Published or ProductBrochureStatus.Archived) || brochure.PageCount <= 0 || brochure.ChildChunkCount <= 0)
-            return new(Guid.NewGuid(), "I found your policy, but its brochure evidence is not ready yet. Please try again later.", "policy_terms_unavailable", "regulated", [], [], [], null, null);
+            return new(Guid.NewGuid(), "I found your policy, but its brochure evidence is not ready yet. Please try again later.", "policy_terms_unavailable", "regulated", [], [], PolicyTermFollowUps(), null, null);
 
         var requestId = Guid.NewGuid();
         var answer = await _policyQaClient.AnswerAsync(new PolicyQaRequest(requestId, brochure.Id, policy.ProductId, brochure.Version, question.Trim()), cancellationToken);
         if (answer.RequestId != requestId || answer.EvidenceStatus is not ("Grounded" or "InsufficientEvidence" or "Rejected"))
             throw new BrochureIngestionException("invalid_policy_qa_response", "Speedy returned an invalid policy-evidence response.");
 
-        return new(requestId, answer.Answer, "policy_terms", "regulated", [], [], [], answer.Provider, answer.Model,
+        return new(requestId, answer.Answer, "policy_terms", "regulated", [], [], PolicyTermFollowUps(), answer.Provider, answer.Model,
             null, answer.EvidenceStatus, brochure.Version, answer.Citations);
     }
 
@@ -331,4 +331,7 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
         string[] cues = ["my policy", "policy cover", "policy coverage", "hospital", "hospitalisation", "hospitalization", "exclusion", "waiting period", "room rent", "day care", "cashless", "pre-existing", "pre existing", "maternity", "sub-limit", "sub limit", "brochure", "policy terms", "claim document"];
         return cues.Any(cue => normalized.Contains(cue, StringComparison.Ordinal));
     }
+
+    private static IReadOnlyList<string> PolicyTermFollowUps() =>
+    ["What exclusions apply to my policy?", "What waiting periods should I know about?", "How do I make a claim under this policy?"];
 }
