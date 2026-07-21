@@ -336,6 +336,8 @@ public partial class SpeedClaimDbContext : DbContext
             e.Property(x => x.Content).IsRequired().HasMaxLength(8000);
             e.Property(x => x.Intent).HasMaxLength(64);
             e.Property(x => x.Risk).HasMaxLength(32);
+            e.Property(x => x.EvidenceStatus).HasMaxLength(64);
+            e.Property(x => x.BrochureVersion).HasMaxLength(100);
             e.Property(x => x.Model).HasMaxLength(255);
             e.HasIndex(x => new { x.ConversationId, x.CreatedAt }).HasDatabaseName("ix_speedy_workspace_messages_conversation_created");
             e.HasOne(x => x.Conversation).WithMany(x => x.Messages).HasForeignKey(x => x.ConversationId)

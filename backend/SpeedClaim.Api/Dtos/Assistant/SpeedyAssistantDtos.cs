@@ -1,3 +1,5 @@
+using SpeedClaim.Api.Dtos.Policies;
+
 namespace SpeedClaim.Api.Dtos.Assistant;
 
 public record AskSpeedyRequest(string Question);
@@ -14,7 +16,10 @@ public record SpeedyWorkspaceResponse(
     IReadOnlyList<SpeedyWorkspaceAction> Actions,
     string? Provider,
     string? Model,
-    Guid? ConversationId = null);
+    Guid? ConversationId = null,
+    string? EvidenceStatus = null,
+    string? BrochureVersion = null,
+    IReadOnlyList<PolicyAssistantCitationDto>? Citations = null);
 
 public record SpeedyWorkspaceConversationDto(
     Guid Id, string Title, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt,
@@ -22,7 +27,9 @@ public record SpeedyWorkspaceConversationDto(
 
 public record SpeedyWorkspaceMessageDto(
     Guid Id, string Role, string Content, string? Intent, string? Risk,
-    IReadOnlyList<SpeedyWorkspaceAction> Actions, DateTimeOffset CreatedAt);
+    IReadOnlyList<SpeedyWorkspaceAction> Actions, DateTimeOffset CreatedAt,
+    string? EvidenceStatus = null, string? BrochureVersion = null,
+    IReadOnlyList<PolicyAssistantCitationDto>? Citations = null);
 
 public record SpeedyWorkspaceAction(
     string Kind,

@@ -815,10 +815,12 @@ export interface SpeedyWorkspaceAction {
 export interface SpeedyWorkspaceResponse {
   requestId: string; answer: string; intent: string; risk: 'low' | 'regulated'; actions: SpeedyWorkspaceAction[];
   provider?: string | null; model?: string | null; conversationId?: string | null;
+  evidenceStatus?: 'Grounded' | 'InsufficientEvidence' | 'Rejected' | null; brochureVersion?: string | null; citations?: PolicyAssistantCitation[] | null;
 }
 export interface SpeedyWorkspaceMessage {
   id: string; role: 'user' | 'assistant'; content: string; intent?: string | null; risk?: 'low' | 'regulated' | null;
   actions: SpeedyWorkspaceAction[]; createdAt: string;
+  evidenceStatus?: 'Grounded' | 'InsufficientEvidence' | 'Rejected' | null; brochureVersion?: string | null; citations?: PolicyAssistantCitation[] | null;
 }
 export interface SpeedyWorkspaceConversation {
   id: string; title: string; createdAt: string; updatedAt: string; messages?: SpeedyWorkspaceMessage[] | null;
