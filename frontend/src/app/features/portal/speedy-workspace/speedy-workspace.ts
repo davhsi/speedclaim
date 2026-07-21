@@ -29,11 +29,6 @@ interface WorkspaceMessage {
   suggestedQuestions?: string[];
 }
 
-interface ConversationSection {
-  messageIndex: number;
-  label: string;
-}
-
 interface JourneyCard {
   title: string;
   detail: string;
@@ -85,8 +80,6 @@ export class SpeedyWorkspaceComponent {
   readonly conversationId = signal<string | null>(null);
   readonly conversations = signal<SpeedyWorkspaceConversation[]>([]);
   readonly mobileHistoryOpen = signal(false);
-  readonly sectionNavigatorOpen = signal(false);
-  readonly activeSectionIndex = signal<number | null>(null);
   readonly historyLoaded = signal(false);
   readonly historyError = signal(false);
   readonly sending = signal(false);
@@ -211,10 +204,6 @@ export class SpeedyWorkspaceComponent {
     const days = this.ageInDays(conversation.updatedAt);
     return days > 7 && days <= 30;
   }));
-  readonly conversationSections = computed<ConversationSection[]>(() => this.messages()
-    .map((message, messageIndex) => ({ message, messageIndex }))
-    .filter(({ message }) => message.role === 'user')
-    .map(({ message, messageIndex }) => ({ messageIndex, label: message.content })));
   readonly latestEvidenceMessage = computed(() => [...this.messages()].reverse().find(message =>
     message.role === 'assistant' && (!!message.sources?.length || !!message.citations?.length)) ?? null);
 
@@ -233,7 +222,6 @@ export class SpeedyWorkspaceComponent {
     this.question.set('');
     this.error.set(null);
     this.messages.update(messages => [...messages, { role: 'user', content: question }]);
-    this.activeSectionIndex.set(this.messages().length - 1);
     this.sending.set(true);
     this.speedy.askWorkspace(question, this.conversationId()).subscribe({
       next: response => {
@@ -274,10 +262,8 @@ export class SpeedyWorkspaceComponent {
 
   startNewChat(): void {
     if (this.sending()) return;
-    this.sectionNavigatorOpen.set(false);
     this.conversationId.set(null);
     this.messages.set([]);
-    this.activeSectionIndex.set(null);
     this.question.set('');
     this.error.set(null);
     this.mobileHistoryOpen.set(false);
@@ -292,7 +278,6 @@ export class SpeedyWorkspaceComponent {
     this.error.set(null);
     this.speedy.getWorkspaceConversation(conversationId).subscribe({
       next: conversation => {
-        this.sectionNavigatorOpen.set(false);
         this.mobileHistoryOpen.set(false);
         this.conversationId.set(conversation.id);
         this.messages.set((conversation.messages ?? []).map(message => ({
@@ -305,29 +290,9 @@ export class SpeedyWorkspaceComponent {
           sources: message.sources,
           suggestedQuestions: message.suggestedQuestions,
         })));
-        this.activeSectionIndex.set([...this.messages()].map((message, index) => ({ message, index }))
-          .filter(({ message }) => message.role === 'user').at(-1)?.index ?? null);
       },
       error: () => this.error.set('That conversation could not be opened. Please try again.'),
     });
-  }
-
-  toggleSectionNavigator(): void {
-    this.sectionNavigatorOpen.update(open => !open);
-  }
-
-  jumpToMessage(index: number): void {
-    if (typeof document !== 'undefined') document.getElementById(`speedy-message-${index}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    this.activeSectionIndex.set(index);
-  }
-
-  moveSection(direction: -1 | 1): void {
-    const sections = this.conversationSections();
-    if (!sections.length) return;
-    const current = sections.findIndex(section => section.messageIndex === this.activeSectionIndex());
-    const base = current < 0 ? (direction === 1 ? -1 : sections.length) : current;
-    const target = sections[Math.max(0, Math.min(sections.length - 1, base + direction))];
-    this.jumpToMessage(target.messageIndex);
   }
 
   runAction(action: SpeedyWorkspaceAction): void {
