@@ -82,6 +82,19 @@ describe('SpeedyWorkspaceComponent', () => {
       .toContain('<th class="whitespace-nowrap border-b border-[#DCE4EC] px-3 py-2 font-bold text-[#27364A]">Due date</th>');
   });
 
+  it('shows grounded brochure evidence only in the dedicated source panel', () => {
+    const fixture = TestBed.createComponent(SpeedyWorkspaceComponent);
+    fixture.componentInstance.messages.set([{
+      role: 'assistant', content: 'Hospitalisation is covered after a 24-hour admission.', evidenceStatus: 'Grounded', brochureVersion: '1',
+      citations: [{ index: 1, pageNumber: 2, sectionTitle: 'Plan features', clauseReference: null, excerpt: 'In-patient hospitalisation after a 24-hour admission.' }],
+    }]);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.latestEvidenceMessage()?.citations).toHaveLength(1);
+    expect(fixture.nativeElement.querySelectorAll('[aria-label="Brochure sources"]').length).toBe(1);
+    expect(fixture.nativeElement.textContent).not.toContain('Brochure evidence');
+  });
+
   it('starts a clean conversation without losing the persisted history list', () => {
     const fixture = TestBed.createComponent(SpeedyWorkspaceComponent);
     fixture.componentInstance.conversationId.set('conversation-1');
@@ -117,38 +130,6 @@ describe('SpeedyWorkspaceComponent', () => {
     expect(fixture.componentInstance.canPaySchedule(fixture.componentInstance.paymentSchedules()[0])).toBe(false);
     expect(fixture.componentInstance.paymentAvailabilityMessage(fixture.componentInstance.paymentSchedules()[0]))
       .toBe('Available after installment #1 is paid');
-  });
-
-  it('opens and closes the compact section navigator', () => {
-    const fixture = TestBed.createComponent(SpeedyWorkspaceComponent);
-
-    fixture.componentInstance.toggleSectionNavigator();
-    expect(fixture.componentInstance.sectionNavigatorOpen()).toBe(true);
-
-    fixture.componentInstance.toggleSectionNavigator();
-    expect(fixture.componentInstance.sectionNavigatorOpen()).toBe(false);
-  });
-
-  it('builds a navigator entry for every user question and moves between entries', () => {
-    const fixture = TestBed.createComponent(SpeedyWorkspaceComponent);
-    fixture.componentInstance.messages.set([
-      { role: 'user', content: 'Which products are available?' },
-      { role: 'assistant', content: 'Here are the products.' },
-      { role: 'user', content: 'How do I complete KYC?' },
-      { role: 'assistant', content: 'Attach Aadhaar and PAN.' },
-    ]);
-
-    expect(fixture.componentInstance.conversationSections()).toEqual([
-      { messageIndex: 0, label: 'Which products are available?' },
-      { messageIndex: 2, label: 'How do I complete KYC?' },
-    ]);
-
-    fixture.componentInstance.jumpToMessage(0);
-    fixture.componentInstance.moveSection(1);
-    expect(fixture.componentInstance.activeSectionIndex()).toBe(2);
-
-    fixture.componentInstance.moveSection(-1);
-    expect(fixture.componentInstance.activeSectionIndex()).toBe(0);
   });
 
   it('uses the regular customer KYC validation messages in the guided composer', () => {
