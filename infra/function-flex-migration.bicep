@@ -143,5 +143,21 @@ resource emailFunctionApp 'Microsoft.Web/sites@2024-04-01' = {
   }
 }
 
+// This queue-triggered function exposes no public application endpoints. Require
+// authentication for any future HTTP surface rather than inheriting an open default.
+resource emailFunctionAppAuth 'Microsoft.Web/sites/config@2024-04-01' = {
+  parent: emailFunctionApp
+  name: 'authsettingsV2'
+  properties: {
+    platform: {
+      enabled: true
+    }
+    globalValidation: {
+      requireAuthentication: true
+      unauthenticatedClientAction: 'Return401'
+    }
+  }
+}
+
 output emailFunctionAppName string = emailFunctionApp.name
 output functionPlanName string = functionPlan.name

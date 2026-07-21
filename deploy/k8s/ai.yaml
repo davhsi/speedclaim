@@ -20,6 +20,7 @@ spec:
       labels:
         app.kubernetes.io/name: speedclaim-ai
     spec:
+      automountServiceAccountToken: false
       imagePullSecrets:
         - name: acr-pull
       containers:

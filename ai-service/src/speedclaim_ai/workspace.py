@@ -123,6 +123,20 @@ class WorkspaceService:
                     model="kyc-status-workflow",
                 )
             }
+        if state["intent"] == "proposal" and request.account.is_authenticated and not kyc_is_under_review_or_approved(request.account):
+            return {
+                "response": WorkspaceResponse(
+                    requestId=request.request_id,
+                    answer=(
+                        "📋 **Complete KYC first**\n\n"
+                        "You can browse products and compare cover now. Before you start a proposal, "
+                        "please submit both Aadhaar and PAN in the secure KYC checklist. Once submitted, "
+                        "you can return here to build your quote and application."
+                    ),
+                    intent=state["intent"], risk=state["risk"], actions=state["actions"],
+                    provider="SpeedClaim", model="kyc-proposal-gate",
+                )
+            }
         completion = await self._answer_provider.complete(
             ChatRequest(
                 system_prompt=_ANSWER_PROMPT,
@@ -160,7 +174,7 @@ def _action_for(intent: str, account: Any) -> WorkspaceAction | None:
         "proposal": WorkspaceAction(kind="guided_quote", label="Build a quote", route=None, detail="Choose a product and review an indicative premium in this workspace.", requiresConfirmation=False),
     }
     customer_actions: dict[str, WorkspaceAction] = {
-        "policy_help": WorkspaceAction(kind="policy_status", label="Check policy status", route=None, detail="Review your live policy status in this workspace.", requiresConfirmation=False),
+        "policy_help": WorkspaceAction(kind="navigate", label="Open Policy Guide", route="/policies", detail="Choose the policy you mean to ask its brochure-grounded Policy Guide, with source citations.", requiresConfirmation=False),
         "proposal_status": WorkspaceAction(kind="policy_status", label="Check application status", route=None, detail="Review your submitted application and policy status in this workspace.", requiresConfirmation=False),
         "premium_help": WorkspaceAction(kind="payment", label="Pay a premium", route=None, detail="Review the next payable installment before opening secure Stripe checkout.", requiresConfirmation=True),
         "claim_guidance": WorkspaceAction(kind="guided_claim", label="Start a claim", route=None, detail="Complete the claim details and explicitly confirm before submitting.", requiresConfirmation=True),
@@ -169,6 +183,8 @@ def _action_for(intent: str, account: Any) -> WorkspaceAction | None:
         "grievance": WorkspaceAction(kind="navigate", label="Raise a grievance", route="/grievances/new", detail="Prepare the grievance and review it before filing.", requiresConfirmation=True),
         "grievance_status": WorkspaceAction(kind="grievance_status", label="Check grievance status", route=None, detail="Review your submitted grievances and their current status.", requiresConfirmation=False),
     }
+    if intent == "proposal" and account.is_authenticated and not kyc_is_under_review_or_approved(account):
+        return customer_actions["kyc"]
     if intent in public_actions:
         return public_actions[intent]
     if intent == "kyc" and kyc_is_under_review_or_approved(account):

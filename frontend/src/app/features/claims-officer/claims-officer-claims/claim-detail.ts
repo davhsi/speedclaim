@@ -10,6 +10,7 @@ import { ClaimsOfficerService, SurveyorDto } from '../services/claims-officer.se
 import { ClaimDto, SubmittedDocumentDto } from '../../../core/models/api.models';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+import { resolveBackendUrl } from '../../../core/config/backend-url.config';
 
 type ModalType = 'approve' | 'reject' | 'assignSurveyor' | 'requestDocs' | 'preAuth' | null;
 type ToastType = 'success' | 'error' | 'warning' | 'info';
@@ -259,7 +260,8 @@ export class ClaimDetailComponent implements OnInit {
   closePreview(): void { this.previewDoc.set(null); }
 
   docRawUrl(doc: SubmittedDocumentDto): string {
-    return '/' + doc.filePath;
+    const path = doc.filePath.startsWith('/') ? doc.filePath : `/${doc.filePath}`;
+    return resolveBackendUrl(path);
   }
 
   getTypePillClass(type: string): string {

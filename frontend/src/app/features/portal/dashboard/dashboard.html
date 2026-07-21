@@ -10,11 +10,11 @@
         </svg>
       </span>
       <div class="flex-1 min-w-0">
-        <p class="text-sm font-semibold text-amber-900">Identity verification required</p>
-        <p class="text-xs text-amber-700 mt-0.5">Complete KYC to purchase policies, pay premiums, or file claims.</p>
+        <p class="text-sm font-semibold text-amber-900">{{ kycNeedsSubmission() ? 'Identity verification required' : 'KYC verification pending' }}</p>
+        <p class="text-xs text-amber-700 mt-0.5">{{ kycNeedsSubmission() ? 'Submit KYC before you start a proposal, pay premiums, or file claims.' : 'Your documents are submitted. You do not need to resubmit them; we will notify you once verification is complete.' }}</p>
       </div>
-      <a routerLink="/kyc" class="shrink-0 text-xs font-semibold text-amber-900 border border-amber-300 bg-white hover:bg-amber-100 transition-colors px-3 py-1.5 rounded-control whitespace-nowrap">
-        Verify now →
+      <a [routerLink]="kycNeedsSubmission() ? '/kyc' : '/speedy'" class="shrink-0 text-xs font-semibold text-amber-900 border border-amber-300 bg-white hover:bg-amber-100 transition-colors px-3 py-1.5 rounded-control whitespace-nowrap">
+        {{ kycNeedsSubmission() ? 'Start KYC →' : 'Ask Speedy →' }}
       </a>
     </div>
   }
@@ -40,6 +40,14 @@
       </a>
     </div>
   </div>
+
+  @if (!loading()) {
+    <a routerLink="/speedy" class="group mb-7 flex items-center gap-4 overflow-hidden rounded-card border border-[#E9C979] bg-[#FFF9ED] p-4 shadow-sm transition hover:-translate-y-px hover:border-[#DFAE42] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#F5A623]">
+      <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#1B2738] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]"><img src="/speedy/speedy-amber.png" class="h-10 w-10 object-contain" alt="" /></span>
+      <span class="min-w-0 flex-1"><span class="block text-[10px] font-bold uppercase tracking-[0.15em] text-[#9A6500]">Speedy Guide</span><span class="mt-1 block text-sm font-bold text-[#27364A]">{{ speedyGuideTitle() }}</span><span class="mt-1 block text-xs leading-5 text-[#6E5A33]">{{ speedyGuideDetail() }}</span></span>
+      <span class="hidden shrink-0 rounded-lg bg-[#F5A623] px-3 py-2 text-xs font-bold text-white transition group-hover:bg-[#D4891A] sm:block">Open guide →</span>
+    </a>
+  }
 
   <!-- Stat Cards / Getting Started -->
   @if (loading()) {
@@ -75,7 +83,7 @@
             </a>
           }
           <p class="text-xs font-semibold mt-2.5 text-center" [class]="journeyStep() >= 2 ? 'text-ink' : 'text-amber-800'">Verify identity</p>
-          <p class="text-[11px] mt-0.5 text-center" [class]="journeyStep() >= 2 ? 'text-muted' : 'text-amber-600'">{{ journeyStep() >= 2 ? 'KYC approved' : 'KYC required' }}</p>
+          <p class="text-[11px] mt-0.5 text-center" [class]="journeyStep() >= 2 ? 'text-muted' : 'text-amber-600'">{{ journeyStep() >= 2 ? (kyc()?.kycStatus === 'Approved' ? 'KYC verified' : 'Verification pending') : 'KYC required' }}</p>
         </div>
         <!-- Connector 2→3 -->
         <div class="flex-1 mt-[18px] mx-1 h-px" [class]="journeyStep() >= 3 ? 'bg-success' : 'bg-line'"></div>

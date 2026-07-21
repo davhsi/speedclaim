@@ -64,7 +64,7 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("AI__EmbeddingDimension", "AI__EMBEDDING_DIMENSION"),
     )
     embedding_cache_dir: Path = Field(
-        default=Path("/tmp/speedclaim-ai-models"),
+        default=Path("/home/speedclaim/.cache/models"),
         validation_alias=AliasChoices("AI__EmbeddingCacheDir", "AI__EMBEDDING_CACHE_DIR"),
     )
     embedding_threads: int = Field(

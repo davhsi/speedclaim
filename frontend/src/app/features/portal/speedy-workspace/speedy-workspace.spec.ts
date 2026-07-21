@@ -38,6 +38,27 @@ describe('SpeedyWorkspaceComponent', () => {
     expect(fixture.componentInstance.messages()[1].actions?.[0].kind).toBe('guided_kyc');
   });
 
+  it('prepares a guided prompt in the composer without sending it immediately', () => {
+    const fixture = TestBed.createComponent(SpeedyWorkspaceComponent);
+    speedy.askWorkspace.mockClear();
+
+    fixture.componentInstance.prepareQuestion('Help me complete my KYC.');
+
+    expect(fixture.componentInstance.question()).toBe('Help me complete my KYC.');
+    expect(speedy.askWorkspace).not.toHaveBeenCalled();
+  });
+
+  it('marks KYC as submitted while keeping the next-step prompt available', () => {
+    const fixture = TestBed.createComponent(SpeedyWorkspaceComponent);
+    fixture.componentInstance.kycRecord.set({
+      id: 'kyc-1', userId: 'user-1', kycStatus: 'Pending', aadhaarUploaded: true, panUploaded: true,
+      createdAt: '',
+    });
+
+    const card = fixture.componentInstance.journeyCards()[0];
+    expect(card).toMatchObject({ title: 'KYC submitted', complete: true, prompt: 'My KYC is submitted. What should I do next?' });
+  });
+
   it('opens the labelled KYC composer rather than navigating to an untrusted route', () => {
     const fixture = TestBed.createComponent(SpeedyWorkspaceComponent);
     fixture.componentInstance.runAction({ kind: 'guided_kyc', label: 'Complete KYC', route: null, detail: 'Attach both documents.', requiresConfirmation: true });
