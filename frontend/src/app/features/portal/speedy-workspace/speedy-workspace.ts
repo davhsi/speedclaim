@@ -79,6 +79,8 @@ export class SpeedyWorkspaceComponent {
   readonly messages = signal<WorkspaceMessage[]>([]);
   readonly conversationId = signal<string | null>(null);
   readonly conversations = signal<SpeedyWorkspaceConversation[]>([]);
+  readonly conversationSearch = signal('');
+  readonly conversationSearchOpen = signal(false);
   readonly mobileHistoryOpen = signal(false);
   readonly historyLoaded = signal(false);
   readonly historyError = signal(false);
@@ -199,8 +201,12 @@ export class SpeedyWorkspaceComponent {
       { title: 'Get claim help', detail: 'Understand how to file or track a claim for an active policy.', prompt: 'Help me understand how to file a claim or track my existing claim.' },
     ];
   });
-  readonly recentConversations = computed(() => this.conversations().filter(conversation => this.ageInDays(conversation.updatedAt) <= 7));
-  readonly previousConversations = computed(() => this.conversations().filter(conversation => {
+  readonly matchingConversations = computed(() => {
+    const query = this.conversationSearch().trim().toLowerCase();
+    return query ? this.conversations().filter(conversation => conversation.title.toLowerCase().includes(query)) : this.conversations();
+  });
+  readonly recentConversations = computed(() => this.matchingConversations().filter(conversation => this.ageInDays(conversation.updatedAt) <= 7));
+  readonly previousConversations = computed(() => this.matchingConversations().filter(conversation => {
     const days = this.ageInDays(conversation.updatedAt);
     return days > 7 && days <= 30;
   }));
@@ -267,6 +273,31 @@ export class SpeedyWorkspaceComponent {
     this.question.set('');
     this.error.set(null);
     this.mobileHistoryOpen.set(false);
+  }
+
+  toggleConversationSearch(): void {
+    this.conversationSearchOpen.update(isOpen => !isOpen);
+    if (this.conversationSearchOpen()) return;
+    this.conversationSearch.set('');
+  }
+
+  clearConversationSearch(): void {
+    this.conversationSearch.set('');
+    this.conversationSearchOpen.set(false);
+  }
+
+  userInitials(): string {
+    const user = this.auth.currentUser();
+    return user ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase() : '?';
+  }
+
+  userName(): string {
+    const user = this.auth.currentUser();
+    return user ? user.fullName || `${user.firstName} ${user.lastName}` : '';
+  }
+
+  userAvatar(): string | null {
+    return this.auth.currentUser()?.avatarUrl ?? null;
   }
 
   backToSpeedClaim(): void {

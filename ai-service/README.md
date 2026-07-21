@@ -15,6 +15,15 @@ cannot commit a business action. The response records tool metadata for .NET aud
 .NET API owns customer authorization, audit logging, and every actual business action. This
 transport-neutral tool layer is also the future compatibility boundary for an MCP adapter.
 
+## MCP status
+
+The external MCP connector is **disabled**. The service does not publish a public `/mcp`
+endpoint and `/internal/` remains a private .NET-to-AI boundary protected by an internal API key.
+The implemented tool catalog distinguishes the full internal surface from a future, strict
+read-only external surface. We will not expose any customer tool to ChatGPT, Claude, or another
+AI host until an OAuth/OIDC authorization-server decision, consent flow, public transport, and
+host-specific security review are complete. See [the MCP architecture](../docs/mcp-architecture.md).
+
 ## Prerequisites
 
 - Python 3.14 (developed and containerized against Python 3.14.6)

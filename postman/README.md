@@ -9,13 +9,13 @@ folder logs in as the role it needs and reuses the auth/state left by the previo
 ## 1. One-time setup (fresh database)
 
 ```bash
-# From repo root. Connection string (speedclaimDB) is in appsettings.Development.json.
+# From repo root. The local PostgreSQL database name comes from appsettings.Development.json.
 
-# a) Apply EF migrations (creates 41 tables + seeds admin/products/rate-tables)
+# a) Apply EF migrations and seed baseline data
 dotnet ef database update --project backend/SpeedClaim.Api
 
 # b) Seed demo data (users, policies, proposals, claims, notifications, …)
-psql -h localhost -U postgres -d speedclaimDB -f seed.sql
+psql -h localhost -U postgres -d <your-local-database> -f seed.sql
 
 # c) Run the API
 dotnet run --project backend/SpeedClaim.Api      # http://localhost:5062
@@ -76,8 +76,8 @@ create unique rows (register, create product, create branch) or consume one-time
 (approve the single pending commission, cancel a policy). To run again cleanly, reseed:
 
 ```bash
-psql -h localhost -U postgres -d speedclaimDB \
+psql -h localhost -U postgres -d <your-local-database> \
   -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
 dotnet ef database update --project backend/SpeedClaim.Api
-psql -h localhost -U postgres -d speedclaimDB -f seed.sql
+psql -h localhost -U postgres -d <your-local-database> -f seed.sql
 ```

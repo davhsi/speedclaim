@@ -1,5 +1,9 @@
 # SpeedClaim production deployment runbook
 
+> **Proposed replacement-environment runbook.** The presently deployed environment is described
+> in [azure-deployment-plan.md](azure-deployment-plan.md). Verify live resources and configuration
+> before using these migration-oriented instructions.
+
 ## Migration rule
 
 Keep `rg-davish` and its existing Static Web Apps workflow alive until this replacement passes

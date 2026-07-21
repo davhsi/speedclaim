@@ -24,7 +24,9 @@
 * **Core Stack:** **.NET 10** for the backend API and **Angular** for the frontend user interface.
 * **Authentication & Authorization:** Implement **JWT (JSON Web Tokens)** for secure, stateless authentication and role-based authorization. Password hashing and verification must utilize **BCrypt**.
 * **Storage & File Management (Current Phase):**
-* **File Storage:** Currently using the **Local File System** via file paths. Code should handle file read/write operations locally for now, keeping the design modular enough to swap to Azure Blob Storage later.
+* **File Storage:** `Storage:Provider` selects the implementation. Local development normally
+  uses the local file system; Azure production can use Blob Storage. Keep storage access behind
+  its existing abstraction and do not hard-code either provider into business workflows.
 * **Configuration & Secrets:** Keep all secrets, database strings, email credentials, and file paths locally in `appsettings.json` or `.env`. *Do not use Azure Key Vault for now.*
 
 

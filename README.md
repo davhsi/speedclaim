@@ -34,6 +34,7 @@ An end-to-end insurance platform covering Health, Life, and Motor domains. Custo
 | Email | Gmail SMTP via MailKit |
 | Logging | Serilog (console + rolling file) |
 | Testing | NUnit + Moq |
+| Private AI support | FastAPI + LangGraph, accessed only through the .NET API |
 
 ---
 
@@ -186,6 +187,8 @@ Logs are written to `backend/SpeedClaim.Api/logs/speedclaim-YYYY-MM-DD.log` (rol
 ```bash
 cd backend
 dotnet test SpeedClaim.Tests/SpeedClaim.Tests.csproj
+cd ../frontend && npm test -- --watch=false
+cd ../ai-service && .venv/bin/python -m pytest
 ```
 
 Backend tests use NUnit and service-layer dependencies are generally mocked with Moq. Use current
@@ -232,6 +235,8 @@ InsuranceApp/
 │   │   └── Program.cs           # App entry point & DI config
 │   └── SpeedClaim.Tests/        # NUnit test project
 │       └── Services/            # Service layer unit tests
+├── ai-service/                  # Private FastAPI / Speedy AI service
+├── frontend/                    # Angular customer and staff portal
 └── docs/
     ├── spec.md                        # Technical specification
     ├── roles_and_responsibilities.md  # Per-role capability matrix
@@ -254,6 +259,7 @@ InsuranceApp/
 | [user-flows.md](docs/user-flows.md) | Step-by-step user journeys with Mermaid diagrams |
 | [api-page-map.md](docs/api-page-map.md) | Page-by-page API endpoint coverage |
 | [stripe_testing_guide.md](docs/stripe_testing_guide.md) | How to test Stripe payments locally via CLI |
+| [mcp-architecture.md](docs/mcp-architecture.md) | Disabled-by-default external MCP design and exposure policy |
 
 ---
 

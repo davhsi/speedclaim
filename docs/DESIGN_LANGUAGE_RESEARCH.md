@@ -1,5 +1,9 @@
 # SpeedClaim — Design Language Research
 
+> **Research reference, not a live UI inventory.** The observations below informed a landing-page
+> redesign. Inspect the Angular components and the frontend README for the current application UI,
+> including the authenticated Speedy workspace.
+
 **Companion to:** `docs/LANDING_UX_RESEARCH.md`  
 **Purpose:** Evidence-based design language specification for the SpeedClaim landing page redesign.  
 **Scope:** Color theory, typography psychology, animation principles, visual hierarchy, shape psychology, and the concrete SpeedClaim design system spec derived from all of the above.

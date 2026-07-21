@@ -1,7 +1,12 @@
 # SpeedClaim Azure infrastructure
 
-This folder is the repeatable, clean-slate Azure deployment for SpeedClaim. It targets one
-production resource group: `rg-speedclaim-prod` in South India.
+This folder is a repeatable, clean-slate Azure deployment plan for SpeedClaim. It targets one
+proposed resource group: `rg-speedclaim-prod` in South India.
+
+> **Status:** This is not the live-environment inventory. The current deployment uses
+> `rg-davish`; consult `AGENTS.md` and [the production runbook](../docs/azure-production-runbook.md)
+> before applying infrastructure changes. Do not treat this plan as authorization to recreate,
+> replace, or delete existing Azure resources.
 
 ## What Bicep creates
 
@@ -75,4 +80,5 @@ application secrets plus the new values listed in [the production runbook](../do
 Enable the PostgreSQL `vector` extension in the `speedclaim_ai` database, then run the Alembic
 migration. Bicep can create the database but cannot safely execute SQL inside it.
 
-Do not delete `rg-davish` until all smoke tests against `rg-speedclaim-prod` pass.
+Do not modify or delete `rg-davish` without a verified migration plan and current smoke-test
+evidence.

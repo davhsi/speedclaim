@@ -24,22 +24,26 @@ business workflow notes.
   - `feat(profile): add staff avatar upload`
   - `fix(frontend): route deployed app to AKS backend`
   - `feat(deploy): load backend secrets from Azure Key Vault`
-- `docs/azure-deployment-plan.md` and `k8s/` are intentionally uncommitted local deployment
-  planning/experiment files for now. Do not stage them unless the user explicitly asks.
+- `k8s/` remains intentionally uncommitted local deployment experiment work. Do not stage it
+  unless the user explicitly asks. `docs/azure-deployment-plan.md` is now the tracked current
+  environment status/operating plan.
 - Immediately before the 2026-07-14 KT documentation/configuration update, the tracked worktree
   was clean on `main`; the only known pre-existing untracked paths were
   `docs/azure-deployment-plan.md` and `k8s/`. Preserve them as prior deployment work.
-- Last audit verification on 2026-07-11:
-  - `dotnet build backend/SpeedClaim.Api` passed with 0 warnings/errors.
-  - `dotnet test backend/SpeedClaim.Tests` passed: 510 tests.
-  - `cd frontend && npm run build -- --configuration development` passed.
-  - `cd frontend && npm test -- --watch=false` passed: 1140 tests.
+- Latest verification on 2026-07-21:
+  - `dotnet test backend/SpeedClaim.Tests --no-restore` passed: 576 tests.
+  - `cd frontend && npm test -- --watch=false` passed: 1214 tests.
+  - `cd frontend && npm run build -- --configuration production` passed, with the existing
+    initial-bundle budget warning.
+  - `cd ai-service && .venv/bin/python -m pytest` passed: 166 tests, 3 skipped; two known
+    dependency warnings remain (FastAPI TestClient/httpx deprecation and LangChain Pydantic v1
+    compatibility under Python 3.14).
 - KT/configuration verification on 2026-07-14:
   - `cd frontend && npm run build -- --configuration development` passed.
   - `cd frontend && npm run build -- --configuration production` passed.
   - Focused backend URL configuration tests passed: 3 tests.
   - The development bundle contained no production backend origin; the production bundle did.
-- Root `CLAUDE.md` has a stale backend test count; use fresh test output before reporting status.
+- Use fresh command output rather than treating the test counts above as a permanent contract.
 - `frontend/package.json` pins Angular `^21.2.x`; prefer package metadata/source when another
   document conflicts.
 - Local Node observed during frontend build/test is v25.9.0, which Angular/npm warn is odd
