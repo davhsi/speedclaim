@@ -58,7 +58,7 @@ export class AgentProposalSubmitComponent implements OnInit, CanComponentDeactiv
   // Defaults sit inside the seeded Health product's limits (age ≤ 65, rate bands up to ₹5,00,000)
   // so the happy path works on a fresh database without tripping eligibility/rate errors.
   healthForm = { coverType: 'Family floater', members: 4, sumAssured: '₹5,00,000', eldestAge: 35 };
-  motorForm = { vehicleNumber: '', vehicleMake: '', vehicleModel: '', regYear: 2022, idv: '', engineNumber: '', chassisNumber: '', coverType: 'Comprehensive' };
+  motorForm = { vehicleNumber: '', vehicleMake: '', vehicleModel: '', regYear: 2022, marketValue: '', engineNumber: '', chassisNumber: '', coverType: 'Comprehensive' };
   lifeForm = { sumAssured: '', term: '30 years', age: 38, tobaccoUser: 'No' };
   proposerForm = { fullName: '', dob: '', annualIncome: '', occupation: '', pan: '', aadhaarLast4: '' };
 
@@ -366,7 +366,16 @@ export class AgentProposalSubmitComponent implements OnInit, CanComponentDeactiv
       sumAssured = this.parseMoney(this.healthForm.sumAssured) || product.minSumAssured;
       tenureYears = 1;
     } else if (this.selectedType === 'Motor') {
-      sumAssured = this.parseMoney(this.motorForm.idv) || product.minSumAssured;
+      const preview = this.motorQuotePreview();
+      if (!preview) {
+        this.toast.warning('Enter a valid vehicle market value and manufacture year.');
+        return;
+      }
+      if (!preview.isWithinProductRange) {
+        this.toast.warning(`The estimated IDV is outside this product's permitted range. Enter a market value from ₹${preview.minMarketValue.toLocaleString('en-IN')} to ₹${preview.maxMarketValue.toLocaleString('en-IN')}.`);
+        return;
+      }
+      sumAssured = preview.idv;
       tenureYears = 1;
     } else if (this.selectedType === 'Life') {
       age = this.lifeForm.age;
@@ -384,6 +393,10 @@ export class AgentProposalSubmitComponent implements OnInit, CanComponentDeactiv
       age,
       sumAssured,
       tenureYears,
+      ...(this.selectedType === 'Motor' ? {
+        vehicleMarketValue: this.parseMoney(this.motorForm.marketValue),
+        vehicleManufactureYear: Number(this.motorForm.regYear),
+      } : {}),
     }).subscribe({
       next: res => { this.quoteResult.set(res); this.calculatingQuote.set(false); },
       error: () => {
@@ -399,6 +412,26 @@ export class AgentProposalSubmitComponent implements OnInit, CanComponentDeactiv
 
   private parseTerm(val: string): number {
     return Number.parseInt(val, 10) || 0;
+  }
+
+  motorQuotePreview(): { idv: number; minMarketValue: number; maxMarketValue: number; isWithinProductRange: boolean } | null {
+    const product = this.selectedProduct();
+    const marketValue = this.parseMoney(this.motorForm.marketValue);
+    const manufactureYear = Number(this.motorForm.regYear);
+    if (!product || this.selectedType !== 'Motor' || marketValue <= 0 || !Number.isInteger(manufactureYear)) return null;
+
+    const vehicleAge = new Date().getFullYear() - manufactureYear;
+    if (vehicleAge < 0 || vehicleAge > 30) return null;
+    const depreciation = vehicleAge === 0 ? 0 : vehicleAge === 1 ? 0.15 : vehicleAge === 2 ? 0.20
+      : vehicleAge === 3 ? 0.30 : vehicleAge === 4 ? 0.40 : 0.50;
+    const retainedValue = 1 - depreciation;
+    const idv = Math.round(marketValue * retainedValue * 100) / 100;
+    return {
+      idv,
+      minMarketValue: Math.ceil(product.minSumAssured / retainedValue),
+      maxMarketValue: Math.floor(product.maxSumAssured / retainedValue),
+      isWithinProductRange: idv >= product.minSumAssured && idv <= product.maxSumAssured,
+    };
   }
 
   private loadDocRequirements(): void {

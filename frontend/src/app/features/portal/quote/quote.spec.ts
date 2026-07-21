@@ -181,6 +181,16 @@ describe('QuoteComponent', () => {
         vehicleMarketValue: 900000, vehicleManufactureYear: 2022,
       }));
     });
+
+    it('blocks an out-of-range calculated motor IDV before calling the API', () => {
+      const fixture = create('prod-motor');
+      fixture.componentInstance.form.patchValue({ manufactureYear: new Date().getFullYear() - 7, insuredDeclaredValue: 100000, tenureYears: 1 });
+
+      expect(fixture.componentInstance.motorIdvPreview()).toMatchObject({ idv: 50000, minMarketValue: 200000, isWithinProductRange: false });
+      expect(fixture.componentInstance.hasValidMotorIdv()).toBe(false);
+      fixture.componentInstance.onSubmit();
+      expect(quoteService.generateQuote).not.toHaveBeenCalled();
+    });
   });
 
   describe('applyNow', () => {

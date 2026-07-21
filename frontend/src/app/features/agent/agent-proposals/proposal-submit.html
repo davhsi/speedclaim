@@ -172,11 +172,17 @@
           <div><label for="ps-motor-make" class="block text-[13px] font-medium mb-1.5">Vehicle make</label><input id="ps-motor-make" type="text" [(ngModel)]="motorForm.vehicleMake" placeholder="e.g., Maruti Suzuki" /></div>
           <div><label for="ps-motor-model" class="block text-[13px] font-medium mb-1.5">Vehicle model</label><input id="ps-motor-model" type="text" [(ngModel)]="motorForm.vehicleModel" placeholder="e.g., Swift VXi" /></div>
           <div><label for="ps-motor-reg-year" class="block text-[13px] font-medium mb-1.5">Manufacture year</label><input id="ps-motor-reg-year" type="number" [(ngModel)]="motorForm.regYear" class="sc-numeric" /></div>
-          <div><label for="ps-motor-idv" class="block text-[13px] font-medium mb-1.5">Insured declared value (IDV)</label><input id="ps-motor-idv" type="text" [(ngModel)]="motorForm.idv" class="sc-numeric" /></div>
+          <div><label for="ps-motor-market-value" class="block text-[13px] font-medium mb-1.5">Manufacturer-listed vehicle value</label><input id="ps-motor-market-value" type="text" [(ngModel)]="motorForm.marketValue" class="sc-numeric" /></div>
           <div><label for="ps-motor-engine-no" class="block text-[13px] font-medium mb-1.5">Engine number</label><input id="ps-motor-engine-no" type="text" [(ngModel)]="motorForm.engineNumber" placeholder="e.g., K12MN1234567" class="sc-numeric" /></div>
           <div><label for="ps-motor-chassis-no" class="block text-[13px] font-medium mb-1.5">Chassis number</label><input id="ps-motor-chassis-no" type="text" [(ngModel)]="motorForm.chassisNumber" placeholder="e.g., MA3FHEB1S00A12345" class="sc-numeric" /></div>
           <div><label for="ps-motor-cover" class="block text-[13px] font-medium mb-1.5">Cover type</label><select id="ps-motor-cover" [(ngModel)]="motorForm.coverType" class="h-[42px]"><option value="Comprehensive">Comprehensive</option><option value="ThirdParty">Third-party only</option></select></div>
         </div>
+        @if (selectedProduct(); as product) {
+          <p class="mb-4 rounded-lg bg-surface-alt p-3 text-xs text-muted">This product accepts a calculated IDV from {{ product.minSumAssured | money }} to {{ product.maxSumAssured | money }}.</p>
+          @if (motorQuotePreview(); as preview) {
+            <p class="mb-4 rounded-lg p-3 text-xs" [class]="preview.isWithinProductRange ? 'bg-success-bg text-success' : 'bg-danger-bg text-danger'">Estimated IDV: {{ preview.idv | money }}. For a {{ motorForm.regYear }} vehicle, enter a market value from {{ preview.minMarketValue | money }} to {{ preview.maxMarketValue | money }}.</p>
+          }
+        }
       }
 
       @if (selectedType === 'Life') {
