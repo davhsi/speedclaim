@@ -1,4 +1,5 @@
 import math
+import os
 from collections.abc import Callable, Iterable, Sequence
 from pathlib import Path
 from typing import Any
@@ -16,7 +17,7 @@ class FastEmbedProvider:
         *,
         model_name: str = DEFAULT_EMBEDDING_MODEL,
         dimension: int = EMBEDDING_DIMENSION,
-        cache_dir: Path = Path("/tmp/speedclaim-ai-models"),
+        cache_dir: Path = Path("/home/speedclaim/.cache/models"),
         threads: int = 2,
         model_factory: ModelFactory | None = None,
     ) -> None:
@@ -56,13 +57,20 @@ class FastEmbedProvider:
     def _build_model(self) -> Any:
         from fastembed import TextEmbedding
 
-        self._cache_dir.mkdir(parents=True, exist_ok=True)
+        self._ensure_private_cache_dir()
         return TextEmbedding(
             model_name=self._model_name,
             cache_dir=str(self._cache_dir),
             threads=self._threads,
             cuda=False,
         )
+
+    def _ensure_private_cache_dir(self) -> None:
+        """Create a model cache owned by the service user, never a shared temp directory."""
+        self._cache_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+        if self._cache_dir.is_symlink() or not self._cache_dir.is_dir():
+            raise RuntimeError("embedding cache path must be a real directory")
+        os.chmod(self._cache_dir, 0o700)
 
     @staticmethod
     def _validate_texts(texts: Sequence[str]) -> list[str]:

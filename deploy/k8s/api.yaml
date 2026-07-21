@@ -5,6 +5,7 @@ metadata:
   namespace: speedclaim
   annotations:
     azure.workload.identity/client-id: "__API_WORKLOAD_IDENTITY_CLIENT_ID__"
+automountServiceAccountToken: false
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -25,6 +26,7 @@ spec:
         azure.workload.identity/use: "true"
     spec:
       serviceAccountName: speedclaim-api
+      automountServiceAccountToken: false
       imagePullSecrets:
         - name: acr-pull
       containers:

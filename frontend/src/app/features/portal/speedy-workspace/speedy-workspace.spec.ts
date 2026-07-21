@@ -38,6 +38,27 @@ describe('SpeedyWorkspaceComponent', () => {
     expect(fixture.componentInstance.messages()[1].actions?.[0].kind).toBe('guided_kyc');
   });
 
+  it('prepares a guided prompt in the composer without sending it immediately', () => {
+    const fixture = TestBed.createComponent(SpeedyWorkspaceComponent);
+    speedy.askWorkspace.mockClear();
+
+    fixture.componentInstance.prepareQuestion('Help me complete my KYC.');
+
+    expect(fixture.componentInstance.question()).toBe('Help me complete my KYC.');
+    expect(speedy.askWorkspace).not.toHaveBeenCalled();
+  });
+
+  it('marks KYC as submitted while keeping the next-step prompt available', () => {
+    const fixture = TestBed.createComponent(SpeedyWorkspaceComponent);
+    fixture.componentInstance.kycRecord.set({
+      id: 'kyc-1', userId: 'user-1', kycStatus: 'Pending', aadhaarUploaded: true, panUploaded: true,
+      createdAt: '',
+    });
+
+    const card = fixture.componentInstance.journeyCards()[0];
+    expect(card).toMatchObject({ title: 'KYC submitted', complete: true, prompt: 'My KYC is submitted. What should I do next?' });
+  });
+
   it('opens the labelled KYC composer rather than navigating to an untrusted route', () => {
     const fixture = TestBed.createComponent(SpeedyWorkspaceComponent);
     fixture.componentInstance.runAction({ kind: 'guided_kyc', label: 'Complete KYC', route: null, detail: 'Attach both documents.', requiresConfirmation: true });
@@ -73,6 +94,20 @@ describe('SpeedyWorkspaceComponent', () => {
     fixture.componentInstance.backToSpeedClaim();
 
     expect(navigate).toHaveBeenCalledWith('/dashboard');
+  });
+
+  it('allows payment only for the earliest unpaid installment', () => {
+    const fixture = TestBed.createComponent(SpeedyWorkspaceComponent);
+    fixture.componentInstance.paymentSchedules.set([
+      { id: 'schedule-2', policyId: 'policy-1', installmentNumber: 2, amountDue: 6800, dueDate: '2026-08-19', status: 'Upcoming' },
+      { id: 'schedule-1', policyId: 'policy-1', installmentNumber: 1, amountDue: 6800, dueDate: '2026-07-19', status: 'Upcoming' },
+      { id: 'schedule-3', policyId: 'policy-1', installmentNumber: 3, amountDue: 6800, dueDate: '2026-09-19', status: 'Upcoming' },
+    ]);
+
+    expect(fixture.componentInstance.canPaySchedule(fixture.componentInstance.paymentSchedules()[1])).toBe(true);
+    expect(fixture.componentInstance.canPaySchedule(fixture.componentInstance.paymentSchedules()[0])).toBe(false);
+    expect(fixture.componentInstance.paymentAvailabilityMessage(fixture.componentInstance.paymentSchedules()[0]))
+      .toBe('Available after installment #1 is paid');
   });
 
   it('opens and closes the compact section navigator', () => {

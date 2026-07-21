@@ -126,4 +126,6 @@ def test_workspace_routes_customer_tasks_to_typed_in_workspace_actions():
     assert _action_for("claim_status", account).kind == "claim_status"
     assert _action_for("proposal_status", account).kind == "policy_status"
     assert _action_for("grievance_status", account).kind == "grievance_status"
-    assert _action_for("policy_help", account).kind == "policy_status"
+    policy_action = _action_for("policy_help", account)
+    assert policy_action.kind == "navigate"
+    assert policy_action.route == "/policies"

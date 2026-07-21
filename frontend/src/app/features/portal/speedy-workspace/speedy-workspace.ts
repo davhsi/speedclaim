@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, ElementRef, ViewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -29,6 +29,13 @@ interface ConversationSection {
   label: string;
 }
 
+interface JourneyCard {
+  title: string;
+  detail: string;
+  prompt: string;
+  complete?: boolean;
+}
+
 const AADHAAR_PATTERN = /^\d{12}$/;
 const PAN_PATTERN = /^[A-Z]{5}\d{4}[A-Z]$/;
 const KYC_ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png'];
@@ -52,6 +59,7 @@ interface BrowserSpeechRecognition {
   templateUrl: './speedy-workspace.html',
 })
 export class SpeedyWorkspaceComponent {
+  @ViewChild('questionBox') private readonly questionBox?: ElementRef<HTMLTextAreaElement>;
   private readonly speedy = inject(SpeedyAssistantService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
@@ -132,6 +140,9 @@ export class SpeedyWorkspaceComponent {
   readonly paymentClientSecret = signal<string | null>(null);
   readonly paymentReady = signal(false);
   readonly paymentAmount = signal<number | null>(null);
+  readonly nextPayableSchedule = computed(() => this.paymentSchedules()
+    .filter(schedule => this.isUnpaidSchedule(schedule))
+    .sort((left, right) => left.installmentNumber - right.installmentNumber)[0] ?? null);
   private stripeInstance: any = null;
   private stripeElements: any = null;
   readonly aadhaarError = computed(() => {
@@ -178,9 +189,17 @@ export class SpeedyWorkspaceComponent {
     return true;
   });
 
-  readonly suggestions = computed(() => this.signedIn()
-    ? ['Which policy may help with a hospital admission?', 'Help me complete KYC', 'When is my next premium due?', 'I need to raise a grievance']
-    : ['Compare family health cover', 'Which products are available?', 'How do I start a quote?']);
+  readonly journeyCards = computed<JourneyCard[]>(() => {
+    const kyc = this.kycRecord();
+    const submitted = this.kycUnderReviewOrVerified();
+    const kycDetail = this.kycJourneyDetail(kyc, submitted);
+    return [
+      { title: submitted ? 'KYC submitted' : 'Start KYC', detail: kycDetail, prompt: submitted ? 'My KYC is submitted. What should I do next?' : 'Help me complete my KYC.', complete: submitted },
+      { title: 'Explore cover', detail: 'Browse products and find cover that fits your life.', prompt: 'What insurance products are available, and which might suit me?' },
+      { title: 'Plan your payment', detail: 'Check when your next premium is due and how to pay it.', prompt: 'What is my next premium schedule and when do I need to pay?' },
+      { title: 'Get claim help', detail: 'Understand how to file or track a claim for an active policy.', prompt: 'Help me understand how to file a claim or track my existing claim.' },
+    ];
+  });
   readonly recentConversations = computed(() => this.conversations().filter(conversation => this.ageInDays(conversation.updatedAt) <= 7));
   readonly previousConversations = computed(() => this.conversations().filter(conversation => {
     const days = this.ageInDays(conversation.updatedAt);
@@ -220,6 +239,24 @@ export class SpeedyWorkspaceComponent {
         this.error.set(failure?.status === 401 ? 'Sign in to use account-specific help.' : 'Speedy is temporarily unavailable. Please try again.');
       },
     });
+  }
+
+  prepareQuestion(prompt: string): void {
+    this.question.set(prompt);
+    this.error.set(null);
+    queueMicrotask(() => this.questionBox?.nativeElement.focus());
+  }
+
+  private kycJourneyDetail(kyc: KycRecordDto | null, submitted: boolean): string {
+    if (!submitted) return 'Submit Aadhaar and PAN to unlock applications, payments, and claims.';
+    if (kyc?.kycStatus === 'Approved') return 'Submitted and verified. You are ready for the next step.';
+    return 'Submitted. Verification is pending — you do not need to resubmit.';
+  }
+
+  onQuestionKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Enter' || event.shiftKey || event.isComposing) return;
+    event.preventDefault();
+    this.ask();
   }
 
   startNewChat(): void {
@@ -345,12 +382,40 @@ export class SpeedyWorkspaceComponent {
   openStripeCheckout(schedule: PremiumScheduleDto): void {
     const policy = this.paymentPolicy();
     if (!policy || this.paymentOpening()) return;
+    if (!this.canPaySchedule(schedule)) {
+      const next = this.nextPayableSchedule();
+      this.taskError.set(next
+        ? `Installment #${next.installmentNumber} must be paid before installment #${schedule.installmentNumber}.`
+        : 'This installment is not currently available for payment.');
+      return;
+    }
     this.paymentOpening.set(true);
     this.taskError.set(null);
     this.payments.createPaymentIntent(schedule.id, { policyId: policy.id }).subscribe({
       next: response => this.initializeStripeCheckout(response, schedule.amountDue),
-      error: failure => { this.paymentOpening.set(false); this.taskError.set(failure?.error?.title ?? 'The payment could not be started.'); },
+      error: failure => {
+        this.paymentOpening.set(false);
+        const next = this.nextPayableSchedule();
+        this.taskError.set(failure?.status === 409 && next
+          ? `Installment #${next.installmentNumber} must be paid first. Please select that installment to continue.`
+          : failure?.error?.detail ?? failure?.error?.title ?? 'The payment could not be started.');
+      },
     });
+  }
+
+  canPaySchedule(schedule: PremiumScheduleDto): boolean {
+    return this.nextPayableSchedule()?.id === schedule.id;
+  }
+
+  paymentAvailabilityMessage(schedule: PremiumScheduleDto): string {
+    const next = this.nextPayableSchedule();
+    return next
+      ? `Available after installment #${next.installmentNumber} is paid`
+      : 'Not currently payable';
+  }
+
+  private isUnpaidSchedule(schedule: PremiumScheduleDto): boolean {
+    return schedule.status === 'Upcoming' || schedule.status === 'Due' || schedule.status === 'Overdue';
   }
 
   private initializeStripeCheckout(response: CreatePaymentIntentResponse, amount: number): void {

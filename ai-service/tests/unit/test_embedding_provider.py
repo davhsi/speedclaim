@@ -1,4 +1,5 @@
 from collections.abc import Iterable, Sequence
+import stat
 
 import pytest
 
@@ -69,3 +70,12 @@ def test_provider_rejects_invalid_model_output(vector: list[float]) -> None:
 
     with pytest.raises(RuntimeError, match="embedding provider"):
         provider.embed_query("valid text")
+
+
+def test_provider_creates_a_private_model_cache(tmp_path) -> None:
+    cache_dir = tmp_path / "models"
+    provider = FastEmbedProvider(cache_dir=cache_dir, model_factory=FakeModel)
+
+    provider._ensure_private_cache_dir()
+
+    assert stat.S_IMODE(cache_dir.stat().st_mode) == 0o700

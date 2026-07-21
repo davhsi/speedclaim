@@ -22,12 +22,22 @@ async def test_reader_reads_only_files_below_its_configured_root(tmp_path: Path)
     assert await reader.read_bytes("products/brochure.pdf", max_bytes=100) == b"%PDF-test"
 
 
-@pytest.mark.parametrize("blob_path", ["../outside.pdf", "/tmp/outside.pdf", "..\\outside.pdf"])
+@pytest.mark.parametrize("blob_path", ["../outside.pdf", "..\\outside.pdf"])
 async def test_reader_rejects_path_escape(tmp_path: Path, blob_path: str) -> None:
     reader = LocalBrochureReader(tmp_path)
 
     with pytest.raises(IngestionFailure) as failure:
         await reader.read_bytes(blob_path, max_bytes=100)
+
+    assert failure.value.code == "brochure_path_invalid"
+
+
+async def test_reader_rejects_an_absolute_path_outside_its_root(tmp_path: Path) -> None:
+    reader = LocalBrochureReader(tmp_path)
+    outside_path = str(tmp_path.parent / "outside.pdf")
+
+    with pytest.raises(IngestionFailure) as failure:
+        await reader.read_bytes(outside_path, max_bytes=100)
 
     assert failure.value.code == "brochure_path_invalid"
 

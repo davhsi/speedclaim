@@ -17,6 +17,7 @@ spec:
     spec:
       restartPolicy: Never
       serviceAccountName: speedclaim-api
+      automountServiceAccountToken: false
       imagePullSecrets:
         - name: acr-pull
       containers:

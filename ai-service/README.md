@@ -58,7 +58,7 @@ Health endpoints are unauthenticated for container/orchestrator probes. All path
 | `AI__EmbeddingProvider` | no | `Local` | Phase R2 supports only `Local` |
 | `AI__EmbeddingModel` | no | `BAAI/bge-small-en-v1.5` | fixed Phase R2 model |
 | `AI__EmbeddingDimension` | no | `384` | must match the model/schema |
-| `AI__EmbeddingCacheDir` | no | `/tmp/speedclaim-ai-models` | local model cache path |
+| `AI__EmbeddingCacheDir` | no | `/home/speedclaim/.cache/models` | owner-only local model cache path |
 | `AI__EmbeddingThreads` | no | `2` | 1–32 CPU threads |
 | `AI__VectorConnectionString` | repository only | none | PostgreSQL/Psycopg URL; stored as a secret |
 | `AI__StorageProvider` | no | `Local` | `Local` or `AzureBlob` |

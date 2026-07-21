@@ -36,11 +36,30 @@ export class DashboardComponent implements OnInit {
   openClaimsCount = signal(0);
 
   kycPending = computed(() => !this.kyc() || this.kyc()?.kycStatus !== 'Approved');
+  kycSubmitted = computed(() => {
+    const kyc = this.kyc();
+    return !!kyc?.aadhaarUploaded && !!kyc?.panUploaded && ['Pending', 'Approved'].includes(kyc.kycStatus);
+  });
+  kycNeedsSubmission = computed(() => !this.kycSubmitted());
   isNewUser = computed(() => !this.loading() && this.policies().length === 0);
   journeyStep = computed(() => {
     if (this.activePoliciesCount() > 0) return 3;
-    if (this.kyc()?.kycStatus === 'Approved') return 2;
+    if (this.kycSubmitted()) return 2;
     return 1;
+  });
+  speedyGuideTitle = computed(() => {
+    if (!this.kyc()) return 'Start your insurance journey';
+    if (this.kycPending()) return 'Your KYC is being verified';
+    if (this.nextDue()) return 'Keep your cover on track';
+    if (this.activePoliciesCount() > 0) return 'Need help with your cover?';
+    return 'Find cover that fits you';
+  });
+  speedyGuideDetail = computed(() => {
+    if (!this.kyc()) return 'Speedy Guide can help you submit KYC, then show you what comes next.';
+    if (this.kycPending()) return 'Your documents are submitted. Ask Speedy Guide what you can do while verification is pending.';
+    if (this.nextDue()) return 'Ask Speedy Guide about your payment schedule, policy details, or a claim.';
+    if (this.activePoliciesCount() > 0) return 'Get plain-language help with policies, premiums, and claims.';
+    return 'Explore products in plain language before you decide to apply.';
   });
 
   actionClaims = computed(() =>
