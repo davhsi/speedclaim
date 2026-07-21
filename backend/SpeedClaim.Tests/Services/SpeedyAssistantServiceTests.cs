@@ -28,6 +28,9 @@ public class SpeedyAssistantServiceTests
             });
         var unitOfWork = new Mock<IUnitOfWork>();
         unitOfWork.SetupGet(x => x.InsuranceProducts).Returns(products.Object);
+        var brochures = new Mock<IRepository<ProductBrochure>>();
+        brochures.Setup(x => x.FindAsync(It.IsAny<Expression<Func<ProductBrochure, bool>>>())).ReturnsAsync(Array.Empty<ProductBrochure>());
+        unitOfWork.SetupGet(x => x.ProductBrochures).Returns(brochures.Object);
         unitOfWork.SetupGet(x => x.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
 
         SpeedyAssistantRequest? captured = null;
@@ -55,6 +58,9 @@ public class SpeedyAssistantServiceTests
             .ReturnsAsync(Array.Empty<InsuranceProduct>());
         var unitOfWork = new Mock<IUnitOfWork>();
         unitOfWork.SetupGet(x => x.InsuranceProducts).Returns(products.Object);
+        var brochures = new Mock<IRepository<ProductBrochure>>();
+        brochures.Setup(x => x.FindAsync(It.IsAny<Expression<Func<ProductBrochure, bool>>>())).ReturnsAsync(Array.Empty<ProductBrochure>());
+        unitOfWork.SetupGet(x => x.ProductBrochures).Returns(brochures.Object);
         unitOfWork.SetupGet(x => x.AuditLogs).Returns(new Mock<IRepository<AuditLog>>().Object);
 
         SpeedyWorkspaceRequest? captured = null;
@@ -62,7 +68,7 @@ public class SpeedyAssistantServiceTests
         var workspaceClient = new Mock<ISpeedyWorkspaceClient>();
         workspaceClient.Setup(x => x.AnswerAsync(It.IsAny<SpeedyWorkspaceRequest>(), It.IsAny<CancellationToken>()))
             .Callback<SpeedyWorkspaceRequest, CancellationToken>((request, _) => captured = request)
-            .ReturnsAsync(new SpeedyWorkspaceResponse(Guid.NewGuid(), "Explore our products.", "product_discovery", "low", [], "Fake", "fake-model"));
+            .ReturnsAsync(new SpeedyWorkspaceResponse(Guid.NewGuid(), "Explore our products.", "product_discovery", "low", [], [], [], "Fake", "fake-model"));
         var service = new SpeedyAssistantService(unitOfWork.Object, speedyClient.Object, workspaceClient.Object);
 
         var response = await service.AnswerWorkspaceAsync(null, "Which plans are available?");
@@ -111,6 +117,9 @@ public class SpeedyAssistantServiceTests
 
         var unitOfWork = new Mock<IUnitOfWork>();
         unitOfWork.SetupGet(x => x.InsuranceProducts).Returns(products.Object);
+        var brochures = new Mock<IRepository<ProductBrochure>>();
+        brochures.Setup(x => x.FindAsync(It.IsAny<Expression<Func<ProductBrochure, bool>>>())).ReturnsAsync(Array.Empty<ProductBrochure>());
+        unitOfWork.SetupGet(x => x.ProductBrochures).Returns(brochures.Object);
         unitOfWork.SetupGet(x => x.Customers).Returns(customers.Object);
         unitOfWork.SetupGet(x => x.Users).Returns(users.Object);
         unitOfWork.SetupGet(x => x.Policies).Returns(policies.Object);
@@ -127,7 +136,7 @@ public class SpeedyAssistantServiceTests
         SpeedyWorkspaceRequest? captured = null;
         workspaceClient.Setup(x => x.AnswerAsync(It.IsAny<SpeedyWorkspaceRequest>(), It.IsAny<CancellationToken>()))
             .Callback<SpeedyWorkspaceRequest, CancellationToken>((request, _) => captured = request)
-            .ReturnsAsync(new SpeedyWorkspaceResponse(Guid.NewGuid(), "Start with your Aadhaar and PAN.", "kyc", "regulated", [], "Fake", "fake-model"));
+            .ReturnsAsync(new SpeedyWorkspaceResponse(Guid.NewGuid(), "Start with your Aadhaar and PAN.", "kyc", "regulated", [], [], [], "Fake", "fake-model"));
         var service = new SpeedyAssistantService(unitOfWork.Object, new Mock<ISpeedyAssistantClient>().Object, workspaceClient.Object);
 
         var response = await service.AnswerWorkspaceAsync(userId, "Help me complete KYC");

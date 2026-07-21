@@ -28,13 +28,21 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
         if (string.IsNullOrWhiteSpace(question) || question.Trim().Length > 2_000)
             throw new ValidationException("Ask Speedy a question of up to 2,000 characters.");
 
-        var catalog = (await _unitOfWork.InsuranceProducts.FindAsync(p => p.IsActive && p.IsAvailableForSale))
+        var activeProducts = (await _unitOfWork.InsuranceProducts.FindAsync(p => p.IsActive && p.IsAvailableForSale)).ToList();
+        var catalog = activeProducts
             .OrderBy(p => p.ProductName)
             .Take(50)
             .Select(p => new SpeedyProductSnapshot(
                 p.ProductName, p.Domain, p.Description, p.MinAge, p.MaxAge, p.MinSumAssured, p.MaxSumAssured,
                 p.MinTenureYears, p.MaxTenureYears, p.WaitingPeriodDays, p.AllowsFamilyFloater, p.MaxFamilyMembers,
                 p.MotorVehicleType))
+            .ToList();
+        var productIdsByName = activeProducts
+            .ToDictionary(p => p.Id, p => p.ProductName);
+        var brochures = ((await _unitOfWork.ProductBrochures.FindAsync(b => b.Status == ProductBrochureStatus.Published)) ?? [])
+            .Where(b => productIdsByName.ContainsKey(b.ProductId) && b.ChildChunkCount > 0)
+            .OrderBy(b => productIdsByName[b.ProductId]).ThenByDescending(b => b.PublishedAt)
+            .Select(b => new SpeedyBrochureSnapshot(b.Id, b.ProductId, productIdsByName[b.ProductId], b.Version))
             .ToList();
 
         Customer? customer = null;
@@ -91,7 +99,7 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
                 grievances.Select(g => new SpeedyGrievanceSnapshot(
                     g.GrievanceNumber, g.Category.ToString(), g.Status.ToString(), g.CreatedAt, g.ResolvedAt)).ToList(),
                 ToKycSnapshot(kyc)),
-            new SpeedyCatalogSnapshot(catalog));
+            new SpeedyCatalogSnapshot(catalog, brochures));
 
         var response = await _client.AnswerAsync(request, cancellationToken);
         if (customerUserId.HasValue && customer is not null)
@@ -116,13 +124,21 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
         if (_workspaceClient is null)
             throw new InvalidOperationException("The Speedy workspace client is not configured.");
 
-        var catalog = (await _unitOfWork.InsuranceProducts.FindAsync(p => p.IsActive && p.IsAvailableForSale))
+        var activeProducts = (await _unitOfWork.InsuranceProducts.FindAsync(p => p.IsActive && p.IsAvailableForSale)).ToList();
+        var catalog = activeProducts
             .OrderBy(p => p.ProductName)
             .Take(50)
             .Select(p => new SpeedyProductSnapshot(
                 p.ProductName, p.Domain, p.Description, p.MinAge, p.MaxAge, p.MinSumAssured, p.MaxSumAssured,
                 p.MinTenureYears, p.MaxTenureYears, p.WaitingPeriodDays, p.AllowsFamilyFloater, p.MaxFamilyMembers,
                 p.MotorVehicleType))
+            .ToList();
+        var productIdsByName = activeProducts
+            .ToDictionary(p => p.Id, p => p.ProductName);
+        var brochures = ((await _unitOfWork.ProductBrochures.FindAsync(b => b.Status == ProductBrochureStatus.Published)) ?? [])
+            .Where(b => productIdsByName.ContainsKey(b.ProductId) && b.ChildChunkCount > 0)
+            .OrderBy(b => productIdsByName[b.ProductId]).ThenByDescending(b => b.PublishedAt)
+            .Select(b => new SpeedyBrochureSnapshot(b.Id, b.ProductId, productIdsByName[b.ProductId], b.Version))
             .ToList();
 
         Customer? customer = null;
@@ -180,7 +196,7 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
                 grievances.Select(g => new SpeedyGrievanceSnapshot(
                     g.GrievanceNumber, g.Category.ToString(), g.Status.ToString(), g.CreatedAt, g.ResolvedAt)).ToList(),
                 ToKycSnapshot(kyc)),
-            new SpeedyCatalogSnapshot(catalog));
+            new SpeedyCatalogSnapshot(catalog, brochures));
 
         var response = policyAnswer ?? await _workspaceClient.AnswerAsync(request, cancellationToken);
         if (customerUserId.HasValue && customer is not null)
@@ -269,7 +285,7 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
         var citations = string.IsNullOrWhiteSpace(message.CitationsJson)
             ? []
             : JsonSerializer.Deserialize<List<PolicyAssistantCitationDto>>(message.CitationsJson) ?? [];
-        return new(message.Id, message.Role.ToString(), message.Content, message.Intent, message.Risk, actions, message.CreatedAt,
+        return new(message.Id, message.Role.ToString(), message.Content, message.Intent, message.Risk, actions, [], [], message.CreatedAt,
             message.EvidenceStatus, message.BrochureVersion, citations);
     }
 
@@ -292,20 +308,20 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
             var clarification = candidates.Count > 1
                 ? "I can check the exact brochure terms, but you have more than one active policy. Please include the policy number or product name so I can use the right policy document."
                 : "I can check brochure-grounded policy terms once an active policy with an available brochure is selected.";
-            return new(Guid.NewGuid(), clarification, "policy_terms_clarification", "regulated", [], null, null);
+            return new(Guid.NewGuid(), clarification, "policy_terms_clarification", "regulated", [], [], [], null, null);
         }
 
         var policy = candidates[0];
         var brochure = await _unitOfWork.ProductBrochures.GetByIdAsync(policy.ProductBrochureId!.Value);
         if (brochure is null || brochure.Status is not (ProductBrochureStatus.Published or ProductBrochureStatus.Archived) || brochure.PageCount <= 0 || brochure.ChildChunkCount <= 0)
-            return new(Guid.NewGuid(), "I found your policy, but its brochure evidence is not ready yet. Please try again later.", "policy_terms_unavailable", "regulated", [], null, null);
+            return new(Guid.NewGuid(), "I found your policy, but its brochure evidence is not ready yet. Please try again later.", "policy_terms_unavailable", "regulated", [], [], [], null, null);
 
         var requestId = Guid.NewGuid();
         var answer = await _policyQaClient.AnswerAsync(new PolicyQaRequest(requestId, brochure.Id, policy.ProductId, brochure.Version, question.Trim()), cancellationToken);
         if (answer.RequestId != requestId || answer.EvidenceStatus is not ("Grounded" or "InsufficientEvidence" or "Rejected"))
             throw new BrochureIngestionException("invalid_policy_qa_response", "Speedy returned an invalid policy-evidence response.");
 
-        return new(requestId, answer.Answer, "policy_terms", "regulated", [], answer.Provider, answer.Model,
+        return new(requestId, answer.Answer, "policy_terms", "regulated", [], [], [], answer.Provider, answer.Model,
             null, answer.EvidenceStatus, brochure.Version, answer.Citations);
     }
 

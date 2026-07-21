@@ -159,13 +159,14 @@ class ServiceContainer:
             return self._workspace_service
         if self._settings.anthropic_base_url is None or self._settings.anthropic_auth_token is None:
             raise AppError(status_code=503, code="chat_provider_not_configured", message="The Speedy answer provider is not configured.")
+        policy_qa_service = await self.get_policy_qa_service()
         async with self._lock:
             if self._workspace_service is None:
                 self._ensure_chat_provider()
                 self._ensure_router_chat_provider()
                 assert self._chat_provider is not None
                 assert self._router_chat_provider is not None
-                self._workspace_service = WorkspaceService(self._chat_provider, self._router_chat_provider)
+                self._workspace_service = WorkspaceService(self._chat_provider, self._router_chat_provider, policy_qa_service)
         return self._workspace_service
 
     def _ensure_chat_provider(self) -> None:

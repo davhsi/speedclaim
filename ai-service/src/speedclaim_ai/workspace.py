@@ -7,6 +7,7 @@ navigation or guided-composer actions for the application to render.
 
 import json
 from typing import Any, Literal, TypedDict
+from uuid import UUID
 
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, Field
@@ -15,15 +16,19 @@ from speedclaim_ai.contracts.workspace import (
     WorkspaceAction,
     WorkspaceRequest,
     WorkspaceResponse,
+    WorkspaceSource,
 )
 from speedclaim_ai.kyc_workflow import kyc_is_under_review_or_approved, kyc_status_answer
 from speedclaim_ai.providers.chat.base import ChatProvider, ChatRequest
+from speedclaim_ai.rag.answer_service import PolicyQaService
+from speedclaim_ai.rag.models import PolicyQaCommand
 
 _INTENTS = Literal[
     "product_discovery",
     "proposal",
     "proposal_status",
     "policy_help",
+    "brochure_qa",
     "premium_help",
     "claim_guidance",
     "claim_status",
@@ -37,6 +42,7 @@ _INTENTS = Literal[
 class _IntentResult(BaseModel):
     intent: _INTENTS
     risk: Literal["low", "regulated"]
+    brochure_id: UUID | None = None
 
 
 class _AnswerResult(BaseModel):
@@ -53,7 +59,9 @@ class _WorkspaceState(TypedDict, total=False):
 
 _CLASSIFIER_PROMPT = """You classify a SpeedClaim customer request for a supervised insurance assistant.
 Return exactly one JSON object matching the supplied schema. Choose one intent only:
-product_discovery, proposal, proposal_status, policy_help, premium_help, claim_guidance, claim_status, kyc, grievance, grievance_status, general_help.
+product_discovery, proposal, proposal_status, policy_help, brochure_qa, premium_help, claim_guidance, claim_status, kyc, grievance, grievance_status, general_help.
+Use brochure_qa for detailed product wording: cover, exclusions, waiting periods, sub-limits, riders, eligibility, or claim documents.
+For brochure_qa, set brochure_id only to an exact ID from the BROCHURES list provided in the user data. If the customer has not named a matching product, set brochure_id to null.
 Use proposal for starting a new application. Use proposal_status when the customer asks about a proposal they already submitted, its approval, rejection, or review progress.
 Use grievance for raising a new grievance. Use grievance_status when the customer asks about a grievance they already filed, its progress, resolution, or current status.
 Use regulated for claims, KYC, grievances, proposals, premium/payment questions, policy coverage questions, or anything that could influence a regulated insurance decision. Otherwise use low.
@@ -70,9 +78,10 @@ Give concise, practical guidance in plain language."""
 
 
 class WorkspaceService:
-    def __init__(self, answer_provider: ChatProvider, router_provider: ChatProvider) -> None:
+    def __init__(self, answer_provider: ChatProvider, router_provider: ChatProvider, policy_qa_service: PolicyQaService | None = None) -> None:
         self._answer_provider = answer_provider
         self._router_provider = router_provider
+        self._policy_qa_service = policy_qa_service
         graph = StateGraph(_WorkspaceState)
         graph.add_node("classify_intent", self._classify_intent)
         graph.add_node("prepare_actions", self._prepare_actions)
@@ -92,14 +101,29 @@ class WorkspaceService:
         completion = await self._router_provider.complete(
             ChatRequest(
                 system_prompt=_CLASSIFIER_PROMPT,
-                user_prompt=json.dumps({"question": request.question}, ensure_ascii=False),
+                user_prompt=json.dumps(
+                    {
+                        "question": request.question,
+                        "BROCHURES": [
+                            {
+                                "brochureId": str(brochure.brochure_id),
+                                "productName": brochure.product_name,
+                                "version": brochure.version,
+                            }
+                            for brochure in request.catalog.brochures
+                        ],
+                    },
+                    ensure_ascii=False,
+                ),
                 response_schema_name="speedy_workspace_intent",
                 response_schema=_IntentResult.model_json_schema(),
                 response_validator=_IntentResult.model_validate_json,
             )
         )
         parsed = _IntentResult.model_validate_json(completion.content)
-        return {"intent": parsed.intent, "risk": parsed.risk}
+        brochure_ids = {brochure.brochure_id for brochure in request.catalog.brochures}
+        brochure_id = parsed.brochure_id if parsed.brochure_id in brochure_ids else None
+        return {"intent": parsed.intent, "risk": parsed.risk, "brochure_id": brochure_id}
 
     @staticmethod
     def _prepare_actions(state: _WorkspaceState) -> dict[str, Any]:
@@ -110,6 +134,8 @@ class WorkspaceService:
 
     async def _answer(self, state: _WorkspaceState) -> dict[str, Any]:
         request = state["request"]
+        if state["intent"] == "brochure_qa":
+            return await self._answer_brochure_question(state)
         kyc_answer = kyc_status_answer(request.account) if state["intent"] == "kyc" else None
         if kyc_answer is not None:
             return {
@@ -167,31 +193,55 @@ class WorkspaceService:
             )
         }
 
+    async def _answer_brochure_question(self, state: _WorkspaceState) -> dict[str, Any]:
+        request = state["request"]
+        brochure_id = state.get("brochure_id")
+        brochure = next((item for item in request.catalog.brochures if item.brochure_id == brochure_id), None)
+        if brochure is None:
+            products = ", ".join(item.product_name for item in request.catalog.brochures[:6])
+            answer = (
+                "I can check the published product brochures, but I need to know which product you mean. "
+                f"Try naming one of these: {products}."
+                if products else "There are no published product brochures available to search right now."
+            )
+            return {"response": WorkspaceResponse(
+                requestId=request.request_id, answer=answer, intent=state["intent"], risk=state["risk"],
+                actions=[], provider="SpeedClaim", model="brochure-selection",
+            )}
+        if self._policy_qa_service is None:
+            raise RuntimeError("Policy QA service is not configured")
+        result = await self._policy_qa_service.answer(PolicyQaCommand(
+            request_id=UUID(request.request_id), brochure_id=brochure.brochure_id,
+            product_id=brochure.product_id, brochure_version=brochure.version, question=request.question,
+        ))
+        source = WorkspaceSource(
+            productName=brochure.product_name,
+            brochureVersion=result.brochure_version,
+            citations=[
+                {"index": item.index, "pageNumber": item.page_number, "sectionTitle": item.section_title,
+                 "clauseReference": item.clause_reference, "excerpt": item.excerpt}
+                for item in result.citations
+            ],
+        )
+        suggestions = [
+            f"What is covered by {brochure.product_name}?",
+            f"What exclusions apply to {brochure.product_name}?",
+            f"What waiting periods apply to {brochure.product_name}?",
+        ]
+        return {"response": WorkspaceResponse(
+            requestId=request.request_id, answer=result.answer, intent=state["intent"], risk=state["risk"],
+            actions=[], sources=[source], suggestedQuestions=suggestions,
+            provider=result.provider or "SpeedClaim", model=result.model or "policy-rag",
+        )}
+
 
 def _action_for(intent: str, account: Any) -> WorkspaceAction | None:
     public_actions: dict[str, WorkspaceAction] = {
         "product_discovery": WorkspaceAction(kind="guided_quote", label="Build a quote", route=None, detail="Choose a product and review an indicative premium in this workspace.", requiresConfirmation=False),
         "proposal": WorkspaceAction(kind="guided_quote", label="Build a quote", route=None, detail="Choose a product and review an indicative premium in this workspace.", requiresConfirmation=False),
     }
-    policy_guide_action = (
-        WorkspaceAction(
-            kind="navigate",
-            label="Open Policy Guide",
-            route=f"/policies/{account.policies[0].policy_id}/guide",
-            detail="Ask questions about this policy's brochure and see the supporting source citations.",
-            requiresConfirmation=False,
-        )
-        if len(account.policies) == 1
-        else WorkspaceAction(
-            kind="navigate",
-            label="Choose a policy guide",
-            route="/policies",
-            detail="Select a policy, then open its brochure-grounded Policy Guide with source citations.",
-            requiresConfirmation=False,
-        )
-    )
     customer_actions: dict[str, WorkspaceAction] = {
-        "policy_help": policy_guide_action,
+        "policy_help": WorkspaceAction(kind="navigate", label="View my policies", route="/policies", detail="Review your policy details and account documents.", requiresConfirmation=False),
         "proposal_status": WorkspaceAction(kind="policy_status", label="Check application status", route=None, detail="Review your submitted application and policy status in this workspace.", requiresConfirmation=False),
         "premium_help": WorkspaceAction(kind="payment", label="Pay a premium", route=None, detail="Review the next payable installment before opening secure Stripe checkout.", requiresConfirmation=True),
         "claim_guidance": WorkspaceAction(kind="guided_claim", label="Start a claim", route=None, detail="Complete the claim details and explicitly confirm before submitting.", requiresConfirmation=True),
