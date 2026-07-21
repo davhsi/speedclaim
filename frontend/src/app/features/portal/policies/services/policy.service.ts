@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import {
   PolicyDto, PolicyStatusHistoryDto, EndorsementDto, PolicyNomineeDto,
   RequestEndorsementRequest, UpdateNomineeRequest, ApiMessage, PremiumScheduleDto,
+  PolicyAssistantAnswer, PolicyAssistantAvailability, PolicyAssistantConversation,
 } from '../../../../core/models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -51,6 +52,18 @@ export class PolicyService {
 
   downloadCertificate(id: string): Observable<Blob> {
     return this.http.get(`${this.api}/${id}/download`, { responseType: 'blob' });
+  }
+
+  getGuideAvailability(id: string): Observable<PolicyAssistantAvailability> {
+    return this.http.get<PolicyAssistantAvailability>(`${this.api}/${id}/assistant/availability`);
+  }
+
+  createGuideConversation(id: string): Observable<PolicyAssistantConversation> {
+    return this.http.post<PolicyAssistantConversation>(`${this.api}/${id}/assistant/conversations`, {});
+  }
+
+  askGuide(id: string, conversationId: string, question: string): Observable<PolicyAssistantAnswer> {
+    return this.http.post<PolicyAssistantAnswer>(`${this.api}/${id}/assistant/conversations/${conversationId}/messages`, { question });
   }
 
 }

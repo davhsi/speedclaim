@@ -168,4 +168,26 @@ describe('PolicyService', () => {
 
     expect(result).toEqual(blob);
   });
+
+  it('gets Policy Guide availability for a policy', () => {
+    service.getGuideAvailability('pol1').subscribe();
+
+    const call = httpMock.expectOne('/api/v1/policies/pol1/assistant/availability');
+    expect(call.request.method).toBe('GET');
+    call.flush({ available: true, state: 'Ready', brochureVersion: '1.0' });
+  });
+
+  it('creates a Policy Guide conversation and sends its question to the policy-bound endpoint', () => {
+    service.createGuideConversation('pol1').subscribe();
+    const create = httpMock.expectOne('/api/v1/policies/pol1/assistant/conversations');
+    expect(create.request.method).toBe('POST');
+    expect(create.request.body).toEqual({});
+    create.flush({ id: 'conversation-1' });
+
+    service.askGuide('pol1', 'conversation-1', 'What is covered?').subscribe();
+    const ask = httpMock.expectOne('/api/v1/policies/pol1/assistant/conversations/conversation-1/messages');
+    expect(ask.request.method).toBe('POST');
+    expect(ask.request.body).toEqual({ question: 'What is covered?' });
+    ask.flush({ requestId: 'request-1', conversationId: 'conversation-1', messageId: 'message-1', answer: 'A grounded answer.', evidenceStatus: 'Grounded', brochureVersion: '1.0', citations: [] });
+  });
 });

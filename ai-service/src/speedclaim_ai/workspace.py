@@ -173,8 +173,25 @@ def _action_for(intent: str, account: Any) -> WorkspaceAction | None:
         "product_discovery": WorkspaceAction(kind="guided_quote", label="Build a quote", route=None, detail="Choose a product and review an indicative premium in this workspace.", requiresConfirmation=False),
         "proposal": WorkspaceAction(kind="guided_quote", label="Build a quote", route=None, detail="Choose a product and review an indicative premium in this workspace.", requiresConfirmation=False),
     }
+    policy_guide_action = (
+        WorkspaceAction(
+            kind="navigate",
+            label="Open Policy Guide",
+            route=f"/policies/{account.policies[0].policy_id}/guide",
+            detail="Ask questions about this policy's brochure and see the supporting source citations.",
+            requiresConfirmation=False,
+        )
+        if len(account.policies) == 1
+        else WorkspaceAction(
+            kind="navigate",
+            label="Choose a policy guide",
+            route="/policies",
+            detail="Select a policy, then open its brochure-grounded Policy Guide with source citations.",
+            requiresConfirmation=False,
+        )
+    )
     customer_actions: dict[str, WorkspaceAction] = {
-        "policy_help": WorkspaceAction(kind="navigate", label="Open Policy Guide", route="/policies", detail="Choose the policy you mean to ask its brochure-grounded Policy Guide, with source citations.", requiresConfirmation=False),
+        "policy_help": policy_guide_action,
         "proposal_status": WorkspaceAction(kind="policy_status", label="Check application status", route=None, detail="Review your submitted application and policy status in this workspace.", requiresConfirmation=False),
         "premium_help": WorkspaceAction(kind="payment", label="Pay a premium", route=None, detail="Review the next payable installment before opening secure Stripe checkout.", requiresConfirmation=True),
         "claim_guidance": WorkspaceAction(kind="guided_claim", label="Start a claim", route=None, detail="Complete the claim details and explicitly confirm before submitting.", requiresConfirmation=True),

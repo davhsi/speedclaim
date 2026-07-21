@@ -2,7 +2,7 @@ from uuid import uuid4
 
 import pytest
 
-from speedclaim_ai.contracts.speedy import SpeedyAccountSnapshot, SpeedyCatalogSnapshot, SpeedyKycSnapshot
+from speedclaim_ai.contracts.speedy import SpeedyAccountSnapshot, SpeedyCatalogSnapshot, SpeedyKycSnapshot, SpeedyPolicySnapshot
 from speedclaim_ai.contracts.workspace import WorkspaceRequest
 from speedclaim_ai.providers.chat.base import ChatCompletion
 from speedclaim_ai.workspace import WorkspaceService, _action_for
@@ -129,3 +129,28 @@ def test_workspace_routes_customer_tasks_to_typed_in_workspace_actions():
     policy_action = _action_for("policy_help", account)
     assert policy_action.kind == "navigate"
     assert policy_action.route == "/policies"
+
+
+def test_workspace_opens_the_only_policy_guide_directly():
+    policy_id = uuid4()
+    account = SpeedyAccountSnapshot(
+        firstName="Asha",
+        isAuthenticated=True,
+        policies=[SpeedyPolicySnapshot(
+            policyId=policy_id,
+            policyNumber="POL-123",
+            productName="Family Shield",
+            status="Active",
+            coverageAmount=500000,
+            premiumAmount=6800,
+            paymentFrequency="Monthly",
+            endDate="2027-07-20",
+        )],
+        upcomingPremiums=[],
+        claims=[],
+    )
+
+    action = _action_for("policy_help", account)
+
+    assert action.label == "Open Policy Guide"
+    assert action.route == f"/policies/{policy_id}/guide"
