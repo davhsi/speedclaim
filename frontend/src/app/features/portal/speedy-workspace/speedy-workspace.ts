@@ -84,6 +84,7 @@ export class SpeedyWorkspaceComponent {
   readonly messages = signal<WorkspaceMessage[]>([]);
   readonly conversationId = signal<string | null>(null);
   readonly conversations = signal<SpeedyWorkspaceConversation[]>([]);
+  readonly mobileHistoryOpen = signal(false);
   readonly sectionNavigatorOpen = signal(false);
   readonly activeSectionIndex = signal<number | null>(null);
   readonly historyLoaded = signal(false);
@@ -214,6 +215,8 @@ export class SpeedyWorkspaceComponent {
     .map((message, messageIndex) => ({ message, messageIndex }))
     .filter(({ message }) => message.role === 'user')
     .map(({ message, messageIndex }) => ({ messageIndex, label: message.content })));
+  readonly latestEvidenceMessage = computed(() => [...this.messages()].reverse().find(message =>
+    message.role === 'assistant' && (!!message.sources?.length || !!message.citations?.length)) ?? null);
 
   constructor() {
     effect(() => {
@@ -277,6 +280,7 @@ export class SpeedyWorkspaceComponent {
     this.activeSectionIndex.set(null);
     this.question.set('');
     this.error.set(null);
+    this.mobileHistoryOpen.set(false);
   }
 
   backToSpeedClaim(): void {
@@ -289,6 +293,7 @@ export class SpeedyWorkspaceComponent {
     this.speedy.getWorkspaceConversation(conversationId).subscribe({
       next: conversation => {
         this.sectionNavigatorOpen.set(false);
+        this.mobileHistoryOpen.set(false);
         this.conversationId.set(conversation.id);
         this.messages.set((conversation.messages ?? []).map(message => ({
           role: message.role.toLowerCase() as WorkspaceMessage['role'],
@@ -332,7 +337,12 @@ export class SpeedyWorkspaceComponent {
         const message = status === 'Approved'
           ? 'Your KYC is already verified. You do not need to submit documents again.'
           : 'Your Aadhaar and PAN are already submitted and awaiting underwriter review. You do not need to submit them again. We will notify you in SpeedClaim and by email once review is complete.';
-        this.messages.update(messages => [...messages, { role: 'assistant', content: message }]);
+        this.messages.update(messages => [...messages, {
+          role: 'assistant', content: message,
+          suggestedQuestions: status === 'Approved'
+            ? ['What insurance products are available for me?', 'Help me choose the right health cover.', 'How do I get an indicative quote?']
+            : ['What can I do while my KYC is under review?', 'What insurance products are available for me?', 'How do I get an indicative quote?'],
+        }]);
         this.announce(message);
         return;
       }

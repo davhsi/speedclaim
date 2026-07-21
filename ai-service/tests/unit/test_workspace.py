@@ -110,6 +110,7 @@ async def test_workspace_does_not_offer_resubmission_when_kyc_is_under_review():
     assert response.actions == []
     assert "awaiting underwriter review" in response.answer
     assert "do not need to submit them again" in response.answer
+    assert "What insurance products are available for me?" in response.suggested_questions
 
 
 def test_workspace_routes_customer_tasks_to_typed_in_workspace_actions():

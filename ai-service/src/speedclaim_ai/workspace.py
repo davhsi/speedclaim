@@ -145,6 +145,7 @@ class WorkspaceService:
                     intent=state["intent"],
                     risk=state["risk"],
                     actions=state["actions"],
+                    suggestedQuestions=_kyc_follow_ups(request.account),
                     provider="SpeedClaim",
                     model="kyc-status-workflow",
                 )
@@ -257,3 +258,17 @@ def _action_for(intent: str, account: Any) -> WorkspaceAction | None:
     if intent == "kyc" and kyc_is_under_review_or_approved(account):
         return None
     return customer_actions.get(intent) if account.is_authenticated else None
+
+
+def _kyc_follow_ups(account: Any) -> list[str]:
+    if account.kyc and account.kyc.status == "Approved":
+        return [
+            "What insurance products are available for me?",
+            "Help me choose the right health cover.",
+            "How do I get an indicative quote?",
+        ]
+    return [
+        "What can I do while my KYC is under review?",
+        "What insurance products are available for me?",
+        "How do I get an indicative quote?",
+    ]
