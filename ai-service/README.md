@@ -8,9 +8,12 @@ conversation records, autonomous domain writes, and staff-side AI workflows rema
 out of scope.
 
 R5 adds the internal, LangGraph-powered Speedy workspace endpoint. The graph uses a small
-Haiku route-classification step followed by a Sonnet answer step, but it has no domain-write
-tools: it produces validated guidance and typed actions only. The .NET API owns customer
-authorization, audit logging, and every actual business action.
+Haiku route-classification step, then invokes one named Customer Assistant Tool before a Sonnet
+answer step. Tools are explicitly limited to `read` and `prepare`: they operate only on the
+authorized .NET-supplied projection, have no customer-id arguments or database credentials, and
+cannot commit a business action. The response records tool metadata for .NET audit logs. The
+.NET API owns customer authorization, audit logging, and every actual business action. This
+transport-neutral tool layer is also the future compatibility boundary for an MCP adapter.
 
 ## Prerequisites
 
