@@ -226,7 +226,13 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
             await _unitOfWork.AuditLogs.AddAsync(new AuditLog
             {
                 Id = Guid.NewGuid(), UserId = customerUserId.Value, EntityType = "Customer", EntityId = customer.Id,
-                Action = "SpeedyWorkspaceAnswered", NewValue = JsonSerializer.Serialize(new { response.RequestId, response.Intent, response.Risk }), CreatedAt = DateTime.UtcNow
+                Action = "SpeedyWorkspaceAnswered", NewValue = JsonSerializer.Serialize(new
+                {
+                    response.RequestId,
+                    response.Intent,
+                    response.Risk,
+                    ToolNames = response.ToolCalls?.Select(tool => tool.Name) ?? []
+                }), CreatedAt = DateTime.UtcNow
             });
             await _unitOfWork.CompleteAsync();
             response = response with { ConversationId = conversation.Id };

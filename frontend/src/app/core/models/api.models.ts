@@ -814,11 +814,13 @@ export interface SpeedyWorkspaceAction {
 }
 export interface SpeedyWorkspaceCitation { index: number; pageNumber: number; sectionTitle?: string | null; clauseReference?: string | null; excerpt: string; }
 export interface SpeedyWorkspaceSource { productName: string; brochureVersion: string; citations: SpeedyWorkspaceCitation[]; }
+export interface SpeedyWorkspaceToolCall { name: string; kind: 'read' | 'prepare'; }
 export interface SpeedyWorkspaceResponse {
   requestId: string; answer: string; intent: string; risk: 'low' | 'regulated'; actions: SpeedyWorkspaceAction[];
   sources: SpeedyWorkspaceSource[]; suggestedQuestions: string[];
   provider?: string | null; model?: string | null; conversationId?: string | null;
   evidenceStatus?: 'Grounded' | 'InsufficientEvidence' | 'Rejected' | null; brochureVersion?: string | null; citations?: PolicyAssistantCitation[] | null;
+  toolCalls?: SpeedyWorkspaceToolCall[];
 }
 export interface SpeedyWorkspaceMessage {
   id: string; role: 'user' | 'assistant'; content: string; intent?: string | null; risk?: 'low' | 'regulated' | null;

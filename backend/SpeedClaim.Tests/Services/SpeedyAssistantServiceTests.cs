@@ -112,6 +112,10 @@ public class SpeedyAssistantServiceTests
                 AadhaarDocumentKey = "uploads/kyc/aadhaar.pdf", PanDocumentKey = "uploads/kyc/pan.pdf"
             });
         var auditLogs = new Mock<IRepository<AuditLog>>();
+        AuditLog? recordedAudit = null;
+        auditLogs.Setup(x => x.AddAsync(It.IsAny<AuditLog>()))
+            .Callback<AuditLog>(audit => recordedAudit = audit)
+            .Returns(Task.CompletedTask);
         var users = new Mock<IUserRepository>();
         users.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync(new User { Id = userId, FirstName = "Asha" });
 
@@ -136,7 +140,9 @@ public class SpeedyAssistantServiceTests
         SpeedyWorkspaceRequest? captured = null;
         workspaceClient.Setup(x => x.AnswerAsync(It.IsAny<SpeedyWorkspaceRequest>(), It.IsAny<CancellationToken>()))
             .Callback<SpeedyWorkspaceRequest, CancellationToken>((request, _) => captured = request)
-            .ReturnsAsync(new SpeedyWorkspaceResponse(Guid.NewGuid(), "Start with your Aadhaar and PAN.", "kyc", "regulated", [], [], [], "Fake", "fake-model"));
+            .ReturnsAsync(new SpeedyWorkspaceResponse(
+                Guid.NewGuid(), "Start with your Aadhaar and PAN.", "kyc", "regulated", [], [], [], "Fake", "fake-model",
+                ToolCalls: [new SpeedyWorkspaceToolCall("get_my_kyc_next_step", "read")]));
         var service = new SpeedyAssistantService(unitOfWork.Object, new Mock<ISpeedyAssistantClient>().Object, workspaceClient.Object);
 
         var response = await service.AnswerWorkspaceAsync(userId, "Help me complete KYC");
@@ -149,5 +155,6 @@ public class SpeedyAssistantServiceTests
         Assert.That(captured!.Account.Kyc, Is.Not.Null);
         Assert.That(captured.Account.Kyc!.Status, Is.EqualTo("Pending"));
         Assert.That(captured.Account.Kyc.AadhaarUploaded && captured.Account.Kyc.PanUploaded, Is.True);
+        Assert.That(recordedAudit?.NewValue, Does.Contain("get_my_kyc_next_step"));
     }
 }

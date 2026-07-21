@@ -21,7 +21,10 @@ public record SpeedyWorkspaceResponse(
     Guid? ConversationId = null,
     string? EvidenceStatus = null,
     string? BrochureVersion = null,
-    IReadOnlyList<PolicyAssistantCitationDto>? Citations = null);
+    IReadOnlyList<PolicyAssistantCitationDto>? Citations = null,
+    IReadOnlyList<SpeedyWorkspaceToolCall>? ToolCalls = null);
+
+public record SpeedyWorkspaceToolCall(string Name, string Kind);
 
 public record SpeedyWorkspaceConversationDto(
     Guid Id, string Title, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt,

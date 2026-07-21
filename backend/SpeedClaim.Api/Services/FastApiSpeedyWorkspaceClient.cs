@@ -54,6 +54,7 @@ public sealed class FastApiSpeedyWorkspaceClient : ISpeedyWorkspaceClient
             var result = await response.Content.ReadFromJsonAsync<SpeedyWorkspaceResponse>(JsonOptions, timeout.Token);
             if (result is null || result.RequestId != request.RequestId || string.IsNullOrWhiteSpace(result.Answer) ||
                 string.IsNullOrWhiteSpace(result.Intent) || result.Actions.Any(a => string.IsNullOrWhiteSpace(a.Kind) || string.IsNullOrWhiteSpace(a.Label)) ||
+                (result.ToolCalls?.Any(tool => string.IsNullOrWhiteSpace(tool.Name) || tool.Kind is not ("read" or "prepare")) ?? false) ||
                 result.Sources.Any(source => string.IsNullOrWhiteSpace(source.ProductName) || string.IsNullOrWhiteSpace(source.BrochureVersion) || source.Citations.Any(c => c.PageNumber < 1 || string.IsNullOrWhiteSpace(c.Excerpt))))
                 throw new BrochureIngestionException("invalid_workspace_response", "Speedy returned an invalid response.");
             return result;

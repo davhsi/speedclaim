@@ -5,6 +5,7 @@ import pytest
 from speedclaim_ai.contracts.speedy import SpeedyAccountSnapshot, SpeedyCatalogSnapshot, SpeedyKycSnapshot, SpeedyPolicySnapshot
 from speedclaim_ai.contracts.workspace import WorkspaceRequest
 from speedclaim_ai.providers.chat.base import ChatCompletion
+from speedclaim_ai.tools.customer import CustomerAssistantTools
 from speedclaim_ai.workspace import WorkspaceService, _action_for, _follow_ups_for
 
 
@@ -30,7 +31,8 @@ class FakeAnswerProvider:
 
     async def complete(self, request):
         assert "AADHAAR" not in request.user_prompt
-        assert "ACCOUNT_DATA" in request.user_prompt
+        assert "TOOL_RESULT" in request.user_prompt
+        assert "ACCOUNT_DATA" not in request.user_prompt
         return ChatCompletion(
             content='{"answer":"Attach Aadhaar and PAN in the labelled slots, then review your submission."}',
             provider=self.provider_name,
@@ -69,6 +71,7 @@ async def test_workspace_runs_a_langgraph_workflow_and_returns_a_guided_kyc_acti
     assert response.actions[0].kind == "guided_kyc"
     assert response.actions[0].requires_confirmation is True
     assert response.model == "fake-sonnet"
+    assert response.tool_calls[0].name == "get_my_kyc_next_step"
 
 
 async def test_workspace_does_not_offer_signed_in_actions_to_a_guest():
@@ -163,3 +166,46 @@ def test_workspace_keeps_policy_help_in_the_workspace():
 
     assert action.label == "View my policies"
     assert action.route == "/policies"
+
+
+def test_customer_tools_return_only_named_read_capabilities_for_account_workflows():
+    account = SpeedyAccountSnapshot(
+        firstName="Asha",
+        isAuthenticated=True,
+        policies=[],
+        upcomingPremiums=[],
+        claims=[],
+    )
+    request = WorkspaceRequest(
+        requestId=str(uuid4()), question="What is my claim status?", account=account,
+        catalog=SpeedyCatalogSnapshot(products=[]),
+    )
+
+    execution = CustomerAssistantTools().execute("claim_status", request)
+
+    assert execution.call.name == "get_my_claim_status"
+    assert execution.call.kind == "read"
+    assert execution.action is not None
+    assert execution.action.kind == "claim_status"
+    assert "items" in execution.facts
+
+
+def test_customer_tools_do_not_create_a_commit_capability():
+    account = SpeedyAccountSnapshot(
+        firstName="Asha",
+        isAuthenticated=True,
+        policies=[],
+        upcomingPremiums=[],
+        claims=[],
+    )
+    request = WorkspaceRequest(
+        requestId=str(uuid4()), question="Help me make a claim", account=account,
+        catalog=SpeedyCatalogSnapshot(products=[]),
+    )
+
+    execution = CustomerAssistantTools().execute("claim_guidance", request)
+
+    assert execution.call.name == "prepare_claim_draft"
+    assert execution.call.kind == "prepare"
+    assert execution.action is not None
+    assert execution.action.requires_confirmation is True

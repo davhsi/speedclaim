@@ -29,6 +29,15 @@ class WorkspaceAction(BaseModel):
     requires_confirmation: bool = Field(alias="requiresConfirmation", default=False)
 
 
+class WorkspaceToolCall(BaseModel):
+    """One named capability invoked by the LangGraph workflow."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    name: str = Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_]*$")
+    kind: Literal["read", "prepare"]
+
+
 class WorkspaceCitation(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
@@ -59,3 +68,4 @@ class WorkspaceResponse(BaseModel):
     suggested_questions: list[str] = Field(alias="suggestedQuestions", default_factory=list, max_length=5)
     provider: str | None = None
     model: str | None = None
+    tool_calls: list[WorkspaceToolCall] = Field(alias="toolCalls", default_factory=list, max_length=4)
