@@ -4,6 +4,7 @@ using SpeedClaim.Api.Exceptions;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Models;
 using SpeedClaim.Api.Models.Enums;
+using SpeedClaim.Api.Dtos.Policies;
 
 namespace SpeedClaim.Api.Services;
 
@@ -12,12 +13,14 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
     private readonly IUnitOfWork _unitOfWork;
     private readonly ISpeedyAssistantClient _client;
     private readonly ISpeedyWorkspaceClient? _workspaceClient;
+    private readonly IPolicyQaClient? _policyQaClient;
 
-    public SpeedyAssistantService(IUnitOfWork unitOfWork, ISpeedyAssistantClient client, ISpeedyWorkspaceClient? workspaceClient = null)
+    public SpeedyAssistantService(IUnitOfWork unitOfWork, ISpeedyAssistantClient client, ISpeedyWorkspaceClient? workspaceClient = null, IPolicyQaClient? policyQaClient = null)
     {
         _unitOfWork = unitOfWork;
         _client = client;
         _workspaceClient = workspaceClient;
+        _policyQaClient = policyQaClient;
     }
 
     public async Task<SpeedyAssistantResponse> AnswerAsync(Guid? customerUserId, string question, CancellationToken cancellationToken = default)
@@ -171,6 +174,7 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
                 .OrderByDescending(g => g.CreatedAt).Take(5).ToList();
         var policyNumbers = policies.ToDictionary(p => p.Id, p => p.PolicyNumber);
 
+        var policyAnswer = await TryAnswerPolicyQuestionAsync(customerUserId, policies, question, cancellationToken);
         var request = new SpeedyWorkspaceRequest(
             Guid.NewGuid(),
             question.Trim(),
@@ -194,7 +198,7 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
                 ToKycSnapshot(kyc)),
             new SpeedyCatalogSnapshot(catalog, brochures));
 
-        var response = await _workspaceClient.AnswerAsync(request, cancellationToken);
+        var response = policyAnswer ?? await _workspaceClient.AnswerAsync(request, cancellationToken);
         if (customerUserId.HasValue && customer is not null)
         {
             var conversation = await GetOrCreateWorkspaceConversationAsync(customerUserId.Value, conversationId, question);
@@ -208,7 +212,10 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
                 {
                     Id = Guid.NewGuid(), ConversationId = conversation.Id, Role = SpeedyWorkspaceMessageRole.Assistant,
                     Content = response.Answer, Intent = response.Intent, Risk = response.Risk,
-                    ActionsJson = JsonSerializer.Serialize(response.Actions), Model = response.Model, CreatedAt = DateTimeOffset.UtcNow
+                    ActionsJson = JsonSerializer.Serialize(response.Actions), Model = response.Model,
+                    EvidenceStatus = response.EvidenceStatus, BrochureVersion = response.BrochureVersion,
+                    CitationsJson = response.Citations is { Count: > 0 } ? JsonSerializer.Serialize(response.Citations) : null,
+                    CreatedAt = DateTimeOffset.UtcNow
                 }
             ]);
             conversation.UpdatedAt = DateTimeOffset.UtcNow;
@@ -275,6 +282,53 @@ public sealed class SpeedyAssistantService : ISpeedyAssistantService
         var actions = string.IsNullOrWhiteSpace(message.ActionsJson)
             ? []
             : JsonSerializer.Deserialize<List<SpeedyWorkspaceAction>>(message.ActionsJson) ?? [];
-        return new(message.Id, message.Role.ToString(), message.Content, message.Intent, message.Risk, actions, [], [], message.CreatedAt);
+        var citations = string.IsNullOrWhiteSpace(message.CitationsJson)
+            ? []
+            : JsonSerializer.Deserialize<List<PolicyAssistantCitationDto>>(message.CitationsJson) ?? [];
+        return new(message.Id, message.Role.ToString(), message.Content, message.Intent, message.Risk, actions, [], [], message.CreatedAt,
+            message.EvidenceStatus, message.BrochureVersion, citations);
+    }
+
+    private async Task<SpeedyWorkspaceResponse?> TryAnswerPolicyQuestionAsync(
+        Guid? customerUserId, IReadOnlyList<Policy> policies, string question, CancellationToken cancellationToken)
+    {
+        if (!customerUserId.HasValue || _policyQaClient is null || !LooksLikePolicyTermsQuestion(question)) return null;
+
+        var candidates = policies
+            .Where(p => p.Status == PolicyStatus.Active && p.ProductBrochureId.HasValue)
+            .OrderByDescending(p => p.EndDate)
+            .ToList();
+        var namedCandidates = candidates.Where(policy =>
+            question.Contains(policy.PolicyNumber, StringComparison.OrdinalIgnoreCase) ||
+            (!string.IsNullOrWhiteSpace(policy.Product?.ProductName) && question.Contains(policy.Product.ProductName, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+        if (namedCandidates.Count == 1) candidates = namedCandidates;
+        if (candidates.Count != 1)
+        {
+            var clarification = candidates.Count > 1
+                ? "I can check the exact brochure terms, but you have more than one active policy. Please include the policy number or product name so I can use the right policy document."
+                : "I can check brochure-grounded policy terms once an active policy with an available brochure is selected.";
+            return new(Guid.NewGuid(), clarification, "policy_terms_clarification", "regulated", [], [], [], null, null);
+        }
+
+        var policy = candidates[0];
+        var brochure = await _unitOfWork.ProductBrochures.GetByIdAsync(policy.ProductBrochureId!.Value);
+        if (brochure is null || brochure.Status is not (ProductBrochureStatus.Published or ProductBrochureStatus.Archived) || brochure.PageCount <= 0 || brochure.ChildChunkCount <= 0)
+            return new(Guid.NewGuid(), "I found your policy, but its brochure evidence is not ready yet. Please try again later.", "policy_terms_unavailable", "regulated", [], [], [], null, null);
+
+        var requestId = Guid.NewGuid();
+        var answer = await _policyQaClient.AnswerAsync(new PolicyQaRequest(requestId, brochure.Id, policy.ProductId, brochure.Version, question.Trim()), cancellationToken);
+        if (answer.RequestId != requestId || answer.EvidenceStatus is not ("Grounded" or "InsufficientEvidence" or "Rejected"))
+            throw new BrochureIngestionException("invalid_policy_qa_response", "Speedy returned an invalid policy-evidence response.");
+
+        return new(requestId, answer.Answer, "policy_terms", "regulated", [], [], [], answer.Provider, answer.Model,
+            null, answer.EvidenceStatus, brochure.Version, answer.Citations);
+    }
+
+    private static bool LooksLikePolicyTermsQuestion(string question)
+    {
+        var normalized = question.ToLowerInvariant();
+        string[] cues = ["my policy", "policy cover", "policy coverage", "hospital", "hospitalisation", "hospitalization", "exclusion", "waiting period", "room rent", "day care", "cashless", "pre-existing", "pre existing", "maternity", "sub-limit", "sub limit", "brochure", "policy terms", "claim document"];
+        return cues.Any(cue => normalized.Contains(cue, StringComparison.Ordinal));
     }
 }

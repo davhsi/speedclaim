@@ -11,6 +11,9 @@ public class SpeedyWorkspaceMessage
     public string? Intent { get; set; }
     public string? Risk { get; set; }
     public string? ActionsJson { get; set; }
+    public string? EvidenceStatus { get; set; }
+    public string? BrochureVersion { get; set; }
+    public string? CitationsJson { get; set; }
     public string? Model { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 

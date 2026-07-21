@@ -131,7 +131,7 @@ def test_workspace_routes_customer_tasks_to_typed_in_workspace_actions():
     assert policy_action.route == "/policies"
 
 
-def test_workspace_opens_the_only_policy_guide_directly():
+def test_workspace_keeps_policy_help_in_the_workspace():
     policy_id = uuid4()
     account = SpeedyAccountSnapshot(
         firstName="Asha",
@@ -152,5 +152,5 @@ def test_workspace_opens_the_only_policy_guide_directly():
 
     action = _action_for("policy_help", account)
 
-    assert action.label == "Open Policy Guide"
-    assert action.route == f"/policies/{policy_id}/guide"
+    assert action.label == "View my policies"
+    assert action.route == "/policies"
