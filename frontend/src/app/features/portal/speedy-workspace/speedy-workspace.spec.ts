@@ -73,6 +73,15 @@ describe('SpeedyWorkspaceComponent', () => {
       .toBe('<p><strong>Health cover</strong></p><ol><li>Compare products</li></ol><ul><li>Check waiting period</li></ul><p>&lt;script&gt;alert(1)&lt;/script&gt;</p>');
   });
 
+  it('renders Markdown tables as accessible table markup', () => {
+    const fixture = TestBed.createComponent(SpeedyWorkspaceComponent);
+
+    expect(fixture.componentInstance.renderMarkdown('| Due date | Amount |\n| --- | ---: |\n| 20 Aug 2026 | ₹6,800 |'))
+      .toContain('<table class="min-w-full border-collapse text-left text-sm">');
+    expect(fixture.componentInstance.renderMarkdown('| Due date | Amount |\n| --- | ---: |\n| 20 Aug 2026 | ₹6,800 |'))
+      .toContain('<th class="whitespace-nowrap border-b border-[#DCE4EC] px-3 py-2 font-bold text-[#27364A]">Due date</th>');
+  });
+
   it('starts a clean conversation without losing the persisted history list', () => {
     const fixture = TestBed.createComponent(SpeedyWorkspaceComponent);
     fixture.componentInstance.conversationId.set('conversation-1');

@@ -19,6 +19,7 @@
         <div class="min-w-0"><h1 class="truncate text-sm font-bold text-[#1B2738]">{{ conversationId() ? 'Conversation with Speedy' : 'New conversation' }}</h1><p class="hidden text-xs text-[#738197] sm:block">Guided insurance support</p></div>
       </div>
       <div class="flex items-center gap-2">
+        <button type="button" (click)="mobileHistoryOpen.set(true)" class="flex h-9 items-center gap-1.5 rounded-lg px-2 text-xs font-bold text-[#42526A] hover:bg-[#F1F4F7] lg:hidden" aria-label="Open previous chats"><span aria-hidden="true">☰</span><span class="hidden xs:inline">Chats</span></button>
         <span class="hidden rounded-full border border-[#F2D9A5] bg-[#FFF9EF] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#8A5700] sm:inline">Supervised AI</span>
         <button type="button" (click)="startNewChat()" class="rounded-lg px-3 py-2 text-xs font-bold text-[#42526A] transition hover:bg-[#F1F4F7]">New chat</button>
       </div>
@@ -50,17 +51,6 @@
               @if (message.actions?.length) {
                 <div class="mt-4 flex flex-wrap gap-2 pl-10">
                   @for (action of message.actions; track action.label) { <button type="button" (click)="runAction(action)" class="rounded-lg bg-[#F5A623] px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-[#D4891A]">{{ action.label }}</button> }
-                </div>
-              }
-              @if (message.sources?.length) {
-                <div class="mt-4 border-l-2 border-[#F5A623] pl-3 ml-10">
-                  <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-[#9A6500]">Brochure sources</p>
-                  @for (source of message.sources; track source.productName + source.brochureVersion) {
-                    <details class="mt-2 rounded-lg border border-[#E9C979] bg-[#FFF9ED] px-3 py-2 text-xs text-[#5F4B28]">
-                      <summary class="cursor-pointer font-bold">{{ source.productName }} · brochure {{ source.brochureVersion }} · {{ source.citations.length }} source{{ source.citations.length === 1 ? '' : 's' }}</summary>
-                      <div class="mt-2 space-y-2">@for (citation of source.citations; track citation.index) { <div class="border-t border-[#F0D197] pt-2"><p class="font-semibold">Page {{ citation.pageNumber }}@if (citation.sectionTitle) { · {{ citation.sectionTitle }} }</p><p class="mt-1 leading-5">{{ citation.excerpt }}</p></div> }</div>
-                    </details>
-                  }
                 </div>
               }
               @if (message.suggestedQuestions?.length) {
@@ -103,7 +93,25 @@
         </nav>
       </section>
     }
+    @if (latestEvidenceMessage(); as evidence) {
+      <section class="absolute right-3 top-20 z-30 hidden max-h-[calc(100dvh-8rem)] w-[320px] flex-col overflow-hidden rounded-2xl border border-[#E3E8EF] bg-white text-[#27364A] shadow-[0_18px_48px_rgba(20,34,53,0.2)] xl:flex" aria-label="Brochure sources">
+        <header class="border-b border-[#E8EDF2] bg-[#FFF9ED] px-4 py-3"><p class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#9A6500]">Brochure sources</p><p class="mt-1 text-xs leading-5 text-[#6E5B36]">Evidence for the latest grounded answer</p></header>
+        <div class="min-h-0 flex-1 overflow-y-auto p-3">
+          @if (evidence.sources?.length) { @for (source of evidence.sources; track source.productName + source.brochureVersion) { <section class="mb-3 rounded-xl border border-[#E9C979] bg-[#FFFDF8] p-3"><p class="text-xs font-bold text-[#5F4B28]">{{ source.productName }}</p><p class="mt-1 text-[11px] text-[#8A6B35]">Brochure {{ source.brochureVersion }}</p><div class="mt-3 space-y-3">@for (citation of source.citations; track citation.index) { <article class="border-t border-[#F0D197] pt-2 first:border-t-0 first:pt-0"><p class="text-xs font-bold">Page {{ citation.pageNumber }}@if (citation.sectionTitle) { · {{ citation.sectionTitle }} }</p><p class="mt-1 text-xs leading-5 text-[#6E5B36]">{{ citation.excerpt }}</p></article> }</div></section> } } @else if (evidence.citations?.length) { <section class="rounded-xl border border-[#E9C979] bg-[#FFFDF8] p-3"><p class="text-xs font-bold text-[#5F4B28]">Policy brochure {{ evidence.brochureVersion }}</p><div class="mt-3 space-y-3">@for (citation of evidence.citations; track citation.index) { <article class="border-t border-[#F0D197] pt-2 first:border-t-0 first:pt-0"><p class="text-xs font-bold">Page {{ citation.pageNumber }}@if (citation.sectionTitle) { · {{ citation.sectionTitle }} }@if (citation.clauseReference) { · Clause {{ citation.clauseReference }} }</p><p class="mt-1 text-xs leading-5 text-[#6E5B36]">{{ citation.excerpt }}</p></article> }</div></section> }
+        </div>
+      </section>
+    }
   </aside>
+
+  @if (mobileHistoryOpen()) {
+    <div class="fixed inset-0 z-40 bg-[#101722]/60 lg:hidden" (click)="mobileHistoryOpen.set(false)">
+      <aside class="flex h-full w-[min(86vw,340px)] flex-col bg-[#16191D] shadow-2xl" (click)="$event.stopPropagation()" aria-label="Conversation history">
+        <header class="flex items-center justify-between px-5 py-5"><button type="button" (click)="backToSpeedClaim()" class="flex items-center gap-2 text-lg font-bold text-white"><img src="/speedy/speedy-amber.png" class="h-8 w-8 rounded-lg bg-[#FFF8EA] object-contain p-0.5" alt="" /> Speedy</button><button type="button" (click)="mobileHistoryOpen.set(false)" class="rounded-lg px-2 py-1 text-xl text-[#AAB1BC]" aria-label="Close chats">×</button></header>
+        <div class="px-4"><button type="button" (click)="startNewChat()" class="w-full rounded-full bg-[#4A4B51] px-4 py-3 text-base font-semibold text-white">⊕&nbsp; New chat</button></div>
+        <nav class="min-h-0 flex-1 overflow-y-auto px-4 py-6">@if (signedIn()) { @if (recentConversations().length) { <p class="mb-3 px-2 text-sm font-medium text-[#AEB2BB]">Last 7 days</p>@for (conversation of recentConversations(); track conversation.id) { <button type="button" (click)="openConversation(conversation.id)" class="mb-1 w-full truncate rounded-xl px-3 py-3 text-left text-base text-[#E1E3E7] hover:bg-white/[0.07]">{{ conversation.title }}</button> } } @if (previousConversations().length) { <p class="mb-3 mt-6 px-2 text-sm font-medium text-[#AEB2BB]">Previous 30 days</p>@for (conversation of previousConversations(); track conversation.id) { <button type="button" (click)="openConversation(conversation.id)" class="mb-1 w-full truncate rounded-xl px-3 py-3 text-left text-base text-[#E1E3E7] hover:bg-white/[0.07]">{{ conversation.title }}</button> } } @if (!conversations().length) { <p class="px-2 text-sm text-[#AAB1BC]">Your saved conversations will appear here.</p> } } @else { <p class="px-2 text-sm text-[#AAB1BC]">Sign in to keep and reopen your conversations.</p> }</nav>
+      </aside>
+    </div>
+  }
 
   @if (showKyc()) {
     <div class="fixed inset-0 z-50 flex items-end bg-[#172033]/55 p-0 md:items-center md:justify-center md:p-6" role="dialog" aria-modal="true" aria-labelledby="guided-kyc-title">
