@@ -29,13 +29,11 @@ public static class McpEndpointRouteBuilderExtensions
             return app;
 
         options.ValidateWhenEnabled();
-        app.MapGet("/.well-known/oauth-protected-resource", () => Results.Ok(new
-        {
-            resource = options.ResourceServerIdentifier,
-            authorization_servers = new[] { options.Issuer },
-            scopes_supported = new[] { CatalogRead, AccountRead },
-            bearer_methods_supported = new[] { "header" }
-        })).AllowAnonymous();
+        // RFC 9728 discovery is path-aware. Some MCP hosts first probe the path-specific
+        // document for /mcp, while others probe the origin document. Serve identical metadata
+        // from both locations so either compliant discovery strategy can start OAuth.
+        app.MapGet("/.well-known/oauth-protected-resource", () => ProtectedResourceMetadata(options)).AllowAnonymous();
+        app.MapGet("/.well-known/oauth-protected-resource/mcp", () => ProtectedResourceMetadata(options)).AllowAnonymous();
         app.MapPost("/mcp", HandleAsync).AllowAnonymous();
         return app;
     }
@@ -79,7 +77,7 @@ public static class McpEndpointRouteBuilderExtensions
 
             var authenticate = await context.AuthenticateAsync(AuthScheme);
             if (!authenticate.Succeeded || authenticate.Principal is null)
-                return Results.Json(Result(id, AuthenticationRequired(options.Value)), statusCode: StatusCodes.Status200OK);
+                return AuthenticationRequired(context, id, options.Value);
 
             var requiredScope = CatalogTools.Contains(toolName, StringComparer.Ordinal) ? CatalogRead : AccountRead;
             if (!HasScope(authenticate.Principal, requiredScope))
@@ -150,15 +148,25 @@ public static class McpEndpointRouteBuilderExtensions
         isError = true
     };
 
-    private static object AuthenticationRequired(McpExternalOptions options) => new
+    private static object ProtectedResourceMetadata(McpExternalOptions options) => new
     {
-        content = new[] { new { type = "text", text = "Authentication required. Sign in with Auth0 to continue." } },
-        isError = true,
-        _meta = new Dictionary<string, string[]>
-        {
-            ["mcp/www_authenticate"] = [$"Bearer resource_metadata=\"{options.PublicBaseUrl!.TrimEnd('/')}/.well-known/oauth-protected-resource\", error=\"invalid_token\", error_description=\"Sign in to SpeedClaim\""]
-        }
+        resource = options.ResourceServerIdentifier,
+        authorization_servers = new[] { options.Issuer },
+        scopes_supported = new[] { CatalogRead, AccountRead },
+        bearer_methods_supported = new[] { "header" }
     };
+
+    private static IResult AuthenticationRequired(HttpContext context, JsonElement id, McpExternalOptions options)
+    {
+        // An OAuth-protected MCP resource must return a real HTTP 401 challenge. Returning a
+        // successful JSON-RPC tool result leaves hosts able to display an error but unable to
+        // discover and launch the authorization flow.
+        var resourceMetadata = $"{options.PublicBaseUrl!.TrimEnd('/')}/.well-known/oauth-protected-resource/mcp";
+        context.Response.Headers.WWWAuthenticate = $"Bearer resource_metadata=\"{resourceMetadata}\", error=\"invalid_token\", error_description=\"Sign in to SpeedClaim\"";
+        return Results.Json(
+            Result(id, ToolError("Authentication required. Sign in with Auth0 to continue.")),
+            statusCode: StatusCodes.Status401Unauthorized);
+    }
 
     private static object Result(JsonElement id, object result) => new { jsonrpc = "2.0", id = ToId(id), result };
     private static object Error(JsonElement id, int code, string message) => new { jsonrpc = "2.0", id = ToId(id), error = new { code, message } };
