@@ -3,6 +3,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SpeedClaim.Api.Configuration;
 using SpeedClaim.Api.Exceptions;
@@ -38,7 +39,12 @@ public static class McpEndpointRouteBuilderExtensions
         return app;
     }
 
-    private static async Task<IResult> HandleAsync(HttpContext context, McpReadOnlyToolService tools, IExternalIdentityService identities, IOptions<McpExternalOptions> options)
+    private static async Task<IResult> HandleAsync(
+        HttpContext context,
+        McpReadOnlyToolService tools,
+        IExternalIdentityService identities,
+        IOptions<McpExternalOptions> options,
+        ILoggerFactory loggerFactory)
     {
         JsonDocument request;
         try { request = await JsonDocument.ParseAsync(context.Request.Body, cancellationToken: context.RequestAborted); }
@@ -46,6 +52,7 @@ public static class McpEndpointRouteBuilderExtensions
 
         using (request)
         {
+            var logger = loggerFactory.CreateLogger("SpeedClaim.Mcp");
             var root = request.RootElement;
             var id = root.TryGetProperty("id", out var idElement) ? idElement.Clone() : default;
             if (!root.TryGetProperty("method", out var methodElement) || methodElement.ValueKind != JsonValueKind.String)
@@ -86,7 +93,10 @@ public static class McpEndpointRouteBuilderExtensions
 
             var requiredScope = CatalogTools.Contains(toolName, StringComparer.Ordinal) ? CatalogRead : AccountRead;
             if (!HasScope(authenticate.Principal, requiredScope))
+            {
+                LogMissingScope(logger, authenticate.Principal, requiredScope);
                 return InsufficientScope(context, id, options.Value, requiredScope);
+            }
 
             var subject = authenticate.Principal.FindFirstValue("sub");
             if (string.IsNullOrWhiteSpace(subject))
@@ -158,9 +168,31 @@ public static class McpEndpointRouteBuilderExtensions
     // `permissions` as a JSON array. ASP.NET exposes that array as one Claim.Value, so a
     // whitespace-only split made valid Auth0 permissions look missing to external MCP hosts.
     public static bool HasScope(ClaimsPrincipal principal, string requiredScope) => principal.Claims
-        .Where(claim => claim.Type is "scope" or "permissions")
+        .Where(IsScopeClaim)
         .SelectMany(ReadClaimScopes)
         .Contains(requiredScope, StringComparer.Ordinal);
+
+    private static bool IsScopeClaim(Claim claim) =>
+        claim.Type is "scope" or "scp" or "permissions"
+        || claim.Type.EndsWith("/scope", StringComparison.OrdinalIgnoreCase)
+        || claim.Type.EndsWith("/scp", StringComparison.OrdinalIgnoreCase)
+        || claim.Type.EndsWith("/permissions", StringComparison.OrdinalIgnoreCase);
+
+    private static void LogMissingScope(ILogger logger, ClaimsPrincipal principal, string requiredScope)
+    {
+        // This deliberately records only claim names and permission values, never a raw bearer
+        // token or customer identity. It lets us safely identify an IdP-specific claim shape if
+        // another compliant OAuth host presents scopes differently from Auth0's defaults.
+        var scopeClaims = principal.Claims
+            .Where(IsScopeClaim)
+            .Select(claim => new { claim.Type, claim.Value })
+            .ToArray();
+
+        logger.LogWarning(
+            "External MCP token does not satisfy scope {RequiredScope}. Scope-related claims: {@ScopeClaims}",
+            requiredScope,
+            scopeClaims);
+    }
 
     private static IEnumerable<string> ReadClaimScopes(Claim claim)
     {
