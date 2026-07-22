@@ -52,6 +52,15 @@ public static class McpEndpointRouteBuilderExtensions
                 return Results.Json(Error(id, -32600, "Invalid Request"));
 
             var method = methodElement.GetString();
+            // OAuth for remote MCP is transport-level: the same bearer token must accompany
+            // initialize, tools/list, and tools/call. Previously we allowed discovery calls
+            // through anonymously and challenged only on tools/call. That let hosts display
+            // the tools before associating the OAuth session with the connector, which could
+            // lead them to register or authorize a second client when the first tool ran.
+            var authenticate = await context.AuthenticateAsync(AuthScheme);
+            if (!authenticate.Succeeded || authenticate.Principal is null)
+                return AuthenticationRequired(context, id, options.Value);
+
             if (method == "notifications/initialized")
                 return Results.Accepted();
             if (method == "initialize")
@@ -74,10 +83,6 @@ public static class McpEndpointRouteBuilderExtensions
                 ? nameElement.GetString() : null;
             if (string.IsNullOrWhiteSpace(toolName) || !AllToolNames.Contains(toolName, StringComparer.Ordinal))
                 return Results.Json(Error(id, -32602, "Unknown tool"));
-
-            var authenticate = await context.AuthenticateAsync(AuthScheme);
-            if (!authenticate.Succeeded || authenticate.Principal is null)
-                return AuthenticationRequired(context, id, options.Value);
 
             var requiredScope = CatalogTools.Contains(toolName, StringComparer.Ordinal) ? CatalogRead : AccountRead;
             if (!HasScope(authenticate.Principal, requiredScope))
@@ -188,7 +193,10 @@ public static class McpEndpointRouteBuilderExtensions
         // successful JSON-RPC tool result leaves hosts able to display an error but unable to
         // discover and launch the authorization flow.
         var resourceMetadata = $"{options.PublicBaseUrl!.TrimEnd('/')}/.well-known/oauth-protected-resource/mcp";
-        context.Response.Headers.WWWAuthenticate = $"Bearer resource_metadata=\"{resourceMetadata}\", error=\"invalid_token\", error_description=\"Sign in to SpeedClaim\"";
+        // Request the complete, deliberately small read-only set at connector setup. Tool
+        // discovery is no longer anonymous, so compliant MCP hosts can bind this token to the
+        // connector before listing or invoking tools and avoid a second authorization flow.
+        context.Response.Headers.WWWAuthenticate = $"Bearer resource_metadata=\"{resourceMetadata}\", error=\"invalid_token\", error_description=\"Sign in to SpeedClaim\", scope=\"{CatalogRead} {AccountRead}\"";
         return Results.Json(
             Result(id, ToolError("Authentication required. Sign in with Auth0 to continue.")),
             statusCode: StatusCodes.Status401Unauthorized);
