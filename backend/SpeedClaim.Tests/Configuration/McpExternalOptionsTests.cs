@@ -34,13 +34,13 @@ public class McpExternalOptionsTests
     }
 
     [Test]
-    public void ResourceServerIdentifier_UsesPublicOriginInsteadOfMcpTransportPath()
+    public void ResourceServerIdentifier_UsesCanonicalPublicOriginWithTrailingSlash()
     {
         var options = new McpExternalOptions
         {
             PublicBaseUrl = "https://api.speedclaim.example/"
         };
 
-        Assert.That(options.ResourceServerIdentifier, Is.EqualTo("https://api.speedclaim.example"));
+        Assert.That(options.ResourceServerIdentifier, Is.EqualTo("https://api.speedclaim.example/"));
     }
 }

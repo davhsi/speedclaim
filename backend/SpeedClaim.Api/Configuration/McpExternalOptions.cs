@@ -15,9 +15,12 @@ public sealed class McpExternalOptions
 
     /// <summary>
     /// Canonical OAuth resource-server identifier. This deliberately remains the public API
-    /// origin; the MCP transport endpoint is hosted below it at <c>/mcp</c>.
+    /// origin (including its trailing slash); the MCP transport endpoint is hosted below it at
+    /// <c>/mcp</c>.
     /// </summary>
-    public string ResourceServerIdentifier => PublicBaseUrl?.TrimEnd('/') ?? string.Empty;
+    public string ResourceServerIdentifier => string.IsNullOrWhiteSpace(PublicBaseUrl)
+        ? string.Empty
+        : PublicBaseUrl.TrimEnd('/') + "/";
 
     public void ValidateWhenEnabled()
     {
