@@ -81,7 +81,7 @@ public static class McpEndpointRouteBuilderExtensions
 
             var requiredScope = CatalogTools.Contains(toolName, StringComparer.Ordinal) ? CatalogRead : AccountRead;
             if (!HasScope(authenticate.Principal, requiredScope))
-                return Results.Json(Result(id, ToolError($"The Auth0 token is missing the required permission: {requiredScope}.")), statusCode: StatusCodes.Status200OK);
+                return InsufficientScope(context, id, options.Value, requiredScope);
 
             var subject = authenticate.Principal.FindFirstValue("sub");
             if (string.IsNullOrWhiteSpace(subject))
@@ -192,6 +192,20 @@ public static class McpEndpointRouteBuilderExtensions
         return Results.Json(
             Result(id, ToolError("Authentication required. Sign in with Auth0 to continue.")),
             statusCode: StatusCodes.Status401Unauthorized);
+    }
+
+    private static IResult InsufficientScope(HttpContext context, JsonElement id, McpExternalOptions options, string requiredScope)
+    {
+        // OAuth clients need an actual insufficient_scope challenge, rather than an ordinary
+        // JSON-RPC tool error, to know that they must run authorization again requesting this
+        // scope. Returning HTTP 200 here caused hosts such as Claude to retain a token that
+        // was valid but lacked the permission required for the selected tool.
+        var resourceMetadata = $"{options.PublicBaseUrl!.TrimEnd('/')}/.well-known/oauth-protected-resource/mcp";
+        context.Response.Headers.WWWAuthenticate =
+            $"Bearer resource_metadata=\"{resourceMetadata}\", error=\"insufficient_scope\", scope=\"{requiredScope}\"";
+        return Results.Json(
+            Result(id, ToolError($"The Auth0 token is missing the required permission: {requiredScope}.")),
+            statusCode: StatusCodes.Status403Forbidden);
     }
 
     private static object Result(JsonElement id, object result) => new { jsonrpc = "2.0", id = ToId(id), result };
