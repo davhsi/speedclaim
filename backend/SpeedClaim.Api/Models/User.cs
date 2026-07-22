@@ -36,5 +36,6 @@ public class User
     public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
     public virtual ICollection<Session> Sessions { get; set; } = new List<Session>();
     public virtual ICollection<UserToken> UserTokens { get; set; } = new List<UserToken>();
+    public virtual ICollection<ExternalIdentity> ExternalIdentities { get; set; } = new List<ExternalIdentity>();
     public virtual ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
 }

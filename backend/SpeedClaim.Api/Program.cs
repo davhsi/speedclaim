@@ -183,6 +183,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IExternalIdentityService, ExternalIdentityService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProductService, SpeedClaim.Api.Services.ProductService>();
 builder.Services.AddScoped<IProductBrochureService, ProductBrochureService>();
