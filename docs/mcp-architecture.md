@@ -13,11 +13,13 @@ SpeedClaim will use MCP as an integration boundary for AI hosts, not as a replac
 The existing `ai-service` customer-tool layer is the canonical capability vocabulary. It is already transport-neutral and operates only on a .NET-authorized, minimal customer snapshot. An MCP adapter may expose that vocabulary; it must not receive database credentials or bypass the .NET API's authorization and domain services.
 
 The .NET application stores an `Auth0` provider subject separately from first-party sessions and
-passwords. A verified customer links it from **Profile → Connected apps** through a SpeedClaim-
-initiated Auth0 Authorization Code + PKCE browser flow. The callback binds the verified Auth0
-subject to the already authenticated SpeedClaim customer server-side; no code, token, password,
-or other linking secret is pasted into an AI conversation. Email matching is never used to link
-identities, and there is no public route that accepts an unverified external subject.
+passwords. The preferred URL-only onboarding path uses an Auth0-signed, namespaced
+**verified-email** access-token claim to match exactly one active, verified SpeedClaim customer
+on first account-tool use; the resulting subject mapping is durable and audited. It never accepts
+an email from an AI host or MCP argument. Missing, unverified, ambiguous, inactive, staff, or
+conflicting identities fail closed and use the existing customer-initiated **Profile → Connected
+apps** Authorization Code + PKCE browser flow as a fallback. No code, token, password, or other
+linking secret is pasted into an AI conversation.
 
 ## Target topology
 

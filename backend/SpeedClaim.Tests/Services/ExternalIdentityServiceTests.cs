@@ -65,6 +65,40 @@ public class ExternalIdentityServiceTests
         Assert.ThrowsAsync<ConflictException>(() => _service.LinkAuth0SubjectAsync(userId, "auth0|other"));
     }
 
+    [Test]
+    public async Task TryAutoLinkAuth0SubjectByVerifiedEmailAsync_LinksOnlyAnEligibleMatchingCustomer()
+    {
+        var userId = Guid.NewGuid();
+        ExternalIdentity? added = null;
+        _users.Setup(users => users.GetUserByEmailAsync("customer@speedclaim.test")).ReturnsAsync(Customer(userId));
+        _users.Setup(users => users.GetByIdAsync(userId)).ReturnsAsync(Customer(userId));
+        _identities.Setup(identities => identities.FirstOrDefaultAsync(It.IsAny<Expression<Func<ExternalIdentity, bool>>>() ))
+            .ReturnsAsync((ExternalIdentity?)null);
+        _identities.Setup(identities => identities.AddAsync(It.IsAny<ExternalIdentity>()))
+            .Callback<ExternalIdentity>(identity => added = identity)
+            .Returns(Task.CompletedTask);
+
+        var result = await _service.TryAutoLinkAuth0SubjectByVerifiedEmailAsync("google-oauth2|customer", " customer@speedclaim.test ");
+
+        Assert.That(result, Is.EqualTo(userId));
+        Assert.That(added, Is.Not.Null);
+        _unitOfWork.Verify(unit => unit.CompleteAsync(), Times.Once);
+    }
+
+    [Test]
+    public async Task TryAutoLinkAuth0SubjectByVerifiedEmailAsync_RejectsNonCustomerWithoutCreatingAMapping()
+    {
+        var staff = Customer(Guid.NewGuid());
+        staff.Role = UserRole.Admin;
+        _users.Setup(users => users.GetUserByEmailAsync("staff@speedclaim.test")).ReturnsAsync(staff);
+
+        var result = await _service.TryAutoLinkAuth0SubjectByVerifiedEmailAsync("auth0|staff", "staff@speedclaim.test");
+
+        Assert.That(result, Is.Null);
+        _identities.Verify(identities => identities.AddAsync(It.IsAny<ExternalIdentity>()), Times.Never);
+        _unitOfWork.Verify(unit => unit.CompleteAsync(), Times.Never);
+    }
+
     private static User Customer(Guid userId) => new()
     {
         Id = userId,
