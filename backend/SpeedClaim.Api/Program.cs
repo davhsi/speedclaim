@@ -189,6 +189,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Idempotency: in-memory distributed cache (swap for Redis in production)
 builder.Services.AddDistributedMemoryCache();
+builder.Services.AddHttpClient(nameof(Auth0AccountLinkService));
 
 // Add DI Services
 builder.Services.AddHttpContextAccessor();
@@ -196,6 +197,7 @@ builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IExternalIdentityService, ExternalIdentityService>();
+builder.Services.AddScoped<IAuth0AccountLinkService, Auth0AccountLinkService>();
 builder.Services.AddScoped<McpReadOnlyToolService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProductService, SpeedClaim.Api.Services.ProductService>();

@@ -1,9 +1,9 @@
 import { Component, inject, signal, computed, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProfileService } from './services/profile.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { UserDto, FamilyMemberDto, KycRecordDto, AddressDto, SingleAddressRequest } from '../../../core/models/api.models';
+import { UserDto, FamilyMemberDto, KycRecordDto, AddressDto, SingleAddressRequest, LinkedExternalIdentityDto } from '../../../core/models/api.models';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { ToastService } from '../../../shared/components/toast/toast.service';
@@ -25,6 +25,8 @@ export class ProfileComponent implements OnInit {
   private readonly profileService = inject(ProfileService);
   private readonly authService = inject(AuthService);
   private readonly toast = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   profile = signal<UserDto | null>(null);
   familyMembers = signal<FamilyMemberDto[]>([]);
@@ -37,7 +39,10 @@ export class ProfileComponent implements OnInit {
   savingAddress = signal(false);
   savingMember = signal(false);
   deleting = signal(false);
-  tabs = ['Personal Info', 'Family Members', 'KYC'];
+  startingExternalLink = signal(false);
+  showExternalLinkConfirm = signal(false);
+  externalIdentities = signal<LinkedExternalIdentityDto[]>([]);
+  tabs = ['Personal Info', 'Family Members', 'KYC', 'Connected apps'];
   maritalStatuses = ['Single', 'Married', 'Divorced', 'Widowed'];
   salutations = ['Mr', 'Mrs', 'Ms', 'Dr', 'Prof'];
 
@@ -64,6 +69,7 @@ export class ProfileComponent implements OnInit {
   panValid = computed(() => PAN_PATTERN.test(this.panNum().trim().toUpperCase()));
 
   kycApproved = computed(() => this.profile()?.kycApproved ?? false);
+  auth0Linked = computed(() => this.externalIdentities().some(identity => identity.provider === 'Auth0'));
   kycStatus = computed(() => this.kyc()?.kycStatus ?? (this.kycApproved() ? 'Approved' : 'Pending'));
   kycMessage = computed(() => {
     switch (this.kycStatus()) {
@@ -162,6 +168,28 @@ export class ProfileComponent implements OnInit {
     });
     this.profileService.getFamilyMembers().subscribe(m => this.familyMembers.set(m));
     this.profileService.getKyc().subscribe({ next: k => this.kyc.set(k), error: () => {} });
+    this.profileService.getExternalIdentities().subscribe({ next: identities => this.externalIdentities.set(identities), error: () => {} });
+
+    const linkOutcome = this.route.snapshot.queryParamMap.get('externalLink');
+    if (linkOutcome) {
+      if (linkOutcome === 'success') this.toast.success('External AI access is connected.');
+      else if (linkOutcome === 'expired') this.toast.warning('The connection request expired. Start again from Connected apps.');
+      else this.toast.error('We could not connect your external AI access. Try again.');
+      void this.router.navigate([], { relativeTo: this.route, queryParams: { externalLink: null }, queryParamsHandling: 'merge', replaceUrl: true });
+    }
+  }
+
+  beginExternalAiConnection(): void {
+    this.showExternalLinkConfirm.set(false);
+    if (this.startingExternalLink()) return;
+    this.startingExternalLink.set(true);
+    this.profileService.startExternalIdentityAuthorization().subscribe({
+      next: ({ authorizationUrl }) => globalThis.location.assign(authorizationUrl),
+      error: () => {
+        this.startingExternalLink.set(false);
+        this.toast.error('External AI linking is not available right now.');
+      },
+    });
   }
 
   saveProfile(): void {

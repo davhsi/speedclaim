@@ -16,13 +16,15 @@ public class UsersController : BaseApiController
 {
     private readonly IUserService _userService;
     private readonly IExternalIdentityService _externalIdentityService;
+    private readonly IAuth0AccountLinkService _auth0AccountLinkService;
     private readonly IAgentService _agentService;
     private readonly INotificationService _notificationService;
 
-    public UsersController(IUserService userService, IExternalIdentityService externalIdentityService, IAgentService agentService, INotificationService notificationService)
+    public UsersController(IUserService userService, IExternalIdentityService externalIdentityService, IAuth0AccountLinkService auth0AccountLinkService, IAgentService agentService, INotificationService notificationService)
     {
         _userService = userService;
         _externalIdentityService = externalIdentityService;
+        _auth0AccountLinkService = auth0AccountLinkService;
         _agentService = agentService;
         _notificationService = notificationService;
     }
@@ -72,17 +74,35 @@ public class UsersController : BaseApiController
 
     #region External identities
 
-    /// <summary>Create a short-lived code that a verified Auth0 MCP flow can consume to link this customer account.</summary>
+    /// <summary>Starts a customer-initiated Auth0 Authorization Code + PKCE account-linking transaction.</summary>
     [Authorize(Roles = "Customer")]
-    [HttpPost("external-identities/auth0/link-code")]
-    [ProducesResponseType(typeof(ExternalIdentityLinkCodeResponse), 200)]
-    public async Task<IActionResult> CreateAuth0LinkCode()
+    [HttpPost("external-identities/auth0/authorize")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(503)]
+    public async Task<IActionResult> StartAuth0AccountLink()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         if (!Guid.TryParse(userId, out var parsedUserId))
             return Unauthorized();
 
-        return Ok(await _externalIdentityService.CreateAuth0LinkCodeAsync(parsedUserId));
+        try
+        {
+            return Ok(await _auth0AccountLinkService.StartAsync(parsedUserId));
+        }
+        catch (InvalidOperationException exception)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = exception.Message });
+        }
+    }
+
+    /// <summary>Handles the Auth0 callback and redirects the browser back to the customer profile.</summary>
+    [AllowAnonymous]
+    [HttpGet("external-identities/auth0/callback")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> CompleteAuth0AccountLink([FromQuery] string? code, [FromQuery] string? state, [FromQuery] string? error)
+    {
+        var returnUrl = await _auth0AccountLinkService.CompleteAsync(code, state, error);
+        return Redirect(returnUrl);
     }
 
     /// <summary>List the external identity providers linked to the authenticated customer without exposing provider subjects.</summary>

@@ -12,25 +12,13 @@ namespace SpeedClaim.Api.Mcp;
 public sealed class McpReadOnlyToolService
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IExternalIdentityService _externalIdentities;
-
-    public McpReadOnlyToolService(IUnitOfWork unitOfWork, IExternalIdentityService externalIdentities)
+    public McpReadOnlyToolService(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork;
-        _externalIdentities = externalIdentities;
     }
 
     public async Task<object> ExecuteAsync(string toolName, Guid? userId, JsonElement arguments, string subject)
     {
-        if (toolName == "link_speedclaim_account")
-        {
-            if (!arguments.TryGetProperty("linkCode", out var linkCode) || string.IsNullOrWhiteSpace(linkCode.GetString()))
-                throw new ValidationException("linkCode is required. Create it from your signed-in SpeedClaim account first.");
-
-            await _externalIdentities.LinkAuth0SubjectAsync(linkCode.GetString()!, subject);
-            return new { linked = true, message = "Your Auth0 identity is now linked to your SpeedClaim customer account." };
-        }
-
         if (toolName == "get_available_products")
         {
             var products = await _unitOfWork.InsuranceProducts.FindAsync(p => p.IsActive && p.IsAvailableForSale);

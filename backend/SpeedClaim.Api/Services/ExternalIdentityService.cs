@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using SpeedClaim.Api.Dtos.Auth;
@@ -12,8 +11,6 @@ namespace SpeedClaim.Api.Services;
 public class ExternalIdentityService : IExternalIdentityService
 {
     public const string Auth0Provider = "Auth0";
-    private static readonly TimeSpan LinkCodeLifetime = TimeSpan.FromMinutes(10);
-
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<ExternalIdentityService> _logger;
 
@@ -23,53 +20,12 @@ public class ExternalIdentityService : IExternalIdentityService
         _logger = logger;
     }
 
-    public async Task<ExternalIdentityLinkCodeResponse> CreateAuth0LinkCodeAsync(Guid userId)
+    public async Task LinkAuth0SubjectAsync(Guid userId, string subject)
     {
-        var user = await _unitOfWork.Users.GetByIdAsync(userId);
-        if (user == null || !user.IsActive || !user.IsEmailVerified || user.Role != UserRole.Customer)
-            throw new ForbiddenException("Only an active, verified customer can link an external identity.");
-
-        var rawCode = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
-        var expiresAt = DateTime.UtcNow.Add(LinkCodeLifetime);
-        var linkToken = new UserToken
-        {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            TokenType = TokenType.ExternalIdentityLink,
-            TokenHash = BCrypt.Net.BCrypt.HashPassword(rawCode),
-            ExpiresAt = expiresAt
-        };
-
-        await _unitOfWork.UserTokens.AddAsync(linkToken);
-        await _unitOfWork.AuditLogs.AddAsync(new AuditLog
-        {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            EntityType = "ExternalIdentity",
-            EntityId = linkToken.Id,
-            Action = "ExternalIdentityLinkCodeCreated",
-            NewValue = JsonSerializer.Serialize(new { provider = Auth0Provider, expiresAt }),
-            CreatedAt = DateTime.UtcNow
-        });
-        _unitOfWork.SetCurrentActor(userId);
-        await _unitOfWork.CompleteAsync();
-
-        return new ExternalIdentityLinkCodeResponse(Auth0Provider, $"{linkToken.Id}:{rawCode}", expiresAt);
-    }
-
-    public async Task LinkAuth0SubjectAsync(string linkCode, string subject)
-    {
-        if (!TryParseLinkCode(linkCode, out var tokenId, out var rawCode))
-            throw new ValidationException("Invalid external identity link code.");
         if (string.IsNullOrWhiteSpace(subject) || subject.Length > 255)
             throw new ValidationException("Invalid external identity subject.");
 
-        var linkToken = await _unitOfWork.UserTokens.GetByIdAsync(tokenId);
-        if (linkToken == null || linkToken.TokenType != TokenType.ExternalIdentityLink || linkToken.IsUsed || linkToken.ExpiresAt <= DateTime.UtcNow ||
-            !BCrypt.Net.BCrypt.Verify(rawCode, linkToken.TokenHash))
-            throw new ValidationException("Invalid or expired external identity link code.");
-
-        var user = await _unitOfWork.Users.GetByIdAsync(linkToken.UserId);
+        var user = await _unitOfWork.Users.GetByIdAsync(userId);
         if (user == null || !user.IsActive || !user.IsEmailVerified || user.Role != UserRole.Customer)
             throw new ForbiddenException("The SpeedClaim account is not eligible for external identity linking.");
 
@@ -83,7 +39,6 @@ public class ExternalIdentityService : IExternalIdentityService
         if (userLink != null && userLink.Subject != subject)
             throw new ConflictException("This SpeedClaim account is already linked to a different Auth0 identity.");
 
-        linkToken.IsUsed = true;
         if (subjectLink == null)
         {
             subjectLink = new ExternalIdentity
@@ -148,11 +103,4 @@ public class ExternalIdentityService : IExternalIdentityService
             .ToList();
     }
 
-    private static bool TryParseLinkCode(string linkCode, out Guid tokenId, out string rawCode)
-    {
-        tokenId = Guid.Empty;
-        rawCode = string.Empty;
-        var parts = linkCode.Split(':', 2, StringSplitOptions.TrimEntries);
-        return parts.Length == 2 && Guid.TryParse(parts[0], out tokenId) && parts[1].Length == 64 && (rawCode = parts[1]).All(Uri.IsHexDigit);
-    }
 }

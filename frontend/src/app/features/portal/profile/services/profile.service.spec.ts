@@ -36,6 +36,23 @@ describe('ProfileService', () => {
     expect(result).toEqual(dto);
   });
 
+  it('gets external identity connection status', () => {
+    service.getExternalIdentities().subscribe();
+
+    const call = httpMock.expectOne('/api/v1/users/external-identities');
+    expect(call.request.method).toBe('GET');
+    call.flush([]);
+  });
+
+  it('starts browser-based external identity authorization', () => {
+    service.startExternalIdentityAuthorization().subscribe();
+
+    const call = httpMock.expectOne('/api/v1/users/external-identities/auth0/authorize');
+    expect(call.request.method).toBe('POST');
+    expect(call.request.body).toEqual({});
+    call.flush({ authorizationUrl: 'https://tenant.example/authorize' });
+  });
+
   it('updateProfile issues a PATCH to /api/v1/users/profile with the given body', () => {
     const patch: Partial<UserDto> = { firstName: 'Jane' };
     let result: ApiMessage | undefined;

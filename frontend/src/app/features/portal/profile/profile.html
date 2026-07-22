@@ -320,9 +320,62 @@
         </div>
       }
     }
+    @case (3) {
+      <div class="mb-5">
+        <div class="text-[15px] font-semibold text-ink">Connected apps</div>
+        <div class="text-sm text-muted mt-0.5">Choose which external AI apps can read your permitted SpeedClaim information.</div>
+      </div>
+
+      <div class="bg-white border border-line rounded-card shadow-sm overflow-hidden">
+        <div class="p-5 sm:p-6">
+          <div class="flex items-start gap-3.5">
+            <div class="w-11 h-11 shrink-0 rounded-[12px] bg-primary-light text-primary flex items-center justify-center">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><path d="M12 15v2"/></svg>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h2 class="text-sm font-semibold text-ink">External AI access</h2>
+                @if (auth0Linked()) {
+                  <span class="inline-flex items-center gap-1 rounded-full bg-success-bg px-2 py-0.5 text-[11px] font-semibold text-[#167850]">
+                    <span class="w-1.5 h-1.5 rounded-full bg-success"></span> Connected
+                  </span>
+                }
+              </div>
+              <p class="mt-1 text-sm leading-5 text-body">
+                @if (auth0Linked()) {
+                  Your account can be used with approved AI connectors. They can only use the read-only tools you approve in the AI app.
+                } @else {
+                  Connect securely in your browser. You will sign in with Auth0 and confirm the connection—no account code is shared with an AI chat.
+                }
+              </p>
+            </div>
+          </div>
+
+          @if (!auth0Linked()) {
+            <div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+              <span class="text-xs text-muted">Read-only access only. Payments, claims, KYC uploads, and applications stay in SpeedClaim.</span>
+              <button type="button" class="inline-flex h-10 items-center gap-2 rounded-control bg-primary px-4 text-[13px] font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50" [disabled]="startingExternalLink()" (click)="showExternalLinkConfirm.set(true)">
+                @if (startingExternalLink()) { <span class="w-3.5 h-3.5 border-[1.5px] border-white border-t-transparent rounded-full animate-spin"></span> }
+                {{ startingExternalLink() ? 'Opening secure sign-in…' : 'Connect external AI' }}
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    }
   }
 </div>
 
 @if (deleteConfirm()) {
   <app-confirm-dialog title="Confirm Delete" message="Are you sure?" variant="danger" [disabled]="deleting()" (confirmed)="confirmDelete()" (cancelled)="deleteConfirm.set(null)" />
+}
+
+@if (showExternalLinkConfirm()) {
+  <app-confirm-dialog
+    title="Connect external AI access"
+    message="You will sign in with Auth0 in a secure browser window. Connected AI apps can use only the read-only SpeedClaim tools you approve in that app."
+    confirmLabel="Continue to secure sign-in"
+    [disabled]="startingExternalLink()"
+    (confirmed)="beginExternalAiConnection()"
+    (cancelled)="showExternalLinkConfirm.set(false)" />
 }
