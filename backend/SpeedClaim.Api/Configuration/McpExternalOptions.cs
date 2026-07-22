@@ -28,13 +28,14 @@ public sealed class McpExternalOptions
     public string? AccountLinkClientSecret { get; init; }
 
     /// <summary>
-    /// Canonical OAuth resource-server identifier. This deliberately remains the public API
-    /// origin (including its trailing slash); the MCP transport endpoint is hosted below it at
-    /// <c>/mcp</c>.
+    /// Canonical OAuth resource identifier for the remote MCP server. It must match the
+    /// transport URL the host connects to, not merely the API origin. OAuth clients cache a
+    /// token by this value, so advertising the origin here while hosting MCP at <c>/mcp</c>
+    /// creates two distinct credentials and causes a repeated Connect prompt.
     /// </summary>
     public string ResourceServerIdentifier => string.IsNullOrWhiteSpace(PublicBaseUrl)
         ? string.Empty
-        : PublicBaseUrl.TrimEnd('/') + "/";
+        : PublicBaseUrl.TrimEnd('/') + "/mcp";
 
     public void ValidateWhenEnabled()
     {
@@ -46,6 +47,11 @@ public sealed class McpExternalOptions
             || string.IsNullOrWhiteSpace(Audience))
             throw new InvalidOperationException(
                 "Mcp:External requires Issuer, Audience, and PublicBaseUrl when Enabled is true.");
+
+        if (!string.Equals(Audience, ResourceServerIdentifier, StringComparison.Ordinal))
+            throw new InvalidOperationException(
+                $"Mcp:External:Audience must exactly match the canonical MCP resource URL '{ResourceServerIdentifier}'. " +
+                "Create an Auth0 API with that identifier and update the Key Vault audience before enabling the external MCP server.");
     }
 
     public void ValidateAccountLinking()

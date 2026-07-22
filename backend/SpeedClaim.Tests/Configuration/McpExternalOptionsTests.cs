@@ -27,20 +27,36 @@ public class McpExternalOptionsTests
         {
             Enabled = true,
             Issuer = "https://speedclaim-dev.us.auth0.com/",
-            Audience = "https://mcp.speedclaim.example",
+            Audience = "https://api.speedclaim.example/mcp",
             PublicBaseUrl = "https://api.speedclaim.example"
         };
         Assert.DoesNotThrow(() => options.ValidateWhenEnabled());
     }
 
     [Test]
-    public void ResourceServerIdentifier_UsesCanonicalPublicOriginWithTrailingSlash()
+    public void ValidateWhenEnabled_RejectsAnAudienceThatDoesNotMatchTheMcpResourceUrl()
+    {
+        var options = new McpExternalOptions
+        {
+            Enabled = true,
+            Issuer = "https://speedclaim-dev.us.auth0.com/",
+            Audience = "https://api.speedclaim.example/",
+            PublicBaseUrl = "https://api.speedclaim.example"
+        };
+
+        Assert.That(
+            () => options.ValidateWhenEnabled(),
+            Throws.TypeOf<InvalidOperationException>().With.Message.Contains("Audience must exactly match"));
+    }
+
+    [Test]
+    public void ResourceServerIdentifier_UsesTheCanonicalMcpEndpoint()
     {
         var options = new McpExternalOptions
         {
             PublicBaseUrl = "https://api.speedclaim.example/"
         };
 
-        Assert.That(options.ResourceServerIdentifier, Is.EqualTo("https://api.speedclaim.example/"));
+        Assert.That(options.ResourceServerIdentifier, Is.EqualTo("https://api.speedclaim.example/mcp"));
     }
 }

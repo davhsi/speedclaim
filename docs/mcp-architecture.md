@@ -81,6 +81,11 @@ Before an external MCP endpoint is enabled, SpeedClaim must provide or integrate
 4. Backend token exchange/service authentication that forwards a subject, audience, scopes, correlation ID, and client identity. The MCP server must never use a shared customer identity or database credential.
 5. Audit events containing tool name, caller/client ID, subject, scope, decision, correlation ID, and outcome—never policy document text, KYC numbers, payment details, or access tokens.
 
+The canonical OAuth resource identifier is the remote transport URL itself: `<public-base-url>/mcp`.
+The Auth0 API Identifier, `Mcp:External:Audience`, protected-resource metadata `resource` value,
+and URL entered in the AI host must all use that exact value. The public base URL is still used for
+claim namespaces and browser callbacks, but it is not the OAuth resource identifier.
+
 Tool results remain minimized to the existing customer-visible snapshots. KYC identity values, document paths, internal notes, Stripe secrets, and raw medical/claim attachments are excluded.
 
 ## Rollout gates
