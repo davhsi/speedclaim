@@ -22,6 +22,35 @@ public class ExternalIdentityService : IExternalIdentityService
 
     public async Task LinkAuth0SubjectAsync(Guid userId, string subject)
     {
+        await LinkAuth0SubjectAsync(userId, subject, "customer_initiated");
+    }
+
+    public async Task<Guid?> TryAutoLinkAuth0SubjectByVerifiedEmailAsync(string subject, string verifiedEmail)
+    {
+        if (string.IsNullOrWhiteSpace(subject) || subject.Length > 255
+            || string.IsNullOrWhiteSpace(verifiedEmail) || verifiedEmail.Length > 255)
+            return null;
+
+        // Email is accepted only after Auth0 has signed it into the access token. It is never
+        // obtained from an MCP argument or an AI-host supplied header.
+        var user = await _unitOfWork.Users.GetUserByEmailAsync(verifiedEmail.Trim());
+        if (user == null || !user.IsActive || !user.IsEmailVerified || user.Role != UserRole.Customer)
+            return null;
+
+        try
+        {
+            await LinkAuth0SubjectAsync(user.Id, subject, "automatic_verified_email");
+            return user.Id;
+        }
+        catch (ConflictException)
+        {
+            // A subject/customer conflict must never be resolved by choosing another account.
+            return null;
+        }
+    }
+
+    private async Task LinkAuth0SubjectAsync(Guid userId, string subject, string linkingMethod)
+    {
         if (string.IsNullOrWhiteSpace(subject) || subject.Length > 255)
             throw new ValidationException("Invalid external identity subject.");
 
@@ -65,12 +94,12 @@ public class ExternalIdentityService : IExternalIdentityService
             EntityType = "ExternalIdentity",
             EntityId = subjectLink.Id,
             Action = "ExternalIdentityLinked",
-            NewValue = JsonSerializer.Serialize(new { provider = Auth0Provider }),
+            NewValue = JsonSerializer.Serialize(new { provider = Auth0Provider, linkingMethod }),
             CreatedAt = DateTime.UtcNow
         });
         _unitOfWork.SetCurrentActor(user.Id);
         await _unitOfWork.CompleteAsync();
-        _logger.LogInformation("Linked Auth0 identity to SpeedClaim user {UserId}", user.Id);
+        _logger.LogInformation("Linked Auth0 identity to SpeedClaim user {UserId} through {LinkingMethod}", user.Id, linkingMethod);
     }
 
     public async Task<Guid?> ResolveActiveUserIdAsync(string provider, string subject)

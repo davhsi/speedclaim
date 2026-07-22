@@ -89,7 +89,24 @@ public static class McpEndpointRouteBuilderExtensions
 
             var args = parameters.ValueKind == JsonValueKind.Object && parameters.TryGetProperty("arguments", out var argsElement)
                 ? argsElement.Clone() : EmptyArguments;
-            var userId = await identities.ResolveActiveUserIdAsync("Auth0", subject);
+            var requiresCustomerAccount = AccountTools.Contains(toolName, StringComparer.Ordinal);
+            Guid? userId = null;
+            if (requiresCustomerAccount)
+            {
+                userId = await identities.ResolveActiveUserIdAsync("Auth0", subject);
+                if (userId is null && options.Value.AutoLinkVerifiedEmail && HasVerifiedEmailClaim(authenticate.Principal, options.Value))
+                {
+                    var verifiedEmail = authenticate.Principal.FindFirstValue(options.Value.VerifiedEmailClaim);
+                    userId = await identities.TryAutoLinkAuth0SubjectByVerifiedEmailAsync(subject, verifiedEmail!);
+                }
+
+                if (userId is null)
+                {
+                    var unresolvedClientId = authenticate.Principal.FindFirstValue("azp") ?? authenticate.Principal.FindFirstValue("client_id");
+                    await tools.AuditInvocationAsync(null, toolName, subject, unresolvedClientId, requiredScope, "identity_unresolved");
+                    return Results.Json(Result(id, ToolError("We could not safely match this Auth0 identity to a verified SpeedClaim customer account. Sign in with the email used for your SpeedClaim account, or link it once from Profile → Connected apps.")));
+                }
+            }
             var clientId = authenticate.Principal.FindFirstValue("azp") ?? authenticate.Principal.FindFirstValue("client_id");
             try
             {
@@ -135,6 +152,15 @@ public static class McpEndpointRouteBuilderExtensions
         .Where(claim => claim.Type is "scope" or "permissions")
         .SelectMany(claim => claim.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         .Contains(requiredScope, StringComparer.Ordinal);
+
+    private static bool HasVerifiedEmailClaim(ClaimsPrincipal principal, McpExternalOptions options)
+    {
+        var email = principal.FindFirstValue(options.VerifiedEmailClaim);
+        var emailVerified = principal.FindFirstValue(options.EmailVerifiedClaim);
+        return !string.IsNullOrWhiteSpace(email)
+            && bool.TryParse(emailVerified, out var isVerified)
+            && isVerified;
+    }
 
     private static object ToolSuccess(object data) => new
     {

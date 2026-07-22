@@ -13,6 +13,13 @@ public sealed class McpExternalOptions
     public string? Audience { get; init; }
     public string? PublicBaseUrl { get; init; }
     /// <summary>
+    /// Enables first-use identity linking only when an Auth0-issued MCP access token carries a
+    /// verified email claim that exactly matches one eligible SpeedClaim customer.
+    /// Disabled by default so existing deployments retain the explicit portal-link behaviour
+    /// until the corresponding Auth0 Action is configured.
+    /// </summary>
+    public bool AutoLinkVerifiedEmail { get; init; }
+    /// <summary>
     /// Auth0 application client used only by the customer-initiated account-linking flow.
     /// It is intentionally separate from dynamically registered MCP host clients.
     /// </summary>
@@ -57,4 +64,17 @@ public sealed class McpExternalOptions
     public string AccountLinkRedirectUri => string.IsNullOrWhiteSpace(PublicBaseUrl)
         ? string.Empty
         : $"{PublicBaseUrl.TrimEnd('/')}/api/v1/users/external-identities/auth0/callback";
+
+    /// <summary>
+    /// Namespaced claims emitted by the Auth0 Post-Login Action for external MCP access tokens.
+    /// The namespace is derived from the configured public resource origin so it remains owned
+    /// by this resource server rather than an AI host.
+    /// </summary>
+    public string VerifiedEmailClaim => string.IsNullOrWhiteSpace(PublicBaseUrl)
+        ? string.Empty
+        : $"{PublicBaseUrl.TrimEnd('/')}/claims/email";
+
+    public string EmailVerifiedClaim => string.IsNullOrWhiteSpace(PublicBaseUrl)
+        ? string.Empty
+        : $"{PublicBaseUrl.TrimEnd('/')}/claims/email_verified";
 }
