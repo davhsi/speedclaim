@@ -153,10 +153,42 @@ public static class McpEndpointRouteBuilderExtensions
     private static readonly string[] AllToolNames = [.. CatalogTools, .. AccountTools];
     private static readonly JsonElement EmptyArguments = JsonDocument.Parse("{}").RootElement.Clone();
 
-    private static bool HasScope(ClaimsPrincipal principal, string requiredScope) => principal.Claims
+    // Auth0 represents the standard OAuth `scope` claim as a space-delimited string, but,
+    // when RBAC's "Add Permissions in the Access Token" setting is enabled, it represents
+    // `permissions` as a JSON array. ASP.NET exposes that array as one Claim.Value, so a
+    // whitespace-only split made valid Auth0 permissions look missing to external MCP hosts.
+    public static bool HasScope(ClaimsPrincipal principal, string requiredScope) => principal.Claims
         .Where(claim => claim.Type is "scope" or "permissions")
-        .SelectMany(claim => claim.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        .SelectMany(ReadClaimScopes)
         .Contains(requiredScope, StringComparer.Ordinal);
+
+    private static IEnumerable<string> ReadClaimScopes(Claim claim)
+    {
+        var value = claim.Value.Trim();
+        if (value.StartsWith('['))
+        {
+            try
+            {
+                using var document = JsonDocument.Parse(value);
+                if (document.RootElement.ValueKind == JsonValueKind.Array)
+                {
+                    return document.RootElement
+                        .EnumerateArray()
+                        .Where(scope => scope.ValueKind == JsonValueKind.String)
+                        .Select(scope => scope.GetString())
+                        .OfType<string>()
+                        .Where(scope => !string.IsNullOrWhiteSpace(scope))
+                        .ToArray();
+                }
+            }
+            catch (JsonException)
+            {
+                // Fall through to the normal OAuth space-delimited claim parsing below.
+            }
+        }
+
+        return value.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    }
 
     private static bool HasVerifiedEmailClaim(ClaimsPrincipal principal, McpExternalOptions options)
     {
