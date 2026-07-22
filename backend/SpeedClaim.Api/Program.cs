@@ -19,6 +19,7 @@ using SpeedClaim.Api.Exceptions;
 using SpeedClaim.Api.Interfaces;
 using SpeedClaim.Api.Repositories;
 using SpeedClaim.Api.Services;
+using SpeedClaim.Api.Mcp;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.RateLimiting;
@@ -75,6 +76,8 @@ var secretKey = jwtSettings["Secret"];
 if (string.IsNullOrWhiteSpace(secretKey))
     throw new InvalidOperationException("JwtSettings:Secret must be configured in appsettings.");
 
+var mcpExternalOptions = builder.Configuration.GetSection(McpExternalOptions.SectionName).Get<McpExternalOptions>() ?? new McpExternalOptions();
+builder.Services.Configure<McpExternalOptions>(builder.Configuration.GetSection(McpExternalOptions.SectionName));
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -146,6 +149,15 @@ builder.Services.AddAuthentication(options =>
             await context.Response.WriteAsJsonAsync(new { error = "Access denied. You do not have permission to access this resource." });
         }
     };
+})
+.AddJwtBearer(McpEndpointRouteBuilderExtensions.AuthScheme, options =>
+{
+    // The route is not mapped unless explicitly enabled. These harmless placeholders keep
+    // ordinary local/web authentication independent from external MCP configuration.
+    options.Authority = mcpExternalOptions.Issuer ?? "https://disabled.invalid/";
+    options.Audience = mcpExternalOptions.Audience ?? "speedclaim-mcp-disabled";
+    options.RequireHttpsMetadata = true;
+    options.MapInboundClaims = false;
 });
 
 builder.Services.AddAuthorization(options =>
@@ -184,6 +196,7 @@ builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IExternalIdentityService, ExternalIdentityService>();
+builder.Services.AddScoped<McpReadOnlyToolService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProductService, SpeedClaim.Api.Services.ProductService>();
 builder.Services.AddScoped<IProductBrochureService, ProductBrochureService>();
@@ -444,6 +457,7 @@ app.UseAuthorization();
 app.MapGet("/health/live", () => Results.Ok(new { status = "ok" })).AllowAnonymous();
 app.MapGet("/health/ready", () => Results.Ok(new { status = "ready" })).AllowAnonymous();
 app.MapControllers();
+app.MapExternalMcp();
 app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.Run();
