@@ -38,6 +38,44 @@ The state transaction expires after 10 minutes and is removed after the callback
 
 ## Auth0 application setup
 
+### Canonical resource URL — required before enabling the endpoint
+
+The OAuth resource, the Auth0 API identifier, and the MCP transport URL must be the **same
+canonical URL**. For the current environment, that value is:
+
+```text
+https://20.235.26.238.sslip.io/mcp
+```
+
+This is intentionally different from the public API origin. An OAuth host such as Claude caches
+credentials by resource URL. Configuring Auth0 with the origin (`https://20.235.26.238.sslip.io/`)
+while the host connects to `/mcp` makes the host treat setup and tool use as two separate protected
+resources, which produces a repeated **Connect** prompt.
+
+In Auth0, create a new API (the existing identifier cannot be edited) such as **SpeedClaim MCP API
+– Claude Development v3** with this exact Identifier. Add only these permissions and enable RBAC
+plus **Add Permissions in the Access Token**:
+
+```text
+speedclaim.catalog.read
+speedclaim.account.read
+```
+
+For that API's **Settings → Default Permissions for third-party applications**, set
+**User-delegated Access** to **Authorized — Pick and choose permissions**, then select both
+permissions. This permits dynamically registered Claude clients to request them.
+
+Update these Azure Key Vault values before deploying the matching backend release:
+
+| Key Vault secret | Required value |
+| --- | --- |
+| `Mcp--External--PublicBaseUrl` | `https://20.235.26.238.sslip.io` |
+| `Mcp--External--Audience` | `https://20.235.26.238.sslip.io/mcp` |
+| `Mcp--External--Issuer` | Your Auth0 tenant issuer, including its trailing slash |
+
+`Mcp--External--Audience` must not retain the previous origin-only API identifier. The backend
+now rejects that mismatch at startup instead of appearing connected and failing later in Claude.
+
 ### Dynamic client registration and token claims
 
 Enable Dynamic Client Registration in **Settings → Advanced**. Configure the MCP API's default
@@ -50,7 +88,7 @@ audience and adds these claims to the *access token*:
 
 ```js
 exports.onExecutePostLogin = async (event, api) => {
-  if (event.resource_server?.identifier !== 'https://20.235.26.238.sslip.io/') return;
+  if (event.resource_server?.identifier !== 'https://20.235.26.238.sslip.io/mcp') return;
   api.accessToken.setCustomClaim('https://20.235.26.238.sslip.io/claims/email', event.user.email);
   api.accessToken.setCustomClaim('https://20.235.26.238.sslip.io/claims/email_verified', event.user.email_verified === true);
 };
