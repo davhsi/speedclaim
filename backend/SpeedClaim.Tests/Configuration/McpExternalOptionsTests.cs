@@ -32,4 +32,15 @@ public class McpExternalOptionsTests
         };
         Assert.DoesNotThrow(() => options.ValidateWhenEnabled());
     }
+
+    [Test]
+    public void ResourceServerIdentifier_UsesPublicOriginInsteadOfMcpTransportPath()
+    {
+        var options = new McpExternalOptions
+        {
+            PublicBaseUrl = "https://api.speedclaim.example/"
+        };
+
+        Assert.That(options.ResourceServerIdentifier, Is.EqualTo("https://api.speedclaim.example"));
+    }
 }

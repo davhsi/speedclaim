@@ -31,7 +31,7 @@ public static class McpEndpointRouteBuilderExtensions
         options.ValidateWhenEnabled();
         app.MapGet("/.well-known/oauth-protected-resource", () => Results.Ok(new
         {
-            resource = options.PublicBaseUrl!.TrimEnd('/') + "/mcp",
+            resource = options.ResourceServerIdentifier,
             authorization_servers = new[] { options.Issuer },
             scopes_supported = new[] { CatalogRead, AccountRead },
             bearer_methods_supported = new[] { "header" }

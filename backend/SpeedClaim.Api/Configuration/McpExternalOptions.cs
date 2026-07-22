@@ -13,6 +13,12 @@ public sealed class McpExternalOptions
     public string? Audience { get; init; }
     public string? PublicBaseUrl { get; init; }
 
+    /// <summary>
+    /// Canonical OAuth resource-server identifier. This deliberately remains the public API
+    /// origin; the MCP transport endpoint is hosted below it at <c>/mcp</c>.
+    /// </summary>
+    public string ResourceServerIdentifier => PublicBaseUrl?.TrimEnd('/') ?? string.Empty;
+
     public void ValidateWhenEnabled()
     {
         if (!Enabled)
