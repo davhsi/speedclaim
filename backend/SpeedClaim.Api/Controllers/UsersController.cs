@@ -15,12 +15,14 @@ namespace SpeedClaim.Api.Controllers;
 public class UsersController : BaseApiController
 {
     private readonly IUserService _userService;
+    private readonly IExternalIdentityService _externalIdentityService;
     private readonly IAgentService _agentService;
     private readonly INotificationService _notificationService;
 
-    public UsersController(IUserService userService, IAgentService agentService, INotificationService notificationService)
+    public UsersController(IUserService userService, IExternalIdentityService externalIdentityService, IAgentService agentService, INotificationService notificationService)
     {
         _userService = userService;
+        _externalIdentityService = externalIdentityService;
         _agentService = agentService;
         _notificationService = notificationService;
     }
@@ -64,6 +66,36 @@ public class UsersController : BaseApiController
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         var avatarUrl = await _userService.UploadAvatarAsync(userId, file);
         return Ok(new { avatarUrl });
+    }
+
+    #endregion
+
+    #region External identities
+
+    /// <summary>Create a short-lived code that a verified Auth0 MCP flow can consume to link this customer account.</summary>
+    [Authorize(Roles = "Customer")]
+    [HttpPost("external-identities/auth0/link-code")]
+    [ProducesResponseType(typeof(ExternalIdentityLinkCodeResponse), 200)]
+    public async Task<IActionResult> CreateAuth0LinkCode()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        if (!Guid.TryParse(userId, out var parsedUserId))
+            return Unauthorized();
+
+        return Ok(await _externalIdentityService.CreateAuth0LinkCodeAsync(parsedUserId));
+    }
+
+    /// <summary>List the external identity providers linked to the authenticated customer without exposing provider subjects.</summary>
+    [Authorize(Roles = "Customer")]
+    [HttpGet("external-identities")]
+    [ProducesResponseType(typeof(IEnumerable<LinkedExternalIdentityDto>), 200)]
+    public async Task<IActionResult> GetExternalIdentities()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        if (!Guid.TryParse(userId, out var parsedUserId))
+            return Unauthorized();
+
+        return Ok(await _externalIdentityService.ListAsync(parsedUserId));
     }
 
     #endregion

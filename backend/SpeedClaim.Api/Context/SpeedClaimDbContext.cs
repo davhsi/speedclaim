@@ -16,6 +16,7 @@ public partial class SpeedClaimDbContext : DbContext
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<Session> Sessions { get; set; } = null!;
     public DbSet<UserToken> UserTokens { get; set; } = null!;
+    public DbSet<ExternalIdentity> ExternalIdentities { get; set; } = null!;
     public DbSet<Surveyor> Surveyors { get; set; } = null!;
     public DbSet<Address> Addresses { get; set; } = null!;
     public DbSet<Customer> Customers { get; set; } = null!;
@@ -129,6 +130,19 @@ public partial class SpeedClaimDbContext : DbContext
             e.HasKey(x => x.Id).HasName("PK_user_tokens");
             e.Property(x => x.TokenType).HasMaxLength(50).HasConversion<string>();
             e.HasOne(x => x.User).WithMany(u => u.UserTokens).HasForeignKey(x => x.UserId).HasConstraintName("FK_user_tokens_users_user_id").OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ExternalIdentity>(e =>
+        {
+            e.HasKey(x => x.Id).HasName("PK_external_identities");
+            e.Property(x => x.Provider).IsRequired().HasMaxLength(64);
+            e.Property(x => x.Subject).IsRequired().HasMaxLength(255);
+            e.HasIndex(x => new { x.Provider, x.Subject }).IsUnique()
+                .HasDatabaseName("uq_external_identities_provider_subject");
+            e.HasIndex(x => new { x.UserId, x.Provider }).IsUnique()
+                .HasDatabaseName("uq_external_identities_user_provider");
+            e.HasOne(x => x.User).WithMany(u => u.ExternalIdentities).HasForeignKey(x => x.UserId)
+                .HasConstraintName("FK_external_identities_users_user_id").OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Address>(e =>

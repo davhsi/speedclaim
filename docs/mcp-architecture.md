@@ -2,12 +2,18 @@
 
 ## Status and decision
 
-**Status:** the catalog/policy foundation is implemented; external exposure is disabled until
-OAuth 2.1 is implemented and reviewed. There is currently no public MCP endpoint.
+**Status:** the catalog/policy foundation and the SpeedClaim-side Auth0 identity-link foundation
+are implemented; external exposure is disabled until OAuth 2.1 is implemented and reviewed.
+There is currently no public MCP endpoint.
 
 SpeedClaim will use MCP as an integration boundary for AI hosts, not as a replacement for the Angular-to-API application contract. The existing browser application continues to call the SpeedClaim API directly. This keeps the normal customer journey, JWT/session checks, idempotency, Stripe confirmation, audit trail, and domain workflow ownership unchanged.
 
 The existing `ai-service` customer-tool layer is the canonical capability vocabulary. It is already transport-neutral and operates only on a .NET-authorized, minimal customer snapshot. An MCP adapter may expose that vocabulary; it must not receive database credentials or bypass the .NET API's authorization and domain services.
+
+The .NET application stores an `Auth0` provider subject separately from first-party sessions and
+passwords. A verified customer can create a single-use, 10-minute linking code; a future trusted
+MCP adapter will consume that code only after validating an Auth0 token. Email matching is never
+used to link identities, and there is no public route that accepts an unverified external subject.
 
 ## Target topology
 

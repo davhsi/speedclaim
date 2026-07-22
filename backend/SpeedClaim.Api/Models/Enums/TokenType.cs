@@ -3,5 +3,6 @@ namespace SpeedClaim.Api.Models.Enums;
 public enum TokenType
 {
     EmailVerification,
-    PasswordReset
+    PasswordReset,
+    ExternalIdentityLink
 }

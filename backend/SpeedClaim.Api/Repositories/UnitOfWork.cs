@@ -18,6 +18,7 @@ public class UnitOfWork : IUnitOfWork
     
     public IRepository<Session> Sessions { get; }
     public IRepository<UserToken> UserTokens { get; }
+    public IRepository<ExternalIdentity> ExternalIdentities { get; }
     public IRepository<Surveyor> Surveyors { get; }
     public IRepository<Address> Addresses { get; }
     public IRepository<Customer> Customers { get; }
@@ -70,6 +71,7 @@ public class UnitOfWork : IUnitOfWork
         
         Sessions = new Repository<Session>(_context);
         UserTokens = new Repository<UserToken>(_context);
+        ExternalIdentities = new Repository<ExternalIdentity>(_context);
         Surveyors = new Repository<Surveyor>(_context);
         Addresses = new Repository<Address>(_context);
         Customers = new Repository<Customer>(_context);

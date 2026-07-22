@@ -14,6 +14,7 @@ public interface IUnitOfWork : IDisposable
     
     IRepository<Session> Sessions { get; }
     IRepository<UserToken> UserTokens { get; }
+    IRepository<ExternalIdentity> ExternalIdentities { get; }
     IRepository<Surveyor> Surveyors { get; }
     IRepository<Address> Addresses { get; }
     IRepository<Customer> Customers { get; }
