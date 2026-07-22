@@ -31,6 +31,17 @@ public class McpEndpointRouteBuilderExtensionsTests
     }
 
     [Test]
+    public void HasScope_RecognizesNamespacedPermissionsClaim()
+    {
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(
+        [
+            new Claim("https://speedclaim.example/permissions", "[\"speedclaim.catalog.read\"]")
+        ]));
+
+        Assert.That(McpEndpointRouteBuilderExtensions.HasScope(principal, "speedclaim.catalog.read"), Is.True);
+    }
+
+    [Test]
     public void HasScope_DoesNotTreatUnrelatedPermissionAsAuthorized()
     {
         var principal = new ClaimsPrincipal(new ClaimsIdentity(
