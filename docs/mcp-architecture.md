@@ -13,9 +13,11 @@ SpeedClaim will use MCP as an integration boundary for AI hosts, not as a replac
 The existing `ai-service` customer-tool layer is the canonical capability vocabulary. It is already transport-neutral and operates only on a .NET-authorized, minimal customer snapshot. An MCP adapter may expose that vocabulary; it must not receive database credentials or bypass the .NET API's authorization and domain services.
 
 The .NET application stores an `Auth0` provider subject separately from first-party sessions and
-passwords. A verified customer can create a single-use, 10-minute linking code; the feature-gated
-MCP adapter consumes that code only after validating an Auth0 token. Email matching is never
-used to link identities, and there is no public route that accepts an unverified external subject.
+passwords. A verified customer links it from **Profile → Connected apps** through a SpeedClaim-
+initiated Auth0 Authorization Code + PKCE browser flow. The callback binds the verified Auth0
+subject to the already authenticated SpeedClaim customer server-side; no code, token, password,
+or other linking secret is pasted into an AI conversation. Email matching is never used to link
+identities, and there is no public route that accepts an unverified external subject.
 
 ## Target topology
 
@@ -59,7 +61,9 @@ The MCP adapter uses an explicit allowlist. Tool visibility is not an authorizat
 | Guided preparation | `prepare_quote`, `prepare_claim_draft`, `prepare_grievance_draft` | Yes | No |
 | Domain writes | payments, claim submission, KYC upload, proposal submission, status changes, administration | No direct MCP write tool in the first release | Never in the public read-only endpoint |
 
-`link_speedclaim_account` is a narrowly scoped identity-linking step, not a domain-write tool. It consumes a single-use code created by an already signed-in, verified SpeedClaim customer, and binds the current verified Auth0 subject without email matching.
+Identity linking is not an MCP tool. It happens in the SpeedClaim browser portal before an external
+host can read account data. This prevents an account-linking secret from ever becoming part of an
+AI conversation transcript.
 
 "Prepare" tools can return a draft or a deep link back to SpeedClaim, but they must not make any business mutation. The SpeedClaim UI remains the confirmation surface for payments, claims, KYC, applications, and grievances.
 
@@ -81,7 +85,7 @@ Tool results remain minimized to the existing customer-visible snapshots. KYC id
 
 1. **Catalog and policy tests:** verify the external list contains only read-only tools and the internal list contains only read/prepare tools.
 2. **Local inspector:** test the MCP protocol without production data, using fixtures.
-3. **OAuth integration test:** prove an unauthenticated request is rejected, a user can see only their data, a revoked/deactivated user is rejected, and a public client cannot invoke a prepare/write capability.
+3. **OAuth integration test:** prove an unauthenticated request is rejected, the PKCE account-link callback binds only the initiating customer, a user can see only their data, a revoked/deactivated user is rejected, and a public client cannot invoke a prepare/write capability.
 4. **Staging:** run with the external endpoint disabled by default, then enable it only for a test client and test accounts.
 5. **Production:** create a separate public hostname and OAuth client registrations only after security review, privacy review, monitoring, incident runbook, and rate limits are in place.
 

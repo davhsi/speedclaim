@@ -3,7 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
   UserDto, SingleAddressRequest, FamilyMemberDto, AddFamilyMemberRequest,
-  UpdateFamilyMemberRequest, KycRecordDto, ApiMessage,
+  UpdateFamilyMemberRequest, KycRecordDto, ApiMessage, LinkedExternalIdentityDto,
+  ExternalIdentityAuthorizationResponse,
 } from '../../../../core/models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -69,5 +70,13 @@ export class ProfileService {
     const fd = new FormData();
     fd.append('file', file);
     return this.http.post<{ avatarUrl: string }>(`${this.api}/profile/avatar`, fd);
+  }
+
+  getExternalIdentities(): Observable<LinkedExternalIdentityDto[]> {
+    return this.http.get<LinkedExternalIdentityDto[]>(`${this.api}/external-identities`);
+  }
+
+  startExternalIdentityAuthorization(): Observable<ExternalIdentityAuthorizationResponse> {
+    return this.http.post<ExternalIdentityAuthorizationResponse>(`${this.api}/external-identities/auth0/authorize`, {});
   }
 }

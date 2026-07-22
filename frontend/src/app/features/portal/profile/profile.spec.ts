@@ -1,5 +1,6 @@
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { Subject, of, throwError } from 'rxjs';
 import { ProfileComponent } from './profile';
 import { ProfileService } from './services/profile.service';
@@ -20,6 +21,8 @@ describe('ProfileComponent', () => {
     uploadAadhaar: ReturnType<typeof vi.fn>;
     uploadPan: ReturnType<typeof vi.fn>;
     uploadAvatar: ReturnType<typeof vi.fn>;
+    getExternalIdentities: ReturnType<typeof vi.fn>;
+    startExternalIdentityAuthorization: ReturnType<typeof vi.fn>;
   };
   let authService: { currentUser: ReturnType<typeof vi.fn>; patchCurrentUser: ReturnType<typeof vi.fn> };
   let toast: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn>; warning: ReturnType<typeof vi.fn> };
@@ -45,6 +48,7 @@ describe('ProfileComponent', () => {
     profileService.getProfile.mockReturnValue(of(profile));
     profileService.getFamilyMembers.mockReturnValue(of(members));
     profileService.getKyc.mockReturnValue(kyc ? of(kyc) : throwError(() => ({ status: 404 })));
+    profileService.getExternalIdentities.mockReturnValue(of([]));
 
     const fixture = TestBed.createComponent(ProfileComponent);
     fixture.detectChanges();
@@ -64,6 +68,8 @@ describe('ProfileComponent', () => {
       uploadAadhaar: vi.fn(),
       uploadPan: vi.fn(),
       uploadAvatar: vi.fn(),
+      getExternalIdentities: vi.fn(),
+      startExternalIdentityAuthorization: vi.fn(),
     };
     authService = {
       currentUser: vi.fn(() => ({ firstName: 'Jane', lastName: 'Doe' }) as AuthUserDto),
@@ -77,6 +83,7 @@ describe('ProfileComponent', () => {
         { provide: ProfileService, useValue: profileService },
         { provide: AuthService, useValue: authService },
         { provide: ToastService, useValue: toast },
+        provideRouter([]),
       ],
     });
   });
@@ -91,6 +98,7 @@ describe('ProfileComponent', () => {
       expect(c.kyc()).toEqual({ id: 'k1' });
       expect(c.profileForm.controls.firstName.value).toBe('Jane');
       expect(c.profileForm.controls.phone.value).toBe('9876543210');
+      expect(c.externalIdentities()).toEqual([]);
     });
 
     it('disables firstName/lastName/dateOfBirth once KYC is approved', () => {

@@ -830,3 +830,12 @@ export interface SpeedyWorkspaceMessage {
 export interface SpeedyWorkspaceConversation {
   id: string; title: string; createdAt: string; updatedAt: string; messages?: SpeedyWorkspaceMessage[] | null;
 }
+
+export interface LinkedExternalIdentityDto {
+  provider: string;
+  linkedAt: string;
+}
+
+export interface ExternalIdentityAuthorizationResponse {
+  authorizationUrl: string;
+}

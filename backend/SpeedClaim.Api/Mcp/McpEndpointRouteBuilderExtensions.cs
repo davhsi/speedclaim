@@ -19,7 +19,7 @@ public static class McpEndpointRouteBuilderExtensions
     private static readonly string[] AccountTools =
     [
         "get_my_kyc_next_step", "get_my_policy_summary", "get_my_proposal_status", "get_my_next_premium_due",
-        "get_my_claim_status", "get_my_grievance_status", "get_customer_assistance", "link_speedclaim_account"
+        "get_my_claim_status", "get_my_grievance_status", "get_customer_assistance"
     ];
 
     public static WebApplication MapExternalMcp(this WebApplication app)
@@ -96,10 +96,7 @@ public static class McpEndpointRouteBuilderExtensions
             try
             {
                 var data = await tools.ExecuteAsync(toolName, userId, args, subject);
-                var auditUserId = toolName == "link_speedclaim_account"
-                    ? await identities.ResolveActiveUserIdAsync("Auth0", subject)
-                    : userId;
-                await tools.AuditInvocationAsync(auditUserId, toolName, subject, clientId, requiredScope, "success");
+                await tools.AuditInvocationAsync(userId, toolName, subject, clientId, requiredScope, "success");
                 return Results.Json(Result(id, ToolSuccess(data)));
             }
             catch (Exception exception) when (exception is ValidationException or ForbiddenException or ConflictException)
@@ -114,7 +111,6 @@ public static class McpEndpointRouteBuilderExtensions
     [
         Tool("get_available_products", "List published SpeedClaim insurance products.", CatalogRead),
         Tool("select_published_brochure", "List safe metadata for published product brochures; optionally filter by productName.", CatalogRead, new { type = "object", properties = new { productName = new { type = "string" } } }),
-        Tool("link_speedclaim_account", "Link this Auth0 identity to a signed-in SpeedClaim customer using a single-use link code.", AccountRead, new { type = "object", required = new[] { "linkCode" }, properties = new { linkCode = new { type = "string", description = "One-time code generated from the signed-in SpeedClaim account." } } }),
         Tool("get_my_kyc_next_step", "Get the linked customer's KYC status and safe next step.", AccountRead),
         Tool("get_my_policy_summary", "Get summaries of the linked customer's policies.", AccountRead),
         Tool("get_my_proposal_status", "Get statuses of the linked customer's proposals.", AccountRead),

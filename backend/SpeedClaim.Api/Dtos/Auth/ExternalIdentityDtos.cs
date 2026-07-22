@@ -1,9 +1,6 @@
 namespace SpeedClaim.Api.Dtos.Auth;
 
-public record ExternalIdentityLinkCodeResponse(
-    string Provider,
-    string LinkCode,
-    DateTime ExpiresAt);
+public record ExternalIdentityAuthorizationResponse(string AuthorizationUrl);
 
 public record LinkedExternalIdentityDto(
     string Provider,
